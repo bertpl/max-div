@@ -4,9 +4,7 @@ import pytest
 from max_div._core._random import new_rng_state
 from max_div._core.metrics import (
     DistanceMetric,
-    DiversityObjectiveHybrid,
     DiversityObjectiveSimple,
-    HybridObjectiveType,
 )
 from max_div._core.metrics._distance import DistanceStore
 from max_div._core.solver._solver_step import InitializationStep
@@ -18,6 +16,7 @@ from max_div._core.solver._strategies._initialization._farthest_point_rounds imp
 )
 from max_div._core.solver._strategies._initialization._init_farthest_point import InitFarthestPoint
 from max_div.metrics import DiversityMetric
+from tests.helpers import hybrid_objective
 
 from ._helpers import new_solver_state, new_solver_state_unconstrained
 
@@ -28,17 +27,10 @@ L1 = DistanceMetric.l1_manhattan()
 L2 = DistanceMetric.l2_euclidean()
 
 
-def _hybrid(
-    *terms: DiversityObjectiveSimple, aggregation=HybridObjectiveType.GEOMETRIC_MEAN
-) -> DiversityObjectiveHybrid:
-    """Build a `DiversityObjectiveHybrid` from loose terms, geometric-mean by default."""
-    return DiversityObjectiveHybrid(terms, aggregation)
-
-
 def _farthest_point_in_rounds(**kwargs) -> InitFarthestPoint:
-    """Return a farthest-point strategy bound to a separation objective, so that it draws in rounds."""
+    """Return a farthest-point strategy adapted to a separation objective, so that it draws in rounds."""
     strategy = InitializationStrategy.farthest_point(**kwargs)
-    strategy.bind_objective(DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION))
+    strategy.adapt_to_objective(DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION))
     return strategy
 
 
@@ -107,11 +99,11 @@ def test_rounds_quality_near_one_item_at_a_time():
 def test_rounds_only_for_a_separation_objective_and_a_batch_size(
     metric: DiversityMetric, batch_size: int | None, is_drawing_rounds: bool
 ):
-    """A strategy draws several items per call only when bound to a separation objective with a batch size."""
+    """A strategy draws several items per call only when adapted to a separation objective with a batch size."""
     # --- arrange ----------------------
     state = new_solver_state_unconstrained()
     strategy = InitializationStrategy.farthest_point(batch_size=batch_size)
-    strategy.bind_objective(DiversityObjectiveSimple(metric))
+    strategy.adapt_to_objective(DiversityObjectiveSimple(metric))
 
     # --- act --------------------------
     batch_sizes = []
@@ -122,16 +114,6 @@ def test_rounds_only_for_a_separation_objective_and_a_batch_size(
 
     # --- assert -----------------------
     assert (max(batch_sizes) > 1) is is_drawing_rounds
-
-
-@pytest.mark.parametrize(
-    "kwargs",
-    [{"batch_size": 0}, {"top_k": 8, "batch_size": 4}],
-)
-def test_init_farthest_point_rejects_invalid_parameters(kwargs: dict):
-    """The constructor rejects `batch_size` below `top_k`."""
-    with pytest.raises(ValueError):
-        InitFarthestPoint(**kwargs)
 
 
 def test_rounds_batches_respect_the_contract():
@@ -283,14 +265,14 @@ def test_top_k_one_reproduces_the_one_item_at_a_time_construction_exactly(seed: 
         (DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION), True),
         (DiversityObjectiveSimple(DiversityMetric.MEAN_PAIRWISE_DISTANCE), False),  # mean-distance family
         (
-            _hybrid(
+            hybrid_objective(
                 DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L1),
                 DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L2),
             ),
             False,  # two distinct specs
         ),
         (
-            _hybrid(
+            hybrid_objective(
                 DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L1),
                 DiversityObjectiveSimple(DiversityMetric.GEOMEAN_SEPARATION, L1),
             ),

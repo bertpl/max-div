@@ -1,4 +1,4 @@
-"""This module draws farthest-point samples in rounds: many items per pass over the dataset.
+"""Farthest-point sampling in rounds draws many items per pass over the dataset.
 
 A round collects the `batch_size` highest-contribution not-selected items into a pool with one
 pass over the dataset, then draws from that pool without touching the dataset again, ending once
@@ -25,19 +25,19 @@ from max_div._core.solver._solver_state import SolverState
 #  Rounds
 # =================================================================================================
 def are_farthest_point_rounds_supported(objective: DiversityObjective) -> bool:
-    """Return whether rounds apply to `objective`: it must track a single separation-family diversity metric.
+    """Return whether rounds apply: every term of `objective` is a separation-family metric over one distance.
 
-    The rule that ends a round depends on contributions that only fall as items are selected, which
-    holds only for a single separation-family metric.
+    The rule that ends a round relies on each contribution only falling as items are selected, and
+    only that kind of objective guarantees it.
     """
     specs = objective.distinct_tracker_specs
     return len(specs) == 1 and specs[0].contribution_family == DiversityContributionFamily.SEPARATION
 
 
-def run_farthest_point_round(
+def draw_farthest_point_round(
     state: SolverState, top_k: int, batch_size: int, k_remaining: int | np.int32, rng_state: NDArray[np.uint64]
 ) -> NDArray[np.int32]:
-    """Run one round on a non-empty selection: collect a candidate pool and draw a batch from it.
+    """Draw one round's batch for a non-empty selection: collect a candidate pool and draw from it.
 
     The batch holds at least 1 item and grows while the pool can still be shown to hold the
     dataset's best candidates. Every draw samples uniformly among the `top_k` best remaining pool

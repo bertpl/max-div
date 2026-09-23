@@ -71,16 +71,19 @@ class InitializationStrategy(StrategyBase, ABC):
     def farthest_point(cls, top_k: int = 8, batch_size: int | None = 256) -> InitFarthestPoint:
         """Create a farthest-point-sampling initialization: a seeded random start item, then greedy picks.
 
-        Where the solve's primary diversity objective is a single separation-family metric and
-        `batch_size` is not None, the picks are drawn in rounds of up to `batch_size` items per pass
-        over the dataset, which is several times faster at large n; otherwise the strategy picks one
-        item per pass. See `InitFarthestPoint` for the per-metric interpretation and constraint
-        handling.
+        Where every term of the solve's primary diversity objective is a separation-family metric over
+        one distance and `batch_size` is not None, the picks are drawn in rounds of up to `batch_size`
+        items per pass over the dataset, which is several times faster at large n; otherwise the
+        strategy picks 1 item per pass.
+
+        Constraints are ignored; feasibility is left to the optimization steps. See `InitFarthestPoint`
+        for the per-metric interpretation.
 
         Args:
             top_k: Each greedy pick samples uniformly among the `top_k` highest diversity
                 contributions; 1 is the exact greedy construction.
-            batch_size: How many candidates a round collects; `None` picks one item at a time.
+            batch_size: How many candidates a round collects; it changes only the time spent, not the
+                selection's quality. `None` picks one item at a time.
 
         Raises:
             ValueError: If `top_k` is below 1, or `batch_size` is below `top_k`.

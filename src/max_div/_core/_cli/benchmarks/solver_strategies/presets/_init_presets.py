@@ -29,7 +29,7 @@ class InitPreset(StrEnum):
     # --- farthest point -------------------------
     FPS_1 = "fps(1)"
     FPS_8 = "fps(8)"
-    FPS_8_UNBATCHED = "fps(8,unbatched)"  # batch_size=None: one item per pass over the dataset
+    FPS_8_ONE_AT_A_TIME = "fps(8,one-at-a-time)"  # batch_size=None: one item per pass over the dataset
 
     # --- most feasible --------------------------
     MF = "mf"
@@ -50,7 +50,7 @@ class InitPreset(StrEnum):
             InitPreset.RSEL_UNCON,
             InitPreset.FPS_1,
             InitPreset.FPS_8,
-            InitPreset.FPS_8_UNBATCHED,
+            InitPreset.FPS_8_ONE_AT_A_TIME,
         ]
 
     def is_relevant_for_problem(self, problem_has_constraints: bool) -> bool:
@@ -95,7 +95,7 @@ _INIT_CLASSES_AND_KWARGS: dict[InitPreset, tuple[type[InitializationStrategy], d
     InitPreset.RSEL_UNCON: (InitRandomSelection, {"ignore_constraints": True}),
     InitPreset.FPS_1: (InitFarthestPoint, {"top_k": 1}),
     InitPreset.FPS_8: (InitFarthestPoint, {"top_k": 8}),
-    InitPreset.FPS_8_UNBATCHED: (InitFarthestPoint, {"top_k": 8, "batch_size": None}),
+    InitPreset.FPS_8_ONE_AT_A_TIME: (InitFarthestPoint, {"top_k": 8, "batch_size": None}),
     InitPreset.MF: (InitMostFeasible, {}),
 }
 

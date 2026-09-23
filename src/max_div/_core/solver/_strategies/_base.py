@@ -39,12 +39,13 @@ class StrategyBase:
         """Return _seed without updating it."""
         return self._seed
 
-    def bind_objective(self, objective: "DiversityObjective") -> None:
-        """Receive the solve's primary diversity objective, before any work.
+    def adapt_to_objective(self, objective: "DiversityObjective") -> None:
+        """Receive the solve's primary diversity objective before the strategy does any work.
 
         Called when the solver is built, in every process that builds one. A strategy whose
-        algorithm depends on the objective overrides `bind_objective`, to adapt to the objective or to
-        raise when it does not support the objective; the default accepts every objective and does nothing.
+        algorithm depends on the objective overrides `adapt_to_objective`, to adapt to the objective
+        or to raise when it does not support the objective; the default accepts every objective and
+        does nothing.
         """
 
     def set_seed(self, seed: int | np.int64) -> None:

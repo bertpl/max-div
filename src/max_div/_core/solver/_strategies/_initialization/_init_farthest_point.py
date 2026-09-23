@@ -7,14 +7,14 @@ from max_div._core.metrics import DiversityObjective
 from max_div._core.solver._solver_state import SolverState
 
 from ._base import InitializationStrategy
-from ._farthest_point_rounds import are_farthest_point_rounds_supported, run_farthest_point_round
+from ._farthest_point_rounds import are_farthest_point_rounds_supported, draw_farthest_point_round
 
 
 class InitFarthestPoint(InitializationStrategy):
     """Initialize by farthest-point sampling: a seeded random start item, then greedy picks.
 
-    Each pick adds a not-yet-selected item among the `top_k` highest diversity contributions with
-    respect to the current selection:
+    Each pick adds one of the `top_k` not-yet-selected items with the highest diversity contribution
+    with respect to the current selection:
 
     - separation-family metrics: the items farthest from their nearest selected neighbor
       (classical farthest-point sampling);
@@ -23,11 +23,13 @@ class InitFarthestPoint(InitializationStrategy):
 
     The picks are made in one of 2 ways; both offer each pick the same candidates:
 
-    - **in rounds** (`_farthest_point_rounds`): many picks per pass over the dataset, several times
-      faster at large n. Used when `batch_size` is not None and the objective is a single
-      separation-family metric.
+    - **in rounds** (`_farthest_point_rounds`): each round collects the `batch_size`
+      highest-contribution items into a pool with one pass over the dataset, then draws several picks
+      from that pool, updating the remaining pool candidates after each draw; several times faster at
+      large n. Used when `batch_size` is not None and every term of the objective is a
+      separation-family metric over one distance.
     - **one item at a time**: one pass over the dataset per pick. Used otherwise, and until
-      `bind_objective` has been called.
+      `adapt_to_objective` has been called.
 
     Constraints are ignored by design; feasibility is left to the optimization steps.
 
@@ -35,9 +37,10 @@ class InitFarthestPoint(InitializationStrategy):
     - top_k (int): every pick samples uniformly among the `top_k` highest contributions; `top_k=1`
                    is the exact argmax and consumes no randomness. (default: 8)
     - batch_size (int | None): how many candidates a round collects, which bounds how many items
-                               it can draw. A larger `batch_size` needs fewer passes over the dataset but
-                               refreshes more candidates per draw; above a few hundred the extra
-                               refreshing costs more than the saved passes. `batch_size` cannot affect the
+                               it can draw. A larger `batch_size` needs fewer passes over the dataset,
+                               but after each draw more pool candidates need their contribution
+                               updated; above a few hundred, those updates cost more than the saved
+                               passes. `batch_size` cannot affect the
                                selection's quality, only the time spent. `None` picks one item at
                                a time for every objective. (default: 256)
 
@@ -59,19 +62,21 @@ class InitFarthestPoint(InitializationStrategy):
             raise ValueError(f"batch_size must be >= top_k ({top_k}), got {batch_size}")
         self._top_k = top_k
         self._batch_size = batch_size
-        # bind_objective sets this to batch_size when the objective allows rounds; None picks one item at a time
+        # adapt_to_objective sets this to batch_size when the objective allows rounds; None picks one item at a time
         self._batch_size_for_objective: int | None = None
 
-    def bind_objective(self, objective: DiversityObjective) -> None:
-        """Draw in rounds when `batch_size` is not None and the objective is a single separation-family metric."""
+    def adapt_to_objective(self, objective: DiversityObjective) -> None:
+        """Enable drawing in rounds when `batch_size` is not None and every objective term fits.
+
+        A term fits when it is a separation-family metric, over the same distance as every other term.
+        """
         self._batch_size_for_objective = self._batch_size if are_farthest_point_rounds_supported(objective) else None
 
     def get_next_samples(self, state: SolverState, k_remaining: int | np.int32) -> NDArray[np.int32]:
         if state.n_selected == 0:
-            # the first pick is a seeded random start item
             return randint(n=state.n, k=np.int32(1), replace=False, p=P_UNIFORM, rng_state=self._rng_state)
         elif self._batch_size_for_objective is not None:
-            return run_farthest_point_round(
+            return draw_farthest_point_round(
                 state, self._top_k, self._batch_size_for_objective, k_remaining, self._rng_state
             )
         else:

@@ -3,6 +3,7 @@
 import numba
 
 from max_div._core.benchmark_problems import BenchmarkProblemFactory
+from max_div._core.metrics import DiversityObjectiveHybrid, DiversityObjectiveSimple, HybridObjectiveType
 
 
 def swept_benchmark_problems() -> list[str]:
@@ -25,3 +26,10 @@ def _first_with_prefix(names: list[str], prefix: str) -> str:
     """Pick a representative by family, so reordering the problems cannot collapse the narrowed
     sweep into two of the same kind."""
     return next(name for name in names if name.startswith(prefix))
+
+
+def hybrid_objective(
+    *terms: DiversityObjectiveSimple, aggregation=HybridObjectiveType.GEOMETRIC_MEAN
+) -> DiversityObjectiveHybrid:
+    """Build a `DiversityObjectiveHybrid` from loose terms, geometric-mean by default."""
+    return DiversityObjectiveHybrid(terms, aggregation)

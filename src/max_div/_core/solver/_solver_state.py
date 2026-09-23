@@ -96,7 +96,7 @@ class SolverState:
                 several), which the strategies read.
             distance_store: the store that the primary objective's one spec is tracked over, or None when
                 the primary objective has several specs; read only by the farthest-point
-                initialization when it draws in rounds.
+                initialization when it draws several items per pass over the dataset.
             score_generator: (ScoreGenerator) score generator to compute scores for current state
             selected: (np.ndarray[np.bool]) array indicating which of the n items are initially selected.
             con_values: (np.ndarray[np.int32] | None) upper/lower bounds per constraint (m x 2 array of float32)

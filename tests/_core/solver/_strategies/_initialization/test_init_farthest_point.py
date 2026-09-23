@@ -82,12 +82,15 @@ def test_init_farthest_point_name():
     assert strategy.name == "InitFarthestPoint"
 
 
-@pytest.mark.parametrize("top_k", [0, -1])
-def test_init_farthest_point_rejects_top_k_below_one(top_k: int):
-    """top_k must be >= 1."""
+@pytest.mark.parametrize(
+    "kwargs",
+    [{"top_k": 0}, {"top_k": -1}, {"batch_size": 0}, {"top_k": 8, "batch_size": 4}],
+)
+def test_init_farthest_point_rejects_invalid_parameters(kwargs: dict):
+    """The constructor rejects `top_k` below 1 and `batch_size` below `top_k`."""
     # --- act & assert -----------------
-    with pytest.raises(ValueError, match="top_k"):
-        InitFarthestPoint(top_k=top_k)
+    with pytest.raises(ValueError):
+        InitFarthestPoint(**kwargs)
 
 
 def test_farthest_point_factory_passes_top_k_through():
