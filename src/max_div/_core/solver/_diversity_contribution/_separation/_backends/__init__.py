@@ -26,11 +26,11 @@ if TYPE_CHECKING:
 class SeparationBackend(NamedTuple):
     """What the separation tracker needs from one storage layout.
 
-    `add`, `add_many` and `remove` update the separations after items join or leave the selection.
-    `add_many` fuses a batch into one pass over all items — the same distance pairs feed the same
-    `min`, so the result is identical to sequential adds, but `sep` is read and written once; its
-    `parallel` flag runs that pass over parallel threads (items are independent and `min` is
-    order-free, so results are identical there too).
+    - `add`, `add_many` and `remove` update the separations after items join or leave the selection.
+    - `add_many` fuses a batch into one pass over all items: the same distance pairs feed the same
+      `min`, so the result is identical to sequential adds, but `sep` is read and written once.
+    - The `parallel` flag of `add_many` runs that pass over parallel threads; items are independent
+      and `min` is order-free, so results are identical there too.
     """
 
     add: Callable[..., None]

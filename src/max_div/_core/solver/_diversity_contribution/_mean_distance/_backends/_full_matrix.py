@@ -2,7 +2,7 @@
 
 One of the interchangeable modules in this package — see this package's `__init__` for the pattern
 and why the backend is chosen once per tracker rather than tested inside these loops.  Each module
-defines the same two calculations over the same signatures, differing only in how a distance is read.
+defines the same calculations over the same signatures, differing only in how a distance is read.
 """
 
 from __future__ import annotations
@@ -14,7 +14,7 @@ import numpy as np
 
 from max_div._core.metrics._distance import get_distance_full_matrix
 
-from .._signatures import UPDATE_SIGNATURE
+from ._signatures import UPDATE_SIGNATURE
 
 if TYPE_CHECKING:
     from numpy.typing import NDArray

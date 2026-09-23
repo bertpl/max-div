@@ -15,7 +15,7 @@ class InitRandomBatched(InitializationStrategy):
     After each batch, the SolverState updates its diversity contributions, influencing sampling probabilities
       of the next batch.
 
-    Each batch is sampled with probabilities p[i] ~= (contribution of i wrt already selected items), which
+    Each batch is sampled with probabilities p[i] ~= (contribution of i with respect to already selected items), which
       favors items far from the selection so far.  The first batch, drawn before anything is selected, is
       sampled uniformly.
 

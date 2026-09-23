@@ -41,11 +41,12 @@ class InitRandomOneShot(InitializationStrategy):
                 con_indices=state.con_indices,
                 rng_state=self._rng_state,
             )
-        # don't take constraints into account
-        return randint(
-            n=state.n,
-            k=state.k,
-            replace=False,
-            p=P_UNIFORM,
-            rng_state=self._rng_state,
-        )
+        else:
+            # don't take constraints into account
+            return randint(
+                n=state.n,
+                k=state.k,
+                replace=False,
+                p=P_UNIFORM,
+                rng_state=self._rng_state,
+            )

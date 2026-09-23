@@ -17,7 +17,7 @@ class InitEager(InitializationStrategy):
     After each iteration, the SolverState updates its diversity contributions, influencing sampling probabilities
       of the next batch of candidates.
 
-    Candidates are sampled with probabilities p[i] ~= (contribution of i wrt already selected items), which
+    Candidates are sampled with probabilities p[i] ~= (contribution of i with respect to already selected items), which
       favors items far from the selection so far.  The first candidates, drawn before anything is selected,
       are sampled uniformly.
 

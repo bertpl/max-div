@@ -37,7 +37,7 @@ def build_add_probabilities(
     Lets a caller that draws several times from one unchanged state (each trial add reverted before
     the next draw) build the probabilities once.  The result is only valid until the selection changes.
 
-    The probabilities follow each candidate's contribution to the current selection.  With nothing
+    Each candidate's probability grows with its contribution to the current selection.  With nothing
     selected yet, that contribution is undefined, so every candidate gets the same probability.
 
     Args:
@@ -55,16 +55,16 @@ def build_add_probabilities(
     if state.n_selected == 0:
         # only the first draw of an initialization strategy sees an empty selection
         return np.ones(len(candidates), dtype=np.float32)
-
-    p = state.full_contribution_array[candidates]  # new array; contribution of candidates wrt selected items
-    exponential_selectivity(
-        p_in=p,
-        p_out=p,  # in-place
-        modifier=np.float32(selectivity_modifier),
-        reverse=False,  # for adding, we want to have items with high diversity contribution have higher probability
-        low_value=DEFAULT_LOW_VALUE,
-    )
-    return p
+    else:
+        p = state.full_contribution_array[candidates]  # new array; contribution of candidates wrt selected items
+        exponential_selectivity(
+            p_in=p,
+            p_out=p,  # in-place
+            modifier=np.float32(selectivity_modifier),
+            reverse=False,  # for adding, we want to have items with high diversity contribution have higher probability
+            low_value=DEFAULT_LOW_VALUE,
+        )
+        return p
 
 
 def select_items_to_add_with_p(
