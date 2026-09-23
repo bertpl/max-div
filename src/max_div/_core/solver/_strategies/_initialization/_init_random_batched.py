@@ -15,24 +15,15 @@ class InitRandomBatched(InitializationStrategy):
     After each batch, the SolverState updates its diversity contributions, influencing sampling probabilities
       of the next batch.
 
-    When sampling a batch, we use probabilities p[i] ~= (contribution of i wrt already selected items)
-                                                                            + (contribution of i wrt all items)
-
-    This drives each batch to be sampled from elements that are both well-separated from the selection so far, to
-      promote diversity, and also well-separated from each other, to avoid samples within a batch that are far from
-      the selection but close to each other.
+    Each batch is sampled with probabilities p[i] ~= (contribution of i wrt already selected items), which
+      favors items far from the selection so far.  The first batch, drawn before anything is selected, is
+      sampled uniformly.
 
     As we progress through the batches, selectivity of p[i] is modified with modifier = #sampled / #to_sample.
         (see modify_p_selectivity for details)
 
     Suggested use: when `InitRandomOneShot` does not provide a sufficiently high-quality initialization, but when
                    e.g. `InitEager` is too slow.
-
-    NOTE: the "contribution wrt all items" term computes every pairwise distance, which with
-    distances computed on demand from vectors takes roughly a minute at n ≈ 20,000 and grows
-    quadratically — hours by n ≈ 100,000 with high-dimensional vectors; with a stored distance
-    matrix, seconds up to n ≈ 20,000. The presets' uniform one-shot initialization avoids this
-    entirely.
 
     Parameters:
     - b (int): Number of batches to sample (must be > 1).
@@ -90,6 +81,5 @@ class InitRandomBatched(InitializationStrategy):
             selectivity_modifier=modifier,
             rng_state=self._rng_state,
             sampling_type=SamplingType.GROUP,
-            include_within_group_contribution=True,
             ignore_constraints=self.ignore_constraints,
         )

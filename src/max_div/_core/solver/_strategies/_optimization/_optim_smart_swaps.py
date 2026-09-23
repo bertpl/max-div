@@ -213,8 +213,6 @@ class OptimSmartSwaps(SwapBasedOptimizationStrategy):
             state=state,
             candidates=candidate_samples,
             selectivity_modifier=self.selectivity_modifier_add,
-            # no dataset-wide prior here: O(n²) to obtain, no measurable benefit for swap sampling
-            include_within_group_contribution=False,
         )
 
         # a) repeat 'nc' times...

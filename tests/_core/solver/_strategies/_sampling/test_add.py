@@ -57,8 +57,8 @@ def test_drawing_leaves_the_probabilities_intact(has_constraints: bool, sampling
     np.testing.assert_array_equal(p, p_before)
 
 
-def test_probabilities_without_a_selection_come_from_the_global_contribution() -> None:
-    """With nothing selected yet, the probabilities derive from each candidate's dataset-wide contribution."""
+def test_probabilities_without_a_selection_are_uniform() -> None:
+    """With nothing selected yet, every candidate gets the same probability."""
     # --- arrange ----------------------
     state = new_solver_state(has_constraints=False)
     candidates = state.not_selected_index_array
@@ -70,3 +70,4 @@ def test_probabilities_without_a_selection_come_from_the_global_contribution() -
     assert p.shape == candidates.shape
     assert p.dtype == np.float32
     assert (p > 0).all()
+    assert (p == p[0]).all()

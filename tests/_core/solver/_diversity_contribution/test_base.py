@@ -22,13 +22,6 @@ class _CallRecordingTracker(DiversityContributionTracker):
     def contribution_wrt_selection(self, selected: NDArray[np.bool], n_selected: np.int32) -> NDArray[np.float32]:
         return np.array([], dtype=np.float32)
 
-    @property
-    def contribution_wrt_dataset(self) -> NDArray[np.float32]:
-        return np.array([], dtype=np.float32)
-
-    def contribution_wrt_dataset_for(self, indices: NDArray[np.int32]) -> NDArray[np.float32]:
-        return np.array([], dtype=np.float32)  # not exercised by these tests
-
     def add(self, index: np.int32) -> None:
         self.calls.append(("add", int(index)))
 

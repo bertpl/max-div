@@ -23,8 +23,7 @@ class SeparationTracker(DiversityContributionTracker):
     """Diversity-contribution tracker of the separation family: contribution = distance to nearest selected point.
 
     For points with no selected neighbor (empty selection, or the point is the only selected one)
-    the contribution is +inf.  The global contribution is each point's distance to its nearest neighbor in the
-    whole dataset.
+    the contribution is +inf.
     """
 
     # -------------------------------------------------------------------------
@@ -41,9 +40,6 @@ class SeparationTracker(DiversityContributionTracker):
         # rather than tested inside them; see `_backends` for why that test cannot live in
         # compiled code
         self._backend = backend_for(store)
-        # lazily filled cache: NaN marks a not-yet-computed element; elements are computed on read
-        # and never change afterwards
-        self._sep_global = np.full(store.n, np.nan, dtype=np.float32)
         self._sep_selected = np.full(store.n, np.inf, dtype=np.float32)
         # snapshot stack, innermost last; entries are owned copies handed back on a restoring pop
         self._snapshot_sep_selected: list[NDArray[np.float32]] = []
@@ -59,26 +55,6 @@ class SeparationTracker(DiversityContributionTracker):
     def contribution_wrt_selection(self, selected: NDArray[np.bool], n_selected: np.int32) -> NDArray[np.float32]:
         """Return separation of all points wrt the current selection (reference; do not modify)."""
         return self._sep_selected
-
-    @property
-    def contribution_wrt_dataset(self) -> NDArray[np.float32]:
-        """Return separation of all points wrt all other points (reference; do not modify).
-
-        Computes every not-yet-computed element first; see the base class for the lazy contract.
-        """
-        self._ensure_global_elements(np.arange(self._store.n, dtype=np.int32))
-        return self._sep_global
-
-    def contribution_wrt_dataset_for(self, indices: NDArray[np.int32]) -> NDArray[np.float32]:
-        """Return global separations for `indices`, computing missing elements first (fresh array)."""
-        self._ensure_global_elements(indices)
-        return self._sep_global[indices]
-
-    def _ensure_global_elements(self, indices: NDArray[np.int32]) -> None:
-        """Compute any not-yet-computed global-separation elements among `indices`."""
-        missing = indices[np.isnan(self._sep_global[indices])]
-        if missing.size > 0:
-            self._backend.elements(self._sep_global, self._store, np.ascontiguousarray(missing, dtype=np.int32))
 
     # -------------------------------------------------------------------------
     #  Mutations
@@ -107,7 +83,7 @@ class SeparationTracker(DiversityContributionTracker):
         remove_trial(self._sep_selected, self._store, index, new_selection)
 
     def reset(self) -> None:
-        """Reset separations to the empty selection (all +inf); the global cache stays valid as-is."""
+        """Reset separations to the empty selection (all +inf)."""
         self._sep_selected.fill(np.inf)
 
     # -------------------------------------------------------------------------

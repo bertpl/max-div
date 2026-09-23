@@ -21,13 +21,6 @@ def tracker() -> SeparationTracker:
     return SeparationTracker(store)
 
 
-def _all_separations(store: DistanceStore) -> np.ndarray:
-    """Separation of every item wrt all others, via the layout's own elements calculation."""
-    sep = np.full(store.n, np.inf, dtype=np.float32)
-    backend_for(store).elements(sep, store, np.arange(store.n, dtype=np.int32))
-    return sep
-
-
 # =================================================================================================
 #  Tests
 # =================================================================================================
@@ -36,8 +29,6 @@ def test_construction_fresh(tracker: SeparationTracker):
     selected, n_selected = selection_args([], 5)
 
     # --- assert -----------------------
-    # global contribution: nearest-neighbor distances of points [0, 1, 3, 6, 10] on a line
-    np.testing.assert_allclose(tracker.contribution_wrt_dataset, [1, 1, 2, 3, 4])
     # empty selection: all contributions +inf
     assert np.all(np.isinf(tracker.contribution_wrt_selection(selected, n_selected)))
 
@@ -111,64 +102,6 @@ def test_snapshot_stack(tracker: SeparationTracker):
 # =================================================================================================
 #  Kernels
 # =================================================================================================
-def test_lazy_global_targeted_read_computes_only_requested(tracker: SeparationTracker):
-    # --- arrange ----------------------
-    # points [0, 1, 3, 6, 10] on a line: nearest-neighbor distances [1, 1, 2, 3, 4]
-    requested = np.array([0, 3], dtype=np.int32)
-
-    # --- act --------------------------
-    values = tracker.contribution_wrt_dataset_for(requested)
-
-    # --- assert -----------------------
-    np.testing.assert_allclose(values, [1, 3])
-    # only the requested elements are computed; the rest of the cache is still pending
-    assert np.all(np.isnan(tracker._sep_global[[1, 2, 4]]))
-    # the returned array is a fresh copy, not a view into the cache
-    values[0] = -1.0
-    assert tracker._sep_global[0] != -1.0
-
-
-def test_compute_separation_elements_partial_fill():
-    """The elements kernel fills exactly the requested elements; untouched ones keep their sentinel."""
-
-    # --- arrange ----------------------
-    vectors = np.array([[0.0], [1.0], [3.0], [6.0], [10.0]], dtype=np.float32)
-    store = DistanceStore.full_matrix_from_vectors(vectors, DistanceMetric.l1_manhattan())
-    sep = np.full(5, np.nan, dtype=np.float32)
-    requested = np.array([1, 4], dtype=np.int32)
-
-    # --- act --------------------------
-    backend_for(store).elements(sep, store, requested)
-
-    # --- assert -----------------------
-    np.testing.assert_allclose(sep[requested], [1, 4])
-    assert np.all(np.isnan(sep[[0, 2, 3]]))  # only the requested elements were written
-
-
-def test_elements_over_every_item():
-    """`elements` fills a whole array with each item's separation wrt all others."""
-
-    # --- arrange ----------------------
-    vectors = np.array([[0, 0], [3, 4], [1, 0], [0, 2]], dtype=np.float32)
-    d = condensed_distances(vectors, metric=DistanceMetric.l2_euclidean())
-    m = vectors.shape[0]
-    d_squared = squareform(d)
-
-    expected_separation = np.full(m, fill_value=np.inf, dtype=np.float32)
-    for i in range(m):
-        for j in range(m):
-            if i != j:
-                dist = d_squared[i, j]
-                if dist < expected_separation[i]:
-                    expected_separation[i] = dist
-
-    # --- act --------------------------
-    separation = _all_separations(DistanceStore.full_matrix(squareform(d)))
-
-    # --- assert -----------------------
-    np.testing.assert_allclose(separation, expected_separation)
-
-
 def test_update_separation_add():
     """Check if update_separation_add correctly updates separation after adding a vector."""
 
@@ -354,32 +287,11 @@ def test_backend_matches_brute_force_over_random_operations(backend: str):
     assert rescans_triggered > 0, "the rescan branch was never exercised, so this proves little"
 
 
-def test_every_backend_computes_the_same_separations():
-    """The three layouts agree with each other, to within summation rounding."""
-
-    # --- arrange ----------------------
-    rng = np.random.default_rng(20260805)
-    vectors = rng.random((30, 4)).astype(np.float32)
-    stores = _stores_for(vectors, DistanceMetric.l2_euclidean())
-    tolerance = 8.0 * np.sqrt(vectors.shape[1]) * np.finfo(np.float32).eps
-
-    # --- act --------------------------
-    results = {name: _all_separations(store) for name, store in stores.items()}
-
-    # --- assert -----------------------
-    reference = results.pop("full_matrix")
-    for name, values in results.items():
-        np.testing.assert_allclose(
-            values, reference, rtol=tolerance, atol=tolerance * float(np.max(reference)), err_msg=f"{name} disagrees"
-        )
-
-
 def test_reset_returns_to_empty_selection(tracker: SeparationTracker):
-    """Reset returns separations to the empty-selection +inf values; the dataset-wide cache stays untouched."""
+    """Reset returns separations to the empty-selection +inf values."""
     # --- arrange ----------------------
     tracker.add(np.int32(0))
     tracker.add(np.int32(2))
-    global_before = tracker.contribution_wrt_dataset.copy()
     selected, n_selected = selection_args([], 5)
 
     # --- act --------------------------
@@ -387,7 +299,6 @@ def test_reset_returns_to_empty_selection(tracker: SeparationTracker):
 
     # --- assert -----------------------
     assert np.all(np.isinf(tracker.contribution_wrt_selection(selected, n_selected)))
-    np.testing.assert_array_equal(tracker.contribution_wrt_dataset, global_before)  # cache untouched
 
 
 @pytest.mark.parametrize("backend", ["full_matrix", "lazy"])

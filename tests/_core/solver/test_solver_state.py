@@ -127,7 +127,6 @@ def test_solver_state_end_to_end(new_solver_state):
     assert state.score.constraints < 1.0  # constraints not satisfied
     assert np.array_equal(state.con_values, state._con_values)
     assert np.array_equal(state.con_indices, state._con_indices)
-    assert np.array_equal(state.global_contribution_array, state._per_item_contribution_source.contribution_wrt_dataset)
     assert state.n_selected == 0
     assert state.n_not_selected == 6
 
@@ -326,7 +325,6 @@ def test_solver_state_consistency_stress_test(new_solver_state, seed: int):
     # check if they're the same
     assert np.array_equal(state.selected_index_array, state_ref.selected_index_array)
     assert np.array_equal(state.not_selected_index_array, state_ref.not_selected_index_array)
-    assert np.array_equal(state.global_contribution_array, state_ref.global_contribution_array)
     assert np.array_equal(state.not_selected_contribution_array, state_ref.not_selected_contribution_array)
     assert np.array_equal(state.selected_contribution_array, state_ref.selected_contribution_array)
     assert np.array_equal(state.con_values, state_ref.con_values)

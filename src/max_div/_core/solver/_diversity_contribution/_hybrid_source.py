@@ -26,8 +26,7 @@ class HybridPerItemContributionSource(PerItemContributionSource):
     Every read combines the term trackers' arrays by the objective's own rule
     (`compute_per_item_contributions`). The source caches no selection contribution: the tracker set
     maintains the term trackers on every selection change, and the strategies read the combined array
-    once per change, so a cache would never serve a second read. The dataset-wide array never changes,
-    so it is combined once.
+    once per change, so a cache would never serve a second read.
     """
 
     # -------------------------------------------------------------------------
@@ -50,7 +49,6 @@ class HybridPerItemContributionSource(PerItemContributionSource):
             raise ValueError(f"A hybrid source needs at least two term trackers; got {len(term_trackers)}.")
         self._objective = objective  # READ-ONLY
         self._term_trackers = tuple(term_trackers)  # READ-ONLY
-        self._contribution_wrt_dataset: NDArray[np.float32] | None = None
 
     @property
     def term_trackers(self) -> tuple[DiversityContributionTracker, ...]:
@@ -64,19 +62,4 @@ class HybridPerItemContributionSource(PerItemContributionSource):
         """Return the objective's combination of the term trackers' selection contributions (fresh array)."""
         return self._objective.compute_per_item_contributions(
             [tracker.contribution_wrt_selection(selected, n_selected) for tracker in self._term_trackers]
-        )
-
-    @property
-    def contribution_wrt_dataset(self) -> NDArray[np.float32]:
-        """Return the aggregation of the term trackers' dataset-wide contributions (reference; do not modify)."""
-        if self._contribution_wrt_dataset is None:
-            self._contribution_wrt_dataset = self._objective.compute_per_item_contributions(
-                [tracker.contribution_wrt_dataset for tracker in self._term_trackers]
-            )
-        return self._contribution_wrt_dataset
-
-    def contribution_wrt_dataset_for(self, indices: NDArray[np.int32]) -> NDArray[np.float32]:
-        """Return the combined dataset-wide contributions for `indices` only (fresh array)."""
-        return self._objective.compute_per_item_contributions(
-            [tracker.contribution_wrt_dataset_for(indices) for tracker in self._term_trackers]
         )

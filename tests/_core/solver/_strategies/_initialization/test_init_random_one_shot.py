@@ -15,14 +15,10 @@ _STEP_IDENTITY = SolverStepIdentity(1, "test")
 
 @pytest.mark.parametrize("problem_has_constraints", [True, False])
 @pytest.mark.parametrize("arg_ignore_constraints", [True, False])
-@pytest.mark.parametrize("arg_uniform", [True, False])
-def test_init_random_one_shot(problem_has_constraints: bool, arg_ignore_constraints: bool, arg_uniform: bool):
+def test_init_random_one_shot(problem_has_constraints: bool, arg_ignore_constraints: bool):
     # --- arrange ----------------------
     solver_state = new_solver_state(problem_has_constraints)
-    strategy = InitializationStrategy.random_one_shot(
-        ignore_constraints=arg_ignore_constraints,
-        uniform=arg_uniform,
-    )
+    strategy = InitializationStrategy.random_one_shot(ignore_constraints=arg_ignore_constraints)
     init_step = InitializationStep(strategy)
 
     # --- act --------------------------
@@ -40,10 +36,8 @@ def test_init_random_one_shot(problem_has_constraints: bool, arg_ignore_constrai
 @pytest.mark.parametrize(
     "kwargs, expected_name",
     [
-        ({"uniform": True, "ignore_constraints": False}, "InitRandomOneShot(u)"),
-        ({"uniform": False, "ignore_constraints": False}, "InitRandomOneShot(nu)"),
-        ({"uniform": True, "ignore_constraints": True}, "InitRandomOneShot(u,uncon)"),
-        ({"uniform": False, "ignore_constraints": True}, "InitRandomOneShot(nu,uncon)"),
+        ({"ignore_constraints": False}, "InitRandomOneShot()"),
+        ({"ignore_constraints": True}, "InitRandomOneShot(uncon)"),
     ],
 )
 def test_init_random_one_shot_name(kwargs: dict[str, Any], expected_name: str):
@@ -61,7 +55,7 @@ def test_init_random_one_shot_parallel_flag(arg_parallel: bool):
     """The constructor's parallel choice must surface through the batch-add property."""
 
     # --- arrange / act ----------------
-    strategy = InitializationStrategy.random_one_shot(uniform=True, parallel=arg_parallel)
+    strategy = InitializationStrategy.random_one_shot(parallel=arg_parallel)
 
     # --- assert -----------------------
     assert strategy.parallel_batch_add is arg_parallel
@@ -73,8 +67,7 @@ def test_init_random_one_shot_parallel_matches_serial():
     # --- arrange ----------------------
     states = [new_solver_state(has_constraints=False) for _ in range(2)]
     steps = [
-        InitializationStep(InitializationStrategy.random_one_shot(uniform=True, parallel=parallel))
-        for parallel in (False, True)
+        InitializationStep(InitializationStrategy.random_one_shot(parallel=parallel)) for parallel in (False, True)
     ]
 
     # --- act --------------------------

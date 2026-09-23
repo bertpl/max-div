@@ -92,20 +92,3 @@ def test_every_read_reflects_the_term_trackers_current_arrays(term_trackers):
     expected = _geomean_of([tracker.contribution_wrt_selection(selected, n_selected) for tracker in term_trackers])
     np.testing.assert_allclose(after, expected, rtol=1e-6)
     assert not np.array_equal(after, before)
-
-
-def test_dataset_contributions_combine_the_term_trackers(term_trackers):
-    """The dataset-wide array, and the array returned for a subset of indices, combine the term trackers' arrays."""
-    # --- arrange ----------------------
-    source = HybridPerItemContributionSource(_hybrid(L1, L2), term_trackers)
-    indices = np.array([4, 1], dtype=np.int32)
-
-    # --- act --------------------------
-    full_contribution = source.contribution_wrt_dataset
-    subset_contribution = source.contribution_wrt_dataset_for(indices)
-
-    # --- assert -----------------------
-    expected = _geomean_of([tracker.contribution_wrt_dataset for tracker in term_trackers])
-    np.testing.assert_allclose(full_contribution, expected, rtol=1e-6)
-    np.testing.assert_allclose(subset_contribution, expected[indices], rtol=1e-6)
-    assert source.contribution_wrt_dataset is full_contribution  # combined once

@@ -30,7 +30,7 @@
     },
     {
      "step_index": 1,
-     "step": "InitRandomOneShot(u,uncon)",
+     "step": "InitRandomOneShot(uncon)",
      "size": 1.0,
      "constraints": 1.0,
      "diversity": 0.06582270562648773,
@@ -296,7 +296,7 @@
     },
     {
      "step_index": 1,
-     "step": "InitRandomOneShot(u,uncon)",
+     "step": "InitRandomOneShot(uncon)",
      "size": 1.0,
      "constraints": 1.0,
      "diversity": 0.05659252405166626,
@@ -562,7 +562,7 @@
     },
     {
      "step_index": 1,
-     "step": "InitRandomOneShot(u,uncon)",
+     "step": "InitRandomOneShot(uncon)",
      "size": 1.0,
      "constraints": 1.0,
      "diversity": 0.06582270562648773,
@@ -828,7 +828,7 @@
     },
     {
      "step_index": 1,
-     "step": "InitRandomOneShot(u,uncon)",
+     "step": "InitRandomOneShot(uncon)",
      "size": 1.0,
      "constraints": 1.0,
      "diversity": 0.05659252405166626,
@@ -2158,7 +2158,7 @@
     },
     {
      "step_index": 1,
-     "step": "InitRandomOneShot(u,uncon)",
+     "step": "InitRandomOneShot(uncon)",
      "size": 1.0,
      "constraints": 1.0,
      "diversity": 0.03098338283598423,
@@ -2424,7 +2424,7 @@
     },
     {
      "step_index": 1,
-     "step": "InitRandomOneShot(u,uncon)",
+     "step": "InitRandomOneShot(uncon)",
      "size": 1.0,
      "constraints": 1.0,
      "diversity": 0.039089713245630264,
@@ -2690,7 +2690,7 @@
     },
     {
      "step_index": 1,
-     "step": "InitRandomOneShot(u,uncon)",
+     "step": "InitRandomOneShot(uncon)",
      "size": 1.0,
      "constraints": 1.0,
      "diversity": 0.03098338283598423,
@@ -2956,7 +2956,7 @@
     },
     {
      "step_index": 1,
-     "step": "InitRandomOneShot(u,uncon)",
+     "step": "InitRandomOneShot(uncon)",
      "size": 1.0,
      "constraints": 1.0,
      "diversity": 0.039089713245630264,
@@ -4286,7 +4286,7 @@
     },
     {
      "step_index": 1,
-     "step": "InitRandomOneShot(u,uncon)",
+     "step": "InitRandomOneShot(uncon)",
      "size": 1.0,
      "constraints": 1.0,
      "diversity": 0.12326381355524063,
@@ -4552,7 +4552,7 @@
     },
     {
      "step_index": 1,
-     "step": "InitRandomOneShot(u,uncon)",
+     "step": "InitRandomOneShot(uncon)",
      "size": 1.0,
      "constraints": 1.0,
      "diversity": 0.0835219994187355,
@@ -4818,7 +4818,7 @@
     },
     {
      "step_index": 1,
-     "step": "InitRandomOneShot(u,uncon)",
+     "step": "InitRandomOneShot(uncon)",
      "size": 1.0,
      "constraints": 1.0,
      "diversity": 0.12326381355524063,
@@ -5084,7 +5084,7 @@
     },
     {
      "step_index": 1,
-     "step": "InitRandomOneShot(u,uncon)",
+     "step": "InitRandomOneShot(uncon)",
      "size": 1.0,
      "constraints": 1.0,
      "diversity": 0.0835219994187355,
@@ -6414,7 +6414,7 @@
     },
     {
      "step_index": 1,
-     "step": "InitRandomOneShot(u,uncon)",
+     "step": "InitRandomOneShot(uncon)",
      "size": 1.0,
      "constraints": 1.0,
      "diversity": 0.049069520086050034,
@@ -6680,7 +6680,7 @@
     },
     {
      "step_index": 1,
-     "step": "InitRandomOneShot(u,uncon)",
+     "step": "InitRandomOneShot(uncon)",
      "size": 1.0,
      "constraints": 1.0,
      "diversity": 0.0363093800842762,
@@ -6946,7 +6946,7 @@
     },
     {
      "step_index": 1,
-     "step": "InitRandomOneShot(u,uncon)",
+     "step": "InitRandomOneShot(uncon)",
      "size": 1.0,
      "constraints": 1.0,
      "diversity": 0.049069520086050034,
@@ -7212,7 +7212,7 @@
     },
     {
      "step_index": 1,
-     "step": "InitRandomOneShot(u,uncon)",
+     "step": "InitRandomOneShot(uncon)",
      "size": 1.0,
      "constraints": 1.0,
      "diversity": 0.0363093800842762,
@@ -8542,7 +8542,7 @@
     },
     {
      "step_index": 1,
-     "step": "InitRandomOneShot(u,uncon)",
+     "step": "InitRandomOneShot(uncon)",
      "size": 1.0,
      "constraints": 0.6363636363636364,
      "diversity": 0.5020173192024231,
@@ -8808,7 +8808,7 @@
     },
     {
      "step_index": 1,
-     "step": "InitRandomOneShot(u,uncon)",
+     "step": "InitRandomOneShot(uncon)",
      "size": 1.0,
      "constraints": 0.6363636363636364,
      "diversity": 0.26414167881011963,
@@ -9074,7 +9074,7 @@
     },
     {
      "step_index": 1,
-     "step": "InitRandomOneShot(u,uncon)",
+     "step": "InitRandomOneShot(uncon)",
      "size": 1.0,
      "constraints": 0.6363636363636364,
      "diversity": 0.5020173192024231,
@@ -9340,7 +9340,7 @@
     },
     {
      "step_index": 1,
-     "step": "InitRandomOneShot(u,uncon)",
+     "step": "InitRandomOneShot(uncon)",
      "size": 1.0,
      "constraints": 0.6363636363636364,
      "diversity": 0.26414167881011963,
@@ -10670,7 +10670,7 @@
     },
     {
      "step_index": 1,
-     "step": "InitRandomOneShot(u,uncon)",
+     "step": "InitRandomOneShot(uncon)",
      "size": 1.0,
      "constraints": 0.8888888888888888,
      "diversity": 0.5020173192024231,
@@ -10936,7 +10936,7 @@
     },
     {
      "step_index": 1,
-     "step": "InitRandomOneShot(u,uncon)",
+     "step": "InitRandomOneShot(uncon)",
      "size": 1.0,
      "constraints": 0.8888888888888888,
      "diversity": 0.26414167881011963,
@@ -11202,7 +11202,7 @@
     },
     {
      "step_index": 1,
-     "step": "InitRandomOneShot(u,uncon)",
+     "step": "InitRandomOneShot(uncon)",
      "size": 1.0,
      "constraints": 0.8888888888888888,
      "diversity": 0.5020173192024231,
@@ -11468,7 +11468,7 @@
     },
     {
      "step_index": 1,
-     "step": "InitRandomOneShot(u,uncon)",
+     "step": "InitRandomOneShot(uncon)",
      "size": 1.0,
      "constraints": 0.8888888888888888,
      "diversity": 0.26414167881011963,
@@ -12795,7 +12795,7 @@
     },
     {
      "step_index": 1,
-     "step": "InitRandomOneShot(u,uncon)",
+     "step": "InitRandomOneShot(uncon)",
      "size": 1.0,
      "constraints": 0.6,
      "diversity": 0.1059877946972847,
@@ -13058,7 +13058,7 @@
     },
     {
      "step_index": 1,
-     "step": "InitRandomOneShot(u,uncon)",
+     "step": "InitRandomOneShot(uncon)",
      "size": 1.0,
      "constraints": 1.0,
      "diversity": 0.24003972113132477,
@@ -13321,7 +13321,7 @@
     },
     {
      "step_index": 1,
-     "step": "InitRandomOneShot(u,uncon)",
+     "step": "InitRandomOneShot(uncon)",
      "size": 1.0,
      "constraints": 0.6,
      "diversity": 0.1059877946972847,
@@ -13334,7 +13334,7 @@
      "step": "OptimGuidedSwaps(1-9)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.20081926882266998,
+     "diversity": 0.2006015032529831,
      "div_tie_breakers": [
       1.0
      ]
@@ -13344,7 +13344,7 @@
      "step": "OptimGuidedSwaps(1-9)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.20081926882266998,
+     "diversity": 0.2006015032529831,
      "div_tie_breakers": [
       1.0
      ]
@@ -13563,11 +13563,11 @@
   },
   "C3|GUIDED|123": {
    "i_selected": [
-    32,
+    29,
     33,
-    69,
-    76,
-    90,
+    64,
+    74,
+    86,
     98,
     99
    ],
@@ -13584,7 +13584,7 @@
     },
     {
      "step_index": 1,
-     "step": "InitRandomOneShot(u,uncon)",
+     "step": "InitRandomOneShot(uncon)",
      "size": 1.0,
      "constraints": 1.0,
      "diversity": 0.24003972113132477,
@@ -13617,7 +13617,7 @@
      "step": "OptimGuidedSwaps(1-9)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.2985786497592926,
+     "diversity": 0.2664426863193512,
      "div_tie_breakers": [
       1.0
      ]
@@ -13627,7 +13627,7 @@
      "step": "OptimGuidedSwaps(1-9)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.2985786497592926,
+     "diversity": 0.30516183376312256,
      "div_tie_breakers": [
       1.0
      ]
@@ -13637,7 +13637,7 @@
      "step": "OptimGuidedSwaps(1-9)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.2985786497592926,
+     "diversity": 0.30516183376312256,
      "div_tie_breakers": [
       1.0
      ]
@@ -13647,7 +13647,7 @@
      "step": "OptimGuidedSwaps(1-9)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.2985786497592926,
+     "diversity": 0.31185486912727356,
      "div_tie_breakers": [
       1.0
      ]
@@ -13657,7 +13657,7 @@
      "step": "OptimGuidedSwaps(1-9)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.3018128275871277,
+     "diversity": 0.31185486912727356,
      "div_tie_breakers": [
       1.0
      ]
@@ -13667,7 +13667,7 @@
      "step": "OptimGuidedSwaps(1-9)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.3018128275871277,
+     "diversity": 0.31185486912727356,
      "div_tie_breakers": [
       1.0
      ]
@@ -13677,7 +13677,7 @@
      "step": "OptimGuidedSwaps(1-9)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.3018128275871277,
+     "diversity": 0.32909154891967773,
      "div_tie_breakers": [
       1.0
      ]
@@ -13687,7 +13687,7 @@
      "step": "OptimGuidedSwaps(1-9)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.3849235475063324,
+     "diversity": 0.32909154891967773,
      "div_tie_breakers": [
       1.0
      ]
@@ -13697,7 +13697,7 @@
      "step": "OptimGuidedSwaps(1-9)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.4659990072250366,
+     "diversity": 0.3732028603553772,
      "div_tie_breakers": [
       1.0
      ]
@@ -13707,7 +13707,7 @@
      "step": "OptimGuidedSwaps(1-9)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.4659990072250366,
+     "diversity": 0.3732028603553772,
      "div_tie_breakers": [
       1.0
      ]
@@ -13717,7 +13717,7 @@
      "step": "OptimGuidedSwaps(1-9)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.4659990072250366,
+     "diversity": 0.3732028603553772,
      "div_tie_breakers": [
       1.0
      ]
@@ -13727,7 +13727,7 @@
      "step": "OptimGuidedSwaps(1-9)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.5299704670906067,
+     "diversity": 0.5279887914657593,
      "div_tie_breakers": [
       1.0
      ]
@@ -13737,7 +13737,7 @@
      "step": "OptimGuidedSwaps(1-9)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6469445824623108,
+     "diversity": 0.5470254421234131,
      "div_tie_breakers": [
       1.0
      ]
@@ -13747,7 +13747,7 @@
      "step": "OptimGuidedSwaps(1-9)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6469445824623108,
+     "diversity": 0.5470254421234131,
      "div_tie_breakers": [
       1.0
      ]
@@ -13757,7 +13757,7 @@
      "step": "OptimGuidedSwaps(1-9)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6550615429878235,
+     "diversity": 0.6535988450050354,
      "div_tie_breakers": [
       1.0
      ]
@@ -13767,7 +13767,7 @@
      "step": "OptimGuidedSwaps(1-9)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6790366768836975,
+     "diversity": 0.6926557421684265,
      "div_tie_breakers": [
       1.0
      ]
@@ -13777,7 +13777,7 @@
      "step": "OptimGuidedSwaps(1-9)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6790366768836975,
+     "diversity": 0.6926557421684265,
      "div_tie_breakers": [
       1.0
      ]
@@ -13787,7 +13787,7 @@
      "step": "OptimGuidedSwaps(1-9)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6865662336349487,
+     "diversity": 0.6926557421684265,
      "div_tie_breakers": [
       1.0
      ]
@@ -13797,7 +13797,7 @@
      "step": "OptimGuidedSwaps(1-9)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6865662336349487,
+     "diversity": 0.6926557421684265,
      "div_tie_breakers": [
       1.0
      ]
@@ -13807,7 +13807,7 @@
      "step": "OptimGuidedSwaps(1-9)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.7082211375236511,
+     "diversity": 0.70828777551651,
      "div_tie_breakers": [
       1.0
      ]
@@ -13817,7 +13817,7 @@
      "step": "OptimGuidedSwaps(1-9)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.7082211375236511,
+     "diversity": 0.70828777551651,
      "div_tie_breakers": [
       1.0
      ]
@@ -14899,7 +14899,7 @@
     },
     {
      "step_index": 1,
-     "step": "InitRandomOneShot(u,uncon)",
+     "step": "InitRandomOneShot(uncon)",
      "size": 1.0,
      "constraints": 0.7777777777777778,
      "diversity": 0.1059877946972847,
@@ -15162,7 +15162,7 @@
     },
     {
      "step_index": 1,
-     "step": "InitRandomOneShot(u,uncon)",
+     "step": "InitRandomOneShot(uncon)",
      "size": 1.0,
      "constraints": 1.0,
      "diversity": 0.24003972113132477,
@@ -15425,7 +15425,7 @@
     },
     {
      "step_index": 1,
-     "step": "InitRandomOneShot(u,uncon)",
+     "step": "InitRandomOneShot(uncon)",
      "size": 1.0,
      "constraints": 0.7777777777777778,
      "diversity": 0.1059877946972847,
@@ -15438,7 +15438,7 @@
      "step": "OptimGuidedSwaps(1-9)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.08895082771778107,
+     "diversity": 0.07884455472230911,
      "div_tie_breakers": [
       1.0
      ]
@@ -15688,7 +15688,7 @@
     },
     {
      "step_index": 1,
-     "step": "InitRandomOneShot(u,uncon)",
+     "step": "InitRandomOneShot(uncon)",
      "size": 1.0,
      "constraints": 1.0,
      "diversity": 0.24003972113132477,

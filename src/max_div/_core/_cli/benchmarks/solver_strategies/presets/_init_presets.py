@@ -29,10 +29,8 @@ class InitPreset(StrEnum):
     FAST = "fast"
 
     # --- random one-shot ------------------------
-    ROS_U = "ros(u)"
-    ROS_NU = "ros(nu)"
-    ROS_U_UNCON = "ros(u,uncon)"
-    ROS_NU_UNCON = "ros(nu,uncon)"
+    ROS = "ros"
+    ROS_UNCON = "ros(uncon)"
 
     # --- random batched -------------------------
     RB_4 = "rb(4)"
@@ -66,8 +64,7 @@ class InitPreset(StrEnum):
     def is_constraint_aware(self) -> bool:
         return self not in [
             InitPreset.FAST,
-            InitPreset.ROS_U_UNCON,
-            InitPreset.ROS_NU_UNCON,
+            InitPreset.ROS_UNCON,
             InitPreset.FPS_1,
             InitPreset.FPS_8,
             InitPreset.FPSB_8,
@@ -79,15 +76,13 @@ class InitPreset(StrEnum):
         Two reasons drop a strategy from an unconstrained problem:
 
         - `most_feasible` *raises* without constraints, so it must not run.
-        - the `ros(*,uncon)` twins are *redundant* there, behaving identically to their
-          constraint-aware versions.
+        - `ros(uncon)` is *redundant* there, behaving identically to the constraint-aware `ros`.
         """
         if problem_has_constraints:
             return True
         dropped_when_unconstrained = {
             InitPreset.MF,
-            InitPreset.ROS_U_UNCON,
-            InitPreset.ROS_NU_UNCON,
+            InitPreset.ROS_UNCON,
         }
         return self not in dropped_when_unconstrained
 
@@ -114,10 +109,8 @@ class InitPreset(StrEnum):
 # =================================================================================================
 _INIT_CLASSES_AND_KWARGS: dict[InitPreset, tuple[type[InitializationStrategy], dict[str, Any]]] = {
     InitPreset.FAST: (InitFast, {}),
-    InitPreset.ROS_U: (InitRandomOneShot, {"uniform": True, "ignore_constraints": False}),
-    InitPreset.ROS_NU: (InitRandomOneShot, {"uniform": False, "ignore_constraints": False}),
-    InitPreset.ROS_U_UNCON: (InitRandomOneShot, {"uniform": True, "ignore_constraints": True}),
-    InitPreset.ROS_NU_UNCON: (InitRandomOneShot, {"uniform": False, "ignore_constraints": True}),
+    InitPreset.ROS: (InitRandomOneShot, {"ignore_constraints": False}),
+    InitPreset.ROS_UNCON: (InitRandomOneShot, {"ignore_constraints": True}),
     InitPreset.RB_4: (InitRandomBatched, {"b": 4, "ignore_constraints": False}),
     InitPreset.RB_16: (InitRandomBatched, {"b": 16, "ignore_constraints": False}),
     InitPreset.E_4: (InitEager, {"nc": 4, "ignore_constraints": False}),
@@ -129,7 +122,7 @@ _INIT_CLASSES_AND_KWARGS: dict[InitPreset, tuple[type[InitializationStrategy], d
 }
 
 _PRESET_NOTES: dict[InitPreset, str] = {
-    InitPreset.ROS_U_UNCON: "= the RANDOM/GUIDED presets' initialization",
+    InitPreset.ROS_UNCON: "= the RANDOM/GUIDED presets' initialization",
     InitPreset.FPSB_8: "= the SMART/THOROUGH presets' initialization (unconstrained problems)",
     InitPreset.MF: "= the SMART/THOROUGH presets' initialization (constrained problems)",
 }

@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Deprecated
 
 ### Removed
+- `random_one_shot`'s `uniform` switch: it always samples uniformly, so the builder's default initialization is now uniform; `eager` and `random_batched` sample by contribution to the current selection alone, with a uniform first draw
 
 ### Fixed
 

@@ -44,14 +44,12 @@ def _brute_force_contribution(pdist: np.ndarray, indices: list[int]) -> np.ndarr
 # =================================================================================================
 #  Tests
 # =================================================================================================
-def test_construction_fresh(tracker: MeanDistanceTracker, pdist: np.ndarray):
+def test_construction_fresh(tracker: MeanDistanceTracker):
     # --- arrange ----------------------
     selected, n_selected = selection_args([], N)
-    expected_global = (squareform(pdist).astype(np.float64).sum(axis=1) / (N - 1)).astype(np.float32)
 
     # --- assert -----------------------
-    assert tracker.contribution_wrt_dataset.dtype == np.float32
-    np.testing.assert_allclose(tracker.contribution_wrt_dataset, expected_global, rtol=1e-6)
+    assert tracker.store.n == N
     # empty selection: all contributions 0.0 (no selected neighbors)
     np.testing.assert_array_equal(
         tracker.contribution_wrt_selection(selected, n_selected), np.zeros(N, dtype=np.float32)
@@ -141,49 +139,9 @@ def test_invariant_random_operations_match_recompute(tracker: MeanDistanceTracke
         )
 
 
-def test_lazy_global_targeted_read_computes_only_requested(tracker: MeanDistanceTracker, pdist: np.ndarray):
-    # --- arrange ----------------------
-    expected_global = (squareform(pdist).astype(np.float64).sum(axis=1) / (N - 1)).astype(np.float32)
-    requested = np.array([2, 11, 5], dtype=np.int32)
-
-    # --- act --------------------------
-    values = tracker.contribution_wrt_dataset_for(requested)
-
-    # --- assert -----------------------
-    np.testing.assert_allclose(values, expected_global[requested], rtol=1e-6)
-    # only the requested elements are computed; the rest of the cache is still pending
-    untouched = np.setdiff1d(np.arange(N), requested)
-    assert np.all(np.isnan(tracker._contribution_wrt_dataset[untouched]))
-    # the returned array is a fresh copy, not a view into the cache
-    values[0] = -1.0
-    assert tracker._contribution_wrt_dataset[2] != -1.0
-
-
 # =================================================================================================
 #  Kernels
 # =================================================================================================
-def test_compute_mean_distance_elements_partial_fill():
-    """The elements kernel fills exactly the requested elements, with brute-force mean values."""
-
-    # --- arrange ----------------------
-    rng = np.random.default_rng(20260713)
-    vectors = rng.standard_normal((30, 4)).astype(np.float32)
-    m = vectors.shape[0]
-    d = condensed_distances(vectors, metric=DistanceMetric.l2_euclidean())
-    expected = (squareform(d).astype(np.float64).sum(axis=1) / (m - 1)).astype(np.float32)
-    out = np.full(m, np.nan, dtype=np.float32)
-    requested = np.array([0, 7, 29, 13], dtype=np.int32)
-
-    # --- act --------------------------
-    store = DistanceStore.full_matrix(squareform(d))
-    backend_for(store).elements(out, store, requested)
-
-    # --- assert -----------------------
-    np.testing.assert_allclose(out[requested], expected[requested], rtol=1e-6)
-    untouched = np.setdiff1d(np.arange(m), requested)
-    assert np.all(np.isnan(out[untouched]))  # only the requested elements were written
-
-
 def test_update_distance_sums_add_remove():
     """Incremental add/remove updates match brute-force sums over the selection at every step."""
 
@@ -280,11 +238,10 @@ def test_backend_matches_brute_force_over_random_operations(backend: str):
 
 
 def test_reset_returns_to_empty_selection(tracker: MeanDistanceTracker):
-    """Reset returns distance sums to the empty-selection zeros; the dataset-wide cache stays untouched."""
+    """Reset returns distance sums to the empty-selection zeros."""
     # --- arrange ----------------------
     tracker.add(np.int32(0))
     tracker.add(np.int32(2))
-    global_before = tracker.contribution_wrt_dataset.copy()
     selected = np.full(N, False, dtype=np.bool)
 
     # --- act --------------------------
@@ -292,7 +249,6 @@ def test_reset_returns_to_empty_selection(tracker: MeanDistanceTracker):
 
     # --- assert -----------------------
     assert np.all(tracker.contribution_wrt_selection(selected, np.int32(0)) == 0.0)
-    np.testing.assert_array_equal(tracker.contribution_wrt_dataset, global_before)  # cache untouched
 
 
 @pytest.mark.parametrize("backend", ["full_matrix", "lazy"])

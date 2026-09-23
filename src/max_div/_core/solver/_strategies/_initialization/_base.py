@@ -121,26 +121,17 @@ class InitializationStrategy(StrategyBase, ABC):
         return InitMostFeasible(max_iter=max_iter)
 
     @classmethod
-    def random_one_shot(
-        cls, uniform: bool = False, ignore_constraints: bool = False, parallel: bool = False
-    ) -> InitRandomOneShot:
-        """Random initialization that selects all ``k`` items in a single batch.
-
-        Probabilities are biased by the global diversity contribution (unless ``uniform=True``).
+    def random_one_shot(cls, ignore_constraints: bool = False, parallel: bool = False) -> InitRandomOneShot:
+        """Random initialization that selects all ``k`` items in a single batch, uniformly at random.
 
         Args:
-            uniform: If True, sample uniformly instead of using contribution-based probabilities.
             ignore_constraints: If True, ignore constraints during sampling.
             parallel: If True, the batched tracker update runs over parallel threads; see
                 `DiversityContributionTracker.add_many` for the contract.
         """
         from ._init_random_one_shot import InitRandomOneShot
 
-        return InitRandomOneShot(
-            uniform=uniform,
-            ignore_constraints=ignore_constraints,
-            parallel=parallel,
-        )
+        return InitRandomOneShot(ignore_constraints=ignore_constraints, parallel=parallel)
 
     @classmethod
     def random_batched(cls, b: int, ignore_constraints: bool = False) -> InitRandomBatched:
