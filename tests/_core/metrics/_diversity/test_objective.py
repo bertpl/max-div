@@ -10,7 +10,6 @@ from max_div._core.metrics import (
     DiversityTrackerSpec,
     HybridObjectiveType,
 )
-from max_div._core.solver._strategies._initialization._farthest_point_rounds import are_rounds_supported
 
 SEPARATION = DiversityContributionFamily.SEPARATION
 MEAN_DISTANCE = DiversityContributionFamily.MEAN_DISTANCE
@@ -129,33 +128,6 @@ def test_distinct_distance_metrics(objective, expected) -> None:
     """The distinct distance metrics an objective reads, in first-seen order."""
     # --- act / assert -----------------
     assert objective.distinct_distance_metrics() == expected
-
-
-@pytest.mark.parametrize(
-    "objective, expected",
-    [
-        (DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION), True),
-        (DiversityObjectiveSimple(DiversityMetric.MEAN_PAIRWISE_DISTANCE), False),  # mean-distance family
-        (
-            _hybrid(
-                DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L1),
-                DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L2),
-            ),
-            False,  # two distinct specs
-        ),
-        (
-            _hybrid(
-                DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L1),
-                DiversityObjectiveSimple(DiversityMetric.GEOMEAN_SEPARATION, L1),
-            ),
-            True,  # two terms over one separation spec
-        ),
-    ],
-)
-def test_are_farthest_point_rounds_supported(objective, expected) -> None:
-    """One distinct separation spec supports farthest-point rounds; a second spec or another family does not."""
-    # --- act / assert -----------------
-    assert are_rounds_supported(objective) is expected
 
 
 # =================================================================================================

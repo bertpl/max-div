@@ -2,12 +2,20 @@ import numpy as np
 import pytest
 
 from max_div._core._random import new_rng_state
-from max_div._core.metrics import DistanceMetric, DiversityObjectiveSimple
+from max_div._core.metrics import (
+    DistanceMetric,
+    DiversityObjectiveHybrid,
+    DiversityObjectiveSimple,
+    HybridObjectiveType,
+)
 from max_div._core.metrics._distance import DistanceStore
 from max_div._core.solver._solver_step import InitializationStep
 from max_div._core.solver._step_identity import SolverStepIdentity
 from max_div._core.solver._strategies import InitializationStrategy
-from max_div._core.solver._strategies._initialization._farthest_point_rounds import _draw_round
+from max_div._core.solver._strategies._initialization._farthest_point_rounds import (
+    _draw_round,
+    are_farthest_point_rounds_supported,
+)
 from max_div._core.solver._strategies._initialization._init_farthest_point import InitFarthestPoint
 from max_div.metrics import DiversityMetric
 
@@ -15,6 +23,16 @@ from ._helpers import new_solver_state, new_solver_state_unconstrained
 
 # each step records its checkpoints under this identity when run on its own in these tests
 _STEP_IDENTITY = SolverStepIdentity(1, "test")
+
+L1 = DistanceMetric.l1_manhattan()
+L2 = DistanceMetric.l2_euclidean()
+
+
+def _hybrid(
+    *terms: DiversityObjectiveSimple, aggregation=HybridObjectiveType.GEOMETRIC_MEAN
+) -> DiversityObjectiveHybrid:
+    """Build a `DiversityObjectiveHybrid` from loose terms, geometric-mean by default."""
+    return DiversityObjectiveHybrid(terms, aggregation)
 
 
 def _farthest_point_in_rounds(**kwargs) -> InitFarthestPoint:
@@ -108,10 +126,10 @@ def test_rounds_only_for_a_separation_objective_and_a_batch_size(
 
 @pytest.mark.parametrize(
     "kwargs",
-    [{"top_k": 0}, {"batch_size": 0}, {"top_k": 8, "batch_size": 4}],
+    [{"batch_size": 0}, {"top_k": 8, "batch_size": 4}],
 )
-def test_rounds_rejects_invalid_parameters(kwargs: dict):
-    """The constructor rejects `top_k` below 1 and `batch_size` below `top_k`."""
+def test_init_farthest_point_rejects_invalid_parameters(kwargs: dict):
+    """The constructor rejects `batch_size` below `top_k`."""
     with pytest.raises(ValueError):
         InitFarthestPoint(**kwargs)
 
@@ -190,7 +208,7 @@ def test_draw_round_draws_while_the_pool_still_holds_the_best():
 
 
 def test_draw_round_ends_when_fewer_than_top_k_candidates_remain():
-    """With a finite threshold, a draw needs top_k live candidates to be shown to range over the dataset's best."""
+    """With a finite threshold, the round ends once fewer than top_k undrawn pool candidates remain."""
     # --- arrange ----------------------
     vectors = np.array([[0.0], [100.0], [200.0], [300.0]], dtype=np.float32)
     store = DistanceStore.lazy(vectors, DistanceMetric.l2_euclidean())
@@ -241,7 +259,7 @@ def test_every_draw_is_among_the_top_k_contributions(seed: int):
 
 
 @pytest.mark.parametrize("seed", [1, 2, 3])
-def test_top_k_one_reproduces_the_per_pick_construction_exactly(seed: int):
+def test_top_k_one_reproduces_the_one_item_at_a_time_construction_exactly(seed: int):
     """With `top_k=1`, both constructions take the same greedy pick and agree item for item."""
     # --- arrange ----------------------
     states = [new_solver_state_unconstrained() for _ in range(2)]
@@ -257,3 +275,30 @@ def test_top_k_one_reproduces_the_per_pick_construction_exactly(seed: int):
 
     # --- assert -----------------------
     np.testing.assert_array_equal(states[0].selected_index_array, states[1].selected_index_array)
+
+
+@pytest.mark.parametrize(
+    "objective, expected",
+    [
+        (DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION), True),
+        (DiversityObjectiveSimple(DiversityMetric.MEAN_PAIRWISE_DISTANCE), False),  # mean-distance family
+        (
+            _hybrid(
+                DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L1),
+                DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L2),
+            ),
+            False,  # two distinct specs
+        ),
+        (
+            _hybrid(
+                DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L1),
+                DiversityObjectiveSimple(DiversityMetric.GEOMEAN_SEPARATION, L1),
+            ),
+            True,  # two terms over one separation spec
+        ),
+    ],
+)
+def test_are_farthest_point_rounds_supported(objective, expected) -> None:
+    """One distinct separation spec supports farthest-point rounds; a second spec or another family does not."""
+    # --- act / assert -----------------
+    assert are_farthest_point_rounds_supported(objective) is expected

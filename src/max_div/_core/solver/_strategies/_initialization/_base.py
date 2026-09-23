@@ -50,6 +50,7 @@ class InitializationStrategy(StrategyBase, ABC):
 
         Returns:
             np.array of unique np.int32 values, shape=(b,), with indices of samples to be added to the selection.
+            The solver adds the whole batch in a single tracker update.
             b can be any value in range [1, k_remaining].  Samples should be unique and not yet selected.
         """
         raise NotImplementedError
@@ -70,15 +71,19 @@ class InitializationStrategy(StrategyBase, ABC):
     def farthest_point(cls, top_k: int = 8, batch_size: int | None = 256) -> InitFarthestPoint:
         """Create a farthest-point-sampling initialization: a seeded random start item, then greedy picks.
 
-        Where the objective is a single separation-family metric, the picks are drawn in rounds of
-        up to `batch_size` items per pass over the dataset, several times faster at large n; every
-        other objective, and `batch_size=None`, picks one item per pass. See `InitFarthestPoint` for
-        the per-metric interpretation and constraint handling.
+        Where the solve's primary diversity objective is a single separation-family metric and
+        `batch_size` is not None, the picks are drawn in rounds of up to `batch_size` items per pass
+        over the dataset, which is several times faster at large n; otherwise the strategy picks one
+        item per pass. See `InitFarthestPoint` for the per-metric interpretation and constraint
+        handling.
 
         Args:
             top_k: Each greedy pick samples uniformly among the `top_k` highest diversity
                 contributions; 1 is the exact greedy construction.
             batch_size: How many candidates a round collects; `None` picks one item at a time.
+
+        Raises:
+            ValueError: If `top_k` is below 1, or `batch_size` is below `top_k`.
         """
         from ._init_farthest_point import InitFarthestPoint
 

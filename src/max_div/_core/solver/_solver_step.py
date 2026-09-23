@@ -59,7 +59,7 @@ class SolverStep[S: StrategyBase](ABC):
         self._strategy.set_seed(seed)
 
     def bind_objective(self, objective: "DiversityObjective") -> None:
-        """Hand the solve's primary diversity objective to this step's strategy; see `StrategyBase.bind_objective`."""
+        """Pass the solve's primary diversity objective to this step's strategy; see `StrategyBase.bind_objective`."""
         self._strategy.bind_objective(objective)
 
     @abstractmethod

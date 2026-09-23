@@ -12,12 +12,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - `InitializationStrategy.random_one_shot` is renamed to `InitializationStrategy.random_selection`, and loses its `uniform` parameter: the strategy always samples uniformly at random. `MaxDivSolverBuilder`'s default initialization used to weight each item by its diversity contribution to the whole dataset, and is now uniform
-- `InitializationStrategy.farthest_point` covers both farthest-point initializations: it draws many items per pass over the dataset where the metric allows it (`batch_size=None` for one item at a time), and its `top_k` defaults to 8, where it was 1
+- `InitializationStrategy.farthest_point` absorbs `farthest_point_batched`: under a single separation-family diversity metric it draws many items per pass over the dataset (`batch_size=None` draws one item per pass), and its `top_k` defaults to 8, where it was 1
 
 ### Deprecated
 
 ### Removed
-- `InitializationStrategy.farthest_point_batched`: `farthest_point` now draws in batches where the metric allows it
+- `InitializationStrategy.farthest_point_batched`: `farthest_point` now draws in batches under a single separation-family diversity metric
 - The `eager` and `random_batched` initializations, which `farthest_point` beats on diversity and speed: use `farthest_point` instead
 - `InitializationStrategy.fast()`: use `random_selection()` for a cheap starting selection
 
