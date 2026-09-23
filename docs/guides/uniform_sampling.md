@@ -169,15 +169,13 @@ Every figure above is a 60 s solve, chosen so the whole case study regenerates i
 
 The solver is built with `with_intermediate_selections()` so every [score checkpoint](../concepts/parallel_solving.md#reading-the-result) also carries the selection held at that moment.
 
-The 2 figures step through those selections: each frame is a checkpoint at which the best selection across the 32 workers changed, and the caption gives the frame's elapsed time and diversity. Move between frames three ways:
+The 2 figures step through those selections: each frame is a checkpoint at which the best selection across the 32 workers changed, and the caption gives the frame's elapsed time and diversity. Move between frames 3 ways:
 
 - drag the slider,
 - click the buttons, or
 - press the arrow keys once the figure has focus.
 
 #### V.C.1. Unconstrained
-
-This run solves the unconstrained problem of V.A.
 
 --8<-- "generated/uniform_sampling_hybrid_long_replay.html"
 
@@ -200,7 +198,7 @@ The later frames are where the extra budget improves the result: the diversity e
 
 #### V.C.2. Banded constraints
 
-This run solves the banded problem of V.B. Its [timeline](images/uniform_sampling_hybrid_banded_long_timeline.webp) also shows the constraints score.
+The [timeline of this solve](images/uniform_sampling_hybrid_banded_long_timeline.webp) also shows the constraints score.
 
 --8<-- "generated/uniform_sampling_hybrid_banded_long_replay.html"
 
@@ -208,11 +206,11 @@ This run solves the banded problem of V.B. Its [timeline](images/uniform_samplin
 
 The diversity ends 7.7 % above V.B's 60 s value, with its last improvement at about 3 h 20 m.
 
-**Under this budget the banded solve ends ahead of the unconstrained one on the hybrid objective**, 0.01583 against 0.01573, where at 60 s it was behind, 0.01470 against 0.01491.
+**Under this budget the banded solve ends ahead of the unconstrained one on the hybrid objective**, 0.01583 against 0.01573, where at 60 s the banded solve was behind, 0.01470 against 0.01491.
 
 Every selection that meets the band counts is also a valid unconstrained selection, so the unconstrained problem has a selection at least as good as the banded result, and the unconstrained solve did not find it.
 
-A likely reason is that the band counts shrink the search space. Each problem was solved once, with 1 seed, and a gap of 0.6 % is within what a different seed can change, so this is a hint, not an established result.
+A likely reason is that the band counts shrink the search space, so the same 4 h of swaps cover a larger share of the selections that remain. Each problem was solved once, with 1 seed, and a gap of 0.6 % is within what a different seed can change, so the banded solve's lead is a hint, not an established result.
 
 ## VI. Summary
 
@@ -224,7 +222,7 @@ Every experiment's achieved min separation under the three reference distances, 
 - **The L−∞ distance reaches the two marginals**, and the geometric-mean distance gets part of the way on all three.
 - **The hybrid objective directly optimizes all three** by explicitly formulating the three objectives, at the cost of slower iterations due to the three objectives.
 - **Exact counts per band come at no cost in diversity**: under them the hybrid objective reaches the same three separations.
-- **A longer budget still improves the result**: with 32 workers for 4 h, both hybrid solves end above their 60 s counterparts on all three separations, and both were still improving in the last hour.
+- **A longer budget still improves the result**: with 32 workers for 4 h, both 4 h solves end above their 60 s counterparts on all 3 separations, and both were still improving in the last hour.
 
 The slower iterations are visible in the iteration counts. The table gives, per experiment, how many iterations the worker holding the final selection completed in the 60 s budget, and the best objective any worker held at three elapsed marks as a fraction of the final value:
 

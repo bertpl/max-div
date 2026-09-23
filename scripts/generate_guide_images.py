@@ -4,11 +4,14 @@ The figures of `geomean_separation.md` plot given selections controlled by a par
 cases as dot rows, and the separation metrics against alpha below them; no solver is involved.
 
 The figures of `uniform_sampling.md` are seven solved selections of one random population, one per
-experiment, plus longer solves of the 2 hybrid experiments; only those run the solver. Each
-selection is emitted as an interactive figure (an HTML fragment over a raster of the population) plus
-its separations table, and cached as JSON so that `--reuse-solution` re-renders the figures without
-the solves, solving only a run that has no cache yet; a closing table compares them all. Each longer
-solve is emitted as a replay figure that steps through every change of its selection.
+experiment, plus a longer solve of each experiment that `EXPERIMENT_NAME_BY_LONG_RUN` names; only
+those run the solver.
+
+Each selection is emitted as an interactive figure (an HTML fragment over a raster of the population)
+plus its separations table, and cached as JSON so that `--reuse-solution` re-renders the figures
+without the solves, solving only a run that has no cache yet; a closing table compares them all.
+
+Each longer solve is emitted as a replay figure that steps through every change of its selection.
 
 Run with: ``uv run --group benchmarks ./scripts/generate_guide_images.py [--reuse-solution]``. Without
 `--reuse-solution`, every run is solved again, including the longer solves, which take `LONG_BUDGET_SEC`
@@ -254,11 +257,12 @@ EXPERIMENT_LABELS = {
     "hybrid_long": "**V.C.1** hybrid, 4 h, 32 workers",
     "hybrid_banded_long": "**V.C.2** hybrid, 20 items per band, 4 h, 32 workers",
 }
-# The replay figures of section V.C re-solve the 2 hybrid experiments with this budget and worker count.
+# The replay figures of section V.C re-solve the experiments that `EXPERIMENT_NAME_BY_LONG_RUN` names, with this
+# budget and worker count.
 LONG_BUDGET_SEC = 4 * 3600.0
 LONG_N_WORKERS = 32
 # Map each longer solve's run name to the name of the experiment that it re-solves.
-LONG_RUNS = {"hybrid_long": "hybrid", "hybrid_banded_long": "hybrid_banded"}
+EXPERIMENT_NAME_BY_LONG_RUN = {"hybrid_long": "hybrid", "hybrid_banded_long": "hybrid_banded"}
 # A summary cell is colored by its achieved / reference fraction: red below LOW, green above HIGH.
 # The classes are styled in docs/stylesheets/extra.css; `uniform_sampling.md` states the rule.
 SUMMARY_LOW_PERCENT, SUMMARY_HIGH_PERCENT = 40, 60
@@ -644,7 +648,7 @@ def render_uniform_sampling_experiments(settings: ExperimentSettings, should_reu
         path.write_text(fragment, encoding="utf-8")
         print(f"wrote {path.relative_to(REPO_ROOT)}")
     experiments_by_name = {experiment.name: experiment for experiment in EXPERIMENTS}
-    for run_name, experiment_name in LONG_RUNS.items():
+    for run_name, experiment_name in EXPERIMENT_NAME_BY_LONG_RUN.items():
         selections[run_name] = render_uniform_sampling_replay(
             vectors, settings, should_reuse_solution, experiments_by_name[experiment_name], run_name
         )
@@ -705,7 +709,7 @@ def render_uniform_sampling_long_run_timeline(run_name: str) -> None:
     """
     pickle_path = _solution_pickle_path(run_name)
     if not pickle_path.exists():
-        print(f"no {pickle_path.relative_to(REPO_ROOT)}: the solve predates the pickling; re-solve it")
+        print(f"no {pickle_path.relative_to(REPO_ROOT)}: this solve's solution was not saved as a pickle; re-solve it")
         return
     solution: ParallelMaxDivSolution = pickle.loads(pickle_path.read_bytes())
     use_docs_style()
