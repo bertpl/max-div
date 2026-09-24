@@ -68,13 +68,13 @@ class InitializationStrategy(StrategyBase, ABC):
     #  Factory Methods
     # -------------------------------------------------------------------------
     @classmethod
-    def farthest_point(cls, top_k: int = 8, batch_size: int | None = 256) -> InitFarthestPoint:
+    def farthest_point(cls, top_k: int = 8, candidate_pool_size: int | None = 256) -> InitFarthestPoint:
         """Create a farthest-point-sampling initialization: a seeded random start item, then greedy picks.
 
         Where every term of the solve's primary diversity objective is a separation-family metric over
-        one distance and `batch_size` is not None, the picks are drawn in rounds of up to `batch_size`
-        items per pass over the dataset, which is several times faster at large n; otherwise the
-        strategy picks 1 item per pass.
+        one distance and `candidate_pool_size` is not None, the picks are drawn in rounds of up to
+        `candidate_pool_size` items per pass over the dataset, which is several times faster at large n;
+        otherwise the strategy picks 1 item per pass.
 
         Constraints are ignored; feasibility is left to the optimization steps. See `InitFarthestPoint`
         for the per-metric interpretation.
@@ -82,15 +82,15 @@ class InitializationStrategy(StrategyBase, ABC):
         Args:
             top_k: Each greedy pick samples uniformly among the `top_k` highest diversity
                 contributions; 1 is the exact greedy construction.
-            batch_size: How many candidates a round collects; it changes only the time spent, not the
-                selection's quality. `None` picks one item at a time.
+            candidate_pool_size: How many candidates a round collects; it changes only the time spent,
+                not the selection's quality. `None` picks one item at a time.
 
         Raises:
-            ValueError: If `top_k` is below 1, or `batch_size` is below `top_k`.
+            ValueError: If `top_k` is below 1, or `candidate_pool_size` is below `top_k`.
         """
         from ._init_farthest_point import InitFarthestPoint
 
-        return InitFarthestPoint(top_k=top_k, batch_size=batch_size)
+        return InitFarthestPoint(top_k=top_k, candidate_pool_size=candidate_pool_size)
 
     @classmethod
     def most_feasible(cls, max_iter: int | None = None) -> InitMostFeasible:

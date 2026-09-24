@@ -23,10 +23,10 @@ class InitFarthestPoint(InitializationStrategy):
 
     The picks are made in one of 2 ways; both offer each pick the same candidates:
 
-    - **in rounds** (`_farthest_point_rounds`): each round collects the `batch_size`
+    - **in rounds** (`_farthest_point_rounds`): each round collects the `candidate_pool_size`
       highest-contribution items into a pool with one pass over the dataset, then draws several picks
       from that pool, updating the remaining pool candidates after each draw; several times faster at
-      large n. Used when `batch_size` is not None and every term of the objective is a
+      large n. Used when `candidate_pool_size` is not None and every term of the objective is a
       separation-family metric over one distance.
     - **one item at a time**: one pass over the dataset per pick. Used otherwise, and until
       `adapt_to_objective` has been called.
@@ -36,48 +36,52 @@ class InitFarthestPoint(InitializationStrategy):
     Parameters:
     - top_k (int): every pick samples uniformly among the `top_k` highest contributions; `top_k=1`
                    is the exact argmax and consumes no randomness. (default: 8)
-    - batch_size (int | None): how many candidates a round collects, which bounds how many items
-                               it can draw. A larger `batch_size` needs fewer passes over the dataset,
-                               but after each draw more pool candidates need their contribution
-                               updated; above a few hundred, those updates cost more than the saved
-                               passes. `batch_size` cannot affect the
-                               selection's quality, only the time spent. `None` picks one item at
-                               a time for every objective. (default: 256)
+    - candidate_pool_size (int | None): how many candidates a round collects, which bounds how many
+                                        items it can draw. A larger `candidate_pool_size` needs fewer
+                                        passes over the dataset, but after each draw more pool
+                                        candidates need their contribution updated; above a few
+                                        hundred, those updates cost more than the saved passes.
+                                        `candidate_pool_size` cannot affect the selection's quality,
+                                        only the time spent. `None` picks one item at a time for
+                                        every objective. (default: 256)
 
     Time Complexity:
        - ~O(n * k), times d when distances are computed on demand from vectors.
     """
 
-    def __init__(self, top_k: int = 8, batch_size: int | None = 256) -> None:
+    def __init__(self, top_k: int = 8, candidate_pool_size: int | None = 256) -> None:
         """Create the strategy.
 
         Raises:
-            ValueError: If `top_k` is below 1, or `batch_size` is below `top_k` (a round could then
-                not offer a full draw).
+            ValueError: If `top_k` is below 1, or `candidate_pool_size` is below `top_k`
+                (a round could then not offer a full draw).
         """
         super().__init__()
         if top_k < 1:
             raise ValueError(f"top_k must be >= 1, got {top_k}")
-        if batch_size is not None and batch_size < top_k:
-            raise ValueError(f"batch_size must be >= top_k ({top_k}), got {batch_size}")
+        if candidate_pool_size is not None and candidate_pool_size < top_k:
+            raise ValueError(f"candidate_pool_size must be >= top_k ({top_k}), got {candidate_pool_size}")
         self._top_k = top_k
-        self._batch_size = batch_size
-        # adapt_to_objective sets this to batch_size when the objective allows rounds; None picks one item at a time
-        self._batch_size_for_objective: int | None = None
+        self._candidate_pool_size = candidate_pool_size
+        # adapt_to_objective sets this to candidate_pool_size when the objective allows rounds;
+        # None picks one item at a time
+        self._candidate_pool_size_for_objective: int | None = None
 
     def adapt_to_objective(self, objective: DiversityObjective) -> None:
-        """Enable drawing in rounds when `batch_size` is not None and every objective term fits.
+        """Enable drawing in rounds when `candidate_pool_size` is not None and every objective term fits.
 
         A term fits when it is a separation-family metric, over the same distance as every other term.
         """
-        self._batch_size_for_objective = self._batch_size if are_farthest_point_rounds_supported(objective) else None
+        self._candidate_pool_size_for_objective = (
+            self._candidate_pool_size if are_farthest_point_rounds_supported(objective) else None
+        )
 
     def get_next_samples(self, state: SolverState, k_remaining: int | np.int32) -> NDArray[np.int32]:
         if state.n_selected == 0:
             return randint(n=state.n, k=np.int32(1), replace=False, p=P_UNIFORM, rng_state=self._rng_state)
-        elif self._batch_size_for_objective is not None:
+        elif self._candidate_pool_size_for_objective is not None:
             return draw_farthest_point_round(
-                state, self._top_k, self._batch_size_for_objective, k_remaining, self._rng_state
+                state, self._top_k, self._candidate_pool_size_for_objective, k_remaining, self._rng_state
             )
         else:
             return self._pick_one_item(state)

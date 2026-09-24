@@ -84,10 +84,10 @@ def test_init_farthest_point_name():
 
 @pytest.mark.parametrize(
     "kwargs",
-    [{"top_k": 0}, {"top_k": -1}, {"batch_size": 0}, {"top_k": 8, "batch_size": 4}],
+    [{"top_k": 0}, {"top_k": -1}, {"candidate_pool_size": 0}, {"top_k": 8, "candidate_pool_size": 4}],
 )
 def test_init_farthest_point_rejects_invalid_parameters(kwargs: dict):
-    """The constructor rejects `top_k` below 1 and `batch_size` below `top_k`."""
+    """The constructor rejects `top_k` below 1 and `candidate_pool_size` below `top_k`."""
     # --- act & assert -----------------
     with pytest.raises(ValueError):
         InitFarthestPoint(**kwargs)

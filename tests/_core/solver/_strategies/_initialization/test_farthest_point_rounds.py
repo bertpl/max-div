@@ -73,7 +73,7 @@ def test_rounds_quality_near_one_item_at_a_time():
     # --- arrange ----------------------
     results = {}
     for label, strategy in (
-        ("one_at_a_time", InitializationStrategy.farthest_point(top_k=8, batch_size=None)),
+        ("one_at_a_time", InitializationStrategy.farthest_point(top_k=8, candidate_pool_size=None)),
         ("rounds", _farthest_point_in_rounds()),
     ):
         state = new_solver_state(has_constraints=False)
@@ -89,20 +89,20 @@ def test_rounds_quality_near_one_item_at_a_time():
 
 
 @pytest.mark.parametrize(
-    "metric, batch_size, is_drawing_rounds",
+    "metric, candidate_pool_size, is_drawing_rounds",
     [
         (DiversityMetric.MIN_SEPARATION, 16, True),
         (DiversityMetric.MIN_SEPARATION, None, False),
         (DiversityMetric.MEAN_PAIRWISE_DISTANCE, 16, False),
     ],
 )
-def test_rounds_only_for_a_separation_objective_and_a_batch_size(
-    metric: DiversityMetric, batch_size: int | None, is_drawing_rounds: bool
+def test_rounds_only_for_a_separation_objective_and_a_candidate_pool_size(
+    metric: DiversityMetric, candidate_pool_size: int | None, is_drawing_rounds: bool
 ):
-    """A strategy draws several items per call only when adapted to a separation objective with a batch size."""
+    """A strategy draws several items per call only when adapted to a separation objective and given a pool size."""
     # --- arrange ----------------------
     state = new_solver_state_unconstrained()
-    strategy = InitializationStrategy.farthest_point(batch_size=batch_size)
+    strategy = InitializationStrategy.farthest_point(candidate_pool_size=candidate_pool_size)
     strategy.adapt_to_objective(DiversityObjectiveSimple(metric))
 
     # --- act --------------------------
@@ -120,7 +120,7 @@ def test_rounds_batches_respect_the_contract():
     """Every returned batch is duplicate-free, in range, and not yet selected."""
     # --- arrange ----------------------
     state = new_solver_state(has_constraints=False)
-    strategy = _farthest_point_in_rounds(batch_size=16)
+    strategy = _farthest_point_in_rounds(candidate_pool_size=16)
 
     # --- arrange / act / assert -------
     while state.n_selected < state.k:
@@ -221,7 +221,7 @@ def test_every_draw_is_among_the_top_k_contributions(seed: int):
     # --- arrange ----------------------
     top_k = 4
     state = new_solver_state_unconstrained()
-    strategy = _farthest_point_in_rounds(top_k=top_k, batch_size=16)
+    strategy = _farthest_point_in_rounds(top_k=top_k, candidate_pool_size=16)
     strategy.set_seed(seed)
 
     # --- arrange / act / assert -------
@@ -246,7 +246,7 @@ def test_top_k_one_reproduces_the_one_item_at_a_time_construction_exactly(seed: 
     # --- arrange ----------------------
     states = [new_solver_state_unconstrained() for _ in range(2)]
     steps = [
-        InitializationStep(InitializationStrategy.farthest_point(top_k=1, batch_size=None)),
+        InitializationStep(InitializationStrategy.farthest_point(top_k=1, candidate_pool_size=None)),
         InitializationStep(_farthest_point_in_rounds(top_k=1)),
     ]
 

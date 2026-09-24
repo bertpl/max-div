@@ -1,7 +1,7 @@
 """Farthest-point sampling in rounds draws many items per pass over the dataset.
 
-A round collects the `batch_size` highest-contribution not-selected items into a pool with one
-pass over the dataset, then draws from that pool without touching the dataset again, ending once
+A round collects the `candidate_pool_size` highest-contribution not-selected items into a pool with
+one pass over the dataset, then draws from that pool without touching the dataset again, ending once
 the pool can no longer be shown to hold the dataset's best candidates (see `_draw_round`).
 
 Every draw ranges over the same candidates as picking one item at a time, so selections are of
@@ -35,7 +35,7 @@ def are_farthest_point_rounds_supported(objective: DiversityObjective) -> bool:
 
 
 def draw_farthest_point_round(
-    state: SolverState, top_k: int, batch_size: int, k_remaining: int | np.int32, rng_state: NDArray[np.uint64]
+    state: SolverState, top_k: int, candidate_pool_size: int, k_remaining: int | np.int32, rng_state: NDArray[np.uint64]
 ) -> NDArray[np.int32]:
     """Draw one round's batch for a non-empty selection: collect a candidate pool and draw from it.
 
@@ -44,12 +44,12 @@ def draw_farthest_point_round(
     candidates and advances `rng_state` in place.
     """
     # --- candidate pool -------------------------
-    # the batch_size highest-contribution not-selected items
-    cand_idx, cand_val = state.top_not_selected_contributions(batch_size)
+    # the candidate_pool_size highest-contribution not-selected items
+    cand_idx, cand_val = state.top_not_selected_contributions(candidate_pool_size)
     # every item outside the pool is below the pool's lowest value, so a pool candidate still at
     # or above that value is among the dataset's best: it is the round's admission threshold
     threshold = np.float32(cand_val.min())
-    if len(cand_idx) < batch_size:
+    if len(cand_idx) < candidate_pool_size:
         # the pool holds every remaining item, so nothing is outside it: draw until the pool is empty
         threshold = np.float32(-np.inf)
 
