@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.18.2 (2026-09-25)
 
 ### Added
 - `plot_timeline(include_tie_breakers=True)` draws each tie-breaker's trajectory in its own panel, and a solution records the labels of its diversity objectives (`diversity_objective_labels`)
@@ -14,16 +14,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `InitializationStrategy.random_one_shot` is renamed to `InitializationStrategy.random_selection`, and loses its `uniform` parameter: the strategy always samples uniformly at random. `MaxDivSolverBuilder`'s default initialization used to weight each item by its diversity contribution to the whole dataset, and is now uniform
 - `InitializationStrategy.farthest_point` now also does what `farthest_point_batched` did: when every term of the diversity objective is a separation-family metric over one distance, it draws many items per pass over the dataset (its new `candidate_pool_size` parameter caps the candidates per pass; `candidate_pool_size=None` draws 1 item per pass), and its `top_k` defaults to 8, where it was 1
 
-### Deprecated
-
 ### Removed
 - `InitializationStrategy.farthest_point_batched`: `farthest_point` now draws in batches when every term of the diversity objective is a separation-family metric over one distance
 - The `eager` and `random_batched` initializations, which `farthest_point` beats on diversity and speed: use `farthest_point` instead
 - `InitializationStrategy.fast()`: use `random_selection()` for a cheap starting selection
-
-### Fixed
-
-### Security
 
 ## 0.18.1 (2026-09-18)
 
