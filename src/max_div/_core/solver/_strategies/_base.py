@@ -8,8 +8,6 @@ from max_div._core._utils import deterministic_hash_int64, int_to_int64
 if TYPE_CHECKING:
     from numpy.typing import NDArray
 
-    from max_div._core.metrics import DiversityObjective
-
 
 class StrategyBase:
     """Base class for OptimizationStrategy & InitializationStrategy, centralizing some overlapping functionality."""
@@ -38,15 +36,6 @@ class StrategyBase:
     def seed(self) -> np.int64:
         """Return _seed without updating it."""
         return self._seed
-
-    def adapt_to_objective(self, objective: "DiversityObjective") -> None:
-        """Receive the solve's primary diversity objective before the strategy does any work.
-
-        Called when the solver is built, in every process that builds one. A strategy whose
-        algorithm depends on the objective overrides `adapt_to_objective`, to adapt to the objective
-        or to raise when it does not support the objective; the default accepts every objective and
-        does nothing.
-        """
 
     def set_seed(self, seed: int | np.int64) -> None:
         """Sets the random seed for the strategy, to be used by child classes."""

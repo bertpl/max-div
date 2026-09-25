@@ -54,7 +54,7 @@ def test_init_farthest_point_picks_are_greedy():
     """With top_k=1, every pick after the first is the argmax of contribution wrt the current selection."""
     # --- arrange ----------------------
     solver_state = new_solver_state(has_constraints=False)
-    strategy = InitializationStrategy.farthest_point(top_k=1)
+    strategy = InitializationStrategy.farthest_point(top_k=1, candidate_pool_size=None)
     solver_state.add(np.int32(0))
 
     # --- act --------------------------
@@ -137,7 +137,7 @@ def test_init_farthest_point_default_pick_varies_by_seed():
     # --- act --------------------------
     picks = set()
     for seed in range(20):
-        strategy = InitializationStrategy.farthest_point()
+        strategy = InitializationStrategy.farthest_point(candidate_pool_size=None)
         strategy.set_seed(seed)
         picks.add(int(strategy.get_next_samples(solver_state, solver_state.k)[0]))
 
@@ -158,7 +158,7 @@ def test_init_farthest_point_top_k_draws_from_the_top_set():
     # --- act --------------------------
     picks = []
     for seed in range(20):
-        strategy = InitFarthestPoint(top_k=top_k)
+        strategy = InitFarthestPoint(top_k=top_k, candidate_pool_size=None)
         strategy.set_seed(seed)
         picks.append(int(strategy.get_next_samples(solver_state, solver_state.k)[0]))
 
@@ -172,19 +172,12 @@ def test_init_farthest_point_top_k_draws_from_the_top_set():
 # =================================================================================================
 #  Drawing in rounds
 # =================================================================================================
-def _farthest_point_in_rounds(**kwargs) -> InitFarthestPoint:
-    """Return a farthest-point strategy adapted to a separation objective, so that it draws in rounds."""
-    strategy = InitializationStrategy.farthest_point(**kwargs)
-    strategy.adapt_to_objective(DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION))
-    return strategy
-
-
 @pytest.mark.parametrize("top_k", [1, 8])
 def test_rounds_completes_selection(top_k: int):
     """Drawing in rounds selects exactly k distinct items and reaches full size."""
     # --- arrange ----------------------
     state = new_solver_state(has_constraints=False)
-    step = InitializationStep(_farthest_point_in_rounds(top_k=top_k))
+    step = InitializationStep(InitializationStrategy.farthest_point(top_k=top_k))
 
     # --- act --------------------------
     step.run(state, _STEP_IDENTITY)
@@ -201,7 +194,7 @@ def test_rounds_is_deterministic_per_seed():
     selections = []
     for seed in (7, 7, 8):
         state = new_solver_state(has_constraints=False)
-        step = InitializationStep(_farthest_point_in_rounds())
+        step = InitializationStep(InitializationStrategy.farthest_point())
         step.set_seed(seed)
 
         # --- act ----------------------
@@ -219,7 +212,7 @@ def test_rounds_quality_near_one_item_at_a_time():
     results = {}
     for label, strategy in (
         ("one_at_a_time", InitializationStrategy.farthest_point(top_k=8, candidate_pool_size=None)),
-        ("rounds", _farthest_point_in_rounds()),
+        ("rounds", InitializationStrategy.farthest_point()),
     ):
         state = new_solver_state(has_constraints=False)
         step = InitializationStep(strategy)
@@ -244,11 +237,10 @@ def test_rounds_quality_near_one_item_at_a_time():
 def test_rounds_only_for_a_separation_objective_and_a_candidate_pool_size(
     metric: DiversityMetric, candidate_pool_size: int | None, is_drawing_rounds: bool
 ):
-    """A strategy draws several items per call only when adapted to a separation objective and given a pool size."""
+    """A strategy draws several items per call only for a separation objective and a pool size."""
     # --- arrange ----------------------
-    state = new_solver_state_unconstrained()
+    state = new_solver_state_unconstrained(metric=metric)
     strategy = InitializationStrategy.farthest_point(candidate_pool_size=candidate_pool_size)
-    strategy.adapt_to_objective(DiversityObjectiveSimple(metric))
 
     # --- act --------------------------
     batch_sizes = []
@@ -265,7 +257,7 @@ def test_rounds_batches_respect_the_contract():
     """Every returned batch is duplicate-free, in range, and not yet selected."""
     # --- arrange ----------------------
     state = new_solver_state(has_constraints=False)
-    strategy = _farthest_point_in_rounds(candidate_pool_size=16)
+    strategy = InitializationStrategy.farthest_point(candidate_pool_size=16)
 
     # --- arrange / act / assert -------
     while state.n_selected < state.k:
@@ -366,7 +358,7 @@ def test_every_draw_is_among_the_top_k_contributions(seed: int):
     # --- arrange ----------------------
     top_k = 4
     state = new_solver_state_unconstrained()
-    strategy = _farthest_point_in_rounds(top_k=top_k, candidate_pool_size=16)
+    strategy = InitializationStrategy.farthest_point(top_k=top_k, candidate_pool_size=16)
     strategy.set_seed(seed)
 
     # --- arrange / act / assert -------
@@ -392,7 +384,7 @@ def test_top_k_one_reproduces_the_one_item_at_a_time_construction_exactly(seed: 
     states = [new_solver_state_unconstrained() for _ in range(2)]
     steps = [
         InitializationStep(InitializationStrategy.farthest_point(top_k=1, candidate_pool_size=None)),
-        InitializationStep(_farthest_point_in_rounds(top_k=1)),
+        InitializationStep(InitializationStrategy.farthest_point(top_k=1)),
     ]
 
     # --- act --------------------------

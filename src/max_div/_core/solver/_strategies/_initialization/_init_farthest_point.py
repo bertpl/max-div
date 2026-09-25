@@ -34,7 +34,7 @@ class InitFarthestPoint(InitializationStrategy):
       is not None and every term of the objective is a separation-family metric over one distance;
       several times faster at large n.
     - **one at a time, from all not-selected items** (slower): one pass over the dataset per pick.
-      Used in every other case, and until `adapt_to_objective` has been called.
+      Used in every other case.
 
     Both offer each pick the same candidates, so selections are of equal quality but not identical.
 
@@ -70,24 +70,12 @@ class InitFarthestPoint(InitializationStrategy):
             raise ValueError(f"candidate_pool_size must be >= top_k ({top_k}), got {candidate_pool_size}")
         self._top_k = top_k
         self._candidate_pool_size = candidate_pool_size
-        # adapt_to_objective sets this to candidate_pool_size when the objective allows rounds;
-        # None picks one item at a time
-        self._candidate_pool_size_for_objective: int | None = None
-
-    def adapt_to_objective(self, objective: DiversityObjective) -> None:
-        """Enable drawing in rounds when `candidate_pool_size` is not None and every objective term fits.
-
-        A term fits when it is a separation-family metric, over the same distance as every other term.
-        """
-        self._candidate_pool_size_for_objective = (
-            self._candidate_pool_size if self._are_rounds_supported(objective) else None
-        )
 
     def get_next_samples(self, state: SolverState, k_remaining: int | np.int32) -> NDArray[np.int32]:
         if state.n_selected == 0:
             return randint(n=state.n, k=np.int32(1), replace=False, p=P_UNIFORM, rng_state=self._rng_state)
-        elif self._candidate_pool_size_for_objective is not None:
-            return self._draw_round(state, self._candidate_pool_size_for_objective, k_remaining)
+        elif self._candidate_pool_size is not None and self._are_rounds_supported(state.primary_objective):
+            return self._draw_round(state, self._candidate_pool_size, k_remaining)
         else:
             return self._pick_one_item(state)
 
@@ -199,9 +187,7 @@ def _draw_from_pool(
     n_drawn = np.int64(0)
     for bi in range(b_target):
         n_live = np.int64(count - bi)
-        k_eff = min(np.int64(top_k), n_live)
-        if k_eff <= 0:
-            break
+        k_eff = min(np.int64(top_k), n_live)  # n_live >= 1: the loop stops at b_target <= count
         if k_eff < top_k and threshold > -np.inf:
             break  # too few live candidates to show the draw would range over the dataset's best
         if select_k_max_into(cand_val, n_live, k_eff, top_positions) < threshold:
