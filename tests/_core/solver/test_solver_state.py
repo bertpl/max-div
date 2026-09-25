@@ -6,10 +6,11 @@ import pytest
 from numpy import random
 
 from max_div._core.constraints import Constraint
-from max_div._core.metrics import DistanceMetric, DiversityMetric
+from max_div._core.metrics import DistanceMetric, DiversityMetric, DiversityObjectiveSimple
 from max_div._core.metrics._distance import DistanceStore
 from max_div._core.solver._diversity_contribution import MeanDistanceTracker, SeparationTracker
 from max_div._core.solver._solver_state import Savepoint, SolverState
+from tests.helpers import hybrid_objective
 
 from .objectives import simple_objective, tie_breaker_objectives
 
@@ -67,6 +68,50 @@ def test_solver_state_properties(new_solver_state, new_solver_state_unconstraine
 
     assert new_solver_state_unconstrained.score.constraints == 1.0  # no constraints -> perfect score
     assert new_solver_state_unconstrained.con_weights.shape == (0,)
+
+
+def test_solver_state_primary_objective_excludes_the_tie_breakers():
+    """The primary objective is the first objective the state was built with."""
+    # --- arrange ----------------------
+    primary = simple_objective(DiversityMetric.GEOMEAN_SEPARATION)
+    objectives = [primary, *tie_breaker_objectives([DiversityMetric.NON_ZERO_SEPARATION_FRAC])]
+
+    # --- act --------------------------
+    state = SolverState.new(
+        n=_VECTORS.shape[0],
+        stores_by_distance={None: DistanceStore.full_matrix_from_vectors(_VECTORS, DistanceMetric.l1_manhattan())},
+        k=3,
+        diversity_objectives=objectives,
+        constraints=[],
+    )
+
+    # --- assert -----------------------
+    assert state.primary_objective is primary
+
+
+def test_solver_state_distance_store_raises_for_an_objective_over_several_distances():
+    """No single store serves a primary objective over 2 distances, so reading the store raises."""
+    # --- arrange ----------------------
+    l1, l2 = DistanceMetric.l1_manhattan(), DistanceMetric.l2_euclidean()
+    state = SolverState.new(
+        n=_VECTORS.shape[0],
+        stores_by_distance={
+            l1: DistanceStore.full_matrix_from_vectors(_VECTORS, l1),
+            l2: DistanceStore.full_matrix_from_vectors(_VECTORS, l2),
+        },
+        k=3,
+        diversity_objectives=[
+            hybrid_objective(
+                DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, l1),
+                DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, l2),
+            )
+        ],
+        constraints=[],
+    )
+
+    # --- act / assert -----------------
+    with pytest.raises(ValueError, match="several specs"):
+        _ = state.distance_store
 
 
 def test_solver_state_con_weights_reach_the_state():

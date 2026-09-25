@@ -12,7 +12,6 @@ if TYPE_CHECKING:
     from max_div._core.solver._solver_state import SolverState
 
     from ._init_farthest_point import InitFarthestPoint
-    from ._init_farthest_point_batched import InitFarthestPointBatched
     from ._init_most_feasible import InitMostFeasible
     from ._init_random_selection import InitRandomSelection
 
@@ -51,6 +50,7 @@ class InitializationStrategy(StrategyBase, ABC):
 
         Returns:
             np.array of unique np.int32 values, shape=(b,), with indices of samples to be added to the selection.
+            The solver adds the whole batch in a single tracker update.
             b can be any value in range [1, k_remaining].  Samples should be unique and not yet selected.
         """
         raise NotImplementedError
@@ -68,30 +68,33 @@ class InitializationStrategy(StrategyBase, ABC):
     #  Factory Methods
     # -------------------------------------------------------------------------
     @classmethod
-    def farthest_point(cls, top_k: int = 1) -> InitFarthestPoint:
-        """Farthest-point-sampling initialization: a seeded random start item, then greedy picks.
+    def farthest_point(cls, top_k: int = 8, candidate_pool_size: int | None = 256) -> InitFarthestPoint:
+        """Create a farthest-point-sampling initialization: a seeded random start item, then greedy picks.
 
-        See `InitFarthestPoint` for the per-metric interpretation and constraint handling.
+        How items are added depends on the solve's primary diversity objective:
+
+        - **in rounds, from a limited candidate pool per round** (faster): when every term of the
+          objective is a separation-family metric over one distance and `candidate_pool_size` is not
+          None; several times faster at large n.
+        - **one at a time, from all not-selected items** (slower): in every other case.
+
+        Both offer each pick the same candidates, so the choice changes only the time spent.
+
+        Constraints are ignored; feasibility is left to the optimization steps. See `InitFarthestPoint`
+        for the per-metric interpretation.
 
         Args:
             top_k: Each greedy pick samples uniformly among the `top_k` highest diversity
-                contributions; the default 1 keeps the exact greedy construction.
+                contributions; 1 is the exact greedy construction.
+            candidate_pool_size: How many candidates a round collects; it changes only the time spent,
+                not the selection's quality. `None` picks one item at a time.
+
+        Raises:
+            ValueError: If `top_k` is below 1, or `candidate_pool_size` is below `top_k`.
         """
         from ._init_farthest_point import InitFarthestPoint
 
-        return InitFarthestPoint(top_k=top_k)
-
-    @classmethod
-    def farthest_point_batched(cls, top_k: int = 8, batch_size: int = 256) -> InitFarthestPointBatched:
-        """Create a farthest-point initialization that draws a batch of items per pass over the dataset.
-
-        The strategy offers each draw the same candidates as `farthest_point`, so selections are of
-        equal quality but not identical, and it is several times faster at large n. Separation-family
-        diversity metrics only; see `InitFarthestPointBatched` for the mechanism and the parameters.
-        """
-        from ._init_farthest_point_batched import InitFarthestPointBatched
-
-        return InitFarthestPointBatched(top_k=top_k, batch_size=batch_size)
+        return InitFarthestPoint(top_k=top_k, candidate_pool_size=candidate_pool_size)
 
     @classmethod
     def most_feasible(cls, max_iter: int | None = None) -> InitMostFeasible:

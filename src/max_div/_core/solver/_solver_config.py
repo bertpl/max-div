@@ -59,11 +59,8 @@ class SolverConfig:
                 so `build` stays lean and the stores are built inside `solve`.
 
         Raises:
-            ValueError: if neither or both are given, or a step's strategy does not support the
-                diversity metric.
+            ValueError: if neither or both are given.
         """
-        for step in self.solver_steps:
-            step.validate_objective(self.diversity_objectives[0])
         if stores_by_distance is not None and stores_by_distance_provider is None:
             provider: Callable[[], Mapping[DistanceMetric | None, DistanceStore]] = lambda: stores_by_distance
         elif stores_by_distance is None and stores_by_distance_provider is not None:

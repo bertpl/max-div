@@ -372,3 +372,82 @@ def select_k_max_masked(  # noqa: C901 — case-dispatch structure is clearer un
                 i_parent = i_child_smallest
 
     return heap_idx
+
+
+# =================================================================================================
+#  select_k_max_into
+# =================================================================================================
+# `_sift_down_min_heap` comes first: an explicit signature compiles `select_k_max_into` at import,
+# and its callee must exist by then.
+@numba.njit(
+    numba.void(numba.float32[:], numba.int32[:], numba.int64, numba.int64),
+    inline="always",
+    cache=True,
+    fastmath={"reassoc", "contract"},
+)
+def _sift_down_min_heap(
+    values: NDArray[np.float32], positions: NDArray[np.int32], size: np.int64, start: np.int64
+) -> None:
+    """Sink the entry at `start` until every parent again holds a value no larger than its children's.
+
+    `positions` is laid out as a binary heap (see `select_k_max_into` for the layout): the children
+    of slot i sit at 2i+1 and 2i+2. A parent that has become larger than a child is swapped with its
+    smaller child, and the check repeats one level down until the entry rests below no larger
+    value or reaches the bottom.
+    """
+    i_parent = start
+    while True:
+        i_left = 2 * i_parent + 1
+        i_right = i_left + 1
+        i_min = i_parent
+        if i_left < size and values[positions[i_left]] < values[positions[i_min]]:
+            i_min = i_left
+        if i_right < size and values[positions[i_right]] < values[positions[i_min]]:
+            i_min = i_right
+        if i_min == i_parent:
+            return
+        positions[i_parent], positions[i_min] = positions[i_min], positions[i_parent]
+        i_parent = i_min
+
+
+@numba.njit(
+    numba.float32(numba.float32[:], numba.int64, numba.int64, numba.int32[:]),
+    cache=True,
+    fastmath={"reassoc", "contract"},
+)
+def select_k_max_into(
+    values: NDArray[np.float32], n_live: np.int64, n_top: np.int64, out_positions: NDArray[np.int32]
+) -> np.float32:
+    r"""Fill `out_positions` with the positions of the `n_top` largest of `values[:n_live]`; return the smallest.
+
+    The positions come back in unspecified order. Ties keep the earlier position, so with
+    `n_top == 1` the result is the first maximum. The caller owns `out_positions` (at least
+    `n_top` long), so a call allocates nothing.
+
+    How it works: `out_positions` is kept as a min-heap of the `n_top` best candidates seen so far —
+    a binary tree stored in an array, where slot i's children are slots 2i+1 and 2i+2 and every
+    parent's value is no larger than its children's, so slot 0 always holds the *smallest* of the
+    kept values:
+
+              v0                 v0 <= v1, v2
+            /    \\               v1 <= v3, v4
+          v1      v2             v2 <= v5, v6     (siblings are not ordered among themselves)
+         /  \\    /  \
+        v3  v4  v5  v6
+
+    The first `n_top` positions seed the heap, and each later value is compared with slot 0: a
+    value no larger than the smallest kept value cannot belong to the top `n_top`, so it is skipped;
+    a larger one replaces slot 0 and sinks to its place (`_sift_down_min_heap`), evicting the old smallest.
+    After the pass the heap holds exactly the `n_top` largest, and slot 0 — the smallest of them —
+    is the `n_top`-th largest overall, which is the value returned. One pass, `log(n_top)` work per
+    replacement, no sorting of the rest.
+    """
+    for i in range(n_top):
+        out_positions[i] = i
+    for i in range(n_top // 2 - 1, -1, -1):
+        _sift_down_min_heap(values, out_positions, n_top, np.int64(i))
+    for i in range(n_top, n_live):
+        if values[i] > values[out_positions[0]]:
+            out_positions[0] = i
+            _sift_down_min_heap(values, out_positions, n_top, np.int64(0))
+    return values[out_positions[0]]

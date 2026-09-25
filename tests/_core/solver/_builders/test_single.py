@@ -26,7 +26,7 @@ from max_div._core.solver._duration import Elapsed
 from max_div._core.solver._score_checkpoint import ScoreCheckpoint
 from max_div._core.solver._solver_step import InitializationStep, OptimizationStep, SolverStepResult
 from max_div._core.solver._strategies import InitializationStrategy, OptimizationStrategy
-from max_div._core.solver._strategies._initialization._init_farthest_point_batched import InitFarthestPointBatched
+from max_div._core.solver._strategies._initialization._init_farthest_point import InitFarthestPoint
 from max_div._core.solver._strategies._initialization._init_most_feasible import InitMostFeasible
 from tests.helpers import swept_benchmark_problems
 
@@ -335,7 +335,7 @@ def test_max_div_solver_builder_preset(problem_name: str, n: int, preset: Solver
 @pytest.mark.parametrize(
     "constraints,expected_init",
     [
-        ([], InitFarthestPointBatched),
+        ([], InitFarthestPoint),
         ([Constraint(set(range(10)), min_count=2, max_count=3)], InitMostFeasible),
     ],
 )

@@ -10,7 +10,7 @@ from max_div._core.metrics import (
     DiversityTrackerSpec,
     HybridObjectiveType,
 )
-from max_div._core.solver._strategies._initialization._init_farthest_point_batched import InitFarthestPointBatched
+from tests.helpers import hybrid_objective
 
 SEPARATION = DiversityContributionFamily.SEPARATION
 MEAN_DISTANCE = DiversityContributionFamily.MEAN_DISTANCE
@@ -20,13 +20,6 @@ L2 = DistanceMetric.l2_euclidean()
 
 def _f32(values: list[float]) -> np.ndarray:
     return np.array(values, dtype=np.float32)
-
-
-def _hybrid(
-    *terms: DiversityObjectiveSimple, aggregation=HybridObjectiveType.GEOMETRIC_MEAN
-) -> DiversityObjectiveHybrid:
-    """Build a `DiversityObjectiveHybrid` from loose terms, geometric-mean by default."""
-    return DiversityObjectiveHybrid(terms, aggregation)
 
 
 # =================================================================================================
@@ -42,18 +35,18 @@ def test_a_hybrid_needs_at_least_two_terms() -> None:
     """One term is a `DiversityObjectiveSimple`, so a hybrid rejects fewer than two."""
     # --- act / assert -----------------
     with pytest.raises(ValueError, match="at least two terms"):
-        _hybrid(DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION))
+        hybrid_objective(DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION))
 
 
 def test_a_hybrid_rejects_a_term_that_is_not_a_simple_objective() -> None:
     """A term must be a simple objective, so that each term reads exactly one array."""
     # --- arrange ----------------------
     simple = DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L1)
-    hybrid = _hybrid(simple, DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L2))
+    hybrid = hybrid_objective(simple, DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L2))
 
     # --- act / assert -----------------
     with pytest.raises(TypeError, match="simple objectives"):
-        _hybrid(simple, hybrid)  # ty: ignore[invalid-argument-type]
+        hybrid_objective(simple, hybrid)  # ty: ignore[invalid-argument-type]
 
 
 def test_a_hybrid_combines_by_the_geometric_mean_unless_told_otherwise() -> None:
@@ -81,7 +74,7 @@ def test_a_hybrid_combines_by_the_geometric_mean_unless_told_otherwise() -> None
             id="simple",
         ),
         pytest.param(
-            _hybrid(
+            hybrid_objective(
                 DiversityObjectiveSimple(DiversityMetric.MEAN_PAIRWISE_DISTANCE),  # (None, MEAN_DISTANCE)
                 DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L1),  # (L1, SEPARATION)
                 DiversityObjectiveSimple(DiversityMetric.GEOMEAN_SEPARATION, L1),  # repeat: (L1, SEPARATION)
@@ -116,7 +109,7 @@ def test_a_simple_objectives_tracker_spec_is_its_one_spec() -> None:
     [
         (DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION), (None,)),
         (
-            _hybrid(
+            hybrid_objective(
                 DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L1),
                 DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L2),
                 DiversityObjectiveSimple(DiversityMetric.GEOMEAN_SEPARATION, L1),
@@ -129,33 +122,6 @@ def test_distinct_distance_metrics(objective, expected) -> None:
     """The distinct distance metrics an objective reads, in first-seen order."""
     # --- act / assert -----------------
     assert objective.distinct_distance_metrics() == expected
-
-
-@pytest.mark.parametrize(
-    "objective, expected",
-    [
-        (DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION), True),
-        (DiversityObjectiveSimple(DiversityMetric.MEAN_PAIRWISE_DISTANCE), False),  # mean-distance family
-        (
-            _hybrid(
-                DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L1),
-                DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L2),
-            ),
-            False,  # two distinct specs
-        ),
-        (
-            _hybrid(
-                DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L1),
-                DiversityObjectiveSimple(DiversityMetric.GEOMEAN_SEPARATION, L1),
-            ),
-            True,  # two terms over one separation spec
-        ),
-    ],
-)
-def test_is_diversity_objective_supported_by_the_batched_farthest_point_init(objective, expected) -> None:
-    """One distinct separation spec is the batched-init case; a second spec or another family is not."""
-    # --- act / assert -----------------
-    assert InitFarthestPointBatched.is_diversity_objective_supported(objective) is expected
 
 
 # =================================================================================================
@@ -257,7 +223,7 @@ def test_a_simple_objectives_default_tie_breakers_follow_its_metric(
 def test_a_geometric_hybrids_default_tie_breakers_are_hybrids_over_its_distinct_distances() -> None:
     """The approximate geomean combines geometrically and the non-zero fraction arithmetically, over each distance."""
     # --- arrange ----------------------
-    objective = _hybrid(
+    objective = hybrid_objective(
         DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L1),
         DiversityObjectiveSimple(DiversityMetric.GEOMEAN_SEPARATION, L2),
         DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L1),  # a repeated distance counts once
@@ -265,12 +231,12 @@ def test_a_geometric_hybrids_default_tie_breakers_are_hybrids_over_its_distinct_
 
     # --- act / assert -----------------
     assert objective.default_tie_breakers() == [
-        _hybrid(
+        hybrid_objective(
             DiversityObjectiveSimple(DiversityMetric.APPROX_GEOMEAN_SEPARATION, L1),
             DiversityObjectiveSimple(DiversityMetric.APPROX_GEOMEAN_SEPARATION, L2),
             aggregation=HybridObjectiveType.GEOMETRIC_MEAN,
         ),
-        _hybrid(
+        hybrid_objective(
             DiversityObjectiveSimple(DiversityMetric.NON_ZERO_SEPARATION_FRAC, L1),
             DiversityObjectiveSimple(DiversityMetric.NON_ZERO_SEPARATION_FRAC, L2),
             aggregation=HybridObjectiveType.ARITHMETIC_MEAN,
@@ -287,8 +253,8 @@ def test_an_arithmetic_hybrid_gets_the_same_tie_breakers() -> None:
     )
 
     # --- act / assert -----------------
-    geometric = _hybrid(*terms, aggregation=HybridObjectiveType.GEOMETRIC_MEAN).default_tie_breakers()
-    arithmetic = _hybrid(*terms, aggregation=HybridObjectiveType.ARITHMETIC_MEAN).default_tie_breakers()
+    geometric = hybrid_objective(*terms, aggregation=HybridObjectiveType.GEOMETRIC_MEAN).default_tie_breakers()
+    arithmetic = hybrid_objective(*terms, aggregation=HybridObjectiveType.ARITHMETIC_MEAN).default_tie_breakers()
     assert arithmetic == geometric
 
 
@@ -315,13 +281,13 @@ def test_an_arithmetic_hybrid_gets_the_same_tie_breakers() -> None:
 def test_a_hybrids_default_tie_breakers_follow_its_terms_metrics(term_metrics, expected_tie_breaker_metrics) -> None:
     """Without a min-separation term, a hybrid gets the non-zero fraction only if a term can be pinned at zero."""
     # --- arrange ----------------------
-    objective = _hybrid(
+    objective = hybrid_objective(
         *(DiversityObjectiveSimple(metric, distance) for metric, distance in zip(term_metrics, (L1, L2)))
     )
 
     # --- act / assert -----------------
     assert objective.default_tie_breakers() == [
-        _hybrid(
+        hybrid_objective(
             DiversityObjectiveSimple(metric, L1),
             DiversityObjectiveSimple(metric, L2),
             aggregation=HybridObjectiveType.ARITHMETIC_MEAN,
@@ -333,7 +299,7 @@ def test_a_hybrids_default_tie_breakers_follow_its_terms_metrics(term_metrics, e
 def test_a_hybrid_over_one_distance_gets_simple_tie_breakers() -> None:
     """Two terms over one distance leave one distinct distance, so each tie-breaker is a simple objective."""
     # --- arrange ----------------------
-    objective = _hybrid(
+    objective = hybrid_objective(
         DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L2),
         DiversityObjectiveSimple(DiversityMetric.GEOMEAN_SEPARATION, L2),
     )
@@ -372,7 +338,7 @@ def test_a_simple_objectives_per_item_contribution_is_its_one_array() -> None:
 def test_a_hybrids_per_item_contribution_aggregates_its_terms_arrays_elementwise(aggregation, expected) -> None:
     """A hybrid aggregates the terms' arrays elementwise, a repeated spec once per term, as a fresh float32 array."""
     # --- arrange ----------------------
-    objective = _hybrid(
+    objective = hybrid_objective(
         DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L1),
         DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L2),
         DiversityObjectiveSimple(DiversityMetric.GEOMEAN_SEPARATION, L1),  # repeats the L1 spec

@@ -15,8 +15,6 @@ from ._step_identity import SolverStepIdentity
 from ._strategies._base import StrategyBase
 
 if TYPE_CHECKING:
-    from max_div._core.metrics import DiversityObjective
-
     from ._parallel import WorkerCoordinator
 
 # A caller passes one of these wall-clock targets into `run` as the size of one optimization
@@ -57,10 +55,6 @@ class SolverStep[S: StrategyBase](ABC):
 
     def set_seed(self, seed: int) -> None:
         self._strategy.set_seed(seed)
-
-    def validate_objective(self, objective: "DiversityObjective") -> None:
-        """Raise when this step's strategy does not support the solve's diversity objective."""
-        self._strategy.validate_objective(objective)
 
     @abstractmethod
     def set_e2e_budget(self, e2e_budget: E2eBudget | None) -> None:

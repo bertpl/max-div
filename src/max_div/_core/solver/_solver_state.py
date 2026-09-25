@@ -68,6 +68,7 @@ class SolverState:
         k: np.int32,
         contribution_trackers: DiversityContributionTrackers,
         per_item_contribution_source: PerItemContributionSource,
+        primary_objective: DiversityObjective,
         distance_store: DistanceStore | None,
         score_generator: ScoreGenerator,
         selected: NDArray[np.bool],
@@ -94,9 +95,11 @@ class SolverState:
             per_item_contribution_source: the source of the primary diversity objective's per-item
                 contributions (that objective's one tracker of the set, or a hybrid source over
                 several), which the strategies read.
+            primary_objective: the primary diversity objective (tie-breakers excluded), for
+                strategies whose algorithm depends on it.
             distance_store: the store that the primary objective's one spec is tracked over, or None when
-                the primary objective has several specs; read only by the batched farthest-point
-                initialization.
+                the primary objective has several specs; read only by the farthest-point
+                initialization when it draws several items per pass over the dataset.
             score_generator: (ScoreGenerator) score generator to compute scores for current state
             selected: (np.ndarray[np.bool]) array indicating which of the n items are initially selected.
             con_values: (np.ndarray[np.int32] | None) upper/lower bounds per constraint (m x 2 array of float32)
@@ -114,6 +117,7 @@ class SolverState:
         # diversity contributions
         self._contribution_trackers = contribution_trackers
         self._per_item_contribution_source = per_item_contribution_source  # held directly: no per-access lookup
+        self._primary_objective = primary_objective  # READ-ONLY
         self._distance_store = distance_store
 
         # scoring
@@ -495,6 +499,11 @@ class SolverState:
         return self._selected_indices[: self._n_selected]
 
     @property
+    def primary_objective(self) -> DiversityObjective:
+        """Return the primary diversity objective, tie-breakers excluded."""
+        return self._primary_objective
+
+    @property
     def distance_store(self) -> DistanceStore:
         """Return the store that the primary objective's one spec is tracked over (shared, immutable).
 
@@ -612,6 +621,7 @@ class SolverState:
             per_item_contribution_source=contribution_trackers.per_item_contribution_source_for(
                 primary_objective, bindings.objective_spec_positions[0]
             ),
+            primary_objective=primary_objective,
             distance_store=(
                 stores_by_distance[primary_objective.distinct_tracker_specs[0].distance_metric]
                 if len(primary_objective.distinct_tracker_specs) == 1
