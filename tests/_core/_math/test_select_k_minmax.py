@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from max_div._core._math.select_k_minmax import select_k_max, select_k_max_masked, select_k_min
+from max_div._core._math.select_k_minmax import select_k_max, select_k_max_into, select_k_max_masked, select_k_min
 
 
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
@@ -125,3 +125,33 @@ def test_select_k_min_ranks_inf_keys_last():
 
     # --- assert -----------------------
     assert sorted(picked.tolist()) == [1, 3, 4]
+
+
+@pytest.mark.parametrize("n_live, n_top", [(1, 1), (10, 1), (10, 4), (100, 8), (100, 100)])
+def test_select_k_max_into_matches_select_k_max_on_the_prefix(n_live: int, n_top: int):
+    """The positions are the n_top largest of values[:n_live], and the return value is the smallest of them."""
+    # --- arrange ----------------------
+    rng = np.random.default_rng(42)
+    values = rng.standard_normal(128).astype(np.float32)  # entries past n_live must be ignored
+    out_positions = np.full(n_top, -1, dtype=np.int32)
+
+    # --- act --------------------------
+    smallest_kept = select_k_max_into(values, np.int64(n_live), np.int64(n_top), out_positions)
+
+    # --- assert -----------------------
+    expected = select_k_max(values[:n_live], np.int32(n_top))
+    assert set(out_positions.tolist()) == set(expected.tolist())
+    assert smallest_kept == values[expected].min()
+
+
+def test_select_k_max_into_keeps_the_first_of_tied_maxima():
+    """With n_top == 1, ties resolve to the earliest position."""
+    # --- arrange ----------------------
+    values = np.array([1.0, 3.0, 2.0, 3.0], dtype=np.float32)
+    out_positions = np.empty(1, dtype=np.int32)
+
+    # --- act --------------------------
+    select_k_max_into(values, np.int64(4), np.int64(1), out_positions)
+
+    # --- assert -----------------------
+    assert out_positions[0] == 1

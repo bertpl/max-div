@@ -71,10 +71,14 @@ class InitializationStrategy(StrategyBase, ABC):
     def farthest_point(cls, top_k: int = 8, candidate_pool_size: int | None = 256) -> InitFarthestPoint:
         """Create a farthest-point-sampling initialization: a seeded random start item, then greedy picks.
 
-        Where every term of the solve's primary diversity objective is a separation-family metric over
-        one distance and `candidate_pool_size` is not None, the picks are drawn in rounds of up to
-        `candidate_pool_size` items per pass over the dataset, which is several times faster at large n;
-        otherwise the strategy picks 1 item per pass.
+        How items are added depends on the solve's primary diversity objective:
+
+        - **in rounds, from a limited candidate pool per round** (faster): when every term of the
+          objective is a separation-family metric over one distance and `candidate_pool_size` is not
+          None; several times faster at large n.
+        - **one at a time, from all not-selected items** (slower): in every other case.
+
+        Both offer each pick the same candidates, so the choice changes only the time spent.
 
         Constraints are ignored; feasibility is left to the optimization steps. See `InitFarthestPoint`
         for the per-metric interpretation.
