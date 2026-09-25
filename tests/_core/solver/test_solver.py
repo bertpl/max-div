@@ -375,7 +375,7 @@ def test_a_solve_frees_its_state_without_the_cyclic_collector(monkeypatch: pytes
     try:
         solution = (
             MaxDivSolverBuilder(problem)
-            .set_initialization_strategy(InitializationStrategy.eager(nc=4))
+            .set_initialization_strategy(InitializationStrategy.random_selection())
             .add_solver_step(OptimizationStep(OptimizationStrategy.random_swaps(), iterations(20)))
             .build()
             .solve(verbosity=Verbosity.SILENT)

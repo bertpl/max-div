@@ -13,7 +13,7 @@ def get_preset_strategies_guided(
     """Get strategies for the GUIDED preset.
 
     This preset consists of...
-      - InitFast initialization strategy
+      - Random initialization strategy, ignoring the constraints
       - GuidedSwaps optimization strategy
           --> parameters chosen to be reasonable for both unconstrained & constrained problems.
 
@@ -21,7 +21,7 @@ def get_preset_strategies_guided(
         target_duration: (TargetDuration) The target duration to aim for.  (iteration- or time-based)
     """
     # --- initialization -------------------------
-    init_strategy = InitializationStrategy.random_one_shot(ignore_constraints=True)
+    init_strategy = InitializationStrategy.random_selection(ignore_constraints=True)
 
     # --- optimization strategy ------------------
     # RATIONALE: Benchmarks show that NARROW strategies result in the best diversity without sacrificing constraint

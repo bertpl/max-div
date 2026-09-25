@@ -59,7 +59,7 @@ def _exact_deadline(budget_sec: float) -> float:
 #  select() builders — max-div
 # ==================================================================================================
 def _maxdiv_lean() -> SelectFn:
-    """Build max-div's `lean` selector: uniform random one-shot init, no optimization, lazy storage."""
+    """Build max-div's `lean` selector: uniform random init, no optimization, lazy storage."""
 
     def select(problem: VectorMaxDivProblem, seed: int, budget_sec: float) -> NDArray[np.int64]:
         from max_div.solver import DistanceStorageType, InitializationStrategy, MaxDivSolverBuilder, Verbosity
@@ -71,7 +71,7 @@ def _maxdiv_lean() -> SelectFn:
             MaxDivSolverBuilder(problem)
             .with_seed(seed)
             .with_distance_storage(DistanceStorageType.LAZY)
-            .set_initialization_strategy(InitializationStrategy.random_one_shot(parallel=True))
+            .set_initialization_strategy(InitializationStrategy.random_selection(parallel=True))
         )
         return np.asarray(builder.build().solve(verbosity=Verbosity.SILENT).i_selected, dtype=np.int64)
 
@@ -251,7 +251,7 @@ CONFIGS: tuple[ScalingConfig, ...] = (
     ScalingConfig(
         "max-div",
         "lean",
-        "uniform random one-shot initialization only, no optimization step, lazy distance storage, 1 worker",
+        "uniform random initialization only, no optimization step, lazy distance storage, 1 worker",
         _maxdiv_lean(),
         seed_varies_result=True,
     ),

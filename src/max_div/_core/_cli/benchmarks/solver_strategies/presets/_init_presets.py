@@ -3,13 +3,10 @@ from __future__ import annotations
 from enum import StrEnum
 from typing import TYPE_CHECKING, Any
 
-from max_div._core.solver._strategies._initialization._init_eager import InitEager
 from max_div._core.solver._strategies._initialization._init_farthest_point import InitFarthestPoint
 from max_div._core.solver._strategies._initialization._init_farthest_point_batched import InitFarthestPointBatched
-from max_div._core.solver._strategies._initialization._init_fast import InitFast
 from max_div._core.solver._strategies._initialization._init_most_feasible import InitMostFeasible
-from max_div._core.solver._strategies._initialization._init_random_batched import InitRandomBatched
-from max_div._core.solver._strategies._initialization._init_random_one_shot import InitRandomOneShot
+from max_div._core.solver._strategies._initialization._init_random_selection import InitRandomSelection
 
 if TYPE_CHECKING:
     from max_div._core.solver._strategies import InitializationStrategy
@@ -21,24 +18,14 @@ if TYPE_CHECKING:
 class InitPreset(StrEnum):
     """StrEnum for all initialization presets we want to benchmark.
 
-    Tunable strategies appear at several settings: random-batched and eager at two batch/candidate
-    sizes each.  Shipped-preset correspondences live in `_PRESET_NOTES`.
+    A strategy with a tunable parameter appears once per benchmarked value of that parameter;
+    `_INIT_CLASSES_AND_KWARGS` lists the values.
+    `_PRESET_NOTES` records which benchmark presets match the initialization of a shipped solver preset.
     """
 
-    # --- fast -----------------------------------
-    FAST = "fast"
-
-    # --- random one-shot ------------------------
-    ROS = "ros"
-    ROS_UNCON = "ros(uncon)"
-
-    # --- random batched -------------------------
-    RB_4 = "rb(4)"
-    RB_16 = "rb(16)"
-
-    # --- eager ----------------------------------
-    E_4 = "e(4)"
-    E_16 = "e(16)"
+    # --- random selection -----------------------
+    RSEL = "rsel"
+    RSEL_UNCON = "rsel(uncon)"
 
     # --- farthest point -------------------------
     FPS_1 = "fps(1)"
@@ -63,8 +50,7 @@ class InitPreset(StrEnum):
     # -------------------------------------------------------------------------
     def is_constraint_aware(self) -> bool:
         return self not in [
-            InitPreset.FAST,
-            InitPreset.ROS_UNCON,
+            InitPreset.RSEL_UNCON,
             InitPreset.FPS_1,
             InitPreset.FPS_8,
             InitPreset.FPSB_8,
@@ -76,13 +62,13 @@ class InitPreset(StrEnum):
         Two reasons drop a strategy from an unconstrained problem:
 
         - `most_feasible` *raises* without constraints, so it must not run.
-        - `ros(uncon)` is *redundant* there, behaving identically to the constraint-aware `ros`.
+        - `rsel(uncon)` is *redundant* there, behaving identically to the constraint-aware `rsel`.
         """
         if problem_has_constraints:
             return True
         dropped_when_unconstrained = {
             InitPreset.MF,
-            InitPreset.ROS_UNCON,
+            InitPreset.RSEL_UNCON,
         }
         return self not in dropped_when_unconstrained
 
@@ -108,13 +94,8 @@ class InitPreset(StrEnum):
 #  Classes & Arguments
 # =================================================================================================
 _INIT_CLASSES_AND_KWARGS: dict[InitPreset, tuple[type[InitializationStrategy], dict[str, Any]]] = {
-    InitPreset.FAST: (InitFast, {}),
-    InitPreset.ROS: (InitRandomOneShot, {"ignore_constraints": False}),
-    InitPreset.ROS_UNCON: (InitRandomOneShot, {"ignore_constraints": True}),
-    InitPreset.RB_4: (InitRandomBatched, {"b": 4, "ignore_constraints": False}),
-    InitPreset.RB_16: (InitRandomBatched, {"b": 16, "ignore_constraints": False}),
-    InitPreset.E_4: (InitEager, {"nc": 4, "ignore_constraints": False}),
-    InitPreset.E_16: (InitEager, {"nc": 16, "ignore_constraints": False}),
+    InitPreset.RSEL: (InitRandomSelection, {"ignore_constraints": False}),
+    InitPreset.RSEL_UNCON: (InitRandomSelection, {"ignore_constraints": True}),
     InitPreset.FPS_1: (InitFarthestPoint, {"top_k": 1}),
     InitPreset.FPS_8: (InitFarthestPoint, {"top_k": 8}),
     InitPreset.FPSB_8: (InitFarthestPointBatched, {"top_k": 8}),
@@ -122,7 +103,7 @@ _INIT_CLASSES_AND_KWARGS: dict[InitPreset, tuple[type[InitializationStrategy], d
 }
 
 _PRESET_NOTES: dict[InitPreset, str] = {
-    InitPreset.ROS_UNCON: "= the RANDOM/GUIDED presets' initialization",
+    InitPreset.RSEL_UNCON: "= the RANDOM/GUIDED presets' initialization",
     InitPreset.FPSB_8: "= the SMART/THOROUGH presets' initialization (unconstrained problems)",
     InitPreset.MF: "= the SMART/THOROUGH presets' initialization (constrained problems)",
 }

@@ -24,13 +24,10 @@ speed vs quality of the starting point:
 
 | Strategy | How it works |
 |----------|-------------|
-| `random_one_shot` | Selects all `k` items in one batch, uniformly at random. **Default for the RANDOM and GUIDED presets.** |
-| `random_batched` | Selects in batches of `b`, re-evaluating separations between batches. |
+| `random_selection` | Selects all `k` items at random: uniformly when the problem has no constraints or `ignore_constraints=True`, otherwise steering the draw so the selection satisfies the constraints. **Default for a builder without an explicit initialization, and for the RANDOM and GUIDED presets** (which set `ignore_constraints=True`). |
 | `farthest_point` | A seeded random start item, then greedily adds the item farthest from the selection (farthest-point sampling; under `MEAN_PAIRWISE_DISTANCE`, greedily maximizes mean distance to the selection). An optional `top_k` samples each pick uniformly among the `top_k` best candidates (default 1 keeps the exact greedy construction). Constraint-unaware. |
 | `farthest_point_batched` | The farthest-point construction with one pass over the dataset per batch of picks, not per pick. Every draw ranges over the same candidates that `farthest_point` would offer, so quality is equal while large problems initialize several times faster. Separation-family diversity metrics only; constraint-unaware. **The SMART and THOROUGH presets initialize unconstrained problems this way** (`farthest_point` under `MEAN_PAIRWISE_DISTANCE`). |
-| `eager` | Evaluates `nc` random candidates per step, picks the best. Slower but higher quality. |
 | `most_feasible` | Constructs a selection satisfying every constraint where one can be found, so optimization starts feasible instead of searching for feasibility; where the constraints provably cannot all be met, starts from a least-infeasible one; and otherwise from the least-violating one found. **Constrained problems only** — raises on a problem with no constraints. |
-| `fast` | Selects the first `k` items. Trivial deterministic baseline for testing and benchmarking. |
 
 ## III. Optimization strategies { #optimization-strategies }
 
@@ -61,7 +58,7 @@ from max_div._core.solver._solver_step import OptimizationStep
 
 solver = (
     MaxDivSolverBuilder(problem)
-    .set_initialization_strategy(InitializationStrategy.eager(nc=50))
+    .set_initialization_strategy(InitializationStrategy.farthest_point(top_k=8))
     .add_solver_step(OptimizationStep(OptimizationStrategy.guided_swaps(), seconds(10)))
     .add_solver_step(OptimizationStep(OptimizationStrategy.smart_swaps(
         swap_size_max=4, nc_remove_max=8, nc_add_max=8,

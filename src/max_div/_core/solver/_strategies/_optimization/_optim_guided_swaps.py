@@ -5,7 +5,7 @@ from max_div._core._random._distributions import sample_truncated_poisson
 from max_div._core._random._rng import rand_float32
 from max_div._core.solver._parameters import ParameterSchedule
 from max_div._core.solver._solver_state import SolverState
-from max_div._core.solver._strategies._sampling import SamplingType, select_items_to_add, select_items_to_remove
+from max_div._core.solver._strategies._sampling import select_items_to_add, select_items_to_remove
 
 from ._base import SwapBasedOptimizationStrategy
 
@@ -83,7 +83,6 @@ class OptimGuidedSwaps(SwapBasedOptimizationStrategy):
             k=n_to_add,
             selectivity_modifier=self.add_selectivity_modifier,
             rng_state=self._rng_state,
-            sampling_type=SamplingType.GROUP,
             ignore_constraints=ignore_constraints,
         )
 
