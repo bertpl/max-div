@@ -4,8 +4,8 @@ Tested Initialization strategies:
 | ---------------------- | ------------------- | ----------------------------------- | ---------------- | --------------------------------------------------------------------- |
 | `rsel`                 | InitRandomSelection | ignore_constraints=False            | True             |                                                                       |
 | `rsel(uncon)`          | InitRandomSelection | ignore_constraints=True             | False            | = the RANDOM/GUIDED presets' initialization                           |
-| `fps(1)`               | InitFarthestPoint   | top_k=1                             | False            |                                                                       |
-| `fps(8)`               | InitFarthestPoint   | top_k=8                             | False            | = the SMART/THOROUGH presets' initialization (unconstrained problems) |
+| `fps(1)`               | InitFarthestPoint   | top_k=1<br>candidate_pool_size=256  | False            |                                                                       |
+| `fps(8)`               | InitFarthestPoint   | top_k=8<br>candidate_pool_size=256  | False            | = the SMART/THOROUGH presets' initialization (unconstrained problems) |
 | `fps(8,one-at-a-time)` | InitFarthestPoint   | top_k=8<br>candidate_pool_size=None | False            |                                                                       |
 | `mf`                   | InitMostFeasible    |                                     | True             | = the SMART/THOROUGH presets' initialization (constrained problems)   |
 

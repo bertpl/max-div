@@ -3,8 +3,8 @@ Tested Initialization strategies:
 | `name`                 | `class`             | `params`                            | Note                                                                  |
 | ---------------------- | ------------------- | ----------------------------------- | --------------------------------------------------------------------- |
 | `rsel`                 | InitRandomSelection | ignore_constraints=False            |                                                                       |
-| `fps(1)`               | InitFarthestPoint   | top_k=1                             |                                                                       |
-| `fps(8)`               | InitFarthestPoint   | top_k=8                             | = the SMART/THOROUGH presets' initialization (unconstrained problems) |
+| `fps(1)`               | InitFarthestPoint   | top_k=1<br>candidate_pool_size=256  |                                                                       |
+| `fps(8)`               | InitFarthestPoint   | top_k=8<br>candidate_pool_size=256  | = the SMART/THOROUGH presets' initialization (unconstrained problems) |
 | `fps(8,one-at-a-time)` | InitFarthestPoint   | top_k=8<br>candidate_pool_size=None |                                                                       |
 
 ### Time Duration
