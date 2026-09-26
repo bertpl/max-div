@@ -31,8 +31,8 @@ class MaxDivSolverBuilder(SolverBuilderBase):
         self._solver_steps: list[SolverStep] = [
             InitializationStep(InitializationStrategy.random_selection()),
         ]
-        # only set_initialization_strategy sets this field, so build() can tell the user's
-        # initialization from a preset's
+        # set_initialization_strategy sets this field and with_preset clears it, so build() can tell
+        # the user's initialization from a preset's
         self._user_init_strategy: InitializationStrategy | None = None
 
     # -------------------------------------------------------------------------
@@ -113,8 +113,8 @@ class MaxDivSolverBuilder(SolverBuilderBase):
         large store is not held between building the solver and running it.
 
         Raises:
-            ValueError: If `with_initial_selection` was used while an initialization strategy set by
-                `set_initialization_strategy` is still in effect; a later `with_preset` replaces it.
+            ValueError: If `with_initial_selection` was used and `set_initialization_strategy` was called
+                with no `with_preset` call after it.
         """
         factory, config = self.prepare_storage_and_config()
         return config.build_solver(stores_by_distance_provider=factory.create_stores_by_distance)
@@ -126,8 +126,8 @@ class MaxDivSolverBuilder(SolverBuilderBase):
         assemble a solver per worker over them, which is how the parallel solver shares one store.
 
         Raises:
-            ValueError: If `with_initial_selection` was used while an initialization strategy set by
-                `set_initialization_strategy` is still in effect; a later `with_preset` replaces it.
+            ValueError: If `with_initial_selection` was used and `set_initialization_strategy` was called
+                with no `with_preset` call after it.
         """
         factory, distance_storage = self._store_factory()
         return factory, SolverConfig(
@@ -144,7 +144,10 @@ class MaxDivSolverBuilder(SolverBuilderBase):
         )
 
     def _resolve_solver_steps(self) -> list[SolverStep]:
-        """Return the solver steps to run, the first replaced by the initialization override, if any."""
+        """Return the solver steps to run, the first one replaced if an initialization override is set.
+
+        The override is the strategy that `_resolve_init_strategy_override` returns, if any.
+        """
         init_strategy = self._resolve_init_strategy_override(self._user_init_strategy)
         if init_strategy is None:
             return self._solver_steps

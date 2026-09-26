@@ -366,7 +366,7 @@ _INITIAL_SELECTION = [9, 4, 0]
 
 
 @pytest.mark.parametrize(
-    "configure",
+    "configure_builder",
     [
         lambda builder: builder.with_initial_selection(_INITIAL_SELECTION).with_preset(iterations(20)),
         lambda builder: builder.with_preset(iterations(20)).with_initial_selection(_INITIAL_SELECTION),
@@ -378,10 +378,10 @@ _INITIAL_SELECTION = [9, 4, 0]
     ],
     ids=["before-preset", "after-preset", "after-a-preset-replaced-the-user-init"],
 )
-def test_the_initial_selection_replaces_the_preset_initialization_in_any_call_order(dummy_problem, configure):
+def test_the_initial_selection_replaces_the_preset_initialization_in_any_call_order(dummy_problem, configure_builder):
     """with_preset rewrites the steps, yet the initial selection is the first step whichever call came first."""
     # --- act --------------------------
-    _, config = configure(MaxDivSolverBuilder(dummy_problem)).prepare_storage_and_config()
+    _, config = configure_builder(MaxDivSolverBuilder(dummy_problem)).prepare_storage_and_config()
 
     # --- assert -----------------------
     assert isinstance(config.solver_steps[0]._strategy, InitFixedSelection)

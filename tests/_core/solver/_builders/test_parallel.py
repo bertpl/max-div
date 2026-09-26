@@ -442,7 +442,7 @@ def test_a_budget_spent_during_setup_leaves_the_grouping_untouched():
 # =================================================================================================
 #  Initial selection
 # =================================================================================================
-_INITIAL_SELECTION = [70, 3, 41, 12, 58, 0, 27, 66]  # k=8 items of the n=80 in _problem()
+_INITIAL_SELECTION = [70, 3, 41, 12, 58, 0, 27, 66]  # the selection holds k=8 of the n=80 items in _problem()
 
 
 @pytest.mark.parametrize(
@@ -456,10 +456,7 @@ _INITIAL_SELECTION = [70, 3, 41, 12, 58, 0, 27, 66]  # k=8 items of the n=80 in 
     ids=["dynamic", "custom"],
 )
 def test_every_worker_starts_from_the_initial_selection(configure_workers):
-    """Every worker's first step is the initial selection, and its configuration reports it.
-
-    This holds whether the workers come from `with_workers` or from `with_custom_worker_groups`.
-    """
+    """Every worker's first step is the initial selection, and its configuration reports it."""
     # --- arrange ----------------------
     builder = configure_workers(ParallelMaxDivSolverBuilder(_problem()).with_initial_selection(_INITIAL_SELECTION))
 
