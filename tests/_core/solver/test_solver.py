@@ -1,4 +1,5 @@
 import gc
+import time
 import weakref
 
 import numpy as np
@@ -15,7 +16,7 @@ from max_div._core.solver._duration import iterations
 from max_div._core.solver._presets import SolverPreset
 from max_div._core.solver._score_checkpoint import ScoreCheckpoint
 from max_div._core.solver._solver_state import SolverState
-from max_div._core.solver._solver_step import OptimizationStep
+from max_div._core.solver._solver_step import OptimizationStep, SolverStep
 from max_div._core.solver._step_identity import SolverStepIdentity
 from max_div._core.solver._strategies import InitializationStrategy, OptimizationStrategy
 from tests._core.metrics._distance.helpers import condensed_distances
@@ -65,7 +66,8 @@ def test_solver_minimal(example_solver):
     # --- assert -----------------------
     assert isinstance(solution, MaxDivSolution)
     assert_score_checkpoints_are_sane(solution.score_checkpoints)
-    assert solution.duration == sum(solution.step_durations)
+    assert solution.duration.n_iterations == sum(solution.step_durations).n_iterations
+    assert solution.duration.t_elapsed_sec >= sum(solution.step_durations).t_elapsed_sec
     assert solution.duration == solution.score_checkpoints[-1].elapsed
     assert solution.score == solution.score_checkpoints[-1].score
 
@@ -484,6 +486,27 @@ def test_solver_hybrid_metric_solves_in_parallel(factory, expected_score):
     assert len(solution.i_selected) == problem.k
     expected = expected_score(vectors, solution.i_selected, axis=0)
     assert solution.score.diversity == pytest.approx(expected, rel=1e-5)
+
+
+def test_time_between_steps_counts_on_the_solve_wide_axis(example_solver, monkeypatch):
+    """Time spent between steps, outside every step timer, is included in the solution's duration."""
+    # --- arrange ----------------------
+    delay_sec = 0.05
+    original_set_seed = SolverStep.set_seed
+
+    def _slow_set_seed(step, seed):
+        time.sleep(delay_sec)  # the solver sets each step's seed between steps, outside every step timer
+        original_set_seed(step, seed)
+
+    monkeypatch.setattr(SolverStep, "set_seed", _slow_set_seed)
+
+    # --- act --------------------------
+    solution = example_solver.solve()
+
+    # --- assert -----------------------
+    n_delays = len(example_solver._solver_steps)
+    summed_step_time_sec = sum(solution.step_durations).t_elapsed_sec
+    assert solution.duration.t_elapsed_sec >= summed_step_time_sec + n_delays * delay_sec
 
 
 def test_step_durations_are_listed_in_step_order(example_solver):

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -24,8 +24,10 @@ class ScoreCheckpoint:
     It captures score, the active solver step, elapsed time/iterations and worker/group index in case of
     a multi-worker setup.
 
-    - `elapsed` is measured from the start of whatever produced the checkpoint: a single step counts
-      from its own start, a whole solve from its first step.
+    - `elapsed` is measured from the start of whatever produced the checkpoint:
+      - a single step counts from its own start;
+      - a whole solve counts from the solve's start (see `SolveTimeline`);
+      - a parallel solve counts from its earliest worker's start (see `SharedSolveTimeline`).
     - `worker_index` and `group_index` name the parallel worker that recorded the checkpoint and the
       worker group it belonged to at that moment; both are `None` for a single (non-parallel) solve.
     - `i_selected` is the selection held at that moment as ascending indices, only when the solve was built
@@ -65,3 +67,7 @@ class ScoreCheckpoint:
                 group_index=coordinator.group_index,
                 i_selected=i_selected,
             )
+
+    def shifted_by(self, offset: Elapsed) -> ScoreCheckpoint:
+        """Return this checkpoint with `offset` added to its elapsed time and iterations."""
+        return replace(self, elapsed=offset + self.elapsed)
