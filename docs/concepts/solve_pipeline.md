@@ -79,7 +79,7 @@ from max_div import MaxDivSolverBuilder, seconds
 first_solution = MaxDivSolverBuilder(problem).with_preset(seconds(10)).build().solve()
 
 # refine the first result with a longer budget
-refined = (
+refined_solution = (
     MaxDivSolverBuilder(problem)
     .with_preset(seconds(60))
     .with_initial_selection(first_solution.i_selected)
@@ -88,12 +88,10 @@ refined = (
 )
 ```
 
-You can also build a selection with a process of your own and let the solver improve it.
-
 - **The selection replaces the preset's initialization**, whether `with_preset` is called before or after `with_initial_selection`. The preset's optimization steps still run.
 - **The selection may violate the constraints.** The optimization steps then try to satisfy them, as after any constraint-unaware initialization.
 - **The indices are checked when you call `with_initial_selection`**: exactly `k` distinct integers, each in `0..n-1`. Anything else raises `ValueError`.
-- **A solve has one starting point.** Combining `with_initial_selection` with `set_initialization_strategy` raises `ValueError` when the solver is built, unless a later `with_preset` replaced that strategy.
+- **A solve has one starting point.** Combining `with_initial_selection` with `set_initialization_strategy` raises `ValueError` when the solver is built, unless `with_preset` is called after `set_initialization_strategy`, because the preset then replaces that strategy.
 
 ### V.A. In a parallel solve { #hot-starts-in-a-parallel-solve }
 
@@ -112,5 +110,7 @@ solution = (
 ```
 
 - **Every worker starts from the same selection**, so workers with the same preset differ only in their random seeds, and together they cover less of the search space early on than workers that each build their own starting selection.
-- **To give workers different starting selections**, pass `InitializationStrategy.given_selection(indices)` as a worker's `init_strategy` in `with_custom_worker_groups` (see [What varies per worker](parallel_solving.md#what-varies-per-worker)). `given_selection` rejects non-integer, negative or duplicate indices when you create it, and checks the count and upper bound when the solve starts, since only then are `n` and `k` known; each check raises `ValueError`.
+- **To give workers different starting selections**, pass `InitializationStrategy.given_selection(indices)` as a worker's `init_strategy` in `with_custom_worker_groups` (see [What varies per worker](parallel_solving.md#what-varies-per-worker)). `given_selection` checks the indices in 2 steps, each raising `ValueError`:
+    - when you create it: non-integer, negative or duplicate indices;
+    - when the solve starts, since only then are `n` and `k` known: anything other than exactly `k` indices, each below `n`.
 - **A worker that sets its own `init_strategy` cannot be combined with `with_initial_selection`**: building the solver raises `ValueError`.
