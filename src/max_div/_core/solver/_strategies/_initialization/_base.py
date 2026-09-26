@@ -101,10 +101,10 @@ class InitializationStrategy(StrategyBase, ABC):
     def fixed_selection(cls, indices: ArrayLike) -> InitFixedSelection:
         """Create an initialization that starts from the given selection of exactly ``k`` items (a hot start).
 
-        The optimization steps start from exactly this selection.  It may violate the problem's
-        constraints; the optimization steps then repair them.  To start a whole solve from one
-        selection, use the builders' `with_initial_selection`; this factory is for giving one
-        worker of a parallel solve its own start, through `WorkerConfig(init_strategy=...)`.
+        The selection may violate the problem's constraints; the optimization steps then repair
+        them.  To start a whole solve from one selection, use the builders'
+        `with_initial_selection`; this factory is for giving one worker of a parallel solve its
+        own start, through `WorkerConfig(init_strategy=...)`.
 
         Args:
             indices: The item indices to start from, such as an earlier solution's `i_selected`.

@@ -14,7 +14,7 @@ _STEP_IDENTITY = SolverStepIdentity(1, "test")
 def test_init_fixed_selection_starts_from_the_given_selection_even_when_infeasible():
     """The selection is exactly the given indices, kept as they are even when they violate the constraints."""
     # --- arrange ----------------------
-    solver_state = new_solver_state(has_constraints=True)  # needs 10 items from 0..49 and 40 from 50..99
+    solver_state = new_solver_state(has_constraints=True)  # the constraints need 10 items from 0..49 and 40 from 50..99
     indices = np.arange(49, -1, -1)  # all 50 items from 0..49, in reverse order
     init_step = InitializationStep(InitializationStrategy.fixed_selection(indices))
 

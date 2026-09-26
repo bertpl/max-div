@@ -456,7 +456,10 @@ _INITIAL_SELECTION = [70, 3, 41, 12, 58, 0, 27, 66]  # k=8 items of the n=80 in 
     ids=["dynamic", "custom"],
 )
 def test_every_worker_starts_from_the_initial_selection(configure_workers):
-    """On either worker path, every worker's first step is the initial selection, and its configuration reports it."""
+    """Every worker's first step is the initial selection, and its configuration reports it.
+
+    This holds whether the workers come from `with_workers` or from `with_custom_worker_groups`.
+    """
     # --- arrange ----------------------
     builder = configure_workers(ParallelMaxDivSolverBuilder(_problem()).with_initial_selection(_INITIAL_SELECTION))
 

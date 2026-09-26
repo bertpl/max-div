@@ -133,20 +133,22 @@ class SolverBuilderBase:
     def with_initial_selection(self, indices: ArrayLike) -> Self:
         """Start the solve from the given selection of exactly k items (a hot start).
 
-        The optimization steps start from exactly this selection, such as an earlier solution's
-        `i_selected`.  It may violate the problem's constraints; the optimization steps then
-        repair them.  It replaces a preset's initialization whatever the call order.  In a
-        parallel solve every worker starts from it, so the workers differ only through their seeds.
+        The selection can be an earlier solution's `i_selected`.  It may violate the problem's
+        constraints; the optimization steps then repair them.
+
+        The selection replaces a preset's initialization, whether `with_preset` is called before
+        or after it.  In a parallel solve every worker starts from the selection, so workers with
+        the same preset differ only through their seeds.
 
         `build()` raises `ValueError` when an initialization strategy is also set explicitly, by
-        `set_initialization_strategy` or a `WorkerConfig`'s `init_strategy`: the solve would
-        have 2 starting points.
+        `set_initialization_strategy` (unless a later `with_preset` replaced it) or a
+        `WorkerConfig`'s `init_strategy`: the solve would have 2 starting points.
 
         Raises:
             ValueError: If `indices` is not k distinct integers in 0..n-1.
         """
         init_strategy = InitializationStrategy.fixed_selection(indices)
-        init_strategy.check_fits(self._n, self._k)
+        init_strategy.check_fits_problem_size(self._n, self._k)
         self._initial_selection_strategy = init_strategy
         return self
 
@@ -169,14 +171,17 @@ class SolverBuilderBase:
             )
         return E2eBudget(budget_sec=self._target_duration.value())
 
-    def _resolve_init_strategy(
+    def _resolve_init_strategy_override(
         self, user_init_strategy: InitializationStrategy | None
     ) -> InitializationStrategy | None:
-        """Return the initialization that replaces a solver's default: the initial selection, the user's, or None.
+        """Return the initialization strategy that replaces a solver's default one.
+
+        That is the initial selection's strategy, the user's explicitly set strategy, or None to
+        keep the default.
 
         Args:
-            user_init_strategy: the initialization strategy the user set explicitly for this
-                solver, or None.
+            user_init_strategy: the user's explicitly set initialization strategy for this solver,
+                or None.
 
         Raises:
             ValueError: If both an initial selection and `user_init_strategy` are given.

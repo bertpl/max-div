@@ -157,9 +157,9 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
         if self._target_duration is None or not self._worker_configs:
             raise ValueError("A parallel solver needs workers; call with_workers or with_custom_worker_groups first.")
         warn_about_worker_count(len(self._worker_configs))
-        # the initial selection goes into each worker's configuration, so the worker summaries report it
+        # the initial selection goes into each worker's configuration, so each `WorkerSummary` reports it
         worker_configs = [
-            replace(worker, init_strategy=self._resolve_init_strategy(worker.init_strategy))
+            replace(worker, init_strategy=self._resolve_init_strategy_override(worker.init_strategy))
             for worker in self._worker_configs
         ]
         factory, distance_storage = self._store_factory()
