@@ -71,7 +71,13 @@ This gives you full control over which strategies run, in what order, and for ho
 
 ## V. Starting from a given selection { #hot-starts }
 
-A solve can start from a selection of your own, not one built by an initialization strategy: a **hot start**. Pass exactly `k` distinct item indices to `with_initial_selection`, and the optimization steps start from exactly those items.
+A solve can start from a selection of your own, not one built by an initialization strategy: a **hot start**. Pass exactly `k` distinct item indices to `with_initial_selection`, on either builder, and the optimization steps start from exactly those items.
+
+- **The selection replaces the preset's initialization**, whether `with_preset` is called before or after `with_initial_selection`. The preset's optimization steps still run.
+- **The selection may violate the constraints.** The optimization steps then try to satisfy them, as after any constraint-unaware initialization.
+- **The indices are checked when you call `with_initial_selection`**: exactly `k` distinct integers, each in `0..n-1`. Anything else raises `ValueError`.
+
+### V.A. In a single solve { #hot-starts-in-a-single-solve }
 
 ```python
 from max_div import MaxDivSolverBuilder, seconds
@@ -88,14 +94,11 @@ refined_solution = (
 )
 ```
 
-- **The selection replaces the preset's initialization**, whether `with_preset` is called before or after `with_initial_selection`. The preset's optimization steps still run.
-- **The selection may violate the constraints.** The optimization steps then try to satisfy them, as after any constraint-unaware initialization.
-- **The indices are checked when you call `with_initial_selection`**: exactly `k` distinct integers, each in `0..n-1`. Anything else raises `ValueError`.
-- **A solve has one starting point.** Combining `with_initial_selection` with `set_initialization_strategy` raises `ValueError` when the solver is built, unless `with_preset` is called after `set_initialization_strategy`, because the preset then replaces that strategy.
+**A solve has one starting point.** Combining `with_initial_selection` with `set_initialization_strategy` raises `ValueError` when the solver is built, unless `with_preset` is called after `set_initialization_strategy`, because the preset then replaces that strategy.
 
-### V.A. In a parallel solve { #hot-starts-in-a-parallel-solve }
+### V.B. In a parallel solve { #hot-starts-in-a-parallel-solve }
 
-`with_initial_selection` works the same on `ParallelMaxDivSolverBuilder`, and every worker starts from the selection:
+On `ParallelMaxDivSolverBuilder`, every worker starts from the selection:
 
 ```python
 from max_div import ParallelMaxDivSolverBuilder, seconds
