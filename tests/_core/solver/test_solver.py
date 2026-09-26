@@ -489,14 +489,14 @@ def test_solver_hybrid_metric_solves_in_parallel(factory, expected_score):
 
 
 def test_time_between_steps_counts_on_the_solve_axis(example_solver, monkeypatch):
-    """Time that no step timer covers still moves every later checkpoint, so the axis is real elapsed time."""
+    """Time spent between steps, outside every step timer, is included in the solution's duration."""
     # --- arrange ----------------------
     delay_sec = 0.05
-    set_seed = SolverStep.set_seed
+    original_set_seed = SolverStep.set_seed
 
     def _slow_set_seed(step, seed):
         time.sleep(delay_sec)  # the solver sets each step's seed between steps, outside every step timer
-        set_seed(step, seed)
+        original_set_seed(step, seed)
 
     monkeypatch.setattr(SolverStep, "set_seed", _slow_set_seed)
 
