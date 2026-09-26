@@ -505,8 +505,8 @@ def test_time_between_steps_counts_on_the_solve_wide_axis(example_solver, monkey
 
     # --- assert -----------------------
     n_delays = len(example_solver._solver_steps)
-    summed_step_time = sum(solution.step_durations).t_elapsed_sec
-    assert solution.duration.t_elapsed_sec >= summed_step_time + n_delays * delay_sec
+    summed_step_time_sec = sum(solution.step_durations).t_elapsed_sec
+    assert solution.duration.t_elapsed_sec >= summed_step_time_sec + n_delays * delay_sec
 
 
 def test_step_durations_are_listed_in_step_order(example_solver):

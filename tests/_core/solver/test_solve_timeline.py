@@ -8,7 +8,7 @@ from max_div._core.solver._solver_step import SolverStepResult
 from max_div._core.solver._step_identity import SolverStepIdentity
 
 
-def _step_result(*elapsed: tuple[float, int]) -> SolverStepResult:
+def _step_result(*checkpoint_times: tuple[float, int]) -> SolverStepResult:
     """Return a step result whose checkpoints are at the given `(seconds, iterations)` after the step's start."""
     return SolverStepResult(
         score_checkpoints=[
@@ -17,7 +17,7 @@ def _step_result(*elapsed: tuple[float, int]) -> SolverStepResult:
                 Elapsed(t_elapsed_sec=t, n_iterations=n),
                 Score(size=1.0, constraints=1.0, diversities=(0.5,)),
             )
-            for t, n in elapsed
+            for t, n in checkpoint_times
         ]
     )
 
@@ -62,7 +62,7 @@ def test_a_finished_step_keeps_its_duration_and_moves_its_checkpoints_onto_the_s
 
 
 def test_recording_a_result_without_a_step_start_raises():
-    """A step result with no recorded start raises, so no checkpoint is shifted by a stale offset."""
+    """A step result with no recorded start raises, so no checkpoint is shifted by the previous step's start."""
     # --- arrange ----------------------
     timeline = SolveTimeline()
     timeline.record_step_start()

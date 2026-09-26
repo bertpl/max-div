@@ -24,10 +24,10 @@ from ._worker_group_change import WorkerGroupChange
 class SharedSolveTimeline:
     """A shared solve timeline holds every worker's events on one time axis whose zero is the earliest worker start.
 
-    - `checkpoints`: all workers' checkpoints, their `elapsed` fields rebased to the shared axis, in no
+    - `checkpoints`: all workers' checkpoints, their `elapsed` fields shifted onto the shared axis, in no
       significant order; `best_known_checkpoints` derives the best-known trace from them.
-    - `group_changes`: all workers' dissolutions, rebased and already in the order they happened, so the
-      field is the group history itself.
+    - `group_changes`: all workers' dissolutions, shifted onto the shared axis and already in the order
+      they happened, so the field is the group history itself.
     - `start_offsets`: maps a worker index to its start on the axis, zero for the earliest worker.
     """
 

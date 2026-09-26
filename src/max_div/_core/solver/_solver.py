@@ -117,7 +117,7 @@ class MaxDivSolver:
             A MaxDivSolution object representing the solution found.
         """
         # --- Init -------------------------------
-        solve_timeline = SolveTimeline()  # the solve-wide time axis starts here
+        solve_timeline = SolveTimeline()  # created before any setup, so the solve-wide axis also counts the setup below
         e2e_budget = self._e2e_budget.started() if self._e2e_budget else None
         for step in self._solver_steps:
             step.set_e2e_budget(e2e_budget)
@@ -133,7 +133,7 @@ class MaxDivSolver:
 
         # --- solver state -----------------------
         init_step_identity = SolverStepIdentity(0, INIT_STEP_NAME)
-        solve_timeline.record_step_start()  # the solver state initialization is the timeline's step 0
+        solve_timeline.record_step_start()
         with Timer() as timer:
             progress_reporter.solver_step_started(init_step_identity)
             stores_by_distance = self._stores_by_distance_provider()

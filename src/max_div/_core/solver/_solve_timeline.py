@@ -27,7 +27,9 @@ class SolveTimeline:
         self._t_start = time.monotonic()
         self._step_durations: list[Elapsed] = []
         self._checkpoints: list[ScoreCheckpoint] = []
-        self._elapsed_before_step: Elapsed | None = None  # set by record_step_start, cleared by record_step_result
+        self._elapsed_before_step: Elapsed | None = (
+            None  # record_step_start sets this, and record_step_result clears it
+        )
 
     @property
     def step_durations(self) -> list[Elapsed]:

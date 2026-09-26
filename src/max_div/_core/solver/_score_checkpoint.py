@@ -24,9 +24,10 @@ class ScoreCheckpoint:
     It captures score, the active solver step, elapsed time/iterations and worker/group index in case of
     a multi-worker setup.
 
-    - `elapsed` is measured from the start of whatever produced the checkpoint: a single step counts
-      from its own start, a whole solve from the solve's start (see `SolveTimeline`), and a parallel solve
-      from its earliest worker's start (see `SharedSolveTimeline`).
+    - `elapsed` is measured from the start of whatever produced the checkpoint:
+      - a single step counts from its own start;
+      - a whole solve counts from the solve's start (see `SolveTimeline`);
+      - a parallel solve counts from its earliest worker's start (see `SharedSolveTimeline`).
     - `worker_index` and `group_index` name the parallel worker that recorded the checkpoint and the
       worker group it belonged to at that moment; both are `None` for a single (non-parallel) solve.
     - `i_selected` is the selection held at that moment as ascending indices, only when the solve was built
