@@ -148,7 +148,7 @@ class MaxDivSolverBuilder(SolverBuilderBase):
 
         The override is the strategy that `_resolve_init_strategy_override` returns, if any.
         """
-        init_strategy = self._resolve_init_strategy_override(self._user_init_strategy)
+        init_strategy = self._resolve_init_strategy_override(self._hot_start_strategy, self._user_init_strategy)
         if init_strategy is None:
             return self._solver_steps
         else:

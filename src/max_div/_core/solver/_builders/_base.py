@@ -7,8 +7,9 @@ of them.
 Distance storage is here for a different reason: workers read one buffer, so per-worker storage
 could not be honored at all.
 
-The initial selection is here because both builders apply it the same way: it replaces the
-initialization of the single solver, or of every worker.
+One search setting is defined here too: `with_initial_selection`, which starts the solve from a
+given selection.  Both builders apply it the same way: it replaces the initialization of the single
+solver, or of every worker.
 
 A subclass adds the search: which strategies run, and for how long.
 """
@@ -64,6 +65,8 @@ class SolverBuilderBase:
         self._e2e_enabled: bool = False
         self._target_duration: TargetDuration | None = None
         self._intermediate_selections_enabled: bool = False
+        # kept apart from the subclasses' own initialization, which with_preset / with_workers
+        # overwrite; build() applies it last, and raises on a conflicting explicit initialization
         self._hot_start_strategy: InitGivenSelection | None = None
 
     # -------------------------------------------------------------------------
@@ -173,18 +176,24 @@ class SolverBuilderBase:
             )
         return E2eBudget(budget_sec=self._target_duration.value())
 
+    @staticmethod
     def _resolve_init_strategy_override(
-        self, user_init_strategy: InitializationStrategy | None
+        hot_start_strategy: InitializationStrategy | None, user_init_strategy: InitializationStrategy | None
     ) -> InitializationStrategy | None:
         """Return the initialization strategy that replaces a solver's default one, or None to keep the default.
 
-        The replacement is the initial selection's strategy when `with_initial_selection` was called,
-        and `user_init_strategy` otherwise.
+        Both builders call this at build time: the single builder once, the parallel builder once per
+        worker.  The replacement is `hot_start_strategy` when set, and `user_init_strategy` otherwise.
+
+        Args:
+            hot_start_strategy: the strategy that `with_initial_selection` stored, or None.
+            user_init_strategy: the initialization strategy the user set explicitly for this solver,
+                through `set_initialization_strategy` or a `WorkerConfig`, or None.
 
         Raises:
-            ValueError: If both an initial selection and `user_init_strategy` are given.
+            ValueError: If both `hot_start_strategy` and `user_init_strategy` are set.
         """
-        if self._hot_start_strategy is None:
+        if hot_start_strategy is None:
             return user_init_strategy
         elif user_init_strategy is not None:
             raise ValueError(
@@ -192,7 +201,7 @@ class SolverBuilderBase:
                 "(set_initialization_strategy or a WorkerConfig's init_strategy); keep one starting point."
             )
         else:
-            return self._hot_start_strategy
+            return hot_start_strategy
 
     def _store_factory(self) -> tuple[DistanceStoreFactory, DistanceStorageTypes]:
         """Return the store factory and each store's resolved (distance, storage type)."""
