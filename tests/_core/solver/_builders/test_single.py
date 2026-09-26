@@ -27,6 +27,7 @@ from max_div._core.solver._score_checkpoint import ScoreCheckpoint
 from max_div._core.solver._solver_step import InitializationStep, OptimizationStep, SolverStepResult
 from max_div._core.solver._strategies import InitializationStrategy, OptimizationStrategy
 from max_div._core.solver._strategies._initialization._init_farthest_point import InitFarthestPoint
+from max_div._core.solver._strategies._initialization._init_given_selection import InitGivenSelection
 from max_div._core.solver._strategies._initialization._init_most_feasible import InitMostFeasible
 from tests.helpers import swept_benchmark_problems
 
@@ -356,6 +357,73 @@ def test_with_preset_switches_init_on_constraints(
 
     # --- assert -----------------------
     assert isinstance(builder._solver_steps[0]._strategy, expected_init)
+
+
+# =================================================================================================
+#  MaxDivSolverBuilder - initial selection
+# =================================================================================================
+_INITIAL_SELECTION = [9, 4, 0]
+
+
+@pytest.mark.parametrize(
+    "configure_builder",
+    [
+        lambda builder: builder.with_initial_selection(_INITIAL_SELECTION).with_preset(iterations(20)),
+        lambda builder: builder.with_preset(iterations(20)).with_initial_selection(_INITIAL_SELECTION),
+        lambda builder: (
+            builder.set_initialization_strategy(InitializationStrategy.farthest_point())
+            .with_preset(iterations(20))
+            .with_initial_selection(_INITIAL_SELECTION)
+        ),
+    ],
+    ids=["before-preset", "after-preset", "after-a-preset-replaced-the-user-init"],
+)
+def test_the_initial_selection_replaces_the_preset_initialization_in_any_call_order(dummy_problem, configure_builder):
+    """with_preset rewrites the steps, yet the initial selection is the first step whichever call came first."""
+    # --- act --------------------------
+    _, config = configure_builder(MaxDivSolverBuilder(dummy_problem)).prepare_storage_and_config()
+
+    # --- assert -----------------------
+    assert isinstance(config.solver_steps[0]._strategy, InitGivenSelection)
+
+
+@pytest.mark.parametrize("is_selection_first", [True, False])
+def test_an_initial_selection_and_an_explicit_initialization_strategy_conflict(dummy_problem, is_selection_first):
+    """Giving the solve 2 starting points is rejected at build time, whichever was given first."""
+    # --- arrange ----------------------
+    builder = MaxDivSolverBuilder(dummy_problem)
+    calls = [
+        lambda: builder.with_initial_selection(_INITIAL_SELECTION),
+        lambda: builder.set_initialization_strategy(InitializationStrategy.farthest_point()),
+    ]
+    for call in calls if is_selection_first else reversed(calls):
+        call()
+
+    # --- act / assert -----------------
+    with pytest.raises(ValueError, match="conflicts with an explicitly set initialization strategy"):
+        builder.build()
+
+
+def test_a_solve_starts_from_the_initial_selection(dummy_problem):
+    """The selection after initialization is exactly the initial selection."""
+    # --- arrange ----------------------
+    builder = (
+        MaxDivSolverBuilder(dummy_problem)
+        .with_preset(iterations(20))
+        .with_initial_selection(_INITIAL_SELECTION)
+        .with_intermediate_selections()
+    )
+
+    # --- act --------------------------
+    solution = builder.build().solve()
+
+    # --- assert -----------------------
+    (init_checkpoint,) = [
+        checkpoint
+        for checkpoint in solution.score_checkpoints
+        if checkpoint.step_identity.step_name == "InitGivenSelection()"
+    ]
+    assert sorted(init_checkpoint.i_selected.tolist()) == sorted(_INITIAL_SELECTION)
 
 
 # =================================================================================================

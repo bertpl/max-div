@@ -7,10 +7,16 @@ of them.
 Distance storage is here for a different reason: workers read one buffer, so per-worker storage
 could not be honored at all.
 
+One search setting is defined here too: `with_initial_selection`, which starts the solve from a
+given selection.  Both builders apply it the same way: it replaces the initialization of the single
+solver, or of every worker.
+
 A subclass adds the search: which strategies run, and for how long.
 """
 
 from typing import TYPE_CHECKING, Self
+
+from numpy.typing import ArrayLike
 
 from max_div._core.metrics import (
     DiversityMetric,
@@ -27,9 +33,11 @@ from max_div._core.solver._distance_storage import (
 )
 from max_div._core.solver._diversity_contribution import DiversityObjectiveBindings
 from max_div._core.solver._duration import E2eBudget, TargetDuration, TargetTimeDuration
+from max_div._core.solver._strategies import InitializationStrategy
 
 if TYPE_CHECKING:
     from max_div._core.constraints import Constraint
+    from max_div._core.solver._strategies._initialization._init_given_selection import InitGivenSelection
 
 
 class SolverBuilderBase:
@@ -57,6 +65,9 @@ class SolverBuilderBase:
         self._e2e_enabled: bool = False
         self._target_duration: TargetDuration | None = None
         self._intermediate_selections_enabled: bool = False
+        # kept apart from the subclasses' own initialization, which with_preset / with_workers
+        # overwrite; build() applies it last, and raises on a conflicting explicit initialization
+        self._hot_start_strategy: InitGivenSelection | None = None
 
     # -------------------------------------------------------------------------
     #  Shared builder API
@@ -122,6 +133,30 @@ class SolverBuilderBase:
         self._intermediate_selections_enabled = enabled
         return self
 
+    def with_initial_selection(self, indices: ArrayLike) -> Self:
+        """Start the solve from the given selection of exactly k items (a hot start).
+
+        The selection can be an earlier solution's `i_selected`.  It may violate the problem's
+        constraints; the optimization steps then try to satisfy them.
+
+        The selection replaces a preset's initialization, whether `with_preset` is called before
+        or after `with_initial_selection`.  In a parallel solve every worker starts from the
+        selection, so workers with the same preset differ only through their seeds.
+
+        `build()` raises `ValueError` when an initialization strategy is also set explicitly,
+        because the solve would then have 2 starting points.  Either of these sets one explicitly:
+
+        - `set_initialization_strategy`, unless a later `with_preset` replaced it
+        - a `WorkerConfig`'s `init_strategy`
+
+        Raises:
+            ValueError: If `indices` is not k distinct integers in 0..n-1.
+        """
+        init_strategy = InitializationStrategy.given_selection(indices)
+        init_strategy.check_fits_problem_size(self._n, self._k)
+        self._hot_start_strategy = init_strategy
+        return self
+
     # -------------------------------------------------------------------------
     #  Resolution
     # -------------------------------------------------------------------------
@@ -140,6 +175,33 @@ class SolverBuilderBase:
                 "not all solver phases can be expressed in iteration counts."
             )
         return E2eBudget(budget_sec=self._target_duration.value())
+
+    @staticmethod
+    def _resolve_init_strategy_override(
+        hot_start_strategy: InitializationStrategy | None, user_init_strategy: InitializationStrategy | None
+    ) -> InitializationStrategy | None:
+        """Return the initialization strategy that replaces a solver's default one, or None to keep the default.
+
+        Both builders call this at build time: the single builder once, the parallel builder once per
+        worker.  The replacement is `hot_start_strategy` when set, and `user_init_strategy` otherwise.
+
+        Args:
+            hot_start_strategy: the strategy that `with_initial_selection` stored, or None.
+            user_init_strategy: the initialization strategy the user set explicitly for this solver,
+                through `set_initialization_strategy` or a `WorkerConfig`, or None.
+
+        Raises:
+            ValueError: If both `hot_start_strategy` and `user_init_strategy` are set.
+        """
+        if hot_start_strategy is None:
+            return user_init_strategy
+        elif user_init_strategy is not None:
+            raise ValueError(
+                "with_initial_selection conflicts with an explicitly set initialization strategy "
+                "(set_initialization_strategy or a WorkerConfig's init_strategy); keep one starting point."
+            )
+        else:
+            return hot_start_strategy
 
     def _store_factory(self) -> tuple[DistanceStoreFactory, DistanceStorageTypes]:
         """Return the store factory and each store's resolved (distance, storage type)."""

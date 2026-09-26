@@ -22,6 +22,7 @@ from max_div._core.solver._presets import SolverPreset
 from max_div._core.solver._progress_reporting import Verbosity
 from max_div._core.solver._solver_step import COOPERATIVE_BATCH_SECONDS, REPORTING_BATCH_SECONDS
 from max_div._core.solver._strategies import InitializationStrategy
+from max_div._core.solver._strategies._initialization._init_given_selection import InitGivenSelection
 
 _BUDGET = iterations(120)
 
@@ -436,6 +437,61 @@ def test_a_budget_spent_during_setup_leaves_the_grouping_untouched():
     # --- assert -----------------------
     assert solution.i_selected.size == 8
     assert solution.worker_group_changes == []
+
+
+# =================================================================================================
+#  Initial selection
+# =================================================================================================
+_INITIAL_SELECTION = [70, 3, 41, 12, 58, 0, 27, 66]  # the selection holds k=8 of the n=80 items in _problem()
+
+
+@pytest.mark.parametrize(
+    "configure_workers",
+    [
+        lambda builder: builder.with_workers(_BUDGET, 3),
+        lambda builder: builder.with_custom_worker_groups(
+            _BUDGET, [WorkerConfig(preset=SolverPreset.SMART), WorkerConfig(preset=SolverPreset.GUIDED)]
+        ),
+    ],
+    ids=["dynamic", "custom"],
+)
+def test_every_worker_starts_from_the_initial_selection(configure_workers):
+    """Every worker's first step is the initial selection, and its configuration reports it."""
+    # --- arrange ----------------------
+    builder = configure_workers(ParallelMaxDivSolverBuilder(_problem()).with_initial_selection(_INITIAL_SELECTION))
+
+    # --- act --------------------------
+    solver = builder.build()
+
+    # --- assert -----------------------
+    assert all(isinstance(config.solver_steps[0]._strategy, InitGivenSelection) for config in solver._solver_configs)
+    assert all(isinstance(worker.init_strategy, InitGivenSelection) for worker in solver._worker_configs)
+
+
+def test_a_hot_started_parallel_solve_completes():
+    """Workers in their own processes receive the initial selection and solve from it."""
+    # --- arrange / act ----------------
+    builder = ParallelMaxDivSolverBuilder(_problem()).with_initial_selection(_INITIAL_SELECTION)
+    solution = builder.with_workers(_BUDGET, 2).build().solve()
+
+    # --- assert -----------------------
+    assert solution.i_selected.size == 8
+    assert all(isinstance(worker.config.init_strategy, InitGivenSelection) for worker in solution.workers)
+
+
+def test_an_initial_selection_and_a_worker_initialization_conflict():
+    """A worker with its own initialization would have 2 starting points, so building is rejected."""
+    # --- arrange ----------------------
+    workers = [WorkerConfig(), WorkerConfig(init_strategy=InitializationStrategy.farthest_point())]
+    builder = (
+        ParallelMaxDivSolverBuilder(_problem())
+        .with_initial_selection(_INITIAL_SELECTION)
+        .with_custom_worker_groups(_BUDGET, workers)
+    )
+
+    # --- act / assert -----------------
+    with pytest.raises(ValueError, match="conflicts with an explicitly set initialization strategy"):
+        builder.build()
 
 
 # =================================================================================================

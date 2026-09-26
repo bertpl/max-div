@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+- `with_initial_selection(...)` on the solver builders starts a solve, or every worker of a parallel solve, from a given selection of k items (a hot start); `InitializationStrategy.given_selection(...)`, passed as `WorkerConfig(init_strategy=...)`, gives a worker its own starting selection
 
 ### Changed
 
