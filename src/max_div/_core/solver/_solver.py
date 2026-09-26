@@ -118,7 +118,7 @@ class MaxDivSolver:
             A MaxDivSolution object representing the solution found.
         """
         # --- Init -------------------------------
-        # the solve-wide time axis starts here; `_elapsed_before_step` measures each step's start from it
+        # the solve-wide time axis starts here; `_elapsed_before_step` measures each step's start from `t_solve_start`
         t_solve_start = time.monotonic()
         e2e_budget = self._e2e_budget.started() if self._e2e_budget else None
         for step in self._solver_steps:
@@ -132,15 +132,15 @@ class MaxDivSolver:
         n_steps = len(self._solver_steps)
         progress_reporter.set_step_count(n_steps + 1)  # the solver state initialization is reported too, as step 0
         step_seeds = [deterministic_hash((self._seed, i)) for i in range(n_steps)]
-        # step_durations holds one duration per step in step order, the solver state initialization
-        # being step 0; score_checkpoints holds every step's checkpoints, already on the solve-wide axis
+        # - step_durations: one duration per step in step order; the solver state initialization is step 0
+        # - score_checkpoints: every step's checkpoints, already on the solve-wide axis
         step_durations: list[Elapsed] = []
         score_checkpoints: list[ScoreCheckpoint] = []
 
         def record_step(step_result: SolverStepResult, elapsed_before_step: Elapsed) -> None:
             """Append the step's duration, and its checkpoints shifted onto the solve-wide axis."""
             step_durations.append(step_result.elapsed)
-            score_checkpoints.extend(self._shift_to_solve_axis(step_result, elapsed_before_step))
+            score_checkpoints.extend(self._shift_to_solve_wide_axis(step_result, elapsed_before_step))
 
         # --- solver state -----------------------
         init_step_identity = SolverStepIdentity(0, INIT_STEP_NAME)
@@ -214,11 +214,11 @@ class MaxDivSolver:
     # -------------------------------------------------------------------------
     @staticmethod
     def _elapsed_before_step(t_solve_start: float, step_durations: list[Elapsed]) -> Elapsed:
-        """Return where a step starting now sits on the solve-wide axis.
+        """Return the solve-wide elapsed time and iteration count at which a step starting now begins.
 
         The time is measured since `t_solve_start`, not summed from the earlier steps' durations,
-        so the axis also counts the solver's own work between steps; the iteration count is the
-        earlier steps' total.
+        so the time also includes the solver's own work between steps; the iteration count is the
+        earlier steps' total. `t_solve_start` must be a `time.monotonic()` reading.
         """
         return Elapsed(
             t_elapsed_sec=time.monotonic() - t_solve_start,
@@ -226,8 +226,8 @@ class MaxDivSolver:
         )
 
     @staticmethod
-    def _shift_to_solve_axis(step_result: SolverStepResult, elapsed_before_step: Elapsed) -> list[ScoreCheckpoint]:
-        """Return the step's checkpoints, which count from the step's own start, shifted onto the solve-wide axis."""
+    def _shift_to_solve_wide_axis(step_result: SolverStepResult, elapsed_before_step: Elapsed) -> list[ScoreCheckpoint]:
+        """Return the step's checkpoints with `elapsed_before_step` added to each checkpoint's elapsed time."""
         return [
             replace(checkpoint, elapsed=elapsed_before_step + checkpoint.elapsed)
             for checkpoint in step_result.score_checkpoints

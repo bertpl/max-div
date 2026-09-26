@@ -488,7 +488,7 @@ def test_solver_hybrid_metric_solves_in_parallel(factory, expected_score):
     assert solution.score.diversity == pytest.approx(expected, rel=1e-5)
 
 
-def test_time_between_steps_counts_on_the_solve_axis(example_solver, monkeypatch):
+def test_time_between_steps_counts_on_the_solve_wide_axis(example_solver, monkeypatch):
     """Time spent between steps, outside every step timer, is included in the solution's duration."""
     # --- arrange ----------------------
     delay_sec = 0.05
