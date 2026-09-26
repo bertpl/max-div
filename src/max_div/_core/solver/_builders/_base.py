@@ -36,7 +36,7 @@ from max_div._core.solver._strategies import InitializationStrategy
 
 if TYPE_CHECKING:
     from max_div._core.constraints import Constraint
-    from max_div._core.solver._strategies._initialization._init_fixed_selection import InitFixedSelection
+    from max_div._core.solver._strategies._initialization._init_given_selection import InitGivenSelection
 
 
 class SolverBuilderBase:
@@ -64,7 +64,7 @@ class SolverBuilderBase:
         self._e2e_enabled: bool = False
         self._target_duration: TargetDuration | None = None
         self._intermediate_selections_enabled: bool = False
-        self._hot_start_strategy: InitFixedSelection | None = None
+        self._hot_start_strategy: InitGivenSelection | None = None
 
     # -------------------------------------------------------------------------
     #  Shared builder API
@@ -149,7 +149,7 @@ class SolverBuilderBase:
         Raises:
             ValueError: If `indices` is not k distinct integers in 0..n-1.
         """
-        init_strategy = InitializationStrategy.fixed_selection(indices)
+        init_strategy = InitializationStrategy.given_selection(indices)
         init_strategy.check_fits_problem_size(self._n, self._k)
         self._hot_start_strategy = init_strategy
         return self

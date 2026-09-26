@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from max_div._core.solver._solver_state import SolverState
 
     from ._init_farthest_point import InitFarthestPoint
-    from ._init_fixed_selection import InitFixedSelection
+    from ._init_given_selection import InitGivenSelection
     from ._init_most_feasible import InitMostFeasible
     from ._init_random_selection import InitRandomSelection
 
@@ -98,7 +98,7 @@ class InitializationStrategy(StrategyBase, ABC):
         return InitFarthestPoint(top_k=top_k, candidate_pool_size=candidate_pool_size)
 
     @classmethod
-    def fixed_selection(cls, indices: ArrayLike) -> InitFixedSelection:
+    def given_selection(cls, indices: ArrayLike) -> InitGivenSelection:
         """Create an initialization that starts from the given selection of exactly ``k`` items (a hot start).
 
         The selection may violate the problem's constraints; the optimization steps then try to
@@ -114,9 +114,9 @@ class InitializationStrategy(StrategyBase, ABC):
                 duplicate index.  A count other than k, or an index of n or more, raises when the
                 solve starts, since only then are n and k known.
         """
-        from ._init_fixed_selection import InitFixedSelection
+        from ._init_given_selection import InitGivenSelection
 
-        return InitFixedSelection(indices)
+        return InitGivenSelection(indices)
 
     @classmethod
     def most_feasible(cls, max_iter: int | None = None) -> InitMostFeasible:

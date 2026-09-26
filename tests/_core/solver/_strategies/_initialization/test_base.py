@@ -8,14 +8,14 @@ from numpy._typing import NDArray
 from max_div._core.solver._solver_state import SolverState
 from max_div._core.solver._strategies import InitializationStrategy
 
-_FACTORY_IDS = ["farthest_point", "fixed_selection", "most_feasible", "random_selection", "random_selection(uncon)"]
+_FACTORY_IDS = ["farthest_point", "given_selection", "most_feasible", "random_selection", "random_selection(uncon)"]
 
 
 @pytest.mark.parametrize(
     "factory_method",
     [
         partial(InitializationStrategy.farthest_point, top_k=4),
-        partial(InitializationStrategy.fixed_selection, [0, 1, 2]),
+        partial(InitializationStrategy.given_selection, [0, 1, 2]),
         partial(InitializationStrategy.most_feasible),
         partial(InitializationStrategy.random_selection, ignore_constraints=False),
         partial(InitializationStrategy.random_selection, ignore_constraints=True),

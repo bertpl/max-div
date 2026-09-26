@@ -11,12 +11,12 @@ from ._helpers import new_solver_state
 _STEP_IDENTITY = SolverStepIdentity(1, "test")
 
 
-def test_init_fixed_selection_starts_from_the_given_selection_even_when_infeasible():
+def test_init_given_selection_starts_from_the_given_selection_even_when_infeasible():
     """The selection is exactly the given indices, kept as they are even when they violate the constraints."""
     # --- arrange ----------------------
     solver_state = new_solver_state(has_constraints=True)  # the constraints need 10 items from 0..49 and 40 from 50..99
     indices = np.arange(49, -1, -1)  # the indices are all 50 items from 0..49, in reverse order
-    init_step = InitializationStep(InitializationStrategy.fixed_selection(indices))
+    init_step = InitializationStep(InitializationStrategy.given_selection(indices))
 
     # --- act --------------------------
     init_step.run(solver_state, _STEP_IDENTITY)
@@ -36,11 +36,11 @@ def test_init_fixed_selection_starts_from_the_given_selection_even_when_infeasib
         ([4, 7, 4], "Index 4 appears more than once"),
     ],
 )
-def test_fixed_selection_rejects_indices_that_fit_no_problem(indices, message: str):
+def test_given_selection_rejects_indices_that_fit_no_problem(indices, message: str):
     """The factory rejects, before any problem is known, indices that no problem could accept."""
     # --- act / assert -----------------
     with pytest.raises(ValueError, match=message):
-        InitializationStrategy.fixed_selection(indices)
+        InitializationStrategy.given_selection(indices)
 
 
 @pytest.mark.parametrize(
@@ -50,11 +50,11 @@ def test_fixed_selection_rejects_indices_that_fit_no_problem(indices, message: s
         (np.arange(2, 102, 2), "Index 100 lies outside the population of n=100 items"),
     ],
 )
-def test_init_fixed_selection_rejects_a_selection_that_does_not_fit_the_problem(indices, message: str):
+def test_init_given_selection_rejects_a_selection_that_does_not_fit_the_problem(indices, message: str):
     """A selection of the wrong size, or reaching past n, raises when the solve starts."""
     # --- arrange ----------------------
     solver_state = new_solver_state(has_constraints=False)  # the state has n=100 and k=50
-    init_step = InitializationStep(InitializationStrategy.fixed_selection(indices))
+    init_step = InitializationStep(InitializationStrategy.given_selection(indices))
 
     # --- act / assert -----------------
     with pytest.raises(ValueError, match=message):

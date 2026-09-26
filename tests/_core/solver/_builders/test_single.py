@@ -27,7 +27,7 @@ from max_div._core.solver._score_checkpoint import ScoreCheckpoint
 from max_div._core.solver._solver_step import InitializationStep, OptimizationStep, SolverStepResult
 from max_div._core.solver._strategies import InitializationStrategy, OptimizationStrategy
 from max_div._core.solver._strategies._initialization._init_farthest_point import InitFarthestPoint
-from max_div._core.solver._strategies._initialization._init_fixed_selection import InitFixedSelection
+from max_div._core.solver._strategies._initialization._init_given_selection import InitGivenSelection
 from max_div._core.solver._strategies._initialization._init_most_feasible import InitMostFeasible
 from tests.helpers import swept_benchmark_problems
 
@@ -384,7 +384,7 @@ def test_the_initial_selection_replaces_the_preset_initialization_in_any_call_or
     _, config = configure_builder(MaxDivSolverBuilder(dummy_problem)).prepare_storage_and_config()
 
     # --- assert -----------------------
-    assert isinstance(config.solver_steps[0]._strategy, InitFixedSelection)
+    assert isinstance(config.solver_steps[0]._strategy, InitGivenSelection)
 
 
 @pytest.mark.parametrize("is_selection_first", [True, False])
@@ -421,7 +421,7 @@ def test_a_solve_starts_from_the_initial_selection(dummy_problem):
     (init_checkpoint,) = [
         checkpoint
         for checkpoint in solution.score_checkpoints
-        if checkpoint.step_identity.step_name == "InitFixedSelection()"
+        if checkpoint.step_identity.step_name == "InitGivenSelection()"
     ]
     assert sorted(init_checkpoint.i_selected.tolist()) == sorted(_INITIAL_SELECTION)
 

@@ -16,7 +16,7 @@ class WorkerConfig:
     Args:
         init_strategy: replaces the preset's own initialization.  Different seeds already vary a
             random initialization, so this is for giving a worker a different kind of start, such
-            as its own selection through `InitializationStrategy.fixed_selection`.
+            as its own selection through `InitializationStrategy.given_selection`.
 
             - None keeps the preset's initialization, or uses the builder's initial selection when
               `with_initial_selection` was called.

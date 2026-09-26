@@ -22,7 +22,7 @@ from max_div._core.solver._presets import SolverPreset
 from max_div._core.solver._progress_reporting import Verbosity
 from max_div._core.solver._solver_step import COOPERATIVE_BATCH_SECONDS, REPORTING_BATCH_SECONDS
 from max_div._core.solver._strategies import InitializationStrategy
-from max_div._core.solver._strategies._initialization._init_fixed_selection import InitFixedSelection
+from max_div._core.solver._strategies._initialization._init_given_selection import InitGivenSelection
 
 _BUDGET = iterations(120)
 
@@ -464,8 +464,8 @@ def test_every_worker_starts_from_the_initial_selection(configure_workers):
     solver = builder.build()
 
     # --- assert -----------------------
-    assert all(isinstance(config.solver_steps[0]._strategy, InitFixedSelection) for config in solver._solver_configs)
-    assert all(isinstance(worker.init_strategy, InitFixedSelection) for worker in solver._worker_configs)
+    assert all(isinstance(config.solver_steps[0]._strategy, InitGivenSelection) for config in solver._solver_configs)
+    assert all(isinstance(worker.init_strategy, InitGivenSelection) for worker in solver._worker_configs)
 
 
 def test_a_hot_started_parallel_solve_completes():
@@ -476,7 +476,7 @@ def test_a_hot_started_parallel_solve_completes():
 
     # --- assert -----------------------
     assert solution.i_selected.size == 8
-    assert all(isinstance(worker.config.init_strategy, InitFixedSelection) for worker in solution.workers)
+    assert all(isinstance(worker.config.init_strategy, InitGivenSelection) for worker in solution.workers)
 
 
 def test_an_initial_selection_and_a_worker_initialization_conflict():
