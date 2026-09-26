@@ -1,6 +1,4 @@
-import time
 from collections.abc import Callable, Mapping
-from dataclasses import replace
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -17,6 +15,7 @@ from ._duration import E2eBudget, Elapsed
 from ._progress_reporting import ProgressReporter, Verbosity
 from ._score_checkpoint import ScoreCheckpoint
 from ._solution import MaxDivSolution
+from ._solve_timeline import SolveTimeline
 from ._solver_state import SolverState
 from ._solver_step import REPORTING_BATCH_SECONDS, SolverStep, SolverStepResult
 from ._step_identity import SolverStepIdentity
@@ -118,8 +117,7 @@ class MaxDivSolver:
             A MaxDivSolution object representing the solution found.
         """
         # --- Init -------------------------------
-        # the solve-wide time axis starts here; `_elapsed_before_step` measures each step's start from `t_solve_start`
-        t_solve_start = time.monotonic()
+        timeline = SolveTimeline()  # the solve-wide time axis starts here
         e2e_budget = self._e2e_budget.started() if self._e2e_budget else None
         for step in self._solver_steps:
             step.set_e2e_budget(e2e_budget)
@@ -132,19 +130,10 @@ class MaxDivSolver:
         n_steps = len(self._solver_steps)
         progress_reporter.set_step_count(n_steps + 1)  # the solver state initialization is reported too, as step 0
         step_seeds = [deterministic_hash((self._seed, i)) for i in range(n_steps)]
-        # - step_durations: one duration per step in step order; the solver state initialization is step 0
-        # - score_checkpoints: every step's checkpoints, already on the solve-wide axis
-        step_durations: list[Elapsed] = []
-        score_checkpoints: list[ScoreCheckpoint] = []
-
-        def record_step(step_result: SolverStepResult, elapsed_before_step: Elapsed) -> None:
-            """Append the step's duration, and its checkpoints shifted onto the solve-wide axis."""
-            step_durations.append(step_result.elapsed)
-            score_checkpoints.extend(self._shift_to_solve_wide_axis(step_result, elapsed_before_step))
 
         # --- solver state -----------------------
         init_step_identity = SolverStepIdentity(0, INIT_STEP_NAME)
-        elapsed_before_init_step = self._elapsed_before_step(t_solve_start, step_durations)
+        timeline.start_step()
         with Timer() as timer:
             progress_reporter.solver_step_started(init_step_identity)
             stores_by_distance = self._stores_by_distance_provider()
@@ -164,31 +153,32 @@ class MaxDivSolver:
                 state.add_many(np.arange(self._n, dtype=np.int32))
             progress_reporter.solver_step_finished(None, state)
 
-        init_step_result = SolverStepResult(
-            score_checkpoints=[
-                ScoreCheckpoint.new(
-                    init_step_identity,
-                    Elapsed(t_elapsed_sec=timer.t_elapsed_sec(), n_iterations=0),
-                    state,
-                    coordinator,
-                    includes_selection=self._intermediate_selections_enabled,
-                )
-            ]
+        timeline.finish_step(
+            SolverStepResult(
+                score_checkpoints=[
+                    ScoreCheckpoint.new(
+                        init_step_identity,
+                        Elapsed(t_elapsed_sec=timer.t_elapsed_sec(), n_iterations=0),
+                        state,
+                        coordinator,
+                        includes_selection=self._intermediate_selections_enabled,
+                    )
+                ]
+            )
         )
-        record_step(init_step_result, elapsed_before_init_step)
 
         # --- forced full selection --------------
         if self._k == self._n:
-            return self._construct_final_solution(state, step_durations, score_checkpoints)
+            return self._construct_final_solution(state, timeline)
 
         # --- Main loop --------------------------
         for step_index, (step_seed, step) in enumerate(zip(step_seeds, self._solver_steps), start=1):
             step_identity = SolverStepIdentity(step_index, step.name())
             progress_reporter.solver_step_started(step_identity)
             step.set_seed(step_seed)
-            # the coordinator is told where the step starts on the solve-wide axis, and the step's own
-            # checkpoints are shifted onto that axis by the same offset
-            elapsed_before_step = self._elapsed_before_step(t_solve_start, step_durations)
+            # the step tells the coordinator where it is on the solve-wide axis, and the timeline shifts
+            # the step's own checkpoints onto that axis by the same offset
+            elapsed_before_step = timeline.start_step()
             try:
                 step_result = step.run(
                     state,
@@ -199,7 +189,7 @@ class MaxDivSolver:
                     elapsed_before_step=elapsed_before_step,
                     intermediate_selections_enabled=self._intermediate_selections_enabled,
                 )
-                record_step(step_result, elapsed_before_step)
+                timeline.finish_step(step_result)
             finally:
                 # release all Savepoint objects: they hold cyclic references via the SolverState, which
                 # cause out-of-memory when left in place; in a finally, so a step that raises still
@@ -207,36 +197,13 @@ class MaxDivSolver:
                 state.release_savepoints()
 
         # --- Construct result -------------------
-        return self._construct_final_solution(state, step_durations, score_checkpoints)
+        return self._construct_final_solution(state, timeline)
 
     # -------------------------------------------------------------------------
     #  Internal
     # -------------------------------------------------------------------------
-    @staticmethod
-    def _elapsed_before_step(t_solve_start: float, step_durations: list[Elapsed]) -> Elapsed:
-        """Return the solve-wide elapsed time and iteration count at which a step starting now begins.
-
-        The time is measured since `t_solve_start`, not summed from the earlier steps' durations,
-        so the time also includes the solver's own work between steps; the iteration count is the
-        earlier steps' total. `t_solve_start` must be a `time.monotonic()` reading.
-        """
-        return Elapsed(
-            t_elapsed_sec=time.monotonic() - t_solve_start,
-            n_iterations=sum(duration.n_iterations for duration in step_durations),
-        )
-
-    @staticmethod
-    def _shift_to_solve_wide_axis(step_result: SolverStepResult, elapsed_before_step: Elapsed) -> list[ScoreCheckpoint]:
-        """Return the step's checkpoints with `elapsed_before_step` added to each checkpoint's elapsed time."""
-        return [
-            replace(checkpoint, elapsed=elapsed_before_step + checkpoint.elapsed)
-            for checkpoint in step_result.score_checkpoints
-        ]
-
-    def _construct_final_solution(
-        self, state: SolverState, step_durations: list[Elapsed], score_checkpoints: list[ScoreCheckpoint]
-    ) -> MaxDivSolution:
-        """Construct the final MaxDivSolution from the state, the step durations and the solve-wide checkpoints."""
+    def _construct_final_solution(self, state: SolverState, timeline: SolveTimeline) -> MaxDivSolution:
+        """Construct the final MaxDivSolution from the state and the solve's timeline."""
         # --- constraint satisfaction ------------
         n_constraints = state.m
         n_constraints_satisfied = _np_con_count_satisfied(state.con_values)
@@ -244,8 +211,8 @@ class MaxDivSolver:
         # --- construct solution -----------------
         return MaxDivSolution(
             i_selected=state.selected_index_array.copy(),
-            score_checkpoints=score_checkpoints,
-            step_durations=step_durations,
+            score_checkpoints=timeline.checkpoints,
+            step_durations=timeline.step_durations,
             diversity_objective_labels=[objective.label for objective in self._diversity_objectives],
             n_constraints=int(n_constraints),
             n_constraints_satisfied=n_constraints_satisfied,
