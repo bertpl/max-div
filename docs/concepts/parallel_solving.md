@@ -137,6 +137,8 @@ Each worker is configured by a `WorkerConfig`: the preset it runs, and optionall
 initialization strategy it starts from. `init_strategy` lets two workers run the same preset from
 different starting points.
 
+To start every worker from one selection of your own, use the builder's `with_initial_selection`; see [Starting from a given selection](solve_pipeline.md#hot-starts-in-a-parallel-solve).
+
 Everything that decides **which selection is better** is fixed for all workers, whether that
 setting comes from the problem (the diversity metric, the constraints) or from the builder (the
 tie-breakers, the constraint penalty). Comparing what workers found requires a single answer to that
