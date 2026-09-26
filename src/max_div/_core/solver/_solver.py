@@ -1,3 +1,4 @@
+import time
 from collections.abc import Callable, Mapping
 from dataclasses import replace
 from typing import TYPE_CHECKING
@@ -117,6 +118,9 @@ class MaxDivSolver:
             A MaxDivSolution object representing the solution found.
         """
         # --- Init -------------------------------
+        # the solve-wide time axis starts here; each step's offset on it is measured on this clock,
+        # so time that no step timer covers (before and between steps) still counts
+        t_solve_start = time.monotonic()
         e2e_budget = self._e2e_budget.started() if self._e2e_budget else None
         for step in self._solver_steps:
             step.set_e2e_budget(e2e_budget)
@@ -129,11 +133,14 @@ class MaxDivSolver:
         n_steps = len(self._solver_steps)
         progress_reporter.set_step_count(n_steps + 1)  # the solver state initialization is reported too, as step 0
         step_seeds = [deterministic_hash((self._seed, i)) for i in range(n_steps)]
-        # one result per step in step order; the solver state initialization is step 0
-        step_results: list[SolverStepResult] = []
+        # one duration per step in step order, the solver state initialization being step 0, and
+        # every step's checkpoints, already placed on the solve-wide axis
+        step_durations: list[Elapsed] = []
+        score_checkpoints: list[ScoreCheckpoint] = []
 
         # --- solver state -----------------------
         init_step_identity = SolverStepIdentity(0, INIT_STEP_NAME)
+        init_step_offset = self._step_offset(t_solve_start, step_durations)
         with Timer() as timer:
             progress_reporter.solver_step_started(init_step_identity)
             stores_by_distance = self._stores_by_distance_provider()
@@ -153,46 +160,44 @@ class MaxDivSolver:
                 state.add_many(np.arange(self._n, dtype=np.int32))
             progress_reporter.solver_step_finished(None, state)
 
-        step_results.append(
-            SolverStepResult(
-                score_checkpoints=[
-                    ScoreCheckpoint.new(
-                        init_step_identity,
-                        Elapsed(t_elapsed_sec=timer.t_elapsed_sec(), n_iterations=0),
-                        state,
-                        coordinator,
-                        includes_selection=self._intermediate_selections_enabled,
-                    )
-                ]
-            )
+        init_step_result = SolverStepResult(
+            score_checkpoints=[
+                ScoreCheckpoint.new(
+                    init_step_identity,
+                    Elapsed(t_elapsed_sec=timer.t_elapsed_sec(), n_iterations=0),
+                    state,
+                    coordinator,
+                    includes_selection=self._intermediate_selections_enabled,
+                )
+            ]
         )
+        step_durations.append(init_step_result.elapsed)
+        score_checkpoints.extend(self._on_solve_axis(init_step_result, init_step_offset))
 
         # --- forced full selection --------------
         if self._k == self._n:
-            return self._construct_final_solution(state, step_results)
+            return self._construct_final_solution(state, step_durations, score_checkpoints)
 
         # --- Main loop --------------------------
         for step_index, (step_seed, step) in enumerate(zip(step_seeds, self._solver_steps), start=1):
             step_identity = SolverStepIdentity(step_index, step.name())
             progress_reporter.solver_step_started(step_identity)
             step.set_seed(step_seed)
-            # the coordinator is told where the step starts on the solve-wide axis (the sum of every
-            # earlier step's elapsed); the step's own checkpoints are shifted the same way below
-            elapsed_before_step = sum(
-                (result.elapsed for result in step_results), Elapsed(t_elapsed_sec=0.0, n_iterations=0)
-            )
+            # the coordinator is told where the step starts on the solve-wide axis, and the step's own
+            # checkpoints are shifted onto that axis by the same offset
+            elapsed_before_step = self._step_offset(t_solve_start, step_durations)
             try:
-                step_results.append(
-                    step.run(
-                        state,
-                        step_identity,
-                        progress_reporter,
-                        coordinator,
-                        self._batch_seconds,
-                        elapsed_before_step=elapsed_before_step,
-                        intermediate_selections_enabled=self._intermediate_selections_enabled,
-                    )
+                step_result = step.run(
+                    state,
+                    step_identity,
+                    progress_reporter,
+                    coordinator,
+                    self._batch_seconds,
+                    elapsed_before_step=elapsed_before_step,
+                    intermediate_selections_enabled=self._intermediate_selections_enabled,
                 )
+                step_durations.append(step_result.elapsed)
+                score_checkpoints.extend(self._on_solve_axis(step_result, elapsed_before_step))
             finally:
                 # release all Savepoint objects: they hold cyclic references via the SolverState, which
                 # cause out-of-memory when left in place; in a finally, so a step that raises still
@@ -200,27 +205,36 @@ class MaxDivSolver:
                 state.release_savepoints()
 
         # --- Construct result -------------------
-        return self._construct_final_solution(state, step_results)
+        return self._construct_final_solution(state, step_durations, score_checkpoints)
 
     # -------------------------------------------------------------------------
     #  Internal
     # -------------------------------------------------------------------------
-    def _construct_final_solution(self, state: SolverState, step_results: list[SolverStepResult]) -> MaxDivSolution:
-        """Construct the final MaxDivSolution from the state and the step results in step order."""
-        # --- collect step durations -------------
-        step_durations = [result.elapsed for result in step_results]
+    @staticmethod
+    def _step_offset(t_solve_start: float, step_durations: list[Elapsed]) -> Elapsed:
+        """Return where a step starting now sits on the solve-wide axis.
 
-        # --- aggregate score checkpoints --------
-        # each step counted elapsed from its own start; shift onto the solve-wide axis
-        score_checkpoints: list[ScoreCheckpoint] = []
-        elapsed_from_previous_steps = Elapsed(t_elapsed_sec=0.0, n_iterations=0)
-        for result in step_results:
-            for checkpoint in result.score_checkpoints:
-                score_checkpoints.append(replace(checkpoint, elapsed=elapsed_from_previous_steps + checkpoint.elapsed))
+        The time is measured since `t_solve_start`, not summed from the earlier steps' durations,
+        so the axis also counts the solver's own work between steps; the iteration count is the
+        earlier steps' total.
+        """
+        return Elapsed(
+            t_elapsed_sec=time.monotonic() - t_solve_start,
+            n_iterations=sum(duration.n_iterations for duration in step_durations),
+        )
 
-            # Update elapsed_from_previous_steps to include this step's total elapsed time
-            elapsed_from_previous_steps += result.elapsed
+    @staticmethod
+    def _on_solve_axis(step_result: SolverStepResult, step_offset: Elapsed) -> list[ScoreCheckpoint]:
+        """Return the step's checkpoints, which count from the step's own start, shifted onto the solve-wide axis."""
+        return [
+            replace(checkpoint, elapsed=step_offset + checkpoint.elapsed)
+            for checkpoint in step_result.score_checkpoints
+        ]
 
+    def _construct_final_solution(
+        self, state: SolverState, step_durations: list[Elapsed], score_checkpoints: list[ScoreCheckpoint]
+    ) -> MaxDivSolution:
+        """Construct the final MaxDivSolution from the state, the step durations and the solve-wide checkpoints."""
         # --- constraint satisfaction ------------
         n_constraints = state.m
         n_constraints_satisfied = _np_con_count_satisfied(state.con_values)
