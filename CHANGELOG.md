@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 ### Fixed
-- A solve's checkpoint times and `duration` now include the solver's own overhead between steps, so a parallel solve no longer places one worker's checkpoints out of order relative to another's; `duration` can therefore exceed the sum of `step_durations`
+- A solve's checkpoint times and `duration` now include the solver's own work before and between steps, so they measure real time since the solve started; a parallel solve therefore keeps its workers' checkpoints in the order they happened, and `duration` can exceed the sum of `step_durations`
 
 ### Security
 

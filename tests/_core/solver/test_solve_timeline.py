@@ -1,3 +1,5 @@
+import pytest
+
 from max_div._core.solver._duration import Elapsed
 from max_div._core.solver._score import Score
 from max_div._core.solver._score_checkpoint import ScoreCheckpoint
@@ -7,7 +9,7 @@ from max_div._core.solver._step_identity import SolverStepIdentity
 
 
 def _step_result(*elapsed: tuple[float, int]) -> SolverStepResult:
-    """Return a step result whose checkpoints sit at the given `(seconds, iterations)` since the step's start."""
+    """Return a step result whose checkpoints are at the given `(seconds, iterations)` after the step's start."""
     return SolverStepResult(
         score_checkpoints=[
             ScoreCheckpoint(
@@ -21,34 +23,34 @@ def _step_result(*elapsed: tuple[float, int]) -> SolverStepResult:
 
 
 def test_a_step_starts_at_the_real_time_since_the_solve_started(fake_clock):
-    """Time between steps counts on the axis, while the iteration count is the earlier steps' total."""
+    """A step starts on the solve-wide axis after the time between steps, with the earlier steps' iterations."""
     # --- arrange ----------------------
     timeline = SolveTimeline()
     fake_clock.advance(1.0)
-    timeline.start_step()
+    timeline.record_step_start()
     fake_clock.advance(1.5)
-    timeline.finish_step(_step_result((1.5, 20)))
-    fake_clock.advance(3.0)  # time outside every step timer
+    timeline.record_step_result(_step_result((1.5, 20)))
+    fake_clock.advance(3.0)  # this time falls outside every step timer
 
     # --- act --------------------------
-    elapsed_before_step = timeline.start_step()
+    elapsed_before_step = timeline.record_step_start()
 
     # --- assert -----------------------
     assert elapsed_before_step == Elapsed(t_elapsed_sec=5.5, n_iterations=20)
 
 
 def test_a_finished_step_keeps_its_duration_and_moves_its_checkpoints_onto_the_solve_wide_axis(fake_clock):
-    """Each step's duration stays its own, and its checkpoints move by where the step started."""
+    """Each step keeps its own duration, and its checkpoints are shifted by the step's start on the solve-wide axis."""
     # --- arrange ----------------------
     timeline = SolveTimeline()
     fake_clock.advance(1.0)
 
     # --- act --------------------------
-    timeline.start_step()
-    timeline.finish_step(_step_result((0.5, 10), (1.5, 20)))
+    timeline.record_step_start()
+    timeline.record_step_result(_step_result((0.5, 10), (1.5, 20)))
     fake_clock.advance(4.0)
-    timeline.start_step()
-    timeline.finish_step(_step_result((0.2, 5)))
+    timeline.record_step_start()
+    timeline.record_step_result(_step_result((0.2, 5)))
 
     # --- assert -----------------------
     assert timeline.step_durations == [Elapsed(1.5, 20), Elapsed(0.2, 5)]
@@ -57,3 +59,15 @@ def test_a_finished_step_keeps_its_duration_and_moves_its_checkpoints_onto_the_s
         Elapsed(2.5, 20),
         Elapsed(5.2, 25),
     ]
+
+
+def test_recording_a_result_without_a_step_start_raises():
+    """A step result with no recorded start raises, so no checkpoint is shifted by a stale offset."""
+    # --- arrange ----------------------
+    timeline = SolveTimeline()
+    timeline.record_step_start()
+    timeline.record_step_result(_step_result((0.5, 10)))
+
+    # --- act / assert -----------------
+    with pytest.raises(RuntimeError, match="needs a matching record_step_start"):
+        timeline.record_step_result(_step_result((0.2, 5)))

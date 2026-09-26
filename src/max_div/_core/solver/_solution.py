@@ -38,7 +38,7 @@ class MaxDivSolution:
         """Return the total elapsed time and iterations taken to compute the solution.
 
         The time includes the solver's own work before and between steps, so it can exceed the
-        sum of `step_durations`; the iteration count equals their sum.
+        sum of `step_durations`; for a single solve, the iteration count equals their sum.
         """
         return self.score_checkpoints[-1].elapsed
 

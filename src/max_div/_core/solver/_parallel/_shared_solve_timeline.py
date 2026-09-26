@@ -45,17 +45,17 @@ class SharedSolveTimeline:
         t_first_start = WorkerResult.earliest_start_time(results)
         start_offsets = {result.worker_index: result.t_start - t_first_start for result in results}
         # a worker's iteration counts stay its own, so only the time moves onto the shared axis
-        offset_per_worker = {
+        start_offsets_elapsed = {
             worker_index: Elapsed(t_elapsed_sec=offset_sec, n_iterations=0)
             for worker_index, offset_sec in start_offsets.items()
         }
         checkpoints = [
-            checkpoint.shifted_by(offset_per_worker[result.worker_index])
+            checkpoint.shifted_by(start_offsets_elapsed[result.worker_index])
             for result in results
             for checkpoint in result.solution.score_checkpoints
         ]
         group_changes = [
-            change.shifted_by(offset_per_worker[result.worker_index])
+            change.shifted_by(start_offsets_elapsed[result.worker_index])
             for result in results
             for change in result.worker_group_changes
         ]
