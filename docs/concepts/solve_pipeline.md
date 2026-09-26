@@ -27,6 +27,7 @@ speed vs quality of the starting point:
 | `random_selection` | Selects all `k` items at random: uniformly when the problem has no constraints or `ignore_constraints=True`, otherwise steering the draw so the selection satisfies the constraints. **Default for a builder without an explicit initialization, and for the RANDOM and GUIDED presets** (which set `ignore_constraints=True`). |
 | `farthest_point` | A seeded random start item, then greedily adds an item far from the selection (farthest-point sampling; under `MEAN_PAIRWISE_DISTANCE`, greedily maximizes mean distance to the selection). Each pick samples uniformly among the `top_k` best candidates (default 8; 1 is the exact greedy construction). When every term of the diversity objective is a separation-family metric over one distance, the picks are drawn in rounds of up to `candidate_pool_size` (default 256) per pass over the dataset. Each pick gets the same candidates as when picking one item per pass, and the initialization is several times faster at large n; `candidate_pool_size=None` picks 1 item per pass. Constraint-unaware. **The SMART and THOROUGH presets initialize unconstrained problems this way.** |
 | `most_feasible` | Constructs a selection satisfying every constraint where one can be found, so optimization starts feasible instead of searching for feasibility; where the constraints provably cannot all be met, starts from a least-infeasible one; and otherwise from the least-violating one found. **Constrained problems only** — raises on a problem with no constraints. |
+| `given_selection` | Starts from a given list of `k` item indices, such as an earlier solution's `i_selected`. Constraint-unaware. Usually set through the builder's `with_initial_selection`; see [Starting from a given selection](#hot-starts). |
 
 ## III. Optimization strategies { #optimization-strategies }
 
@@ -67,3 +68,52 @@ solver = (
 ```
 
 This gives you full control over which strategies run, in what order, and for how long.
+
+## V. Starting from a given selection { #hot-starts }
+
+A solve can start from a selection of your own, not one built by an initialization strategy: a **hot start**. Pass exactly `k` distinct item indices to `with_initial_selection`, on either builder, and the optimization steps start from exactly those items.
+
+- **The selection replaces the preset's initialization**, whether `with_preset` is called before or after `with_initial_selection`. The preset's optimization steps still run.
+- **The selection may violate the constraints.** The optimization steps then try to satisfy them, as after any constraint-unaware initialization.
+- **The indices are checked when you call `with_initial_selection`**: exactly `k` distinct integers, each in `0..n-1`. Anything else raises `ValueError`.
+
+### V.A. In a single solve { #hot-starts-in-a-single-solve }
+
+```python
+from max_div import MaxDivSolverBuilder, seconds
+
+first_solution = MaxDivSolverBuilder(problem).with_preset(seconds(10)).build().solve()
+
+# refine the first result with a longer budget
+refined_solution = (
+    MaxDivSolverBuilder(problem)
+    .with_preset(seconds(60))
+    .with_initial_selection(first_solution.i_selected)
+    .build()
+    .solve()
+)
+```
+
+**A solve has one starting point.** Combining `with_initial_selection` with `set_initialization_strategy` raises `ValueError` when the solver is built, unless `with_preset` is called after `set_initialization_strategy`, because the preset then replaces that strategy.
+
+### V.B. In a parallel solve { #hot-starts-in-a-parallel-solve }
+
+On `ParallelMaxDivSolverBuilder`, every worker starts from the selection:
+
+```python
+from max_div import ParallelMaxDivSolverBuilder, seconds
+
+solution = (
+    ParallelMaxDivSolverBuilder(problem)
+    .with_initial_selection(first_solution.i_selected)
+    .with_workers(seconds(600), 12)
+    .build()
+    .solve()
+)
+```
+
+- **Every worker starts from the same selection**, so workers with the same preset differ only in their random seeds, and together they cover less of the search space early on than workers that each build their own starting selection.
+- **To give workers different starting selections**, pass `InitializationStrategy.given_selection(indices)` as a worker's `init_strategy` in `with_custom_worker_groups` (see [What varies per worker](parallel_solving.md#what-varies-per-worker)). `given_selection` checks the indices in 2 steps, each raising `ValueError`:
+    - when you create it: non-integer, negative or duplicate indices;
+    - when the solve starts, since only then are `n` and `k` known: anything other than exactly `k` indices, each below `n`.
+- **A worker that sets its own `init_strategy` cannot be combined with `with_initial_selection`**: building the solver raises `ValueError`.
