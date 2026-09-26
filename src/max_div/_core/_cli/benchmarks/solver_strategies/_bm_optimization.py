@@ -1,9 +1,11 @@
+import numpy as np
+
 from max_div._core._markdown import ReportElement
 from max_div._core.metrics import DiversityMetric
 from max_div._core.solver import MaxDivSolver, MaxDivSolverBuilder
 from max_div._core.solver._duration import iterations
+from max_div._core.solver._strategies import InitializationStrategy
 from max_div._core.solver._solver_step import OptimizationStep
-from max_div._core.solver._strategies._initialization._init_fast import InitFast
 
 from ._base import BenchmarkSolverConstructor
 from .presets import OptimPreset
@@ -37,7 +39,7 @@ class BenchmarkSolverConstructor_Optimization(BenchmarkSolverConstructor):
         return (
             MaxDivSolverBuilder(problem)
             # start from the first k items, so that only the optimization step is measured
-            .set_initialization_strategy(InitFast())
+            .set_initialization_strategy(InitializationStrategy.given_selection(np.arange(problem.k)))
             .add_solver_step(
                 OptimizationStep(
                     optim_strategy=preset.create(),

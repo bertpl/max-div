@@ -1,5 +1,6 @@
 from typing import TYPE_CHECKING
 
+import numpy as np
 import pytest
 
 from max_div._core.benchmark_problems import BenchmarkProblemFactory
@@ -8,7 +9,7 @@ from max_div._core.metrics._distance import DistanceStore
 from max_div._core.solver._solver_state import SolverState
 from max_div._core.solver._solver_step import InitializationStep
 from max_div._core.solver._step_identity import SolverStepIdentity
-from max_div._core.solver._strategies._initialization._init_fast import InitFast
+from max_div._core.solver._strategies import InitializationStrategy
 from max_div._core.solver._strategies._optimization import OptimizationStrategy
 from tests._core.solver.objectives import simple_objective
 from tests.helpers import swept_benchmark_problems
@@ -45,7 +46,7 @@ def test_optim_random_swaps(problem_name: str, n: int):
     )
 
     # initialize solver state
-    init_step = InitializationStep(InitFast())
+    init_step = InitializationStep(InitializationStrategy.given_selection(np.arange(problem.k)))
     init_step.run(solver_state, _STEP_IDENTITY)
 
     # prepare strategy
