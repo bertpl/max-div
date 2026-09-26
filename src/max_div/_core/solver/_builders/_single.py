@@ -31,6 +31,8 @@ class MaxDivSolverBuilder(SolverBuilderBase):
         self._solver_steps: list[SolverStep] = [
             InitializationStep(InitializationStrategy.random_selection()),
         ]
+        # set only by set_initialization_strategy, so build() can tell it from a preset's initialization
+        self._user_init_strategy: InitializationStrategy | None = None
 
     # -------------------------------------------------------------------------
     #  Builder API
@@ -38,6 +40,7 @@ class MaxDivSolverBuilder(SolverBuilderBase):
     def set_initialization_strategy(self, init_strategy: InitializationStrategy) -> Self:
         """Set the initialization strategy for the first solver step."""
         self._solver_steps[0] = InitializationStep(init_strategy)
+        self._user_init_strategy = init_strategy
         return self
 
     def add_solver_step(self, solver_step: OptimizationStep) -> Self:
@@ -91,6 +94,7 @@ class MaxDivSolverBuilder(SolverBuilderBase):
             InitializationStep(init_strategy),
             *optim_steps,
         ]
+        self._user_init_strategy = None  # the preset replaced it
 
         # --- diversity tie-breakers -------------
         self.with_default_diversity_tie_breakers()
@@ -106,6 +110,9 @@ class MaxDivSolverBuilder(SolverBuilderBase):
 
         The store is not built here: `solve` builds it, so its cost is part of the solve and a
         large store is not held between building the solver and running it.
+
+        Raises:
+            ValueError: If `with_initial_selection` and `set_initialization_strategy` were both used.
         """
         factory, config = self.prepare_storage_and_config()
         return config.build_solver(stores_by_distance_provider=factory.create_stores_by_distance)
@@ -115,6 +122,9 @@ class MaxDivSolverBuilder(SolverBuilderBase):
 
         Keeping the factory and the config apart lets a caller build the distances once and
         assemble a solver per worker over them, which is how the parallel solver shares one store.
+
+        Raises:
+            ValueError: If `with_initial_selection` and `set_initialization_strategy` were both used.
         """
         factory, distance_storage = self._store_factory()
         return factory, SolverConfig(
@@ -122,10 +132,18 @@ class MaxDivSolverBuilder(SolverBuilderBase):
             k=self._k,
             diversity_objectives=self._determine_diversity_objectives(),
             constraints=self._constraints,
-            solver_steps=self._solver_steps,
+            solver_steps=self._resolve_solver_steps(),
             seed=self._seed,
             constraint_penalty=self._constraint_penalty,
             distance_storage=distance_storage,
             e2e_budget=self._resolve_e2e_budget(),
             intermediate_selections_enabled=self._intermediate_selections_enabled,
         )
+
+    def _resolve_solver_steps(self) -> list[SolverStep]:
+        """Return the solver steps to run, the first one replaced when an initialization overrides the default."""
+        init_strategy = self._resolve_init_strategy(self._user_init_strategy)
+        if init_strategy is None:
+            return self._solver_steps
+        else:
+            return [InitializationStep(init_strategy), *self._solver_steps[1:]]

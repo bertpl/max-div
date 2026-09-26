@@ -7,11 +7,12 @@ from max_div._core.solver._strategies._base import StrategyBase
 
 if TYPE_CHECKING:
     import numpy as np
-    from numpy.typing import NDArray
+    from numpy.typing import ArrayLike, NDArray
 
     from max_div._core.solver._solver_state import SolverState
 
     from ._init_farthest_point import InitFarthestPoint
+    from ._init_fixed_selection import InitFixedSelection
     from ._init_most_feasible import InitMostFeasible
     from ._init_random_selection import InitRandomSelection
 
@@ -95,6 +96,27 @@ class InitializationStrategy(StrategyBase, ABC):
         from ._init_farthest_point import InitFarthestPoint
 
         return InitFarthestPoint(top_k=top_k, candidate_pool_size=candidate_pool_size)
+
+    @classmethod
+    def fixed_selection(cls, indices: ArrayLike) -> InitFixedSelection:
+        """Create an initialization that starts from the given selection of exactly ``k`` items (a hot start).
+
+        The optimization steps start from exactly this selection.  It may violate the problem's
+        constraints; the optimization steps then repair them.  To start a whole solve from one
+        selection, use the builders' `with_initial_selection`; this factory is for giving one
+        worker of a parallel solve its own start, through `WorkerConfig(init_strategy=...)`.
+
+        Args:
+            indices: The item indices to start from, such as an earlier solution's `i_selected`.
+
+        Raises:
+            ValueError: If `indices` is not a 1-dimensional integer array, or holds a negative or
+                duplicate index.  A count other than k, or an index of n or more, raises when the
+                solve starts, since only then are n and k known.
+        """
+        from ._init_fixed_selection import InitFixedSelection
+
+        return InitFixedSelection(indices)
 
     @classmethod
     def most_feasible(cls, max_iter: int | None = None) -> InitMostFeasible:

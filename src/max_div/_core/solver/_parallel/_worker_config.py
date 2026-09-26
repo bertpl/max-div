@@ -14,9 +14,10 @@ class WorkerConfig:
     """A worker configuration holds one worker's search: its preset, and where it starts from.
 
     Args:
-        init_strategy: replaces the preset's own initialization; None keeps it.  Different
-            seeds already vary a random initialization, so this is for giving workers a
-            different kind of start, not merely a different one.
+        init_strategy: replaces the preset's own initialization; None keeps it, or takes the
+            builder's `with_initial_selection` when one is set.  Different seeds already vary a
+            random initialization, so this is for giving a worker a different kind of start,
+            such as its own selection through `InitializationStrategy.fixed_selection`.
     """
 
     preset: SolverPreset = SolverPreset.DEFAULT

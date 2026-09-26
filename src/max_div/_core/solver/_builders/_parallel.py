@@ -1,6 +1,7 @@
 """A parallel-solver builder configures and builds several solvers over one problem."""
 
 from collections.abc import Sequence
+from dataclasses import replace
 from typing import Self, cast
 
 from max_div._core._utils import deterministic_hash_int64
@@ -150,22 +151,28 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
         """Build the parallel solver: one solver configuration per worker over a store they will share.
 
         Raises:
-            ValueError: If no workers were configured.
+            ValueError: If no workers were configured, or `with_initial_selection` was combined with
+                a `WorkerConfig` that sets its own `init_strategy`.
         """
         if self._target_duration is None or not self._worker_configs:
             raise ValueError("A parallel solver needs workers; call with_workers or with_custom_worker_groups first.")
         warn_about_worker_count(len(self._worker_configs))
+        # the initial selection goes into each worker's configuration, so the worker summaries report it
+        worker_configs = [
+            replace(worker, init_strategy=self._resolve_init_strategy(worker.init_strategy))
+            for worker in self._worker_configs
+        ]
         factory, distance_storage = self._store_factory()
         e2e_budget = self._resolve_e2e_budget()
         batch_intervals = self._batch_interval_per_worker()
         return ParallelMaxDivSolver(
             store_factory=factory,
-            worker_configs=self._worker_configs,
+            worker_configs=worker_configs,
             solver_configs=[
                 self._solver_config_for(
                     index, worker, self._target_duration, distance_storage, batch_intervals[index], e2e_budget
                 )
-                for index, worker in enumerate(self._worker_configs)
+                for index, worker in enumerate(worker_configs)
             ],
             group_sizes=self._group_sizes,
             merge_schedule=self._merge_schedule(),

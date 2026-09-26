@@ -13,12 +13,14 @@ from max_div._core.solver._strategies import InitializationStrategy
     "factory_method",
     [
         partial(InitializationStrategy.farthest_point, top_k=4),
+        partial(InitializationStrategy.fixed_selection, [0, 1, 2]),
         partial(InitializationStrategy.most_feasible),
         partial(InitializationStrategy.random_selection, ignore_constraints=False),
         partial(InitializationStrategy.random_selection, ignore_constraints=True),
     ],
     ids=[
         "farthest_point",
+        "fixed_selection",
         "most_feasible",
         "random_selection",
         "random_selection(uncon)",

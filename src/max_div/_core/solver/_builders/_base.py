@@ -7,10 +7,15 @@ of them.
 Distance storage is here for a different reason: workers read one buffer, so per-worker storage
 could not be honored at all.
 
+The initial selection is here because both builders apply it the same way: it replaces the
+initialization of the single solver, or of every worker.
+
 A subclass adds the search: which strategies run, and for how long.
 """
 
 from typing import TYPE_CHECKING, Self
+
+from numpy.typing import ArrayLike
 
 from max_div._core.metrics import (
     DiversityMetric,
@@ -27,9 +32,11 @@ from max_div._core.solver._distance_storage import (
 )
 from max_div._core.solver._diversity_contribution import DiversityObjectiveBindings
 from max_div._core.solver._duration import E2eBudget, TargetDuration, TargetTimeDuration
+from max_div._core.solver._strategies import InitializationStrategy
 
 if TYPE_CHECKING:
     from max_div._core.constraints import Constraint
+    from max_div._core.solver._strategies._initialization._init_fixed_selection import InitFixedSelection
 
 
 class SolverBuilderBase:
@@ -57,6 +64,7 @@ class SolverBuilderBase:
         self._e2e_enabled: bool = False
         self._target_duration: TargetDuration | None = None
         self._intermediate_selections_enabled: bool = False
+        self._initial_selection_strategy: InitFixedSelection | None = None
 
     # -------------------------------------------------------------------------
     #  Shared builder API
@@ -122,6 +130,26 @@ class SolverBuilderBase:
         self._intermediate_selections_enabled = enabled
         return self
 
+    def with_initial_selection(self, indices: ArrayLike) -> Self:
+        """Start the solve from the given selection of exactly k items (a hot start).
+
+        The optimization steps start from exactly this selection, such as an earlier solution's
+        `i_selected`.  It may violate the problem's constraints; the optimization steps then
+        repair them.  It replaces a preset's initialization whatever the call order.  In a
+        parallel solve every worker starts from it, so the workers differ only through their seeds.
+
+        `build()` raises `ValueError` when an initialization strategy is also set explicitly, by
+        `set_initialization_strategy` or a `WorkerConfig`'s `init_strategy`: the solve would
+        have 2 starting points.
+
+        Raises:
+            ValueError: If `indices` is not k distinct integers in 0..n-1.
+        """
+        init_strategy = InitializationStrategy.fixed_selection(indices)
+        init_strategy.check_fits(self._n, self._k)
+        self._initial_selection_strategy = init_strategy
+        return self
+
     # -------------------------------------------------------------------------
     #  Resolution
     # -------------------------------------------------------------------------
@@ -140,6 +168,28 @@ class SolverBuilderBase:
                 "not all solver phases can be expressed in iteration counts."
             )
         return E2eBudget(budget_sec=self._target_duration.value())
+
+    def _resolve_init_strategy(
+        self, user_init_strategy: InitializationStrategy | None
+    ) -> InitializationStrategy | None:
+        """Return the initialization that replaces a solver's default: the initial selection, the user's, or None.
+
+        Args:
+            user_init_strategy: the initialization strategy the user set explicitly for this
+                solver, or None.
+
+        Raises:
+            ValueError: If both an initial selection and `user_init_strategy` are given.
+        """
+        if self._initial_selection_strategy is None:
+            return user_init_strategy
+        elif user_init_strategy is not None:
+            raise ValueError(
+                "with_initial_selection conflicts with an explicitly set initialization strategy "
+                "(set_initialization_strategy or a WorkerConfig's init_strategy); keep one starting point."
+            )
+        else:
+            return self._initial_selection_strategy
 
     def _store_factory(self) -> tuple[DistanceStoreFactory, DistanceStorageTypes]:
         """Return the store factory and each store's resolved (distance, storage type)."""
