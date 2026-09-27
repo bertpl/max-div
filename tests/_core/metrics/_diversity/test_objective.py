@@ -60,7 +60,7 @@ def test_a_hybrid_needs_one_weight_per_term() -> None:
 
     # --- act / assert -----------------
     with pytest.raises(ValueError, match="one weight per term; got 3 weights for 2 terms"):
-        DiversityObjectiveHybrid(terms, GeometricMeanAggregation.with_equal_weights(3))
+        DiversityObjectiveHybrid(terms, GeometricMeanAggregation.with_unit_weights(3))
 
 
 # =================================================================================================
@@ -371,7 +371,7 @@ def test_a_hybrids_per_item_contribution_aggregates_its_terms_arrays_elementwise
         (
             DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L1),
             DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L2),
-            DiversityObjectiveSimple(DiversityMetric.GEOMEAN_SEPARATION, L1),  # repeats the L1 spec
+            DiversityObjectiveSimple(DiversityMetric.GEOMEAN_SEPARATION, L1),  # this term repeats the L1 spec
         ),
         aggregation,
     )

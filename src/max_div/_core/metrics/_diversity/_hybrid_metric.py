@@ -1,9 +1,10 @@
-"""`HybridDiversityMetric` is the public form of a hybrid: several diversity terms combined by one weighted aggregation.
+"""`HybridDiversityMetric` is the public form of a hybrid diversity metric: terms under one weighted aggregation.
 
 A term pairs a diversity metric with the distance metric it reads (`DiversityTerm`, obtained
 through `DiversityMetric.over`); a bare `DiversityMetric` given as a term reads the problem's own
 distance. `HybridDiversityMetric` holds the terms and their aggregation, which carries one weight per
-term. Both are immutable descriptions; the problem turns them into the solver's objective.
+term. `DiversityTerm` and `HybridDiversityMetric` are immutable descriptions; the problem turns them into the
+solver's objective.
 """
 
 from __future__ import annotations
@@ -56,7 +57,7 @@ class HybridDiversityMetric:
     Create instances via `geomean_of` and `mean_of`.
 
     Each term carries a weight, 1 unless given, whose meaning depends on the aggregation: an exponent
-    in the geometric mean, a weight in the arithmetic mean.
+    on the term's value in the geometric mean, a multiplier of the term's value in the arithmetic mean.
 
     A hybrid needs at least 2 terms: a one-term hybrid is the bare metric, and asking for one is taken
     as a mistake. A term may repeat, which counts it once more in the mean.
@@ -97,7 +98,8 @@ class HybridDiversityMetric:
         """Return the weighted geometric mean of the terms' diversity values.
 
         The geometric mean is zero as soon as one term is zero, so every term must be spread out
-        for the selection to score. A term's weight is its exponent: the result is
+        for the selection to score. Rescaling a term by a constant does not change which selection
+        scores highest. A term's weight is its exponent: the result is
         `(prod_t value_t ** weight_t) ** (1 / sum(weights))`, the plain geometric mean when every
         weight is equal.
 
@@ -109,7 +111,7 @@ class HybridDiversityMetric:
             ValueError: If fewer than 2 terms are given, or a weight is missing, extra, or not a
                 positive, finite number.
         """
-        return cls._from_aggregation_type(GeometricMeanAggregation, terms, weights)
+        return cls(terms, GeometricMeanAggregation.from_weights(weights, len(terms)))
 
     @classmethod
     def mean_of(
@@ -118,8 +120,9 @@ class HybridDiversityMetric:
         """Return the weighted arithmetic mean of the terms' diversity values.
 
         A zero term only lowers the arithmetic mean, so a selection can trade a poor spread on one
-        term for a better one on another. The result is `sum_t weight_t * value_t / sum(weights)`,
-        the plain arithmetic mean when every weight is equal.
+        term for a better one on another. Each term enters the mean at its own scale, so a term over a
+        larger distance counts for more unless its weight compensates. The result is
+        `sum_t weight_t * value_t / sum(weights)`, the plain arithmetic mean when every weight is equal.
 
         Args:
             terms: the diversity terms, each a `DiversityMetric` or a `DiversityMetric.over(...)`.
@@ -129,21 +132,7 @@ class HybridDiversityMetric:
             ValueError: If fewer than 2 terms are given, or a weight is missing, extra, or not a
                 positive, finite number.
         """
-        return cls._from_aggregation_type(ArithmeticMeanAggregation, terms, weights)
-
-    @classmethod
-    def _from_aggregation_type(
-        cls,
-        aggregation_type: type[HybridAggregation],
-        terms: tuple[DiversityTerm | DiversityMetric, ...],
-        weights: Sequence[float] | None,
-    ) -> HybridDiversityMetric:
-        """Return the hybrid of `terms` under `aggregation_type`, weighting every term 1 when `weights` is `None`."""
-        if weights is None:
-            aggregation = aggregation_type.with_equal_weights(len(terms))
-        else:
-            aggregation = aggregation_type(tuple(weights))
-        return cls(terms, aggregation)
+        return cls(terms, ArithmeticMeanAggregation.from_weights(weights, len(terms)))
 
     # --------------------------------------------------------------------------
     #  Properties
@@ -167,8 +156,7 @@ class HybridDiversityMetric:
     def label(self) -> str:
         """Return a short label, e.g. `geomean(GEOMEAN_SEPARATION, MIN_SEPARATION over axis 0)`.
 
-        When any weight differs from 1, all weights follow the terms, each to 4 significant digits:
-        `geomean(...; weights 2, 1)`.
+        When any weight differs from 1, all weights follow the terms: `geomean(...; weights 2, 1)`.
         """
         return self._to_objective().label
 
@@ -200,5 +188,5 @@ class HybridDiversityMetric:
         term_reprs = ", ".join(
             f"DiversityMetric.{term.name}" if isinstance(term, DiversityMetric) else repr(term) for term in self._terms
         )
-        weights = f", weights={self._aggregation.weights!r}" if self._aggregation.has_non_unit_weights else ""
-        return f"HybridDiversityMetric.{self._aggregation.name}_of({term_reprs}{weights})"
+        weights_suffix = f", weights={self._aggregation.weights!r}" if self._aggregation.has_non_unit_weights else ""
+        return f"HybridDiversityMetric.{self._aggregation.name}_of({term_reprs}{weights_suffix})"

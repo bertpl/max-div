@@ -142,7 +142,7 @@ class DiversityObjective(ABC):
                 tie_breakers.append(DiversityObjectiveSimple(metric, distance_metrics[0]))
             else:
                 terms = tuple(DiversityObjectiveSimple(metric, distance_metric) for distance_metric in distance_metrics)
-                tie_breakers.append(DiversityObjectiveHybrid(terms, aggregation_type.with_equal_weights(len(terms))))
+                tie_breakers.append(DiversityObjectiveHybrid(terms, aggregation_type.with_unit_weights(len(terms))))
         return tie_breakers
 
     @cached_property
@@ -202,8 +202,8 @@ class DiversityObjectiveHybrid(DiversityObjective):
     """A hybrid objective combines several simple objectives (its terms) by a weighted aggregation, one weight per term.
 
     Terms are simple objectives only, so each term reads exactly one of the arrays passed to
-    `compute`. Its per-item contribution is its aggregation over one row per item, and its score is
-    the same aggregation over the single row of term scores.
+    `compute`. A hybrid's per-item contributions are its aggregation applied to each item's row of term
+    contributions, and its score is the same aggregation applied to the single row of term scores.
     """
 
     terms: tuple[DiversityObjectiveSimple, ...]
@@ -211,10 +211,7 @@ class DiversityObjectiveHybrid(DiversityObjective):
 
     @property
     def label(self) -> str:
-        """Return e.g. `geomean(MIN_SEPARATION over L2, MIN_SEPARATION over axis 0)`.
-
-        When any weight differs from 1, all weights follow the terms.
-        """
+        """Return e.g. `geomean(MIN_SEPARATION over L2, MIN_SEPARATION over axis 0)`."""
         return self.aggregation.format_label([term.label for term in self.terms])
 
     def __post_init__(self) -> None:

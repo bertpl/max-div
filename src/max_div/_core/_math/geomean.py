@@ -56,7 +56,8 @@ def weighted_geomean_per_row_f32(
 ) -> None:
     """Write the weighted geometric mean of each row of `rows` into `out`: each entry raised to its column's weight.
 
-    The mean of row i is (prod_j rows[i, j] ** weights[j]) ** (1 / sum(weights)).
+    The mean of row i is (prod_j rows[i, j] ** weights[j]) ** (1 / sum(weights)). A zero entry makes
+    its row's mean zero, a +inf entry makes it +inf, and a row holding both gives nan.
 
     With every weight 1, each entry of `out` is bit for bit the `geomean_f32` of its row: the log sum
     accumulates in float32 in the same order, and the division by the weight sum runs in the same

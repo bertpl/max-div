@@ -4,11 +4,9 @@ What a weight means depends on the aggregation, so each aggregation holds its ow
 s_t is term t's value and w_t its weight:
 
 - `GeometricMeanAggregation` — a weight is its term's exponent: (prod_t s_t ** w_t) ** (1 / sum(w)).
-- `ArithmeticMeanAggregation` — a weight is its term's weight in the mean: sum_t w_t * s_t / sum(w).
+- `ArithmeticMeanAggregation` — a weight multiplies its term's value: sum_t w_t * s_t / sum(w).
 
 Both normalize by the weight sum, so equal weights give the plain mean.
-
-An aggregation turns each row of a matrix with one column per term into one value.
 """
 
 from __future__ import annotations
@@ -36,15 +34,16 @@ if TYPE_CHECKING:
 # =================================================================================================
 @dataclass(frozen=True)
 class HybridAggregation(ABC):
-    """A hybrid aggregation combines a hybrid objective's term values into one, with one positive weight per term."""
+    """A hybrid aggregation combines a hybrid objective's term values into one value, with one weight per term."""
 
-    # `name` is the aggregation's short name: the label's prefix, and the public factory's name without `_of`.
+    # `name` is the aggregation's short name: it starts the hybrid's label (`geomean(...)`), and appending
+    # `_of` gives the public factory method (`geomean_of`).
     name: ClassVar[str]
 
     weights: tuple[float, ...]
 
     def __post_init__(self) -> None:
-        """Store the weights as plain floats, so `repr` shows them alike whatever numeric type was given.
+        """Store the weights as plain floats, so `repr` shows an int `2` and a numpy `2` both as `2.0`.
 
         Raises:
             ValueError: If a weight is not a positive, finite number; a bool is rejected although it is a
@@ -62,9 +61,17 @@ class HybridAggregation(ABC):
         object.__setattr__(self, "weights", tuple(float(weight) for weight in self.weights))
 
     @classmethod
-    def with_equal_weights(cls, n_terms: int) -> Self:
+    def with_unit_weights(cls, n_terms: int) -> Self:
         """Return this aggregation with a weight of 1 for each of `n_terms` terms."""
         return cls((1.0,) * n_terms)
+
+    @classmethod
+    def from_weights(cls, weights: Sequence[float] | None, n_terms: int) -> Self:
+        """Return this aggregation with `weights`, or with a weight of 1 per term when `weights` is `None`."""
+        if weights is None:
+            return cls.with_unit_weights(n_terms)
+        else:
+            return cls(tuple(weights))
 
     # --------------------------------------------------------------------------
     #  Properties
@@ -76,7 +83,7 @@ class HybridAggregation(ABC):
 
     @cached_property
     def weights_f32(self) -> NDArray[np.float32]:
-        """Return the weights as a float32 array, the dtype that the per-row mean functions take."""
+        """Return the weights as a float32 array, the input dtype of the per-row mean functions."""
         return np.array(self.weights, dtype=np.float32)
 
     # --------------------------------------------------------------------------
@@ -99,16 +106,16 @@ class HybridAggregation(ABC):
 
         Each weight is shown to 4 significant digits.
         """
-        weights = (
+        weights_suffix = (
             f"; weights {', '.join(f'{weight:.4g}' for weight in self.weights)}" if self.has_non_unit_weights else ""
         )
-        return f"{self.name}({', '.join(term_labels)}{weights})"
+        return f"{self.name}({', '.join(term_labels)}{weights_suffix})"
 
     # --------------------------------------------------------------------------
-    #  Combination
+    #  Aggregation
     # --------------------------------------------------------------------------
     def aggregate_rows(self, rows: NDArray[np.float32]) -> NDArray[np.float32]:
-        """Return the combination of each row of `rows`, as a fresh float32 array.
+        """Return the aggregate of each row of `rows`, as a fresh float32 array.
 
         Args:
             rows: a C-contiguous float32 (n_rows, n_terms) array, one column per term in term order.
@@ -118,7 +125,7 @@ class HybridAggregation(ABC):
         return aggregated
 
     def aggregate_scores(self, term_scores: NDArray[np.float32]) -> float:
-        """Return the combination of `term_scores`, a contiguous float32 array of the terms' scores in term order.
+        """Return the aggregate of `term_scores`, a contiguous float32 array of the terms' scores in term order.
 
         This is `aggregate_rows` over the single row of scores, so a hybrid's score and its per-item
         contributions combine their terms by the same arithmetic.
@@ -127,7 +134,7 @@ class HybridAggregation(ABC):
 
     @abstractmethod
     def _aggregate_rows_into(self, rows: NDArray[np.float32], out: NDArray[np.float32]) -> None:
-        """Write the combination of each row of `rows` into `out`, which has one entry per row."""
+        """Write the aggregate of each row of `rows` into `out`, which has one entry per row."""
 
 
 # =================================================================================================

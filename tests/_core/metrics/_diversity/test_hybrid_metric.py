@@ -165,13 +165,13 @@ def test_hybrids_compare_and_hash_by_terms_aggregation_and_weights() -> None:
     """Hybrids are equal and hash alike when their terms, aggregation and weights are equal, int or float."""
     # --- arrange ----------------------
     geomean = _two_term_hybrid(HybridDiversityMetric.geomean_of)
-    geomean_with_equal_weights = _two_term_hybrid(HybridDiversityMetric.geomean_of, weights=(1, 1))
+    geomean_with_unit_weights = _two_term_hybrid(HybridDiversityMetric.geomean_of, weights=(1, 1))
     mean = _two_term_hybrid(HybridDiversityMetric.mean_of)
     weighted = _two_term_hybrid(HybridDiversityMetric.geomean_of, weights=(2, 1))
 
     # --- assert -----------------------
-    assert geomean == geomean_with_equal_weights
-    assert hash(geomean) == hash(geomean_with_equal_weights)
+    assert geomean == geomean_with_unit_weights
+    assert hash(geomean) == hash(geomean_with_unit_weights)
     assert geomean != mean
     assert geomean != weighted
     assert geomean != DiversityMetric.MIN_SEPARATION

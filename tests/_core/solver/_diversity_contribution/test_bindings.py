@@ -43,7 +43,7 @@ L2 = DistanceMetric.l2_euclidean()
                 hybrid_objective(
                     DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L2),
                     DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L1),
-                    DiversityObjectiveSimple(DiversityMetric.GEOMEAN_SEPARATION, L2),  # repeats the L2 spec
+                    DiversityObjectiveSimple(DiversityMetric.GEOMEAN_SEPARATION, L2),  # this term repeats the L2 spec
                 ),
                 hybrid_objective(
                     DiversityObjectiveSimple(DiversityMetric.NON_ZERO_SEPARATION_FRAC, L1),

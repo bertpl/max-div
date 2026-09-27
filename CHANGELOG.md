@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
-- `HybridDiversityMetric.geomean_of` and `mean_of` take a `weights` argument with one weight per term: in `geomean_of` each weight is its term's exponent, in `mean_of` its term's weight in the mean
+- `HybridDiversityMetric.geomean_of` and `mean_of` take a `weights` argument with one weight per term: in `geomean_of` each weight is its term's exponent, in `mean_of` each weight multiplies its term's value
 
 ### Changed
 

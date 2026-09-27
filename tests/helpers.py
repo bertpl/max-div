@@ -37,4 +37,4 @@ def hybrid_objective(
     *terms: DiversityObjectiveSimple, aggregation_type: type[HybridAggregation] = GeometricMeanAggregation
 ) -> DiversityObjectiveHybrid:
     """Build a `DiversityObjectiveHybrid` from simple objectives at equal weights, geometric-mean by default."""
-    return DiversityObjectiveHybrid(terms, aggregation_type.with_equal_weights(len(terms)))
+    return DiversityObjectiveHybrid(terms, aggregation_type.with_unit_weights(len(terms)))

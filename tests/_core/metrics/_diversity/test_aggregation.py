@@ -14,10 +14,10 @@ def _random_rows(n_rows: int, n_terms: int) -> np.ndarray:
 #  Weights
 # =================================================================================================
 @pytest.mark.parametrize("aggregation_type", [GeometricMeanAggregation, ArithmeticMeanAggregation])
-def test_with_equal_weights_weights_every_term_1(aggregation_type) -> None:
-    """An aggregation built with equal weights holds a weight of 1 per term and reports itself unweighted."""
+def test_with_unit_weights_weights_every_term_1(aggregation_type) -> None:
+    """An aggregation built with unit weights holds a weight of 1 per term and has `has_non_unit_weights` False."""
     # --- act --------------------------
-    aggregation = aggregation_type.with_equal_weights(3)
+    aggregation = aggregation_type.with_unit_weights(3)
 
     # --- assert -----------------------
     assert aggregation.weights == (1.0, 1.0, 1.0)
@@ -52,7 +52,7 @@ def test_a_weight_that_is_not_a_positive_finite_number_is_rejected(weight) -> No
 def test_validate_term_count_rejects_a_weight_count_that_differs() -> None:
     """`validate_term_count` accepts the aggregation's own term count and rejects any other."""
     # --- arrange ----------------------
-    aggregation = GeometricMeanAggregation.with_equal_weights(2)
+    aggregation = GeometricMeanAggregation.with_unit_weights(2)
 
     # --- act / assert -----------------
     aggregation.validate_term_count(2)
@@ -89,7 +89,7 @@ def test_an_aggregation_at_equal_weights_is_bit_for_bit_the_unweighted_mean(aggr
     """At equal weights both the row combination and the score are exactly the unweighted mean of the row."""
     # --- arrange ----------------------
     rows = _random_rows(1000, 3)
-    aggregation = aggregation_type.with_equal_weights(3)
+    aggregation = aggregation_type.with_unit_weights(3)
 
     # --- act --------------------------
     aggregated_rows = aggregation.aggregate_rows(rows)
