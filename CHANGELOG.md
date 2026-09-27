@@ -5,20 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
-
-### Added
-
-### Changed
-
-### Deprecated
-
-### Removed
+## 0.18.4 (2026-09-27)
 
 ### Fixed
 - A solve's checkpoint times and `duration` now measure real time since the solve started, including the solver's own work before and between steps. With every worker on real time, a parallel solve keeps its workers' checkpoints in the order they happened. `duration` can now exceed the sum of `step_durations`
-
-### Security
 
 ## 0.18.3 (2026-09-26)
 
