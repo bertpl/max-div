@@ -199,10 +199,11 @@ class DiversityObjectiveSimple(DiversityObjective):
 
 @dataclass(frozen=True)
 class DiversityObjectiveHybrid(DiversityObjective):
-    """Several simple objectives (its terms) combined by a weighted aggregation, one weight per term.
+    """A hybrid objective combines several simple objectives (its terms) by a weighted aggregation, one weight per term.
 
     Terms are simple objectives only, so each term reads exactly one of the arrays passed to
-    `compute`.
+    `compute`. Its per-item contribution is its aggregation over one row per item, and its score is
+    the same aggregation over the single row of term scores.
     """
 
     terms: tuple[DiversityObjectiveSimple, ...]
@@ -210,20 +211,27 @@ class DiversityObjectiveHybrid(DiversityObjective):
 
     @property
     def label(self) -> str:
-        """Return e.g. `geomean(MIN_SEPARATION over L2, MIN_SEPARATION over axis 0)`, with any weights last."""
+        """Return e.g. `geomean(MIN_SEPARATION over L2, MIN_SEPARATION over axis 0)`.
+
+        When any weight differs from 1, all weights follow the terms.
+        """
         return self.aggregation.format_label([term.label for term in self.terms])
 
     def __post_init__(self) -> None:
-        """Reject fewer than two terms, any term that is not a simple objective, and a weight count that differs.
+        """Validate the terms, and the aggregation's weight count against them.
 
         A one-term hybrid is a `DiversityObjectiveSimple`.
+
+        Raises:
+            ValueError: If fewer than 2 terms are given, or the weight count differs from the term count.
+            TypeError: If a term is not a simple objective.
         """
         if len(self.terms) < 2:
             raise ValueError(f"A hybrid objective needs at least two terms; got {len(self.terms)}.")
         for term in self.terms:
             if not isinstance(term, DiversityObjectiveSimple):
                 raise TypeError(f"A hybrid objective's terms must be simple objectives; got {type(term).__name__}.")
-        self.aggregation.check_term_count(len(self.terms))
+        self.aggregation.validate_term_count(len(self.terms))
 
     def compute(self, contributions: Sequence[NDArray[np.float32]]) -> float:
         """Return the aggregation of the terms' diversity scores, each term reading its own array."""

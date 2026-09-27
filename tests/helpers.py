@@ -36,5 +36,5 @@ def _first_with_prefix(names: list[str], prefix: str) -> str:
 def hybrid_objective(
     *terms: DiversityObjectiveSimple, aggregation_type: type[HybridAggregation] = GeometricMeanAggregation
 ) -> DiversityObjectiveHybrid:
-    """Build a `DiversityObjectiveHybrid` from loose terms at equal weights, geometric-mean by default."""
+    """Build a `DiversityObjectiveHybrid` from simple objectives at equal weights, geometric-mean by default."""
     return DiversityObjectiveHybrid(terms, aggregation_type.with_equal_weights(len(terms)))

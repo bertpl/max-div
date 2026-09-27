@@ -1,4 +1,4 @@
-"""Compute the geometric mean of a float32 vector, or the weighted one of each matrix row, as exp of the mean log.
+"""Compute the plain and the weighted geometric mean of float32 data, as the exponential of the mean log.
 
 Every function here requires at least one entry per reduced vector. `geomean_f32` and
 `weighted_geomean_per_row_f32` accept zero and +inf:
@@ -56,11 +56,16 @@ def weighted_geomean_per_row_f32(
 ) -> None:
     """Write the weighted geometric mean of each row of `rows` into `out`: each entry raised to its column's weight.
 
-    The mean of row i is (prod_j rows[i, j] ** weights[j]) ** (1 / sum(weights)). `rows` is a
-    C-contiguous (n_rows, n_cols) array with n_cols at least one, `weights` holds one positive weight
-    per column, and `out` has length n_rows. With every weight 1, each entry of `out` is bit for bit
-    the `geomean_f32` of its row: the log sum accumulates in float32 in the same order, and the
-    division by the weight sum runs in the precision of `geomean_f32`'s division by the entry count.
+    The mean of row i is (prod_j rows[i, j] ** weights[j]) ** (1 / sum(weights)).
+
+    With every weight 1, each entry of `out` is bit for bit the `geomean_f32` of its row: the log sum
+    accumulates in float32 in the same order, and the division by the weight sum runs in the same
+    precision as `geomean_f32`'s division by the entry count (float64 under numba).
+
+    Args:
+        rows: a C-contiguous (n_rows, n_cols) array with n_cols at least one.
+        weights: one positive weight per column.
+        out: the output array, of length n_rows.
     """
     n_rows, n_cols = rows.shape
     weight_sum = 0.0  # float64

@@ -15,23 +15,24 @@ def _random_rows(n_rows: int, n_terms: int) -> np.ndarray:
 # =================================================================================================
 @pytest.mark.parametrize("aggregation_type", [GeometricMeanAggregation, ArithmeticMeanAggregation])
 def test_with_equal_weights_weights_every_term_1(aggregation_type) -> None:
+    """An aggregation built with equal weights holds a weight of 1 per term and reports itself unweighted."""
     # --- act --------------------------
     aggregation = aggregation_type.with_equal_weights(3)
 
     # --- assert -----------------------
     assert aggregation.weights == (1.0, 1.0, 1.0)
-    assert not aggregation.is_weighted
+    assert not aggregation.has_non_unit_weights
 
 
 def test_weights_are_stored_as_floats_and_compare_by_value() -> None:
-    """Integer and numpy weights become floats, so an aggregation equals the one given the same values as floats."""
+    """Integer and numpy weights are stored as plain floats, and aggregations compare by type and weights."""
     # --- act --------------------------
     aggregation = GeometricMeanAggregation((2, np.float32(0.5)))
 
     # --- assert -----------------------
     assert aggregation.weights == (2.0, 0.5)
     assert all(type(weight) is float for weight in aggregation.weights)
-    assert aggregation.is_weighted
+    assert aggregation.has_non_unit_weights
     assert aggregation == GeometricMeanAggregation((2.0, 0.5))
     assert aggregation != ArithmeticMeanAggregation((2.0, 0.5))
 
@@ -42,19 +43,21 @@ def test_weights_are_stored_as_floats_and_compare_by_value() -> None:
     ids=["zero", "negative", "infinite", "nan", "bool", "string", "none"],
 )
 def test_a_weight_that_is_not_a_positive_finite_number_is_rejected(weight) -> None:
+    """A zero, negative, infinite, NaN, bool or non-numeric weight raises ValueError."""
     # --- act / assert -----------------
     with pytest.raises(ValueError, match="positive, finite number"):
         ArithmeticMeanAggregation((1.0, weight))
 
 
-def test_check_term_count_rejects_a_weight_count_that_differs() -> None:
+def test_validate_term_count_rejects_a_weight_count_that_differs() -> None:
+    """`validate_term_count` accepts the aggregation's own term count and rejects any other."""
     # --- arrange ----------------------
     aggregation = GeometricMeanAggregation.with_equal_weights(2)
 
     # --- act / assert -----------------
-    aggregation.check_term_count(2)
+    aggregation.validate_term_count(2)
     with pytest.raises(ValueError, match="got 2 weights for 3 terms"):
-        aggregation.check_term_count(3)
+        aggregation.validate_term_count(3)
 
 
 @pytest.mark.parametrize(
@@ -66,41 +69,35 @@ def test_check_term_count_rejects_a_weight_count_that_differs() -> None:
     ],
 )
 def test_format_label_names_the_aggregation_and_the_weights_unless_all_1(aggregation, expected) -> None:
+    """The label is the aggregation's name over the terms, with the weights appended only when they are not all 1."""
     # --- act / assert -----------------
     assert aggregation.format_label(["A", "B"]) == expected
 
 
 # =================================================================================================
-#  Combination at equal weights: bit for bit today's unweighted means
+#  Combination at equal weights: bit for bit `geomean_f32` and numpy's float32 mean
 # =================================================================================================
-def test_the_geometric_mean_at_equal_weights_is_bit_for_bit_the_unweighted_one() -> None:
-    """At equal weights both the row combination and the score are exactly `geomean_f32` of the row."""
+@pytest.mark.parametrize(
+    "aggregation_type, row_mean",
+    [
+        (GeometricMeanAggregation, geomean_f32),
+        (ArithmeticMeanAggregation, lambda row: np.mean(row, dtype=np.float32)),
+    ],
+    ids=["geometric", "arithmetic"],
+)
+def test_an_aggregation_at_equal_weights_is_bit_for_bit_the_unweighted_mean(aggregation_type, row_mean) -> None:
+    """At equal weights both the row combination and the score are exactly the unweighted mean of the row."""
     # --- arrange ----------------------
     rows = _random_rows(1000, 3)
-    aggregation = GeometricMeanAggregation.with_equal_weights(3)
+    aggregation = aggregation_type.with_equal_weights(3)
 
     # --- act --------------------------
     aggregated_rows = aggregation.aggregate_rows(rows)
     score = aggregation.aggregate_scores(rows[0, :])
 
     # --- assert -----------------------
-    np.testing.assert_array_equal(aggregated_rows, [geomean_f32(rows[i, :]) for i in range(1000)])
-    assert score == float(geomean_f32(rows[0, :]))
-
-
-def test_the_arithmetic_mean_at_equal_weights_is_bit_for_bit_numpys_float32_mean() -> None:
-    """At equal weights the row combination is numpy's float32 row mean, and the score numpy's mean of the scores."""
-    # --- arrange ----------------------
-    rows = _random_rows(1000, 3)
-    aggregation = ArithmeticMeanAggregation.with_equal_weights(3)
-
-    # --- act --------------------------
-    aggregated_rows = aggregation.aggregate_rows(rows)
-    score = aggregation.aggregate_scores(rows[0, :])
-
-    # --- assert -----------------------
-    np.testing.assert_array_equal(aggregated_rows, rows.mean(axis=1, dtype=np.float32))
-    assert score == float(np.mean(rows[0, :]))
+    np.testing.assert_array_equal(aggregated_rows, [row_mean(rows[i, :]) for i in range(1000)])
+    assert score == float(row_mean(rows[0, :]))
 
 
 # =================================================================================================

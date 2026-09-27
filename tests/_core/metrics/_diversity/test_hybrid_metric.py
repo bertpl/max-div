@@ -126,6 +126,7 @@ def test_every_aggregation_has_a_factory_named_after_it() -> None:
 
 
 def test_a_hybrids_weights_are_one_per_term_and_1_unless_given() -> None:
+    """A hybrid holds one weight per term: 1 when none are given, and the given values as floats otherwise."""
     # --- act / assert -----------------
     assert _two_term_hybrid(HybridDiversityMetric.geomean_of).weights == (1.0, 1.0)
     assert _two_term_hybrid(HybridDiversityMetric.mean_of, weights=(2, 3)).weights == (2.0, 3.0)
@@ -161,15 +162,16 @@ def test_a_hybrid_does_not_nest() -> None:
 
 
 def test_hybrids_compare_and_hash_by_terms_aggregation_and_weights() -> None:
+    """Hybrids are equal and hash alike when their terms, aggregation and weights are equal, int or float."""
     # --- arrange ----------------------
     geomean = _two_term_hybrid(HybridDiversityMetric.geomean_of)
-    same = _two_term_hybrid(HybridDiversityMetric.geomean_of, weights=(1, 1))
+    geomean_with_equal_weights = _two_term_hybrid(HybridDiversityMetric.geomean_of, weights=(1, 1))
     mean = _two_term_hybrid(HybridDiversityMetric.mean_of)
     weighted = _two_term_hybrid(HybridDiversityMetric.geomean_of, weights=(2, 1))
 
     # --- assert -----------------------
-    assert geomean == same
-    assert hash(geomean) == hash(same)
+    assert geomean == geomean_with_equal_weights
+    assert hash(geomean) == hash(geomean_with_equal_weights)
     assert geomean != mean
     assert geomean != weighted
     assert geomean != DiversityMetric.MIN_SEPARATION
@@ -205,6 +207,7 @@ def test_hybrids_compare_and_hash_by_terms_aggregation_and_weights() -> None:
 def test_a_hybrids_label_and_repr_name_the_aggregation_the_terms_and_any_weights(
     factory, weights, expected_label, expected_repr
 ) -> None:
+    """A hybrid's label and repr name the aggregation and the terms, and the weights only when they are not all 1."""
     # --- arrange ----------------------
     hybrid = _two_term_hybrid(factory, weights=weights)
 
