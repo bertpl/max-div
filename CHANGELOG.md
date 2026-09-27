@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 ### Fixed
+- A solve's checkpoint times and `duration` now measure real time since the solve started, including the solver's own work before and between steps. With every worker on real time, a parallel solve keeps its workers' checkpoints in the order they happened. `duration` can now exceed the sum of `step_durations`
 
 ### Security
 

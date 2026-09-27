@@ -1,6 +1,6 @@
 """A worker group change records one dissolution of a worker group during a dynamic parallel solve."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 from max_div._core.solver._duration import Elapsed
 
@@ -30,3 +30,7 @@ class WorkerGroupChange:
     n_alive_groups_after: int
     slot_scores: dict[int, tuple[float, ...] | None]
     reassignments: dict[int, int]
+
+    def shifted_by(self, offset: Elapsed) -> "WorkerGroupChange":
+        """Return this change with `offset` added to its elapsed time and iterations."""
+        return replace(self, elapsed=offset + self.elapsed)

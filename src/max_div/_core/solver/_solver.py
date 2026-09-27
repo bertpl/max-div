@@ -1,5 +1,4 @@
 from collections.abc import Callable, Mapping
-from dataclasses import replace
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -16,6 +15,7 @@ from ._duration import E2eBudget, Elapsed
 from ._progress_reporting import ProgressReporter, Verbosity
 from ._score_checkpoint import ScoreCheckpoint
 from ._solution import MaxDivSolution
+from ._solve_timeline import SolveTimeline
 from ._solver_state import SolverState
 from ._solver_step import REPORTING_BATCH_SECONDS, SolverStep, SolverStepResult
 from ._step_identity import SolverStepIdentity
@@ -117,6 +117,7 @@ class MaxDivSolver:
             A MaxDivSolution object representing the solution found.
         """
         # --- Init -------------------------------
+        solve_timeline = SolveTimeline()  # created before any setup, so the solve-wide axis also counts the setup below
         e2e_budget = self._e2e_budget.started() if self._e2e_budget else None
         for step in self._solver_steps:
             step.set_e2e_budget(e2e_budget)
@@ -129,11 +130,10 @@ class MaxDivSolver:
         n_steps = len(self._solver_steps)
         progress_reporter.set_step_count(n_steps + 1)  # the solver state initialization is reported too, as step 0
         step_seeds = [deterministic_hash((self._seed, i)) for i in range(n_steps)]
-        # one result per step in step order; the solver state initialization is step 0
-        step_results: list[SolverStepResult] = []
 
         # --- solver state -----------------------
         init_step_identity = SolverStepIdentity(0, INIT_STEP_NAME)
+        solve_timeline.record_step_start()
         with Timer() as timer:
             progress_reporter.solver_step_started(init_step_identity)
             stores_by_distance = self._stores_by_distance_provider()
@@ -153,7 +153,7 @@ class MaxDivSolver:
                 state.add_many(np.arange(self._n, dtype=np.int32))
             progress_reporter.solver_step_finished(None, state)
 
-        step_results.append(
+        solve_timeline.record_step_result(
             SolverStepResult(
                 score_checkpoints=[
                     ScoreCheckpoint.new(
@@ -169,30 +169,27 @@ class MaxDivSolver:
 
         # --- forced full selection --------------
         if self._k == self._n:
-            return self._construct_final_solution(state, step_results)
+            return self._construct_final_solution(state, solve_timeline)
 
         # --- Main loop --------------------------
         for step_index, (step_seed, step) in enumerate(zip(step_seeds, self._solver_steps), start=1):
             step_identity = SolverStepIdentity(step_index, step.name())
             progress_reporter.solver_step_started(step_identity)
             step.set_seed(step_seed)
-            # the coordinator is told where the step starts on the solve-wide axis (the sum of every
-            # earlier step's elapsed); the step's own checkpoints are shifted the same way below
-            elapsed_before_step = sum(
-                (result.elapsed for result in step_results), Elapsed(t_elapsed_sec=0.0, n_iterations=0)
-            )
+            # `elapsed_before_step` is where the step starts on the solve-wide axis: the step passes it to the
+            # coordinator, and the solve timeline shifts the step's own checkpoints onto that axis by the same amount
+            elapsed_before_step = solve_timeline.record_step_start()
             try:
-                step_results.append(
-                    step.run(
-                        state,
-                        step_identity,
-                        progress_reporter,
-                        coordinator,
-                        self._batch_seconds,
-                        elapsed_before_step=elapsed_before_step,
-                        intermediate_selections_enabled=self._intermediate_selections_enabled,
-                    )
+                step_result = step.run(
+                    state,
+                    step_identity,
+                    progress_reporter,
+                    coordinator,
+                    self._batch_seconds,
+                    elapsed_before_step=elapsed_before_step,
+                    intermediate_selections_enabled=self._intermediate_selections_enabled,
                 )
+                solve_timeline.record_step_result(step_result)
             finally:
                 # release all Savepoint objects: they hold cyclic references via the SolverState, which
                 # cause out-of-memory when left in place; in a finally, so a step that raises still
@@ -200,27 +197,13 @@ class MaxDivSolver:
                 state.release_savepoints()
 
         # --- Construct result -------------------
-        return self._construct_final_solution(state, step_results)
+        return self._construct_final_solution(state, solve_timeline)
 
     # -------------------------------------------------------------------------
     #  Internal
     # -------------------------------------------------------------------------
-    def _construct_final_solution(self, state: SolverState, step_results: list[SolverStepResult]) -> MaxDivSolution:
-        """Construct the final MaxDivSolution from the state and the step results in step order."""
-        # --- collect step durations -------------
-        step_durations = [result.elapsed for result in step_results]
-
-        # --- aggregate score checkpoints --------
-        # each step counted elapsed from its own start; shift onto the solve-wide axis
-        score_checkpoints: list[ScoreCheckpoint] = []
-        elapsed_from_previous_steps = Elapsed(t_elapsed_sec=0.0, n_iterations=0)
-        for result in step_results:
-            for checkpoint in result.score_checkpoints:
-                score_checkpoints.append(replace(checkpoint, elapsed=elapsed_from_previous_steps + checkpoint.elapsed))
-
-            # Update elapsed_from_previous_steps to include this step's total elapsed time
-            elapsed_from_previous_steps += result.elapsed
-
+    def _construct_final_solution(self, state: SolverState, solve_timeline: SolveTimeline) -> MaxDivSolution:
+        """Construct the final MaxDivSolution from the state and the solve timeline."""
         # --- constraint satisfaction ------------
         n_constraints = state.m
         n_constraints_satisfied = _np_con_count_satisfied(state.con_values)
@@ -228,8 +211,8 @@ class MaxDivSolver:
         # --- construct solution -----------------
         return MaxDivSolution(
             i_selected=state.selected_index_array.copy(),
-            score_checkpoints=score_checkpoints,
-            step_durations=step_durations,
+            score_checkpoints=solve_timeline.checkpoints,
+            step_durations=solve_timeline.step_durations,
             diversity_objective_labels=[objective.label for objective in self._diversity_objectives],
             n_constraints=int(n_constraints),
             n_constraints_satisfied=n_constraints_satisfied,

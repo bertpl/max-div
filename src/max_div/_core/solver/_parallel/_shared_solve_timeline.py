@@ -11,7 +11,7 @@ consumers downstream read three things off it without shifting again: the worker
 ordered group history, and the best-known checkpoint trace.
 """
 
-from dataclasses import dataclass, replace
+from dataclasses import dataclass
 
 from max_div._core.solver._duration import Elapsed
 from max_div._core.solver._score_checkpoint import ScoreCheckpoint
@@ -24,10 +24,10 @@ from ._worker_group_change import WorkerGroupChange
 class SharedSolveTimeline:
     """A shared solve timeline holds every worker's events on one time axis whose zero is the earliest worker start.
 
-    - `checkpoints`: all workers' checkpoints, their `elapsed` fields rebased to the shared axis, in no
+    - `checkpoints`: all workers' checkpoints, their `elapsed` fields shifted onto the shared axis, in no
       significant order; `best_known_checkpoints` derives the best-known trace from them.
-    - `group_changes`: all workers' dissolutions, rebased and already in the order they happened, so the
-      field is the group history itself.
+    - `group_changes`: all workers' dissolutions, shifted onto the shared axis and already in the order
+      they happened, so the field is the group history itself.
     - `start_offsets`: maps a worker index to its start on the axis, zero for the earliest worker.
     """
 
@@ -44,13 +44,18 @@ class SharedSolveTimeline:
         """
         t_first_start = WorkerResult.earliest_start_time(results)
         start_offsets = {result.worker_index: result.t_start - t_first_start for result in results}
+        # a worker's iteration counts stay its own, so only the time moves onto the shared axis
+        start_offsets_elapsed = {
+            worker_index: Elapsed(t_elapsed_sec=offset_sec, n_iterations=0)
+            for worker_index, offset_sec in start_offsets.items()
+        }
         checkpoints = [
-            cls._shifted_onto_axis(checkpoint, start_offsets[result.worker_index])
+            checkpoint.shifted_by(start_offsets_elapsed[result.worker_index])
             for result in results
             for checkpoint in result.solution.score_checkpoints
         ]
         group_changes = [
-            cls._shifted_onto_axis(change, start_offsets[result.worker_index])
+            change.shifted_by(start_offsets_elapsed[result.worker_index])
             for result in results
             for change in result.worker_group_changes
         ]
@@ -83,16 +88,3 @@ class SharedSolveTimeline:
         if closing is not trace[-1]:
             trace.append(closing)
         return trace
-
-    # --------------------------------------------------------------------------
-    #  Helpers
-    # --------------------------------------------------------------------------
-    @staticmethod
-    def _shifted_onto_axis[T: (ScoreCheckpoint, WorkerGroupChange)](event: T, offset_sec: float) -> T:
-        """Move `event`'s `elapsed` field onto the shared axis by `offset_sec`, keeping its iteration count."""
-        return replace(
-            event,
-            elapsed=Elapsed(
-                t_elapsed_sec=offset_sec + event.elapsed.t_elapsed_sec, n_iterations=event.elapsed.n_iterations
-            ),
-        )
