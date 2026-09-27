@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+- `HybridDiversityMetric.geomean_of` and `mean_of` take per-term `weights`: exponents of the geometric mean, or weights of the arithmetic mean
 
 ### Changed
 

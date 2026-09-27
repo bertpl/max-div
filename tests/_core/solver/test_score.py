@@ -3,16 +3,16 @@ import pytest
 
 from max_div._core.constraints import Constraint
 from max_div._core.metrics import (
+    ArithmeticMeanAggregation,
     DistanceMetric,
     DiversityContributionFamily,
     DiversityMetric,
-    DiversityObjectiveHybrid,
     DiversityObjectiveSimple,
     DiversityTrackerSpec,
-    HybridObjectiveType,
 )
 from max_div._core.solver._diversity_contribution import DiversityObjectiveBindings
 from max_div._core.solver._score import Score, ScoreGenerator, _con_norm_constant
+from tests.helpers import hybrid_objective
 
 from .objectives import simple_objective, tie_breaker_objectives
 
@@ -439,12 +439,12 @@ _L1, _L2, _L3 = DistanceMetric.l1_manhattan(), DistanceMetric.l2_euclidean(), Di
         ),
         pytest.param(
             2,
-            DiversityObjectiveHybrid(
-                tuple(DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, metric) for metric in (_L1, _L2, _L3))
+            hybrid_objective(
+                *(DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, metric) for metric in (_L1, _L2, _L3))
             ),
-            DiversityObjectiveHybrid(
-                tuple(DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, metric) for metric in (_L1, _L3)),
-                HybridObjectiveType.ARITHMETIC_MEAN,
+            hybrid_objective(
+                *(DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, metric) for metric in (_L1, _L3)),
+                aggregation_type=ArithmeticMeanAggregation,
             ),
             tuple(DiversityTrackerSpec(metric, SEPARATION) for metric in (_L1, _L2, _L3)),
             [

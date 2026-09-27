@@ -5,7 +5,6 @@ from max_div._core.metrics import (
     DistanceMetric,
     DiversityContributionFamily,
     DiversityMetric,
-    DiversityObjectiveHybrid,
     DiversityObjectiveSimple,
     DiversityTrackerSpec,
 )
@@ -16,6 +15,7 @@ from max_div._core.solver._diversity_contribution import (
     MeanDistanceTracker,
     SeparationTracker,
 )
+from tests.helpers import hybrid_objective
 
 SEPARATION = DiversityContributionFamily.SEPARATION
 MEAN_DISTANCE = DiversityContributionFamily.MEAN_DISTANCE
@@ -70,12 +70,10 @@ def test_source_for_several_specs_combines_the_trackers_at_the_positions(store: 
     # --- arrange ----------------------
     specs = (DiversityTrackerSpec(None, SEPARATION), DiversityTrackerSpec(None, MEAN_DISTANCE))
     trackers = DiversityContributionTrackers.for_specs(specs, {None: store})
-    objective = DiversityObjectiveHybrid(
-        (
-            DiversityObjectiveSimple(DiversityMetric.MEAN_PAIRWISE_DISTANCE),
-            DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION),
-            DiversityObjectiveSimple(DiversityMetric.GEOMEAN_SEPARATION),
-        )
+    objective = hybrid_objective(
+        DiversityObjectiveSimple(DiversityMetric.MEAN_PAIRWISE_DISTANCE),
+        DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION),
+        DiversityObjectiveSimple(DiversityMetric.GEOMEAN_SEPARATION),
     )
 
     # --- act --------------------------

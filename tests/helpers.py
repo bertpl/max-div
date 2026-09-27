@@ -3,7 +3,12 @@
 import numba
 
 from max_div._core.benchmark_problems import BenchmarkProblemFactory
-from max_div._core.metrics import DiversityObjectiveHybrid, DiversityObjectiveSimple, HybridObjectiveType
+from max_div._core.metrics import (
+    DiversityObjectiveHybrid,
+    DiversityObjectiveSimple,
+    GeometricMeanAggregation,
+    HybridAggregation,
+)
 
 
 def swept_benchmark_problems() -> list[str]:
@@ -29,7 +34,7 @@ def _first_with_prefix(names: list[str], prefix: str) -> str:
 
 
 def hybrid_objective(
-    *terms: DiversityObjectiveSimple, aggregation=HybridObjectiveType.GEOMETRIC_MEAN
+    *terms: DiversityObjectiveSimple, aggregation_type: type[HybridAggregation] = GeometricMeanAggregation
 ) -> DiversityObjectiveHybrid:
-    """Build a `DiversityObjectiveHybrid` from loose terms, geometric-mean by default."""
-    return DiversityObjectiveHybrid(terms, aggregation)
+    """Build a `DiversityObjectiveHybrid` from loose terms at equal weights, geometric-mean by default."""
+    return DiversityObjectiveHybrid(terms, aggregation_type.with_equal_weights(len(terms)))

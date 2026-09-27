@@ -9,6 +9,7 @@ from max_div._core.metrics import (
 )
 from max_div._core.metrics._distance import DistanceStore
 from max_div._core.solver._diversity_contribution import HybridPerItemContributionSource, SeparationTracker
+from tests.helpers import hybrid_objective
 
 from .helpers import selection_args
 
@@ -32,8 +33,8 @@ def term_trackers() -> tuple[SeparationTracker, SeparationTracker]:
 
 def _hybrid(*distance_metrics: DistanceMetric) -> DiversityObjectiveHybrid:
     """Return a geomean hybrid of min-separation terms, one per given distance metric."""
-    return DiversityObjectiveHybrid(
-        tuple(DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, metric) for metric in distance_metrics)
+    return hybrid_objective(
+        *(DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, metric) for metric in distance_metrics)
     )
 
 

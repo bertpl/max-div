@@ -1,22 +1,23 @@
 import pytest
 
 from max_div._core.metrics import (
+    ArithmeticMeanAggregation,
     DistanceMetric,
     DiversityMetric,
     DiversityObjectiveHybrid,
     DiversityObjectiveSimple,
     DiversityTerm,
+    GeometricMeanAggregation,
+    HybridAggregation,
     HybridDiversityMetric,
-    HybridObjectiveType,
 )
-from max_div._core.metrics._diversity._hybrid_metric import _AGGREGATION_LABELS
 
 _AXIS_0 = DistanceMetric.along_axis(0)
 
 
-def _two_term_hybrid(factory) -> HybridDiversityMetric:
+def _two_term_hybrid(factory, **kwargs) -> HybridDiversityMetric:
     """Return a hybrid built by `factory` from a bare min-separation term and a geomean term along axis 0."""
-    return factory(DiversityMetric.MIN_SEPARATION, DiversityMetric.GEOMEAN_SEPARATION.over(_AXIS_0))
+    return factory(DiversityMetric.MIN_SEPARATION, DiversityMetric.GEOMEAN_SEPARATION.over(_AXIS_0), **kwargs)
 
 
 # =================================================================================================
@@ -60,15 +61,18 @@ def test_a_terms_label_and_repr_name_both_metrics() -> None:
 #  HybridDiversityMetric
 # =================================================================================================
 @pytest.mark.parametrize(
-    "factory, aggregation",
+    "factory, weights, aggregation",
     [
-        (HybridDiversityMetric.geomean_of, HybridObjectiveType.GEOMETRIC_MEAN),
-        (HybridDiversityMetric.mean_of, HybridObjectiveType.ARITHMETIC_MEAN),
+        (HybridDiversityMetric.geomean_of, None, GeometricMeanAggregation((1.0, 1.0))),
+        (HybridDiversityMetric.mean_of, None, ArithmeticMeanAggregation((1.0, 1.0))),
+        (HybridDiversityMetric.geomean_of, (2, 0.5), GeometricMeanAggregation((2.0, 0.5))),
+        (HybridDiversityMetric.mean_of, [3.0, 1.0], ArithmeticMeanAggregation((3.0, 1.0))),
     ],
+    ids=["geomean", "mean", "weighted_geomean", "weighted_mean"],
 )
-def test_a_hybrid_resolves_to_a_hybrid_objective_with_its_aggregation(factory, aggregation) -> None:
+def test_a_hybrid_resolves_to_a_hybrid_objective_with_its_aggregation(factory, weights, aggregation) -> None:
     # --- arrange ----------------------
-    hybrid = _two_term_hybrid(factory)
+    hybrid = _two_term_hybrid(factory, weights=weights)
 
     # --- act --------------------------
     objective = hybrid._to_objective()
@@ -104,8 +108,42 @@ def test_a_repeated_term_counts_once_per_repeat() -> None:
     assert len(objective.terms) == 3
 
 
-def test_every_aggregation_type_has_a_label() -> None:
-    assert set(_AGGREGATION_LABELS) == set(HybridObjectiveType)
+def test_every_aggregation_has_a_factory_named_after_it() -> None:
+    """Each aggregation's `name` plus `_of` is the public factory that builds it, as `repr` assumes."""
+    # --- arrange ----------------------
+    aggregation_types = HybridAggregation.__subclasses__()
+
+    # --- act --------------------------
+    built = {
+        aggregation_type: type(
+            _two_term_hybrid(getattr(HybridDiversityMetric, f"{aggregation_type.name}_of"))._to_objective().aggregation
+        )
+        for aggregation_type in aggregation_types
+    }
+
+    # --- assert -----------------------
+    assert built == {aggregation_type: aggregation_type for aggregation_type in aggregation_types}
+
+
+def test_a_hybrids_weights_are_one_per_term_and_1_unless_given() -> None:
+    # --- act / assert -----------------
+    assert _two_term_hybrid(HybridDiversityMetric.geomean_of).weights == (1.0, 1.0)
+    assert _two_term_hybrid(HybridDiversityMetric.mean_of, weights=(2, 3)).weights == (2.0, 3.0)
+
+
+@pytest.mark.parametrize(
+    "weights, message",
+    [
+        pytest.param((1.0,), "got 1 weights for 2 terms", id="too_few"),
+        pytest.param((1.0, 1.0, 1.0), "got 3 weights for 2 terms", id="too_many"),
+        pytest.param((1.0, 0.0), "positive, finite number; got 0.0", id="not_positive"),
+    ],
+)
+def test_a_hybrid_rejects_weights_that_are_not_one_positive_finite_number_per_term(weights, message) -> None:
+    """The factory rejects a weight count that differs from the term count, and an invalid weight."""
+    # --- act / assert -----------------
+    with pytest.raises(ValueError, match=message):
+        _two_term_hybrid(HybridDiversityMetric.geomean_of, weights=weights)
 
 
 def test_a_hybrid_needs_at_least_two_terms() -> None:
@@ -122,39 +160,53 @@ def test_a_hybrid_does_not_nest() -> None:
         HybridDiversityMetric.mean_of(inner, DiversityMetric.MIN_SEPARATION)
 
 
-def test_hybrids_compare_and_hash_by_terms_and_aggregation() -> None:
+def test_hybrids_compare_and_hash_by_terms_aggregation_and_weights() -> None:
     # --- arrange ----------------------
     geomean = _two_term_hybrid(HybridDiversityMetric.geomean_of)
-    same = _two_term_hybrid(HybridDiversityMetric.geomean_of)
+    same = _two_term_hybrid(HybridDiversityMetric.geomean_of, weights=(1, 1))
     mean = _two_term_hybrid(HybridDiversityMetric.mean_of)
+    weighted = _two_term_hybrid(HybridDiversityMetric.geomean_of, weights=(2, 1))
 
     # --- assert -----------------------
     assert geomean == same
     assert hash(geomean) == hash(same)
     assert geomean != mean
+    assert geomean != weighted
     assert geomean != DiversityMetric.MIN_SEPARATION
 
 
 @pytest.mark.parametrize(
-    "factory, expected_label, expected_repr",
+    "factory, weights, expected_label, expected_repr",
     [
         (
             HybridDiversityMetric.geomean_of,
+            None,
             "geomean(MIN_SEPARATION, GEOMEAN_SEPARATION over axis 0)",
             "HybridDiversityMetric.geomean_of(DiversityMetric.MIN_SEPARATION, "
             "DiversityMetric.GEOMEAN_SEPARATION.over(DistanceMetric.along_axis(0)))",
         ),
         (
             HybridDiversityMetric.mean_of,
+            (1.0, 1.0),
             "mean(MIN_SEPARATION, GEOMEAN_SEPARATION over axis 0)",
             "HybridDiversityMetric.mean_of(DiversityMetric.MIN_SEPARATION, "
             "DiversityMetric.GEOMEAN_SEPARATION.over(DistanceMetric.along_axis(0)))",
         ),
+        (
+            HybridDiversityMetric.geomean_of,
+            (31.6227766, 1000),
+            "geomean(MIN_SEPARATION, GEOMEAN_SEPARATION over axis 0; weights 31.62, 1000)",
+            "HybridDiversityMetric.geomean_of(DiversityMetric.MIN_SEPARATION, "
+            "DiversityMetric.GEOMEAN_SEPARATION.over(DistanceMetric.along_axis(0)), weights=(31.6227766, 1000.0))",
+        ),
     ],
+    ids=["geomean", "mean_at_equal_weights", "weighted_geomean"],
 )
-def test_a_hybrids_label_and_repr_name_the_aggregation_and_the_terms(factory, expected_label, expected_repr) -> None:
+def test_a_hybrids_label_and_repr_name_the_aggregation_the_terms_and_any_weights(
+    factory, weights, expected_label, expected_repr
+) -> None:
     # --- arrange ----------------------
-    hybrid = _two_term_hybrid(factory)
+    hybrid = _two_term_hybrid(factory, weights=weights)
 
     # --- assert -----------------------
     assert hybrid.label == expected_label
