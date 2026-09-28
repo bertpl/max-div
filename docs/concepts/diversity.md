@@ -43,12 +43,13 @@ The distance metric determines how the distance between two vectors is measured.
 | `minkowski(p, root=True)` | $$d = \Big( \sum_i \lvert x_i - y_i \rvert^p \Big)^{1/p}$$ | The general family behind `l1_manhattan()` ($p=1$), `l2_euclidean()` ($p=2$) and `linf_chebyshev()` ($p=\infty$); any $p > 0$ is accepted, and those special values resolve to the dedicated metrics. |
 | `geometric_mean()` | $$d = \Big( \prod_i \lvert x_i - y_i \rvert \Big)^{1/d}$$ | The geometric mean of the per-dimension gaps, the $p \to 0$ limit of the power-mean family. A shared coordinate makes the distance zero, so a selection that keeps every pair apart under this metric is spread in every coordinate projection as well as in the full space -- the pair distance behind *maximum projection designs* (Joseph, Gul & Ba, 2015). |
 | `along_axis(axis)` | $$d = \lvert x_{\text{axis}} - y_{\text{axis}} \rvert$$ | The distance along one coordinate axis, every other coordinate ignored. A selection kept apart under it is spread along that single coordinate. |
+| `marginals_and_joint(joint_scale=1.0)` | $$d = \min\Big( \min_i \lvert a_i - b_i \rvert,\; s \, \lVert a - b \rVert_2^{\,d} \Big)$$ | For vectors $a$ and $b$ of dimension $d$, with $s$ = `joint_scale`: the smaller of the `l_minus_inf()` distance and the L2 distance raised to the power $d$. Under `MIN_SEPARATION` a selection is spread along every coordinate axis (its marginals) and in the full space (its joint distribution) at once. The 2 terms are comparable only for a population that fills the unit cube $[0,1]^d$, so scale the vectors into it first; in higher dimensions the joint term rarely sets the minimum, and `joint_scale` below 1 gives it more weight. A shared coordinate makes the distance zero. |
 
 - **Speed depends on `p`.** The values $p \in \{1, 2, \infty, 0.5, 0.25, 0.125\}$ compute with hardware arithmetic; every other $p$ pays a `pow` call per dimension, well over an order of magnitude more per term.
 - **`root=False` skips the outer $1/p$ root**, exactly as `l2s_euclidean_squared()` does for `l2_euclidean()` -- see that row above.
 - **For $0 < p < 1$ the `root=True` form violates the triangle inequality** and is not a strict metric, while the `root=False` form is one -- the solver never relies on the triangle inequality, so both are usable.
 - **`geometric_mean()` is computed through logarithms**, one per dimension with a single exponential at the end, so the product cannot underflow or overflow at any dimension count.
-- **Distinct points can be at distance zero under `geometric_mean()`, `l_minus_inf()` and `along_axis(axis)`**; the solver treats them as a coincident pair -- see the [scoring page](scoring.md#diversity-tie-breakers) for the tie-breaker that removes one of them.
+- **Distinct points can be at distance zero under `geometric_mean()`, `l_minus_inf()`, `along_axis(axis)` and `marginals_and_joint()`**; the solver treats them as a coincident pair -- see the [scoring page](scoring.md#diversity-tie-breakers) for the tie-breaker that removes one of them.
 
 Reference for the geometric-mean distance: Joseph, V. R., Gul, E. & Ba, S. (2015). *Maximum projection designs for computer experiments*. Biometrika 102(2), 371–380. [doi:10.1093/biomet/asv002](https://doi.org/10.1093/biomet/asv002).
 
@@ -184,6 +185,8 @@ objective = HybridDiversityMetric.min_of(
     weights=(1 / x_range, 1 / y_range),
 )
 ```
+
+A `min_of` over min-separation terms scores a selection exactly as min-separation over a single distance: the weighted minimum of the terms' distances. [`marginals_and_joint()`](#distance-metrics) is such a distance, for spread along every axis and in the full space at once, with no weights to choose.
 
 ### VI.D. Tie-breakers { #hybrid-tie-breakers }
 

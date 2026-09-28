@@ -15,6 +15,8 @@ NAMED_METRICS = (
     DistanceMetric.geometric_mean(),
     DistanceMetric.l_minus_inf(),
     DistanceMetric.along_axis(1),
+    DistanceMetric.marginals_and_joint(),
+    DistanceMetric.marginals_and_joint(joint_scale=0.25),
 )
 
 # MINKOWSKI_METRICS covers each Minkowski kind once: generic and specialized, rooted and not.

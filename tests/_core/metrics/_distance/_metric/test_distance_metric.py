@@ -1,10 +1,12 @@
 import math
+import pickle
 
 import numpy as np
 import pytest
 
 from max_div._core.metrics import DistanceMetric
 from max_div._core.metrics._distance._metric import NO_AXIS, NO_P
+from max_div._core.metrics._distance._metric._distance_metric import NO_JOINT_SCALE
 
 # Every metric with a dedicated factory method of its own.
 _FACTORY_METRICS = (
@@ -16,6 +18,7 @@ _FACTORY_METRICS = (
     DistanceMetric.geometric_mean(),
     DistanceMetric.l_minus_inf(),
     DistanceMetric.along_axis(0),
+    DistanceMetric.marginals_and_joint(),
 )
 
 
@@ -107,10 +110,10 @@ def test_kinds_without_an_exponent_store_no_p():
     assert DistanceMetric.minkowski(3).p == 3.0
 
 
-def test_a_metric_rebuilds_from_its_fields(metric: DistanceMetric):
-    """The (kind, p, axis) triple that a spec carries rebuilds the metric, for every kind."""
+def test_a_metric_survives_pickling(metric: DistanceMetric):
+    """A metric travels to a worker process pickled, inside a shared store spec, and arrives equal."""
     # --- act / assert -----------------
-    assert DistanceMetric(kind=metric.kind, p=metric.p, axis=metric.axis) == metric
+    assert pickle.loads(pickle.dumps(metric)) == metric  # noqa: S301 -- round-trip of our own object
 
 
 @pytest.mark.parametrize(
@@ -124,6 +127,8 @@ def test_a_metric_rebuilds_from_its_fields(metric: DistanceMetric):
         (DistanceMetric.geometric_mean(), "geomean"),
         (DistanceMetric.l_minus_inf(), "L-∞"),
         (DistanceMetric.along_axis(2), "axis 2"),
+        (DistanceMetric.marginals_and_joint(), "marginals+joint"),
+        (DistanceMetric.marginals_and_joint(joint_scale=0.5), "marginals+joint (joint scale 0.5)"),
         (DistanceMetric.minkowski(3), "L3"),
         (DistanceMetric.minkowski(3, root=False), "L3-powered"),
         (DistanceMetric.minkowski(0.5), "L0.5"),
@@ -169,3 +174,41 @@ def test_along_axis_rejects_anything_but_a_non_negative_integer(axis):
     # --- act / assert -----------------
     with pytest.raises(ValueError, match="non-negative integer axis"):
         DistanceMetric.along_axis(axis)
+
+
+# ==================================================================================================
+#  Marginals and joint
+# ==================================================================================================
+def test_marginals_and_joint_carries_its_joint_scale_and_nothing_else_does():
+    """The marginals-and-joint kind stores its joint scale, 1 by default; every other kind stores NO_JOINT_SCALE."""
+    # --- act / assert -----------------
+    assert DistanceMetric.marginals_and_joint().joint_scale == 1.0
+    assert DistanceMetric.marginals_and_joint(joint_scale=2).joint_scale == 2.0
+    assert DistanceMetric.marginals_and_joint(joint_scale=0.5) != DistanceMetric.marginals_and_joint()
+    assert all(
+        metric.joint_scale == NO_JOINT_SCALE
+        for metric in _FACTORY_METRICS
+        if metric.kind != DistanceMetric.marginals_and_joint().kind
+    )
+
+
+@pytest.mark.parametrize("joint_scale", [0.0, -1.0, math.inf, math.nan])
+def test_marginals_and_joint_rejects_a_joint_scale_that_is_not_positive_and_finite(joint_scale: float):
+    """The joint scale must be a positive, finite number."""
+    # --- act / assert -----------------
+    with pytest.raises(ValueError, match="positive, finite joint_scale"):
+        DistanceMetric.marginals_and_joint(joint_scale=joint_scale)
+
+
+@pytest.mark.parametrize(
+    "metric, expected",
+    [
+        (DistanceMetric.marginals_and_joint(joint_scale=0.25), 0.25),
+        (DistanceMetric.minkowski(3), 3.0),
+        (DistanceMetric.l2_euclidean(), NO_P),
+    ],
+)
+def test_pair_function_param_is_the_joint_scale_or_p(metric: DistanceMetric, expected: float):
+    """The compiled pair function reads the joint scale for marginals-and-joint and `p` for every other kind."""
+    # --- act / assert -----------------
+    assert metric.pair_function_param == expected
