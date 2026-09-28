@@ -33,8 +33,10 @@ def explorer():
 
 # The four items are chosen so that the distances disagree:
 # - item 0 shares its y with item 1 and its x with item 2, so those pairs sit at distance 0 under the
-#   x or y distance, and hence under the L-inf and geometric-mean distances;
+#   x or y distance, and hence under the L-inf, geometric-mean and marginals-and-joint distances;
 # - item 3 is nearest to item 2 under the geometric-mean distance (gaps 0.3 and 0.3) and under L2 alike;
+# - under the marginals-and-joint distance, item 3 is nearest to item 2 by the joint term, 0.3^2 + 0.3^2 = 0.18,
+#   below the smallest coordinate gap to any item;
 # - items 0 to 2 are L2-nearest to item 3;
 # - along x, items 0 and 2 share a value and item 3 ties between them at 0.3, so `argmin` picks the lower index, item 0.
 X = np.array([0.1, 0.9, 0.1, 0.4], dtype=np.float32)
@@ -47,7 +49,7 @@ Y = np.array([0.1, 0.1, 0.9, 0.6], dtype=np.float32)
 def test_nearest_neighbors_under_each_distance(explorer):
     """A shared coordinate gives distance 0 under the product-like distances; the L2 neighbors are other items."""
     # --- act --------------------------
-    neighbors = explorer.nearest_neighbors(X, Y, ("geomean", "linf", "l2", "x", "y"))
+    neighbors = explorer.nearest_neighbors(X, Y, ("geomean", "linf", "marginals_and_joint", "l2", "x", "y"))
 
     # --- assert -----------------------
     assert neighbors["geomean"][0].tolist() == [1, 0, 0, 2]
@@ -55,6 +57,8 @@ def test_nearest_neighbors_under_each_distance(explorer):
     assert neighbors["geomean"][1][3] == pytest.approx(0.3)
     assert neighbors["linf"][0].tolist() == [1, 0, 0, 2]
     assert neighbors["linf"][1][3] == pytest.approx(0.3)
+    assert neighbors["marginals_and_joint"][0].tolist() == [1, 0, 0, 2]
+    assert neighbors["marginals_and_joint"][1][3] == pytest.approx(0.18)
     assert neighbors["l2"][0].tolist() == [3, 3, 3, 2]
     assert neighbors["l2"][1][3] == pytest.approx(0.3 * np.sqrt(2))
     assert neighbors["x"][0].tolist() == [2, 3, 0, 0]
@@ -142,3 +146,20 @@ def test_band_edges_draw_one_line_per_edge_along_each_axis(explorer):
     # --- assert -----------------------
     assert len(re.findall(r'<line class="usx-band"', banded)) == 2
     assert "usx-band" not in plain
+
+
+def test_legend_widens_a_column_to_fit_its_longest_label(explorer):
+    """A long objective-distance label widens the left column, so it does not run into the right column."""
+    # --- act --------------------------
+    widths = {
+        key: float(
+            re.search(
+                r'<rect class="usx-legend" [^>]*width="([\d.]+)"', "".join(explorer.legend_svg(4, 4, (key,)))
+            ).group(1)
+        )
+        for key in ("l2", "marginals_and_joint")
+    }
+
+    # --- assert -----------------------
+    assert widths["l2"] == 250 + 190 + 8
+    assert widths["marginals_and_joint"] > widths["l2"]

@@ -33,7 +33,7 @@ function appendElement(layer, tag, attributes) {
 // Return the four branches of |x - cx| * |y - cy| = d^2 as SVG path strings in data units, sampled
 // log-spaced so the branches stay smooth near the asymptotes. A shared coordinate (d = 0) degenerates
 // the curve into the two axis-parallel lines through the item.
-function hyperbolaPaths(cx, cy, d, samples = 80) {
+function geomeanPaths(cx, cy, d, samples = 80) {
   const d2 = d * d;
   if (d2 <= 0) {
     return [`M${cx},${-FAR}L${cx},${FAR}`, `M${-FAR},${cy}L${FAR},${cy}`];
@@ -53,11 +53,54 @@ function hyperbolaPaths(cx, cy, d, samples = 80) {
   return paths;
 }
 
+// Return the L-inf level curve at value d around (cx, cy): the edges of the square of half-side d,
+// each extended outward, since min(|dx|, |dy|) = d holds on |dx| = d where |dy| >= d and on
+// |dy| = d where |dx| >= d.
+function lInfPaths(cx, cy, d) {
+  return [
+    `M${cx - d},${cy + d}L${cx - d},${FAR}`,
+    `M${cx + d},${cy + d}L${cx + d},${FAR}`,
+    `M${cx - d},${cy - d}L${cx - d},${-FAR}`,
+    `M${cx + d},${cy - d}L${cx + d},${-FAR}`,
+    `M${cx - d},${cy - d}L${-FAR},${cy - d}`,
+    `M${cx - d},${cy + d}L${-FAR},${cy + d}`,
+    `M${cx + d},${cy - d}L${FAR},${cy - d}`,
+    `M${cx + d},${cy + d}L${FAR},${cy + d}`,
+  ];
+}
+
+// Return the marginals-and-joint level curve at value d around (cx, cy), at joint scale 1 in 2
+// dimensions: min(min(|dx|, |dy|), dx^2 + dy^2) = d. It is the L-inf curve with the corner of each
+// quadrant cut by the circle of radius sqrt(d): the circle crosses the line |dx| = d at
+// |dy| = q = sqrt(d - d^2), and it cuts the corner only while q > d, which holds for every d < 1/2.
+function marginalsAndJointPaths(cx, cy, d, samples = 24) {
+  const q = Math.sqrt(Math.max(d - d * d, 0));
+  if (q <= d) return lInfPaths(cx, cy, d);
+  const radius = Math.sqrt(d);
+  const paths = [];
+  for (const sx of [-1, 1]) {
+    for (const sy of [-1, 1]) {
+      // each path runs along the half-line |dx| = d, then the arc from (d, q) to (q, d), then the half-line |dy| = d
+      const points = [`${cx + sx * d},${cy + sy * FAR}`];
+      const angleFrom = Math.atan2(q, d);
+      const angleTo = Math.atan2(d, q);
+      for (let t = 0; t <= samples; t++) {
+        const angle = angleFrom + ((angleTo - angleFrom) * t) / samples;
+        points.push(
+          `${(cx + sx * radius * Math.cos(angle)).toFixed(5)},${(cy + sy * radius * Math.sin(angle)).toFixed(5)}`,
+        );
+      }
+      points.push(`${cx + sx * FAR},${cy + sy * d}`);
+      paths.push("M" + points.join("L"));
+    }
+  }
+  return paths;
+}
+
 // Return the level curve of a distance at value d around (cx, cy) as SVG path strings in data units:
 // - L2: a circle;
 // - x or y: the two lines at that coordinate offset;
-// - L-inf: the edges of the square of half-side d, each extended outward, since min(|dx|, |dy|) = d
-//   holds on |dx| = d where |dy| >= d and on |dy| = d where |dx| >= d;
+// - L-inf and marginals-and-joint: see `lInfPaths` and `marginalsAndJointPaths`;
 // - geometric mean: the hyperbolas.
 function levelPaths(key, cx, cy, d) {
   switch (key) {
@@ -68,18 +111,11 @@ function levelPaths(key, cx, cy, d) {
     case "y":
       return [`M${-FAR},${cy - d}L${FAR},${cy - d}`, `M${-FAR},${cy + d}L${FAR},${cy + d}`];
     case "linf":
-      return [
-        `M${cx - d},${cy + d}L${cx - d},${FAR}`,
-        `M${cx + d},${cy + d}L${cx + d},${FAR}`,
-        `M${cx - d},${cy - d}L${cx - d},${-FAR}`,
-        `M${cx + d},${cy - d}L${cx + d},${-FAR}`,
-        `M${cx - d},${cy - d}L${-FAR},${cy - d}`,
-        `M${cx - d},${cy + d}L${-FAR},${cy + d}`,
-        `M${cx + d},${cy - d}L${FAR},${cy - d}`,
-        `M${cx + d},${cy + d}L${FAR},${cy + d}`,
-      ];
+      return lInfPaths(cx, cy, d);
+    case "marginals_and_joint":
+      return marginalsAndJointPaths(cx, cy, d);
     default:
-      return hyperbolaPaths(cx, cy, d);
+      return geomeanPaths(cx, cy, d);
   }
 }
 

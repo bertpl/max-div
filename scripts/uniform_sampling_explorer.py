@@ -15,6 +15,7 @@ for the rest.
 """
 
 import json
+import math
 from collections.abc import Callable
 from dataclasses import dataclass
 
@@ -42,6 +43,9 @@ RING_RADIUS_FACTOR = 1.7  # the ring radius is this many dot radii
 GLYPH_REACH_FACTOR = 0.7  # a stroke glyph reaches this far from the center, in ring radii
 CENTER_DOT_FACTOR = 0.3  # the central-dot glyph has this radius, in ring radii
 LEGEND_RING_RADIUS = 5.5
+# A legend column is at least as wide as its longest label, estimated at this many pixels per character of the
+# `.usx-label` font in `docs/stylesheets/extra.css`; the SVG cannot measure its text before it is rendered.
+LEGEND_CHAR_WIDTH = 5.5
 
 FOREGROUND_COLOR = "#222222"
 POPULATION_COLOR = "#B0B0B0"
@@ -77,6 +81,13 @@ DISTANCES = {
         Distance("y", "y distance", lambda dx, dy: dy),
         Distance("linf", "L\u2212\u221e distance", np.minimum),
         Distance("geomean", "geometric-mean distance", lambda dx, dy: np.sqrt(dx * dy)),
+        # This is `DistanceMetric.marginals_and_joint()` at its default joint scale of 1; in 2 dimensions its joint term
+        # is the squared L2 distance
+        Distance(
+            "marginals_and_joint",
+            "marginals-and-joint distance",
+            lambda dx, dy: np.minimum(np.minimum(dx, dy), dx * dx + dy * dy),
+        ),
     )
 }
 REFERENCE_KEYS = ("l2", "x", "y")  # the neighbors marked whatever the objective
@@ -88,8 +99,9 @@ def nearest_neighbors(
 ) -> dict[str, tuple[NDArray[np.intp], NDArray[np.float64]]]:
     """Return, per distance key, each item's nearest other item and its distance to it.
 
-    Two items sharing a coordinate are at distance 0 under the x, y, L-inf and geometric-mean distances;
-    that pair is then each other's nearest neighbor, and the JavaScript draws the degenerate level curve.
+    A pair of items that share a coordinate is at distance 0 under every distance of `DISTANCES` except L2 and the
+    distance along the axis where the 2 items differ; that pair is then each other's nearest neighbor, and the
+    JavaScript draws the degenerate level curve.
     """
     x64 = np.asarray(x, dtype=np.float64)
     y64 = np.asarray(y, dtype=np.float64)
@@ -177,10 +189,7 @@ def legend_svg(n: int, k: int, objective_keys: tuple[str, ...], with_neighbor_ma
     figure without the neighbor interaction (`with_neighbor_marks=False`) gets the left column's first
     two rows only.
     """
-    column_widths, row, pad = (250, 190) if with_neighbor_marks else (170,), 18, 8
-    width = sum(column_widths) + pad
-    x0 = px(X_MAX) - 6 - width
-    y0 = py(Y_MAX) + 6
+    min_column_widths, row, pad, label_offset = (250, 190) if with_neighbor_marks else (170,), 18, 8, 26
     left_column = [
         (
             lambda x, y: f'<circle cx="{x:.1f}" cy="{y:.1f}" r="1.5" fill="{POPULATION_COLOR}"/>',
@@ -203,6 +212,13 @@ def legend_svg(n: int, k: int, objective_keys: tuple[str, ...], with_neighbor_ma
         for key in REFERENCE_KEYS
     ]
     columns = (left_column, right_column) if with_neighbor_marks else (left_column,)
+    column_widths = [
+        max(min_width, math.ceil(label_offset + LEGEND_CHAR_WIDTH * max(len(label) for _, label in column)))
+        for column, min_width in zip(columns, min_column_widths)
+    ]
+    width = sum(column_widths) + pad
+    x0 = px(X_MAX) - 6 - width
+    y0 = py(Y_MAX) + 6
     height = pad * 2 + row * max(len(column) for column in columns)
     parts = [f'<rect class="usx-legend" x="{x0}" y="{y0}" width="{width}" height="{height}"/>']
     x = x0
@@ -211,7 +227,8 @@ def legend_svg(n: int, k: int, objective_keys: tuple[str, ...], with_neighbor_ma
             y = y0 + pad + row * i + row / 2
             parts.append(mark(x + 14, y))
             parts.append(
-                f'<text class="usx-label" x="{x + 26:.1f}" y="{y:.1f}" dominant-baseline="middle">{label}</text>'
+                f'<text class="usx-label" x="{x + label_offset:.1f}" y="{y:.1f}" dominant-baseline="middle">'
+                f"{label}</text>"
             )
         x += column_width
     return parts

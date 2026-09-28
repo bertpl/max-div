@@ -28,7 +28,7 @@ GENERATED_DIR = REPO_ROOT / "generated"
 IMAGES_DIR = REPO_ROOT / "docs" / "concepts" / "images"
 
 # the case study's banded hybrid experiment, at the case study's size, is the problem of every timeline
-TIMELINE_EXPERIMENT = next(experiment for experiment in EXPERIMENTS if experiment.name == "hybrid_banded")
+TIMELINE_EXPERIMENT = next(experiment for experiment in EXPERIMENTS if experiment.name == "hybrid_geomean_banded")
 TIMELINE_N = 10_000
 TIMELINE_K = 100
 TIMELINE_SEED = 42

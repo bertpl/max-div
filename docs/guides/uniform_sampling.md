@@ -1,7 +1,13 @@
 # Case study: maximally uniform sampling in 2D and its marginals
 
 !!! info "In short"
-    A selection can be spread uniformly over the unit square and, at the same time, uniformly along each axis. Seven experiments on one population show what each [distance metric](../concepts/glossary.md#distance-metric) delivers on those three goals, that a [hybrid objective](../reference/metrics/HybridDiversityMetric.md) with one term per goal delivers all three at once, and what exact per-band counts cost on top of it.
+    A selection can be spread uniformly over the unit square and, at the same time, uniformly along each axis. The guide's experiments on one population show:
+
+    - what each [distance metric](../concepts/glossary.md#distance-metric) delivers on those 3 goals;
+    - that a [hybrid objective](../reference/metrics/HybridDiversityMetric.md) with one term per goal delivers all 3 at once;
+    - what exact per-band counts cost on top of it.
+
+    A hybrid that takes the minimum over weighted terms, not their geometric mean, spreads the selection further over the square without spreading it less along either axis. Min separation under the marginals-and-joint distance, a single distance that is the minimum of an L−∞ part and an L2 part, gives the lowest of the 3 goals the highest value of any 60 s experiment.
 
 ## I. Problem statement
 
@@ -75,7 +81,7 @@ The mirror image of III.B: the $y$ values are evenly spread and the $x$ values a
 
 ## IV. One distance covering several goals
 
-A single objective can still cover several goals when its distance combines them. Two distances do that.
+A single objective can still cover several goals when its distance combines them. The 2 distances here do that only in part: the L−∞ distance of IV.A covers the 2 marginal goals and ignores the L2 goal, and the geometric-mean distance of IV.B approximates all 3 at once.
 
 ### IV.A. L−∞ distance
 
@@ -108,7 +114,11 @@ The selection is spread in the square and along both axes, none of the three at 
 
 ## V. Hybrid objective
 
-A hybrid objective states the three goals directly: one term per goal, each the min separation under that goal's distance, combined by their geometric mean so that no term dominates by its scale.
+Each objective below combines a part for the L2 goal with parts for the marginal goals, and they differ in how they combine them:
+
+- **V.A to V.C** use a [hybrid objective](../concepts/diversity.md#hybrid-diversity-metrics) with one term per goal, each the min separation under that goal's distance, combined by their geometric mean so that no term dominates by its scale.
+- **V.D** takes the minimum of 2 weighted terms, so the lowest weighted term sets the score.
+- **V.E** uses a single distance, the marginals-and-joint distance, that is the minimum of an L−∞ part and an L2 part, with no weights.
 
 ### V.A. Unconstrained
 
@@ -124,9 +134,9 @@ objective = HybridDiversityMetric.geomean_of(
 
 Hover over a dot to see the three level curves, each through the point's nearest neighbor under its term's distance.
 
---8<-- "generated/uniform_sampling_hybrid_figure.html"
+--8<-- "generated/uniform_sampling_hybrid_geomean_figure.html"
 
---8<-- "generated/uniform_sampling_hybrid_separations.md"
+--8<-- "generated/uniform_sampling_hybrid_geomean_separations.md"
 
 The two marginal goals reach about 70 % of their references and the L2 goal reaches more than half of its reference, all three at the same time; no single-distance experiment comes close on the two goals it ignores.
 
@@ -155,9 +165,9 @@ problem = MaxDivProblem.new(vectors=vectors, k=k, diversity_metric=objective, co
 
 The light gray lines are the band edges.
 
---8<-- "generated/uniform_sampling_hybrid_banded_figure.html"
+--8<-- "generated/uniform_sampling_hybrid_geomean_banded_figure.html"
 
---8<-- "generated/uniform_sampling_hybrid_banded_separations.md"
+--8<-- "generated/uniform_sampling_hybrid_geomean_banded_separations.md"
 
 Every band holds its 20 items; the unconstrained selection of V.A holds between 16 and 22 per band. The three separations stay within 3 % of V.A's separations: on this population the exact counts cost almost no diversity.
 
@@ -177,9 +187,9 @@ The 2 figures step through those selections: each frame is a checkpoint at which
 
 #### V.C.1. Unconstrained
 
---8<-- "generated/uniform_sampling_hybrid_long_replay.html"
+--8<-- "generated/uniform_sampling_hybrid_geomean_long_replay.html"
 
-The [timeline of this solve](images/uniform_sampling_hybrid_long_timeline.webp) shows:
+The [timeline of this solve](images/uniform_sampling_hybrid_geomean_long_timeline.webp) shows:
 
 - the 32 workers,
 - their groups merging over the 4 h, and
@@ -187,7 +197,7 @@ The [timeline of this solve](images/uniform_sampling_hybrid_long_timeline.webp) 
 
 The [parallel-solving page](../concepts/parallel_solving.md#the-three-groupings-on-one-problem) explains how to read it.
 
---8<-- "generated/uniform_sampling_hybrid_long_separations.md"
+--8<-- "generated/uniform_sampling_hybrid_geomean_long_separations.md"
 
 Most frames fall in the first minute, where the selection still changes at nearly every checkpoint. After that a change is rare, and it is one of two kinds:
 
@@ -198,11 +208,11 @@ The later frames are where the extra budget improves the result: the diversity e
 
 #### V.C.2. Banded constraints
 
-The [timeline of this solve](images/uniform_sampling_hybrid_banded_long_timeline.webp) also shows the constraints score.
+The [timeline of this solve](images/uniform_sampling_hybrid_geomean_banded_long_timeline.webp) also shows the constraints score.
 
---8<-- "generated/uniform_sampling_hybrid_banded_long_replay.html"
+--8<-- "generated/uniform_sampling_hybrid_geomean_banded_long_replay.html"
 
---8<-- "generated/uniform_sampling_hybrid_banded_long_separations.md"
+--8<-- "generated/uniform_sampling_hybrid_geomean_banded_long_separations.md"
 
 The diversity ends 7.7 % above V.B's 60 s value, with its last improvement at about 3 h 20 m.
 
@@ -212,6 +222,79 @@ Every selection that meets the band counts is also a valid unconstrained selecti
 
 A likely reason is that the band counts shrink the search space, so the same 4 h of swaps cover a larger share of the selections that remain. Each problem was solved once, with 1 seed, and a gap of 0.6 % is within what a different seed can change, so the banded solve's lead is a hint, not an established result.
 
+### V.D. Minimum of weighted terms
+
+A [minimum](../concepts/diversity.md#hybrid-aggregations) makes the score equal to the lowest weighted term: a swap improves the score only by improving the term that is lowest. The objective covers the 3 goals with 2 terms: the L−∞ distance of IV.A covers both marginal goals, and the L2 distance covers the third.
+
+A minimum compares its terms' values directly, so the terms need a common scale first.
+
+Among $k$ points well spread in the square, the nearest-neighbor L−∞ distance is about $1/k$ and the L2 distance about $1/\sqrt{k}$. [Weights](../concepts/diversity.md#hybrid-weights) of $k$ and $\sqrt{k}$ multiply the L−∞ and L2 terms respectively, which brings both to about 1:
+
+```python
+import math
+
+from max_div.metrics import DistanceMetric, DiversityMetric, HybridDiversityMetric
+
+k = 100
+objective = HybridDiversityMetric.min_of(
+    DiversityMetric.MIN_SEPARATION.over(DistanceMetric.l_minus_inf()),
+    DiversityMetric.MIN_SEPARATION.over(DistanceMetric.l2_euclidean()),
+    weights=(k, math.sqrt(k)),
+)
+```
+
+--8<-- "generated/uniform_sampling_hybrid_weighted_min_figure.html"
+
+--8<-- "generated/uniform_sampling_hybrid_weighted_min_separations.md"
+
+Against the geometric-mean hybrid of V.A, the L2 goal rises from 56 % to 63 % of its reference, and the 2 marginal goals stay at 72 % and 71 %. On each goal, this 60 s solve comes within 2 percentage points of V.C.1, which solved V.A's geometric-mean objective for 4 h.
+
+With 2 terms instead of 3, each iteration is also faster, as the convergence table in VI shows.
+
+### V.E. Marginals-and-joint distance
+
+Min separation takes a minimum over pairs, and V.D's objective takes a minimum over terms. The 2 minimums can be swapped: taking, for each term, the weighted distance of its closest pair and then the smallest of those values gives the same number as taking, for each pair, the smallest of its weighted term distances and then the smallest over all pairs.
+
+V.D's objective is therefore the min separation under a single distance, $\min(k \cdot d_{\text{L}-\infty},\ \sqrt{k} \cdot d_{\text{L2}})$.
+
+The [marginals-and-joint distance](../concepts/diversity.md#distance-metrics) is, like V.D's single distance, a minimum of an L−∞ part and an L2 part, but with no weight that depends on $k$. In 2D it is
+
+$$
+d(a, b) = \min\Big( \min\big(\lvert a_x - b_x \rvert, \lvert a_y - b_y \rvert\big),\; \lVert a - b \rVert_2^{\,2} \Big)
+$$
+
+- **The first part is the L−∞ distance** of IV.A, which covers both marginal goals.
+- **The second part is the L2 distance raised to the power of the dimension**, here squared. Among $k$ well-spread points in the square, both parts of a nearest-neighbor pair are about $1/k$, so neither part needs a weight that depends on $k$.
+
+```python
+from max_div.metrics import DistanceMetric, DiversityMetric
+from max_div.problem import MaxDivProblem
+
+problem = MaxDivProblem.new(
+    vectors=vectors,
+    k=100,
+    distance_metric=DistanceMetric.marginals_and_joint(),
+    diversity_metric=DiversityMetric.MIN_SEPARATION,
+)
+```
+
+Hover over a dot to see the level curve of this distance: the L−∞ curve of IV.A, with the corner of each quadrant cut off by a circle. Points are close under the marginals-and-joint distance when they are close along one axis, or close under the L2 distance.
+
+--8<-- "generated/uniform_sampling_marginals_and_joint_figure.html"
+
+--8<-- "generated/uniform_sampling_marginals_and_joint_separations.md"
+
+Against V.D, the L2 goal rises from 63 % to 72 % of its reference, and the 2 marginal goals drop from 72 % and 71 % to 66 % and 67 %. The lowest of the 3 goals, at 66 %, is the highest of any 60 s experiment.
+
+A solve under a single distance also iterates as fast as the single-distance experiments of III and IV, as the convergence table in VI shows.
+
+The L2 goal gains because V.D's weighted minimum and the marginals-and-joint distance turn the same L−∞ separation into different L2 separations. A solve that maximizes a minimum of 2 parts ends with the 2 parts about equal, so equating the 2 parts at each solve's achieved L−∞ separation gives the L2 separation that the solve should reach:
+
+- **V.D:** $\sqrt{k} \cdot d_{\text{L2}} = k \cdot d_{\text{L}-\infty}$ gives $d_{\text{L2}} = \sqrt{k} \cdot d_{\text{L}-\infty} = 10 \times 0.0072 = 0.072$;
+- **V.E:** $d_{\text{L2}}^{\,2} = d_{\text{L}-\infty}$ gives $d_{\text{L2}} = \sqrt{0.0067} = 0.082$.
+
+Both match the L2 separations that the solves reached. `marginals_and_joint(joint_scale=...)` multiplies the second part by `joint_scale`: a value above 1 favors the 2 marginal goals, and one below 1 favors the L2 goal; this guide keeps the default of 1.
+
 ## VI. Summary
 
 Every experiment's achieved min separation under the three reference distances, each as a fraction of its free-placement reference from section II. A result <span class="usx-low">at or below 40 %</span> of its reference is marked red, one <span class="usx-high">at or above 60 %</span> green:
@@ -220,9 +303,11 @@ Every experiment's achieved min separation under the three reference distances, 
 
 - **One distance reaches one goal.** The L2, $x$ and $y$ distances each reach their own goal and leave at least one other near the level of a random selection.
 - **The L−∞ distance reaches the two marginals**, and the geometric-mean distance gets part of the way on all three.
-- **The hybrid objective directly optimizes all three** by explicitly formulating the three objectives, at the cost of slower iterations due to the three objectives.
-- **Exact counts per band come at no cost in diversity**: under them the hybrid objective reaches the same three separations.
+- **The geometric-mean hybrid directly optimizes all 3** by explicitly formulating the 3 objectives, at the cost of slower iterations due to the 3 objectives.
+- **Exact counts per band come at no cost in diversity**: under them the geometric-mean hybrid reaches the same 3 separations.
 - **A longer budget still improves the result**: with 32 workers for 4 h, both 4 h solves end above their 60 s counterparts on all 3 separations, and both were still improving in the last hour.
+- **A minimum of 2 weighted terms improves on the geometric mean of 3**: in 60 s it comes within 2 percentage points, on each goal, of what V.C.1 reaches on V.A's objective in 4 h.
+- **The marginals-and-joint distance gives the lowest of the 3 goals the highest value of any 60 s experiment**, 66 % of its reference, with a single distance and no weights to choose.
 
 The slower iterations are visible in the iteration counts. The table gives, per experiment, how many iterations the worker holding the final selection completed in the 60 s budget, and the best objective any worker held at three elapsed marks as a fraction of the final value:
 
