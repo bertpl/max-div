@@ -168,21 +168,18 @@ Every factory takes `weights=`: one positive number per term, in term order, eac
 - **The geometric mean does not depend on the scale of a term**: multiplying a term by a constant multiplies the score by a constant, so the same selection wins.
 - **The arithmetic mean and the minimum compare raw values**, so terms on different scales need weights that bring them onto a common one. Under the minimum an unweighted term can even be unable to ever set the score.
 
-For example, with $k$ well-spread points in the unit square, the min separation over L2 shrinks like $1/\sqrt{k}$ and the min separation along one axis like $1/k$. An L2 distance is also never smaller than the distance along one axis, so an unweighted minimum of the 2 always equals the axis term. Weights $\sqrt{k}$ and $k$ put all 3 terms on one scale:
+For example, when the x coordinates span 0 to 1,000 and the y coordinates 0 to 1, an unweighted minimum of the 2 axis terms is almost always the y term. Dividing each term by the range of its coordinate puts both on one scale:
 
 ```python
-import math
+x_scale = vectors[:, 0].max() - vectors[:, 0].min()
+y_scale = vectors[:, 1].max() - vectors[:, 1].min()
 
-k = 100
 objective = HybridDiversityMetric.min_of(
-    DiversityMetric.MIN_SEPARATION.over(DistanceMetric.l2_euclidean()),
     DiversityMetric.MIN_SEPARATION.over(DistanceMetric.along_axis(0)),
     DiversityMetric.MIN_SEPARATION.over(DistanceMetric.along_axis(1)),
-    weights=(math.sqrt(k), k, k),
+    weights=(1 / x_scale, 1 / y_scale),
 )
 ```
-
-The right weights depend on the data: in $d$ dimensions, the ratio between the L2 and the single-axis min separations grows like $k^{1 - 1/d}$.
 
 ### VI.D. Tie-breakers { #hybrid-tie-breakers }
 
