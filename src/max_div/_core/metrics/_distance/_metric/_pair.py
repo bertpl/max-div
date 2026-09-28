@@ -99,22 +99,23 @@ def _marginals_and_joint_pair(
     The distance is computed in float64; for a far pair in a high dimension the joint term may overflow
     to +inf, and the minimum then returns the smallest gap.
     """
-    smallest_gap = np.float64(np.inf)
-    squared_l2 = np.float64(0.0)
+    # --- smallest coordinate gap (L-∞) ---------
+    smallest_gap = _lminusinf_pair(vectors, i, j)
+
+    # --- joint term (L2 to the power d) ---------
+    # the metric is meant for small d, so the common dimensions skip the general power
+    squared_l2 = _l2sq_pair(vectors, i, j)
     n_dims = vectors.shape[1]
-    for c in range(n_dims):
-        diff = abs(np.float64(vectors[i, c]) - np.float64(vectors[j, c]))
-        if diff < smallest_gap:
-            smallest_gap = diff
-        squared_l2 += diff * diff
-    # The loop builds the power d from the squared distance multiplied d // 2 times, times the distance
-    # itself when d is odd; for d = 2 the joint term is then the squared distance, with no square root
-    # to round.
-    joint_term = np.float64(1.0)
-    for _ in range(n_dims // 2):
-        joint_term *= squared_l2
-    if n_dims % 2 == 1:
-        joint_term *= np.sqrt(squared_l2)
+    if n_dims == 2:
+        joint_term = squared_l2
+    elif n_dims == 3:
+        joint_term = squared_l2 * np.sqrt(squared_l2)
+    elif n_dims == 4:
+        joint_term = squared_l2 * squared_l2
+    else:
+        joint_term = squared_l2 ** (0.5 * n_dims)
+
+    # --- minimum --------------------------------
     return min(smallest_gap, joint_scale * joint_term)
 
 
