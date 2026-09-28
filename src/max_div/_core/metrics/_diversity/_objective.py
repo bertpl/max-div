@@ -21,6 +21,8 @@ simple objective counting as a single term):
 - the non-zero fraction is needed when a term is min-separation or goes to zero when one pair coincides.
 
 Each tie-breaker is computed over every distinct distance metric of the objective, as a hybrid when there are several.
+A hybrid gets one more tie-breaker, ranked before these, when its aggregation returns a tie-breaker
+aggregation over the hybrid's own terms (`HybridAggregationBase.tie_breaker_aggregation_over_terms`).
 """
 
 from __future__ import annotations
@@ -248,6 +250,18 @@ class DiversityObjectiveHybrid(DiversityObjective):
         # one row per item, one column per term, so each item's values are contiguous
         stacked = np.stack(contributions, axis=1).astype(np.float32, copy=False)
         return self.aggregation.aggregate_rows(stacked)
+
+    def default_tie_breakers(self) -> list[DiversityObjective]:
+        """Return the aggregation's extra tie-breaker over the terms, if any, then the default tie-breakers.
+
+        The default tie-breakers follow from the terms' diversity metrics, by the rule in the module docstring.
+        """
+        tie_breakers = super().default_tie_breakers()
+        tie_breaker_aggregation_over_terms = self.aggregation.tie_breaker_aggregation_over_terms()
+        if tie_breaker_aggregation_over_terms is not None:
+            return [DiversityObjectiveHybrid(self.terms, tie_breaker_aggregation_over_terms), *tie_breakers]
+        else:
+            return tie_breakers
 
     @cached_property
     def tracker_specs(self) -> tuple[DiversityTrackerSpec, ...]:

@@ -5,8 +5,11 @@ s_t is term t's value and w_t its weight:
 
 - `HybridAggregationGeometricMean` — a weight is its term's exponent: (prod_t s_t ** w_t) ** (1 / sum(w)).
 - `HybridAggregationArithmeticMean` — a weight multiplies its term's value: sum_t w_t * s_t / sum(w).
+- `HybridAggregationMinimum` — a weight multiplies its term's value: min_t w_t * s_t.
 
-Both normalize by the weight sum, so equal weights give the plain mean.
+The 2 means normalize by the weight sum, so equal weights give the plain mean. The minimum does not
+normalize: its weights put terms of different scales on a common one, and dividing every weighted value
+by the weight sum would not change which selection scores highest.
 """
 
 from __future__ import annotations
@@ -22,6 +25,7 @@ import numpy as np
 
 from max_div._core._math.geomean import weighted_geomean_per_row_f32
 from max_div._core._math.mean import weighted_mean_per_row_f32
+from max_div._core._math.minimum import weighted_minimum_per_row_f32
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -83,7 +87,7 @@ class HybridAggregationBase(ABC):
 
     @cached_property
     def weights_f32(self) -> NDArray[np.float32]:
-        """Return the weights as a float32 array, the input dtype of the per-row mean functions."""
+        """Return the weights as a float32 array, the input dtype of the per-row aggregation functions."""
         return np.array(self.weights, dtype=np.float32)
 
     # --------------------------------------------------------------------------
@@ -136,6 +140,17 @@ class HybridAggregationBase(ABC):
     def _aggregate_rows_into(self, rows: NDArray[np.float32], out: NDArray[np.float32]) -> None:
         """Write the aggregate of each row of `rows` into `out`, which has one entry per row."""
 
+    # --------------------------------------------------------------------------
+    #  Tie-breaking
+    # --------------------------------------------------------------------------
+    def tie_breaker_aggregation_over_terms(self) -> HybridAggregationBase | None:
+        """Return the aggregation of an extra tie-breaker over the hybrid's own terms, or `None` if it needs none.
+
+        The extra tie-breaker ranks before the default tie-breakers. An aggregation returns one when its
+        value can stay unchanged under a swap that improves only some of the terms.
+        """
+        return None
+
 
 # =================================================================================================
 #  Concrete aggregations
@@ -164,3 +179,27 @@ class HybridAggregationArithmeticMean(HybridAggregationBase):
     def _aggregate_rows_into(self, rows: NDArray[np.float32], out: NDArray[np.float32]) -> None:
         """Write each row's weighted arithmetic mean into `out`."""
         weighted_mean_per_row_f32(rows, self.weights_f32, out)
+
+
+@dataclass(frozen=True)
+class HybridAggregationMinimum(HybridAggregationBase):
+    """The weighted minimum is the smallest of the terms' values, each multiplied by its weight.
+
+    Only the term whose value is lowest after multiplying by its weight sets the minimum, so a swap that
+    improves any other term leaves the minimum unchanged; the hybrid's first tie-breaker, the geomean of
+    its terms, rewards such a swap.
+    """
+
+    name: ClassVar[str] = "min"
+
+    def _aggregate_rows_into(self, rows: NDArray[np.float32], out: NDArray[np.float32]) -> None:
+        """Write each row's weighted minimum into `out`."""
+        weighted_minimum_per_row_f32(rows, self.weights_f32, out)
+
+    def tie_breaker_aggregation_over_terms(self) -> HybridAggregationBase:
+        """Return the geomean of the terms at unit weights.
+
+        A weight here multiplies its term, and multiplying a term by a constant does not change which
+        selection a geomean prefers, so the geomean needs no weights.
+        """
+        return HybridAggregationGeometricMean.with_unit_weights(len(self.weights))

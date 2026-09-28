@@ -8,7 +8,7 @@ from scipy.spatial.distance import squareform
 
 from max_div._core._utils import stdout_to_file
 from max_div._core.constraints import Constraint
-from max_div._core.metrics import DistanceMetric, DiversityMetric, HybridDiversityMetric
+from max_div._core.metrics import DistanceMetric, DiversityMetric, HybridAggregationBase, HybridDiversityMetric
 from max_div._core.problem import MaxDivProblem
 from max_div._core.solver import DistanceStorageType, MaxDivSolution, MaxDivSolverBuilder, Verbosity
 from max_div._core.solver._builders import ParallelMaxDivSolverBuilder
@@ -419,10 +419,27 @@ def _expected_mean(vectors: np.ndarray, indices: np.ndarray, axis: int) -> float
     return (min_l2 + min_axis) / 2
 
 
+def _expected_min(vectors: np.ndarray, indices: np.ndarray, axis: int) -> float:
+    """Return the smaller of the selection's 2 min separations."""
+    return min(_min_separations(vectors, indices, axis))
+
+
 _HYBRID_CASES = [
     (HybridDiversityMetric.geomean_of, _expected_geomean),
     (HybridDiversityMetric.mean_of, _expected_mean),
+    (HybridDiversityMetric.min_of, _expected_min),
 ]
+
+
+def test_hybrid_cases_cover_every_aggregation_factory() -> None:
+    """`_HYBRID_CASES` holds one case per `HybridAggregationBase` subclass's public factory."""
+    # --- arrange / act ----------------
+    factory_names = {factory.__name__ for factory, _ in _HYBRID_CASES}
+
+    # --- assert -----------------------
+    assert factory_names == {
+        f"{aggregation_type.name}_of" for aggregation_type in HybridAggregationBase.__subclasses__()
+    }
 
 
 def _hybrid_problem(factory) -> tuple[MaxDivProblem, np.ndarray]:

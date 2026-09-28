@@ -10,6 +10,7 @@ from max_div._core.metrics import (
     DiversityTrackerSpec,
     HybridAggregationArithmeticMean,
     HybridAggregationGeometricMean,
+    HybridAggregationMinimum,
 )
 from tests.helpers import hybrid_objective
 
@@ -175,6 +176,16 @@ def test_simple_computes_its_metric_over_its_one_spec() -> None:
         ),
         pytest.param(
             (
+                DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L1),
+                DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L2),
+            ),
+            HybridAggregationMinimum((1.0, 2.0)),
+            (_f32([4.0, 8.0]), _f32([9.0, 3.0])),  # L1 array (min 4), L2 array (min 3, scaled to 6)
+            4.0,
+            id="weighted_minimum_of_the_scaled_terms",
+        ),
+        pytest.param(
+            (
                 DiversityObjectiveSimple(DiversityMetric.NON_ZERO_SEPARATION_FRAC, L1),
                 DiversityObjectiveSimple(DiversityMetric.NON_ZERO_SEPARATION_FRAC, L2),
             ),
@@ -267,7 +278,7 @@ def test_a_geometric_hybrids_default_tie_breakers_are_hybrids_over_its_distinct_
 
 
 def test_an_arithmetic_hybrid_gets_the_same_tie_breakers() -> None:
-    """The tie-breakers follow the terms' metrics, not the hybrid's aggregation, so both aggregations get the pair."""
+    """An arithmetic and a geometric hybrid over the same terms get the tie-breakers of the terms' metrics."""
     # --- arrange ----------------------
     terms = (
         DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L1),
@@ -278,6 +289,34 @@ def test_an_arithmetic_hybrid_gets_the_same_tie_breakers() -> None:
     geometric = hybrid_objective(*terms, aggregation_type=HybridAggregationGeometricMean).default_tie_breakers()
     arithmetic = hybrid_objective(*terms, aggregation_type=HybridAggregationArithmeticMean).default_tie_breakers()
     assert arithmetic == geometric
+
+
+@pytest.mark.parametrize(
+    "term_metric, expected_rule_tie_breaker_metrics",
+    [
+        (
+            DiversityMetric.MIN_SEPARATION,
+            [DiversityMetric.APPROX_GEOMEAN_SEPARATION, DiversityMetric.NON_ZERO_SEPARATION_FRAC],
+        ),
+        (DiversityMetric.MEAN_SEPARATION, []),
+    ],
+)
+def test_a_minimum_hybrid_first_gets_the_geomean_of_its_terms_at_unit_weights(
+    term_metric, expected_rule_tie_breaker_metrics
+) -> None:
+    """A min hybrid first gets the unit-weight geomean of its terms, then its metrics' default tie-breakers, if any."""
+    # --- arrange ----------------------
+    terms = (DiversityObjectiveSimple(term_metric, L1), DiversityObjectiveSimple(term_metric, L2))
+    objective = DiversityObjectiveHybrid(terms, HybridAggregationMinimum((5.0, 7.0)))
+
+    # --- act --------------------------
+    tie_breakers = objective.default_tie_breakers()
+
+    # --- assert -----------------------
+    geomean_of_terms = DiversityObjectiveHybrid(terms, HybridAggregationGeometricMean((1.0, 1.0)))
+    rule_tie_breakers = hybrid_objective(*terms).default_tie_breakers()
+    assert tie_breakers == [geomean_of_terms, *rule_tie_breakers]
+    assert [tie_breaker.diversity_metrics[0] for tie_breaker in rule_tie_breakers] == expected_rule_tie_breaker_metrics
 
 
 @pytest.mark.parametrize(
@@ -361,8 +400,12 @@ def test_a_simple_objectives_per_item_contribution_is_its_one_array() -> None:
             HybridAggregationGeometricMean((1.0, 2.0, 1.0)),
             (np.array([1.0, 4.0]) * np.array([8.0, 2.0]) ** 2 * np.array([1.0, 4.0])) ** (1.0 / 4.0),
         ),
+        (
+            HybridAggregationMinimum((3.0, 0.5, 2.0)),
+            np.minimum(np.minimum(3.0 * np.array([1.0, 4.0]), 0.5 * np.array([8.0, 2.0])), 2.0 * np.array([1.0, 4.0])),
+        ),
     ],
-    ids=["geometric", "arithmetic", "weighted_geometric"],
+    ids=["geometric", "arithmetic", "weighted_geometric", "weighted_minimum"],
 )
 def test_a_hybrids_per_item_contribution_aggregates_its_terms_arrays_elementwise(aggregation, expected) -> None:
     """A hybrid aggregates the terms' arrays elementwise, a repeated spec once per term, as a fresh float32 array."""

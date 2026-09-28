@@ -12,7 +12,12 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from ._aggregation import HybridAggregationArithmeticMean, HybridAggregationBase, HybridAggregationGeometricMean
+from ._aggregation import (
+    HybridAggregationArithmeticMean,
+    HybridAggregationBase,
+    HybridAggregationGeometricMean,
+    HybridAggregationMinimum,
+)
 from ._enum import DiversityMetric
 from ._objective import DiversityObjectiveHybrid, DiversityObjectiveSimple
 
@@ -49,27 +54,30 @@ class DiversityTerm:
 #  HybridDiversityMetric
 # =================================================================================================
 class HybridDiversityMetric:
-    """A hybrid diversity metric aggregates several diversity terms by their weighted geometric or arithmetic mean.
+    """A hybrid diversity metric aggregates diversity terms by a weighted geometric mean, arithmetic mean or minimum.
 
     Each term is a `DiversityMetric` over its own distance: a bare `DiversityMetric` reads the
     problem's own distance, and `DiversityMetric.over(distance_metric)` names another one, so one
     solve can spread a selection in the full space and in chosen coordinate projections at once.
-    Create instances via `geomean_of` and `mean_of`.
+    Create instances via `geomean_of`, `mean_of` and `min_of`.
 
     Each term carries a weight, 1 unless given, whose meaning depends on the aggregation: an exponent
-    on the term's value in the geometric mean, a multiplier of the term's value in the arithmetic mean.
+    on the term's value in the geometric mean, a multiplier of the term's value in the arithmetic mean
+    and in the minimum.
 
     A hybrid needs at least 2 terms: a one-term hybrid is the bare metric, and asking for one is taken
-    as a mistake. A term may repeat, which counts it once more in the mean.
+    as a mistake. A term may repeat, which counts it once more in a mean; in the minimum, only the
+    copy with the smallest weight has an effect.
 
-    The solver's default tie-breakers for a hybrid follow the terms' metrics, whichever mean
-    aggregates them, and a hybrid accepts no custom tie-breakers.
+    The solver's default tie-breakers for a hybrid follow the terms' metrics, whichever aggregation
+    combines them; a `min_of` hybrid first gets the geomean of its terms. A hybrid accepts no custom
+    tie-breakers.
     """
 
     __slots__ = ("_aggregation", "_terms")
 
     def __init__(self, terms: tuple[DiversityTerm | DiversityMetric, ...], aggregation: HybridAggregationBase) -> None:
-        """Validate the terms against the aggregation; use `geomean_of` or `mean_of` to construct a hybrid.
+        """Validate the terms against the aggregation; use `geomean_of`, `mean_of` or `min_of` to construct a hybrid.
 
         Raises:
             ValueError: If fewer than 2 terms are given, or the aggregation holds a different number
@@ -133,6 +141,32 @@ class HybridDiversityMetric:
                 positive, finite number.
         """
         return cls(terms, HybridAggregationArithmeticMean.from_weights(weights, len(terms)))
+
+    @classmethod
+    def min_of(
+        cls, *terms: DiversityTerm | DiversityMetric, weights: Sequence[float] | None = None
+    ) -> HybridDiversityMetric:
+        """Return the smallest of the terms' diversity values, each multiplied by its weight.
+
+        The score is the lowest of the weighted terms, so a high value in one term cannot compensate
+        for a low value in another.
+
+        The minimum compares raw values, so terms of different scales need
+        weights that bring them onto a common one: with k well-spread points in the unit square, the
+        min separation over L2 shrinks like 1/sqrt(k) and along one axis like 1/k, so weights sqrt(k)
+        and k make them comparable.
+
+        The weights are not normalized.
+
+        Args:
+            terms: the diversity terms, each a `DiversityMetric` or a `DiversityMetric.over(...)`.
+            weights: one positive, finite weight per term, in term order; `None` weights every term 1.
+
+        Raises:
+            ValueError: If fewer than 2 terms are given, or a weight is missing, extra, or not a
+                positive, finite number.
+        """
+        return cls(terms, HybridAggregationMinimum.from_weights(weights, len(terms)))
 
     # --------------------------------------------------------------------------
     #  Properties

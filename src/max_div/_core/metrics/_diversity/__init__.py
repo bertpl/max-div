@@ -1,4 +1,9 @@
-from ._aggregation import HybridAggregationArithmeticMean, HybridAggregationBase, HybridAggregationGeometricMean
+from ._aggregation import (
+    HybridAggregationArithmeticMean,
+    HybridAggregationBase,
+    HybridAggregationGeometricMean,
+    HybridAggregationMinimum,
+)
 from ._enum import DiversityContributionFamily, DiversityMetric
 from ._hybrid_metric import DiversityTerm, HybridDiversityMetric
 from ._objective import (
