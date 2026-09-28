@@ -15,6 +15,7 @@ Terms used across the documentation, defined once. Each entry carries a stable a
 [Guarantee type](#guarantee-type) ·
 [Harmonic-mean separation](#harmonic-mean-separation) ·
 [Hybrid diversity metric](#hybrid-diversity-metric) ·
+[Hybrid term](#hybrid-term) ·
 [Item](#item) ·
 [Local search](#local-search) ·
 [Max-min](#max-min) ·
@@ -27,7 +28,6 @@ Terms used across the documentation, defined once. Each entry carries a stable a
 [Separation](#separation) ·
 [Solver step](#solver-step) ·
 [Swap](#swap) ·
-[Term](#term) ·
 [Vector](#vector)
 
 ## Anytime algorithm { #anytime-algorithm }
@@ -99,7 +99,7 @@ one scalar being maximized — a minimum, a mean, or a geometric mean. Choosing 
 *is* choosing the objective, and it changes what a good answer looks like rather than merely how
 hard the solver works: see [max-min](#max-min), [max-sum](#max-sum), and
 [geometric-mean separation](#geometric-mean-separation). A
-[hybrid diversity metric](#hybrid-diversity-metric) combines several of them into one score.
+[hybrid diversity metric](#hybrid-diversity-metric) combines several diversity metrics into one score.
 
 ## Feasibility { #feasibility }
 
@@ -148,10 +148,19 @@ tools of different kinds:
 
 ## Hybrid diversity metric { #hybrid-diversity-metric }
 
-A [diversity metric](#diversity-metric) built from several diversity metrics, its [terms](#term),
-whose values are aggregated into one score. The supported aggregations are a weighted geometric
-mean, a weighted arithmetic mean and a weighted minimum. A hybrid spreads one selection in several
-senses at once, for example in the full space and along each coordinate. See [Hybrid diversity metrics](diversity.md#hybrid-diversity-metrics).
+A [diversity metric](#diversity-metric) built from several diversity metrics, its
+[terms](#hybrid-term), whose values are aggregated into one score. The supported aggregations are a
+weighted geometric mean, a weighted arithmetic mean and a weighted minimum. Each term gets a weight,
+whose meaning depends on the aggregation — see [Weights](diversity.md#hybrid-weights). A hybrid
+rewards a selection that is spread in several senses at once, for example in the full space and
+along each coordinate. See [Hybrid diversity metrics](diversity.md#hybrid-diversity-metrics).
+
+## Hybrid term { #hybrid-term }
+
+One component of a [hybrid diversity metric](#hybrid-diversity-metric): a
+[diversity metric](#diversity-metric) over one [distance metric](#distance-metric), written
+`DiversityMetric.MIN_SEPARATION.over(DistanceMetric.along_axis(0))`, or a bare `DiversityMetric`
+over the problem's own distance.
 
 ## Item { #item }
 
@@ -249,14 +258,6 @@ The single move of max-div's [local search](#local-search): remove one or more i
 [score](#score-components) improves. How many items move at once is the *swap size*; some
 strategies adapt it during the run, since small swaps stop paying off once the selection is
 already good, while large ones cost more per iteration.
-
-## Term { #term }
-
-One component of a [hybrid diversity metric](#hybrid-diversity-metric): a
-[diversity metric](#diversity-metric) over one [distance metric](#distance-metric), written
-`DiversityMetric.MIN_SEPARATION.over(DistanceMetric.along_axis(0))`, or a bare `DiversityMetric`
-over the problem's own distance. Each term carries a weight, whose meaning depends on how the
-hybrid combines its terms — see [Weights](diversity.md#hybrid-weights).
 
 ## Vector { #vector }
 
