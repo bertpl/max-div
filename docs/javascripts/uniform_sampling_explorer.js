@@ -33,7 +33,7 @@ function appendElement(layer, tag, attributes) {
 // Return the four branches of |x - cx| * |y - cy| = d^2 as SVG path strings in data units, sampled
 // log-spaced so the branches stay smooth near the asymptotes. A shared coordinate (d = 0) degenerates
 // the curve into the two axis-parallel lines through the item.
-function hyperbolaPaths(cx, cy, d, samples = 80) {
+function geomeanPaths(cx, cy, d, samples = 80) {
   const d2 = d * d;
   if (d2 <= 0) {
     return [`M${cx},${-FAR}L${cx},${FAR}`, `M${-FAR},${cy}L${FAR},${cy}`];
@@ -80,7 +80,7 @@ function marginalsAndJointPaths(cx, cy, d, samples = 24) {
   const paths = [];
   for (const sx of [-1, 1]) {
     for (const sy of [-1, 1]) {
-      // the half-line along |dx| = d, the arc from (d, q) to (q, d), the half-line along |dy| = d
+      // each path runs along the half-line |dx| = d, then the arc from (d, q) to (q, d), then the half-line |dy| = d
       const points = [`${cx + sx * d},${cy + sy * FAR}`];
       const angleFrom = Math.atan2(q, d);
       const angleTo = Math.atan2(d, q);
@@ -100,7 +100,7 @@ function marginalsAndJointPaths(cx, cy, d, samples = 24) {
 // Return the level curve of a distance at value d around (cx, cy) as SVG path strings in data units:
 // - L2: a circle;
 // - x or y: the two lines at that coordinate offset;
-// - L-inf and marginals-and-joint: see their functions above;
+// - L-inf and marginals-and-joint: see `lInfPaths` and `marginalsAndJointPaths`;
 // - geometric mean: the hyperbolas.
 function levelPaths(key, cx, cy, d) {
   switch (key) {
@@ -115,7 +115,7 @@ function levelPaths(key, cx, cy, d) {
     case "marginals_and_joint":
       return marginalsAndJointPaths(cx, cy, d);
     default:
-      return hyperbolaPaths(cx, cy, d);
+      return geomeanPaths(cx, cy, d);
   }
 }
 

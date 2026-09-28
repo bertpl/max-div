@@ -3,8 +3,8 @@
 The figures of `geomean_separation.md` plot given selections controlled by a parameter alpha: three
 cases as dot rows, and the separation metrics against alpha below them; no solver is involved.
 
-The figures of `uniform_sampling.md` are nine solved selections of one random population, one per
-experiment, plus a longer solve of each experiment that `EXPERIMENT_NAME_BY_LONG_RUN` names; only
+The figures of `uniform_sampling.md` are solved selections of one random population, one per
+experiment in `EXPERIMENTS`, plus a longer solve of each experiment that `EXPERIMENT_NAME_BY_LONG_RUN` names; only
 those run the solver.
 
 Each selection is emitted as an interactive figure (an HTML fragment over a raster of the population)
@@ -233,7 +233,7 @@ def layout_constrained_group(alpha: float) -> NDArray[np.float64]:
 
 
 # ==================================================================================================
-#  Uniform sampling: nine solved experiments
+#  Uniform sampling: solved experiments
 # ==================================================================================================
 # The keys name the distances of `uniform_sampling_explorer.DISTANCES`.
 DISTANCE_METRICS = {
@@ -254,10 +254,10 @@ EXPERIMENT_LABELS = {
     "linf": "**IV.A** L\u2212\u221e distance",
     "geomean": "**IV.B** geometric-mean distance",
     "hybrid": "**V.A** geometric-mean hybrid: L2, $x$ and $y$ terms",
-    "hybrid_banded": "**V.B** hybrid, 20 items per band",
-    "hybrid_long": "**V.C.1** hybrid, 4 h, 32 workers",
-    "hybrid_banded_long": "**V.C.2** hybrid, 20 items per band, 4 h, 32 workers",
-    "hybrid_min": "**V.D** minimum hybrid: L\u2212\u221e and L2 terms, weighted $k$ and $\\sqrt{k}$",
+    "hybrid_banded": "**V.B** geometric-mean hybrid, 20 items per band",
+    "hybrid_long": "**V.C.1** geometric-mean hybrid, 4 h, 32 workers",
+    "hybrid_banded_long": "**V.C.2** geometric-mean hybrid, 20 items per band, 4 h, 32 workers",
+    "hybrid_weighted_min": "**V.D** minimum hybrid: L\u2212\u221e and L2 terms, weighted $k$ and $\\sqrt{k}$",
     "marginals_and_joint": "**V.E** marginals-and-joint distance",
 }
 # The replay figures of section V.C re-solve the experiments that `EXPERIMENT_NAME_BY_LONG_RUN` names, with this
@@ -359,7 +359,10 @@ EXPERIMENTS = (
     # in 2D the nearest-neighbor L-inf distance of k well-spread points scales like 1 / k and the L2
     # distance like 1 / sqrt(k), so the weights k and sqrt(k) bring both terms to a common scale
     Experiment(
-        "hybrid_min", ("linf", "l2"), hybrid_factory=HybridDiversityMetric.min_of, k_weight_exponents=(1.0, 0.5)
+        "hybrid_weighted_min",
+        ("linf", "l2"),
+        hybrid_factory=HybridDiversityMetric.min_of,
+        k_weight_exponents=(1.0, 0.5),
     ),
     Experiment("marginals_and_joint", ("marginals_and_joint",)),
 )
@@ -598,7 +601,8 @@ def write_summary(selections: dict[str, NDArray[np.float64]], k: int) -> None:
     fractions = {name: {key: achieved[name][key] / references[key] for key in REFERENCE_LABELS} for name in selections}
     header = " | ".join(f"{label}, achieved / reference" for label in REFERENCE_LABELS.values())
     lines = [f"| experiment | {header} |", "|---|---|---|---|"]
-    for name in selections:
+    # the rows follow the order of the guide's sections, which `EXPERIMENT_LABELS` follows
+    for name in EXPERIMENT_LABELS:
         cells = [_summary_cell(achieved[name][key], fractions[name][key]) for key in REFERENCE_LABELS]
         lines.append(f"| {EXPERIMENT_LABELS[name]} | {' | '.join(cells)} |")
     path = GENERATED_DIR / "uniform_sampling_summary.md"
@@ -666,8 +670,7 @@ def render_uniform_sampling_experiments(settings: ExperimentSettings, should_reu
         selections[run_name] = render_uniform_sampling_replay(
             vectors, settings, should_reuse_solution, experiments_by_name[experiment_name], run_name
         )
-    # the summary lists the experiments in the order of the guide's sections, which `EXPERIMENT_LABELS` follows
-    write_summary({name: selections[name] for name in EXPERIMENT_LABELS}, settings.k)
+    write_summary(selections, settings.k)
     write_convergence(runs, settings.budget_sec)
 
 

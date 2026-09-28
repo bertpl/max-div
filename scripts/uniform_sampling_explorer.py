@@ -44,7 +44,7 @@ GLYPH_REACH_FACTOR = 0.7  # a stroke glyph reaches this far from the center, in 
 CENTER_DOT_FACTOR = 0.3  # the central-dot glyph has this radius, in ring radii
 LEGEND_RING_RADIUS = 5.5
 # A legend column is at least as wide as its longest label, estimated at this many pixels per character of the
-# 12 px label font; the SVG cannot measure its text before it is rendered.
+# `.usx-label` font in `docs/stylesheets/extra.css`; the SVG cannot measure its text before it is rendered.
 LEGEND_CHAR_WIDTH = 5.5
 
 FOREGROUND_COLOR = "#222222"
@@ -81,8 +81,8 @@ DISTANCES = {
         Distance("y", "y distance", lambda dx, dy: dy),
         Distance("linf", "L\u2212\u221e distance", np.minimum),
         Distance("geomean", "geometric-mean distance", lambda dx, dy: np.sqrt(dx * dy)),
-        # `DistanceMetric.marginals_and_joint()` at its default joint scale of 1: in 2 dimensions the joint term is
-        # the squared L2 distance
+        # This is `DistanceMetric.marginals_and_joint()` at its default joint scale of 1; in 2 dimensions its joint term
+        # is the squared L2 distance
         Distance(
             "marginals_and_joint",
             "marginals-and-joint distance",
@@ -99,8 +99,9 @@ def nearest_neighbors(
 ) -> dict[str, tuple[NDArray[np.intp], NDArray[np.float64]]]:
     """Return, per distance key, each item's nearest other item and its distance to it.
 
-    Two items sharing a coordinate are at distance 0 under the x, y, L-inf, geometric-mean and marginals-and-joint
-    distances; that pair is then each other's nearest neighbor, and the JavaScript draws the degenerate level curve.
+    A pair of items that share a coordinate is at distance 0 under every distance of `DISTANCES` except L2 and the
+    distance along the other axis; that pair is then each other's nearest neighbor, and the JavaScript draws the
+    degenerate level curve.
     """
     x64 = np.asarray(x, dtype=np.float64)
     y64 = np.asarray(y, dtype=np.float64)

@@ -33,7 +33,7 @@ def explorer():
 
 # The four items are chosen so that the distances disagree:
 # - item 0 shares its y with item 1 and its x with item 2, so those pairs sit at distance 0 under the
-#   x or y distance, and hence under the L-inf and geometric-mean distances;
+#   x or y distance, and hence under the L-inf, geometric-mean and marginals-and-joint distances;
 # - item 3 is nearest to item 2 under the geometric-mean distance (gaps 0.3 and 0.3) and under L2 alike;
 # - under the marginals-and-joint distance, item 3 is nearest to item 2 by the joint term, 0.3^2 + 0.3^2 = 0.18,
 #   below the smallest coordinate gap to any item;
