@@ -225,7 +225,7 @@ def test_pair_lminusinf_values(x: list[float], y: list[float], expected_value: f
 # ==================================================================================================
 #  Marginals and joint
 # ==================================================================================================
-@pytest.mark.parametrize("n_dims", [1, 2, 3, 4, 5, 10])
+@pytest.mark.parametrize("n_dims", [2, 3, 4, 5, 10])
 @pytest.mark.parametrize("joint_scale", [1.0, 0.25])
 def test_pair_marginals_and_joint_matches_reference(n_dims: int, joint_scale: float):
     """Every pair's distance is the smaller of the smallest coordinate gap and the scaled L2 distance to the power d."""

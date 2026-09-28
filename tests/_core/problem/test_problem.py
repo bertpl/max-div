@@ -155,6 +155,16 @@ def test_problem_new_along_axis_beyond_the_dimension_count_raises():
         _ = MaxDivProblem.new(vectors, k=3, distance_metric=DistanceMetric.along_axis(3))
 
 
+def test_problem_new_marginals_and_joint_over_1_dimension_raises():
+    """The marginals-and-joint distance needs at least 2 dimensions and is rejected at construction over 1."""
+    # --- arrange ----------------------
+    vectors = np.random.default_rng(0).random((5, 1)).astype(np.float32)
+
+    # --- act / assert -----------------
+    with pytest.raises(ValueError, match="needs at least 2 dimensions"):
+        _ = MaxDivProblem.new(vectors, k=3, distance_metric=DistanceMetric.marginals_and_joint())
+
+
 def test_problem_new_along_axis_within_the_dimension_count_ok():
     """The last coordinate is a valid axis."""
     # --- arrange ----------------------

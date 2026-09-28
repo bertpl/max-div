@@ -192,7 +192,8 @@ class DistanceMetric(NamedTuple):
         in the full space (its joint distribution) at once.
 
         The 2 terms are comparable only for a population that fills the unit cube [0, 1]^d, so scale
-        the vectors into it first.
+        the vectors into it first.  It needs at least 2 dimensions: in 1 the 2 terms coincide, and a
+        problem over 1-dimensional vectors rejects it.
 
         For k well-spread points in the unit cube, the gap along an axis between neighbors can reach
         1/k, while the nearest-neighbor L2 distance raised to the power d is about c/k, where the

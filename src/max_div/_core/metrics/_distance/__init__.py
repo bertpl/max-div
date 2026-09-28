@@ -13,8 +13,8 @@ from ._metric import (
     NO_PARAM,
     DistanceMetric,
     preprocess_vectors,
-    validate_axis_within_dimensions,
     validate_cosine_distance_vectors,
+    validate_metric_fits_dimensions,
 )
 from ._store import (
     DISTANCE_STORE_TYPE,

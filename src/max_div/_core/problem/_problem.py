@@ -16,8 +16,8 @@ from max_div._core.metrics import (
     DiversityObjective,
     DiversityObjectiveSimple,
     HybridDiversityMetric,
-    validate_axis_within_dimensions,
     validate_cosine_distance_vectors,
+    validate_metric_fits_dimensions,
 )
 from max_div._core.metrics._distance import compute_full_matrix, expand_condensed
 
@@ -156,7 +156,7 @@ class MaxDivProblem(ABC):
         for metric in cls._distance_metrics_read(distance_metric, diversity_metric):
             if metric == DistanceMetric.cosine():
                 validate_cosine_distance_vectors(vectors)  # fail fast: zero vectors have no defined angle
-            validate_axis_within_dimensions(metric, vectors.shape[1])
+            validate_metric_fits_dimensions(metric, vectors.shape[1])
 
         cls._validate_k(k, vectors.shape[0])
 
