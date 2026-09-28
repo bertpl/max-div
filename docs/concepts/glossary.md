@@ -99,7 +99,8 @@ one scalar being maximized — a minimum, a mean, or a geometric mean. Choosing 
 *is* choosing the objective, and it changes what a good answer looks like rather than merely how
 hard the solver works: see [max-min](#max-min), [max-sum](#max-sum), and
 [geometric-mean separation](#geometric-mean-separation). A
-[hybrid diversity metric](#hybrid-diversity-metric) combines several diversity metrics into one score.
+[hybrid diversity metric](#hybrid-diversity-metric) is the exception: it combines the values of
+several diversity metrics into one score, not the *k* contributions.
 
 ## Feasibility { #feasibility }
 
@@ -151,8 +152,9 @@ tools of different kinds:
 A [diversity metric](#diversity-metric) built from several diversity metrics, its
 [terms](#hybrid-term), whose values are aggregated into one score. The supported aggregations are a
 weighted geometric mean, a weighted arithmetic mean and a weighted minimum. Each term gets a weight,
-whose meaning depends on the aggregation — see [Weights](diversity.md#hybrid-weights). A hybrid
-rewards a selection that is spread in several senses at once, for example in the full space and
+whose meaning depends on the aggregation — see [Weights](diversity.md#hybrid-weights).
+
+A hybrid rewards a selection that is spread in several senses at once, for example in the full space and
 along each coordinate. See [Hybrid diversity metrics](diversity.md#hybrid-diversity-metrics).
 
 ## Hybrid term { #hybrid-term }
@@ -160,7 +162,7 @@ along each coordinate. See [Hybrid diversity metrics](diversity.md#hybrid-divers
 One component of a [hybrid diversity metric](#hybrid-diversity-metric): a
 [diversity metric](#diversity-metric) over one [distance metric](#distance-metric), written
 `DiversityMetric.MIN_SEPARATION.over(DistanceMetric.along_axis(0))`, or a bare `DiversityMetric`
-over the problem's own distance.
+such as `DiversityMetric.MIN_SEPARATION`, which uses the problem's own distance metric.
 
 ## Item { #item }
 

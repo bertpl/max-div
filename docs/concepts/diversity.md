@@ -125,7 +125,7 @@ see [Objectives & the diversity-problem landscape](objectives.md).)
 
 A **hybrid diversity metric** combines several diversity metrics, its **terms**, into one score.
 
-A hybrid is for selections that must be diverse in more than one sense at once: spread in the full space and along each coordinate, or spread under 2 different distances. The [uniform-sampling case study](../guides/uniform_sampling.md) shows what a hybrid delivers next to single metrics.
+A hybrid is for selections that must be diverse in more than one sense at once: spread in the full space and along each coordinate, or spread under 2 different distances. The [uniform-sampling case study](../guides/uniform_sampling.md) compares a hybrid's selections with those of single diversity metrics.
 
 ### VI.A. Terms { #hybrid-terms }
 
@@ -134,17 +134,17 @@ A term is a diversity metric over one distance metric:
 - `DiversityMetric.MIN_SEPARATION.over(DistanceMetric.along_axis(0))` reads the distance along axis 0;
 - a bare `DiversityMetric.MIN_SEPARATION` reads the problem's own distance metric.
 
-Each term's distance metric is computed and stored like the problem's own, and every term adds work to each iteration.
+The distances under each term's distance metric are computed and stored in the same way as the distances under the problem's own distance metric, and every term adds work to each iteration. A hybrid needs at least 2 terms, and a hybrid cannot be a term of another hybrid.
 
-A problem built from [precomputed distances](glossary.md#precomputed-distances) has no vectors, so none of its terms can name a distance metric; its terms all read the given distances. A hybrid needs at least 2 terms.
+A problem built from [precomputed distances](glossary.md#precomputed-distances) has no vectors, so none of its terms can use `.over(...)`; every term reads the given distances.
 
 ### VI.B. Aggregations { #hybrid-aggregations }
 
-Each factory below combines the terms' values into the hybrid's score in its own way:
+Each factory below combines the terms' values into the hybrid's score:
 
 | Factory | Score | Choose it when |
 |---------|-------|----------------|
-| `HybridDiversityMetric.geomean_of(...)` | the geometric mean of the terms | **every term must be spread**: one term at zero makes the score zero |
+| `HybridDiversityMetric.geomean_of(...)` | the geometric mean of the terms | **the selection must be spread under every term**: one term at zero makes the score zero |
 | `HybridDiversityMetric.mean_of(...)` | the arithmetic mean of the terms | **a strong term may make up for a weak one** |
 | `HybridDiversityMetric.min_of(...)` | the smallest of the terms | **the weakest term decides**: a high value in one term cannot make up for a low value in another |
 
@@ -161,7 +161,7 @@ problem = MaxDivProblem.new(vectors, k=100, diversity_metric=objective)
 
 ### VI.C. Weights { #hybrid-weights }
 
-Every factory takes `weights=`: one positive number per term, in term order; a weight that is not given is 1. What a weight does depends on the aggregation, with $s_t$ the value of term $t$ and $w_t$ its weight:
+Every factory takes `weights=`: one positive, finite number per term, in term order; leaving out `weights=` gives every term weight 1. What a weight does depends on the aggregation, with $s_t$ the value of term $t$ and $w_t$ its weight:
 
 | Factory | Score | A weight … |
 |---------|-------|------------|
@@ -169,8 +169,8 @@ Every factory takes `weights=`: one positive number per term, in term order; a w
 | `mean_of` | $\sum_t w_t \, s_t \,/\, \sum_t w_t$ | multiplies its term's value in a weighted mean |
 | `min_of` | $\min_t \; w_t \, s_t$ | multiplies its term's value; the weights are not normalized |
 
-- **The best selection under the geometric mean does not depend on the scale of a term**: multiplying a term by a constant multiplies every selection's score by the same constant, so the best selection stays the same.
-- **The arithmetic mean and the minimum compare raw values**, so terms on different scales need weights that bring them onto a common one.
+- **The best selection under the geometric mean does not depend on the scale of a term**: multiplying a term by a constant multiplies every selection's score by the same factor, so the best selection stays the same.
+- **The arithmetic mean and the minimum compare raw values**, so terms on different scales need weights that bring them onto a common scale.
 
 For example, when the x coordinates span 0 to 1,000 and the y coordinates 0 to 1, the unweighted minimum of the x-axis term and the y-axis term almost always equals the y-axis term's value. Dividing each term by the range of its coordinate puts both on one scale:
 
@@ -187,4 +187,4 @@ objective = HybridDiversityMetric.min_of(
 
 ### VI.D. Tie-breakers { #hybrid-tie-breakers }
 
-A hybrid accepts no custom tie-breakers: its defaults come from its terms' metrics, and a `min_of` hybrid first gets the unweighted geometric mean of its own terms. The [scoring page](scoring.md#diversity-tie-breakers) gives the full rule.
+A hybrid accepts no custom tie-breakers: `MaxDivSolverBuilder.with_diversity_tie_breakers()` raises a `ValueError` for a problem with a hybrid diversity metric. Its default tie-breakers come from the diversity metrics of its terms, and a `min_of` hybrid gets the unweighted geometric mean of its terms as its first tie-breaker. The [scoring page](scoring.md#diversity-tie-breakers) gives the full rule.
