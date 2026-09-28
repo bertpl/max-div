@@ -97,9 +97,8 @@ def _marginals_and_joint_pair(
     """Return the marginals-and-joint distance between vectors i and j.
 
     It is the smaller of the smallest absolute coordinate difference and `joint_scale` times the L2
-    distance raised to the dimension d. The power is taken as d/2 products of the squared distance, one
-    square root more when d is odd, so d = 2 multiplies the squared distance exactly. It is computed in
-    float64, where a far pair in a high dimension may reach +inf, which the minimum then ignores.
+    distance raised to the dimension d. The distance is computed in float64, where a far pair in a high
+    dimension may reach +inf, which the minimum then ignores.
     """
     smallest_gap = np.float64(np.inf)
     squared_l2 = np.float64(0.0)
@@ -109,12 +108,14 @@ def _marginals_and_joint_pair(
         if diff < smallest_gap:
             smallest_gap = diff
         squared_l2 += diff * diff
-    joint = np.float64(1.0)
+    # The power d multiplies the squared distance d // 2 times, and once more by the distance itself
+    # when d is odd; for d = 2 the joint term is the squared distance, with no square root to round.
+    joint_term = np.float64(1.0)
     for _ in range(n_dims // 2):
-        joint *= squared_l2
+        joint_term *= squared_l2
     if n_dims % 2 == 1:
-        joint *= np.sqrt(squared_l2)
-    return min(smallest_gap, joint_scale * joint)
+        joint_term *= np.sqrt(squared_l2)
+    return min(smallest_gap, joint_scale * joint_term)
 
 
 @numba.njit(
@@ -191,7 +192,7 @@ def _along_axis_pair(vectors: NDArray[np.float32], i: int | np.signedinteger, j:
     cache=True,
 )
 def _metric_pair(  # noqa: C901 -- flat dispatch, one arm per kind: complexity here is roster size, not tangledness
-    vectors: NDArray[np.float32], metric_kind: np.int32, metric_param: np.float64, i: np.int32, j: np.int32
+    vectors: NDArray[np.float32], metric_kind: np.int32, pair_function_param: np.float64, i: np.int32, j: np.int32
 ) -> np.float32:
     """Compute the distance between vectors i and j, per the given metric selector.
 
@@ -216,11 +217,11 @@ def _metric_pair(  # noqa: C901 -- flat dispatch, one arm per kind: complexity h
     if metric_kind == METRIC_KIND_ALONG_AXIS:
         return np.float32(_along_axis_pair(vectors, i, j))  # along axis: the array holds that one coordinate
     if metric_kind == METRIC_KIND_MARGINALS_AND_JOINT:
-        return np.float32(_marginals_and_joint_pair(vectors, i, j, metric_param))
+        return np.float32(_marginals_and_joint_pair(vectors, i, j, pair_function_param))
     if metric_kind == METRIC_KIND_MINKOWSKI:
-        return np.float32(_minkowski_pair_powered(vectors, i, j, metric_param) ** (1.0 / metric_param))
+        return np.float32(_minkowski_pair_powered(vectors, i, j, pair_function_param) ** (1.0 / pair_function_param))
     if metric_kind == METRIC_KIND_MINKOWSKI_POWERED:
-        return np.float32(_minkowski_pair_powered(vectors, i, j, metric_param))
+        return np.float32(_minkowski_pair_powered(vectors, i, j, pair_function_param))
     if metric_kind == METRIC_KIND_MINKOWSKI_P05:
         acc = _minkowski_pair_powered_p05(vectors, i, j)
         return np.float32(acc * acc)

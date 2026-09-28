@@ -5,8 +5,7 @@ import numpy as np
 import pytest
 
 from max_div._core.metrics import DistanceMetric
-from max_div._core.metrics._distance._metric import NO_AXIS, NO_P
-from max_div._core.metrics._distance._metric._distance_metric import NO_JOINT_SCALE
+from max_div._core.metrics._distance._metric import NO_AXIS, NO_JOINT_SCALE, NO_P
 
 # Every metric with a dedicated factory method of its own.
 _FACTORY_METRICS = (
@@ -111,7 +110,7 @@ def test_kinds_without_an_exponent_store_no_p():
 
 
 def test_a_metric_survives_pickling(metric: DistanceMetric):
-    """A metric travels to a worker process pickled, inside a shared store spec, and arrives equal."""
+    """A metric pickled for a worker process, inside a shared store spec, unpickles equal to the original."""
     # --- act / assert -----------------
     assert pickle.loads(pickle.dumps(metric)) == metric  # noqa: S301 -- round-trip of our own object
 

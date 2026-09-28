@@ -37,9 +37,18 @@ class SharedStoreSpec(NamedTuple):
     segment_name: str  # the operating-system name of the segment, which is how another process finds it
     kind: int  # the `DistanceStore.kind` selector of the distance store that reads the segment
     shape: tuple[int, ...]  # the shape of the float32 array in the segment; its first axis is the item count
-    metric: DistanceMetric | None = (
-        None  # the distance metric that a lazy distance store computes with; None for a full matrix
-    )
+    metric: DistanceMetric | None = None  # the metric of a lazy distance store; None for a full matrix
+
+    # --------------------------------------------------------------------------
+    #  Rebuilding the distance store
+    # --------------------------------------------------------------------------
+    def store_over(self, buffer: NDArray[np.float32]) -> DistanceStore:
+        """Return the distance store that reads the buffer as the kind that this spec names."""
+        if self.kind == KIND_FULL_MATRIX:
+            return DistanceStore.full_matrix(buffer)
+        else:
+            assert self.metric is not None  # noqa: S101 -- the allocator gives every lazy spec its metric
+            return DistanceStore.lazy(buffer, self.metric)
 
 
 # =================================================================================================
@@ -54,15 +63,6 @@ def attached_distance_store(spec: SharedStoreSpec) -> Iterator[DistanceStore]:
     """
     segment = attach_shared_memory_segment(spec.segment_name)
     try:
-        yield _store_over(np.ndarray(spec.shape, dtype=np.float32, buffer=segment.buf), spec)
+        yield spec.store_over(np.ndarray(spec.shape, dtype=np.float32, buffer=segment.buf))
     finally:
         segment.close()
-
-
-def _store_over(buffer: NDArray[np.float32], spec: SharedStoreSpec) -> DistanceStore:
-    """Return the distance store that reads the buffer as the kind that the spec names."""
-    if spec.kind == KIND_FULL_MATRIX:
-        return DistanceStore.full_matrix(buffer)
-    else:
-        assert spec.metric is not None  # noqa: S101 -- the allocator gives every lazy spec its metric
-        return DistanceStore.lazy(buffer, spec.metric)
