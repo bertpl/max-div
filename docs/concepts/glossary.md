@@ -149,9 +149,9 @@ tools of different kinds:
 ## Hybrid diversity metric { #hybrid-diversity-metric }
 
 A [diversity metric](#diversity-metric) built from several diversity metrics, its [terms](#term),
-whose values a weighted geometric mean, arithmetic mean or minimum combines into one score. It
-spreads one selection in several senses at once, for example in the full space and along each
-coordinate. See [Hybrid diversity metrics](diversity.md#hybrid-diversity-metrics).
+whose values are aggregated into one score. The supported aggregations are a weighted geometric
+mean, a weighted arithmetic mean and a weighted minimum. A hybrid spreads one selection in several
+senses at once, for example in the full space and along each coordinate. See [Hybrid diversity metrics](diversity.md#hybrid-diversity-metrics).
 
 ## Item { #item }
 
