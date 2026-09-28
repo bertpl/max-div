@@ -16,6 +16,7 @@ The segment mechanics, and the lifetime rules that every user of a segment must 
 
 from collections.abc import Iterator
 from contextlib import contextmanager
+from multiprocessing.shared_memory import SharedMemory
 from typing import NamedTuple
 
 import numpy as np
@@ -37,18 +38,34 @@ class SharedStoreSpec(NamedTuple):
     segment_name: str  # the operating-system name of the segment, which is how another process finds it
     kind: int  # the `DistanceStore.kind` selector of the distance store that reads the segment
     shape: tuple[int, ...]  # the shape of the float32 array in the segment; its first axis is the item count
-    metric: DistanceMetric | None = None  # the metric of a lazy distance store; None for a full matrix
+    distance_metric: DistanceMetric | None = (
+        None  # the distance metric of a lazy distance store; None for a full matrix
+    )
+
+    # --------------------------------------------------------------------------
+    #  Factory methods
+    # --------------------------------------------------------------------------
+    @classmethod
+    def over_segment(
+        cls,
+        segment: SharedMemory,
+        buffer: NDArray[np.float32],
+        kind: np.int32,
+        distance_metric: DistanceMetric | None = None,
+    ) -> "SharedStoreSpec":
+        """Return the spec that lets a worker process rebuild a distance store of the given kind over the segment."""
+        return cls(segment_name=segment.name, kind=int(kind), shape=buffer.shape, distance_metric=distance_metric)
 
     # --------------------------------------------------------------------------
     #  Rebuilding the distance store
     # --------------------------------------------------------------------------
-    def store_over(self, buffer: NDArray[np.float32]) -> DistanceStore:
-        """Return the distance store that reads the buffer as the kind that this spec names."""
+    def distance_store_over(self, buffer: NDArray[np.float32]) -> DistanceStore:
+        """Return the distance store that reads the buffer as this spec's kind."""
         if self.kind == KIND_FULL_MATRIX:
             return DistanceStore.full_matrix(buffer)
         else:
-            assert self.metric is not None  # noqa: S101 -- the allocator gives every lazy spec its metric
-            return DistanceStore.lazy(buffer, self.metric)
+            assert self.distance_metric is not None  # noqa: S101 -- the allocator gives every lazy spec its metric
+            return DistanceStore.lazy(buffer, self.distance_metric)
 
 
 # =================================================================================================
@@ -63,6 +80,6 @@ def attached_distance_store(spec: SharedStoreSpec) -> Iterator[DistanceStore]:
     """
     segment = attach_shared_memory_segment(spec.segment_name)
     try:
-        yield spec.store_over(np.ndarray(spec.shape, dtype=np.float32, buffer=segment.buf))
+        yield spec.distance_store_over(np.ndarray(spec.shape, dtype=np.float32, buffer=segment.buf))
     finally:
         segment.close()

@@ -95,7 +95,7 @@ def test_shared_specs_carry_the_metric_of_a_lazy_store():
 
     # --- assert -----------------------
     assert spec.kind == KIND_LAZY
-    assert spec.metric == metric
+    assert spec.distance_metric == metric
 
 
 def test_shared_specs_attach_to_the_data_in_the_segment():

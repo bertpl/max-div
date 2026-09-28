@@ -94,11 +94,10 @@ def _lminusinf_pair(vectors: NDArray[np.float32], i: int | np.signedinteger, j: 
 def _marginals_and_joint_pair(
     vectors: NDArray[np.float32], i: int | np.signedinteger, j: int | np.signedinteger, joint_scale: np.float64
 ) -> np.float64:
-    """Return the marginals-and-joint distance between vectors i and j.
+    """Return the marginals-and-joint distance of vectors i and j, defined on `DistanceMetric.marginals_and_joint`.
 
-    It is the smaller of the smallest absolute coordinate difference and `joint_scale` times the L2
-    distance raised to the dimension d. The distance is computed in float64, where a far pair in a high
-    dimension may reach +inf, which the minimum then ignores.
+    The distance is computed in float64; for a far pair in a high dimension the joint term may overflow
+    to +inf, and the minimum then returns the smallest gap.
     """
     smallest_gap = np.float64(np.inf)
     squared_l2 = np.float64(0.0)
@@ -108,8 +107,9 @@ def _marginals_and_joint_pair(
         if diff < smallest_gap:
             smallest_gap = diff
         squared_l2 += diff * diff
-    # The power d multiplies the squared distance d // 2 times, and once more by the distance itself
-    # when d is odd; for d = 2 the joint term is the squared distance, with no square root to round.
+    # The loop builds the power d from the squared distance multiplied d // 2 times, times the distance
+    # itself when d is odd; for d = 2 the joint term is then the squared distance, with no square root
+    # to round.
     joint_term = np.float64(1.0)
     for _ in range(n_dims // 2):
         joint_term *= squared_l2
@@ -195,6 +195,9 @@ def _metric_pair(  # noqa: C901 -- flat dispatch, one arm per kind: complexity h
     vectors: NDArray[np.float32], metric_kind: np.int32, pair_function_param: np.float64, i: np.int32, j: np.int32
 ) -> np.float32:
     """Compute the distance between vectors i and j, per the given metric selector.
+
+    `pair_function_param` is the metric's `DistanceMetric.pair_function_param`: its `joint_scale` for
+    marginals-and-joint, its `p` for every other kind.
 
     The selector is loop-invariant in every calling loop, so the branch order is not
     performance-relevant.  The specialized Minkowski kinds apply the outer root as repeated

@@ -99,7 +99,7 @@ class SharedMemoryDistanceStoreAllocator(DistanceStoreAllocator):
     def allocate(self, shape: tuple[int, ...], kind: np.int32) -> NDArray[np.float32]:
         """Create a segment sized for the given shape and return the writable array that views it."""
         segment, buffer = self._create_segment(shape)
-        self._specs.append(SharedStoreSpec(segment_name=segment.name, kind=int(kind), shape=buffer.shape))
+        self._specs.append(SharedStoreSpec.over_segment(segment, buffer, kind))
         return buffer
 
     def adopt(self, array: NDArray[np.float32], kind: np.int32, metric: DistanceMetric | None) -> NDArray[np.float32]:
@@ -115,9 +115,7 @@ class SharedMemoryDistanceStoreAllocator(DistanceStoreAllocator):
             self._segment_of_adopted[id(array)] = (segment, buffer)
         else:
             segment, buffer = known
-        self._specs.append(
-            SharedStoreSpec(segment_name=segment.name, kind=int(kind), shape=buffer.shape, metric=metric)
-        )
+        self._specs.append(SharedStoreSpec.over_segment(segment, buffer, kind, metric))
         return buffer
 
     @property

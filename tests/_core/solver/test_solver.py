@@ -19,7 +19,7 @@ from max_div._core.solver._solver_state import SolverState
 from max_div._core.solver._solver_step import OptimizationStep, SolverStep
 from max_div._core.solver._step_identity import SolverStepIdentity
 from max_div._core.solver._strategies import InitializationStrategy, OptimizationStrategy
-from tests._core.metrics._distance.helpers import condensed_distances
+from tests._core.metrics._distance.helpers import condensed_distances, marginals_and_joint_reference
 
 
 # =================================================================================================
@@ -524,7 +524,7 @@ def test_min_separation_over_marginals_and_joint_is_the_smallest_pair_distance_o
     # --- assert -----------------------
     selected = vectors[solution.i_selected].astype(np.float64)
     pair_distances = [
-        min(np.abs(a - b).min(), float(np.sum((a - b) ** 2)))
+        marginals_and_joint_reference(a, b, joint_scale=1.0)
         for index, a in enumerate(selected)
         for b in selected[index + 1 :]
     ]

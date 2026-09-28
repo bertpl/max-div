@@ -5,7 +5,7 @@ from scipy.spatial.distance import pdist as scipy_pdist
 from max_div._core.metrics._distance import (
     DistanceMetric,
 )
-from tests._core.metrics._distance.helpers import condensed_distances
+from tests._core.metrics._distance.helpers import condensed_distances, marginals_and_joint_reference
 
 _SCIPY_METRIC = {
     DistanceMetric.l1_manhattan(): "cityblock",
@@ -225,21 +225,15 @@ def test_pair_lminusinf_values(x: list[float], y: list[float], expected_value: f
 # ==================================================================================================
 #  Marginals and joint
 # ==================================================================================================
-def _marginals_and_joint_reference(a: np.ndarray, b: np.ndarray, joint_scale: float) -> float:
-    """Return the marginals-and-joint distance of 2 vectors, computed in float64 with numpy."""
-    gaps = np.abs(a.astype(np.float64) - b.astype(np.float64))
-    return float(min(gaps.min(), joint_scale * np.linalg.norm(gaps) ** len(gaps)))
-
-
 @pytest.mark.parametrize("n_dims", [1, 2, 3, 5, 10])
 @pytest.mark.parametrize("joint_scale", [1.0, 0.25])
 def test_pair_marginals_and_joint_matches_reference(n_dims: int, joint_scale: float):
-    """Every pair is the smaller of the smallest coordinate gap and the scaled L2 distance to the power d."""
+    """Every pair's distance is the smaller of the smallest coordinate gap and the scaled L2 distance to the power d."""
     # --- arrange ----------------------
     vectors = np.random.default_rng(20260928).random((40, n_dims)).astype(np.float32)
     metric = DistanceMetric.marginals_and_joint(joint_scale=joint_scale)
     expected = [
-        _marginals_and_joint_reference(vectors[i], vectors[j], joint_scale)
+        marginals_and_joint_reference(vectors[i], vectors[j], joint_scale)
         for i in range(len(vectors))
         for j in range(i + 1, len(vectors))
     ]

@@ -110,7 +110,7 @@ def test_kinds_without_an_exponent_store_no_p():
 
 
 def test_a_metric_survives_pickling(metric: DistanceMetric):
-    """A metric pickled for a worker process, inside a shared store spec, unpickles equal to the original."""
+    """A metric round-trips through pickle unchanged, as it must to reach a worker inside a shared store spec."""
     # --- act / assert -----------------
     assert pickle.loads(pickle.dumps(metric)) == metric  # noqa: S301 -- round-trip of our own object
 

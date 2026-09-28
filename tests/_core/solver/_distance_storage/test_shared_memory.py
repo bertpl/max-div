@@ -139,7 +139,7 @@ def test_attached_minkowski_store_reads_the_published_values():
     allocator.close()
 
     # --- assert -----------------------
-    assert allocator.specs[0].metric == metric
+    assert allocator.specs[0].distance_metric == metric
     assert read_attached == _read_pairs(reference)
 
 
