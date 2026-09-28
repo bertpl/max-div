@@ -26,9 +26,10 @@ METRIC_KIND_MINKOWSKI_P0125_POWERED = 12
 METRIC_KIND_GEOMEAN = 13
 METRIC_KIND_ALONG_AXIS = 14
 METRIC_KIND_LMINUSINF = 15
+METRIC_KIND_MARGINALS_AND_JOINT = 16
 
-# `__repr__` looks up each kind's factory-method name here; the Minkowski kinds render as a
-# `minkowski(...)` call and the along-axis kind as an `along_axis(...)` call instead.
+# `__repr__` looks up each kind's factory-method name here; a kind whose factory takes an argument is
+# left out, and `__repr__` builds its call with that argument.
 _FACTORY_NAMES = {
     METRIC_KIND_L1: "l1_manhattan",
     METRIC_KIND_L2: "l2_euclidean",
@@ -39,9 +40,10 @@ _FACTORY_NAMES = {
     METRIC_KIND_LMINUSINF: "l_minus_inf",
 }
 
-# `label` looks up each kind listed here; along-axis and the Minkowski kinds build theirs from the
-# axis or the exponent.  This label appears in the solution summary; the docs use a separate
-# `hero_label` (in data/capability_axes.yaml), kept apart so product code and docs do not couple.
+# `label` looks up each kind listed here; a kind whose factory takes an argument builds its label from
+# that argument.  This label appears in the solution summary;
+# the docs use a separate `hero_label` (in data/capability_axes.yaml), kept apart so product code and
+# docs do not couple.
 _KIND_LABELS = {
     METRIC_KIND_L1: "L1",
     METRIC_KIND_L2: "L2",
@@ -53,7 +55,7 @@ _KIND_LABELS = {
 }
 
 # `_IMPLIED_P` gives the p each specialized Minkowski kind implies, for `__repr__`; a metric of
-# these kinds stores p=NO_P.
+# these kinds stores param=NO_PARAM.
 _IMPLIED_P = {
     METRIC_KIND_MINKOWSKI_P05: 0.5,
     METRIC_KIND_MINKOWSKI_P05_POWERED: 0.5,
@@ -75,11 +77,11 @@ _POWERED_KINDS = (
 )
 
 
-# Fields are stored as the compiled functions read them, so a metric crosses the njit boundary
-# without conversion: `p` is a float, and NO_P marks a kind without a power parameter (every
-# Minkowski kind requires p > 0, so 0.0 is free to mean "none").  `axis` follows the same rule:
-# an int, with NO_AXIS marking every kind that does not read one coordinate.
-NO_P = 0.0
+# `param` is stored as the compiled distance functions read it, so a metric crosses the njit boundary
+# without conversion: a float, with NO_PARAM marking a kind without one (every kind that has one
+# requires it to be > 0, so 0.0 is free to mean "none").  `axis` is an int, with NO_AXIS marking every
+# kind that does not read one coordinate.
+NO_PARAM = 0.0
 NO_AXIS = -1
 
 
@@ -87,12 +89,16 @@ class DistanceMetric(NamedTuple):
     """A distance metric: a `kind` selector plus the parameters that kind needs.
 
     Create instances via the factory methods only, so metrics that compute the same distance
-    compare equal.  `p` is the metric's power parameter, `NO_P` for every kind that does not use
-    one; `axis` is the coordinate that `along_axis` reads, `NO_AXIS` for every other kind.
+    compare equal.  Each parameter field holds a sentinel for every kind that does not use it:
+
+    - `param`: the kind's float parameter, the one the compiled distance functions read: the power `p`
+      of a generic Minkowski kind, or the `joint_scale` of `marginals_and_joint`; `NO_PARAM` for every
+      other kind
+    - `axis`: the coordinate that `along_axis` reads; `NO_AXIS` for every other kind
     """
 
     kind: int
-    p: float = NO_P
+    param: float = NO_PARAM
     axis: int = NO_AXIS
 
     # --------------------------------------------------------------------------
@@ -175,6 +181,47 @@ class DistanceMetric(NamedTuple):
         return cls(kind=METRIC_KIND_ALONG_AXIS, axis=int(axis))
 
     @classmethod
+    def marginals_and_joint(cls, joint_scale: float = 1.0) -> "DistanceMetric":
+        """Return the marginals-and-joint distance: ``min( min_i |a_i - b_i|, joint_scale * ||a - b||_2^d )``.
+
+        For 2 vectors a and b of dimension d, the first term is the `l_minus_inf()` distance, the gap in
+        the coordinate where they are closest, and the second term, the joint term, is their L2 distance
+        raised to the power d.
+
+        Under min-separation a selection is then spread along every coordinate axis (its marginals) and
+        in the full space (its joint distribution) at once.
+
+        The 2 terms are comparable only for a population that fills the unit cube [0, 1]^d, so scale
+        the vectors into it first.  It needs at least 2 dimensions: in 1 it only rescales the one
+        coordinate gap, and a problem over 1-dimensional vectors rejects it.
+
+        For k well-spread points in the unit cube, the gap along an axis between neighbors can reach
+        1/k, while the nearest-neighbor L2 distance raised to the power d is about c/k, where the
+        constant c grows with d:
+
+        - c ≈ 1.15 for d = 2
+        - c ≈ 1.4 for d = 3
+        - c ≈ 2.8 for d = 5
+        - c ≈ 40 for d = 10
+
+        In higher dimensions the joint term is therefore larger than the gap and rarely sets the
+        minimum; a `joint_scale` of about 1/c gives the 2 terms equal weight.
+
+        The marginals-and-joint distance is not a metric in the mathematical sense (points that share any one
+        coordinate are at distance zero, and the triangle inequality fails); the solver relies on neither.
+
+        Args:
+            joint_scale: The positive, finite factor on the joint term.
+
+        Raises:
+            ValueError: If `joint_scale` is not a positive, finite number.
+        """
+        joint_scale = float(joint_scale)
+        if not (math.isfinite(joint_scale) and joint_scale > 0):
+            raise ValueError(f"marginals_and_joint requires a positive, finite joint_scale; here: {joint_scale}.")
+        return cls(kind=METRIC_KIND_MARGINALS_AND_JOINT, param=joint_scale)
+
+    @classmethod
     def minkowski(cls, p: float, root: bool = True) -> "DistanceMetric":
         """Return the Minkowski distance metric: ``( sum_i |x_i - y_i|^p )^(1/p)``, for any p > 0.
 
@@ -210,7 +257,7 @@ class DistanceMetric(NamedTuple):
             return cls(kind=METRIC_KIND_MINKOWSKI_P025 if root else METRIC_KIND_MINKOWSKI_P025_POWERED)
         if p == 0.125:
             return cls(kind=METRIC_KIND_MINKOWSKI_P0125 if root else METRIC_KIND_MINKOWSKI_P0125_POWERED)
-        return cls(kind=METRIC_KIND_MINKOWSKI if root else METRIC_KIND_MINKOWSKI_POWERED, p=p)
+        return cls(kind=METRIC_KIND_MINKOWSKI if root else METRIC_KIND_MINKOWSKI_POWERED, param=p)
 
     # --------------------------------------------------------------------------
     #  Properties
@@ -225,21 +272,29 @@ class DistanceMetric(NamedTuple):
         """Return a short label for the metric, e.g. `L1`, `geomean`, `axis 2`, `L3-powered`."""
         if self.kind in _KIND_LABELS:
             return _KIND_LABELS[self.kind]
-        if self.kind == METRIC_KIND_ALONG_AXIS:
+        elif self.kind == METRIC_KIND_ALONG_AXIS:
             return f"axis {self.axis}"
-        p = self.p if self.p != NO_P else _IMPLIED_P[self.kind]
-        powered = "-powered" if self.kind in _POWERED_KINDS else ""
-        return f"L{p:g}{powered}"
+        elif self.kind == METRIC_KIND_MARGINALS_AND_JOINT:
+            scale_suffix = f" (joint scale {self.param:g})" if self.param != 1.0 else ""
+            return f"marginals+joint{scale_suffix}"
+        else:
+            p = self.param if self.param != NO_PARAM else _IMPLIED_P[self.kind]
+            powered = "-powered" if self.kind in _POWERED_KINDS else ""
+            return f"L{p:g}{powered}"
 
     # --------------------------------------------------------------------------
     #  Representation
     # --------------------------------------------------------------------------
     def __repr__(self) -> str:
-        """Return the factory call that constructs this metric."""
+        """Return the factory call that constructs this metric, leaving out an argument that equals its default."""
         if self.kind in _FACTORY_NAMES:
             return f"DistanceMetric.{_FACTORY_NAMES[self.kind]}()"
-        if self.kind == METRIC_KIND_ALONG_AXIS:
+        elif self.kind == METRIC_KIND_ALONG_AXIS:
             return f"DistanceMetric.along_axis({self.axis})"
-        p = self.p if self.p != NO_P else _IMPLIED_P[self.kind]
-        root_arg = ", root=False" if self.kind in _POWERED_KINDS else ""
-        return f"DistanceMetric.minkowski(p={p}{root_arg})"
+        elif self.kind == METRIC_KIND_MARGINALS_AND_JOINT:
+            scale_arg = f"joint_scale={self.param!r}" if self.param != 1.0 else ""
+            return f"DistanceMetric.marginals_and_joint({scale_arg})"
+        else:
+            p = self.param if self.param != NO_PARAM else _IMPLIED_P[self.kind]
+            root_arg = ", root=False" if self.kind in _POWERED_KINDS else ""
+            return f"DistanceMetric.minkowski(p={p}{root_arg})"

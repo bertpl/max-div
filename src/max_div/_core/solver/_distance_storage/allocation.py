@@ -99,7 +99,7 @@ class SharedMemoryDistanceStoreAllocator(DistanceStoreAllocator):
     def allocate(self, shape: tuple[int, ...], kind: np.int32) -> NDArray[np.float32]:
         """Create a segment sized for the given shape and return the writable array that views it."""
         segment, buffer = self._create_segment(shape)
-        self._specs.append(_spec_for(segment, buffer, kind, None))
+        self._specs.append(SharedStoreSpec.over_segment(segment, buffer, kind))
         return buffer
 
     def adopt(self, array: NDArray[np.float32], kind: np.int32, metric: DistanceMetric | None) -> NDArray[np.float32]:
@@ -115,7 +115,7 @@ class SharedMemoryDistanceStoreAllocator(DistanceStoreAllocator):
             self._segment_of_adopted[id(array)] = (segment, buffer)
         else:
             segment, buffer = known
-        self._specs.append(_spec_for(segment, buffer, kind, metric))
+        self._specs.append(SharedStoreSpec.over_segment(segment, buffer, kind, metric))
         return buffer
 
     @property
@@ -139,19 +139,3 @@ class SharedMemoryDistanceStoreAllocator(DistanceStoreAllocator):
         segment = create_shared_memory_segment(int(np.prod(shape, dtype=np.int64)) * np.dtype(np.float32).itemsize)
         self._segments.append(segment)
         return segment, np.ndarray(shape, dtype=np.float32, buffer=segment.buf)
-
-
-def _spec_for(
-    segment: SharedMemory, buffer: NDArray[np.float32], kind: np.int32, metric: DistanceMetric | None
-) -> SharedStoreSpec:
-    """Return the spec that lets a worker process rebuild a distance store of the given kind over the segment."""
-    if metric is None:
-        return SharedStoreSpec(segment_name=segment.name, kind=int(kind), shape=buffer.shape)
-    return SharedStoreSpec(
-        segment_name=segment.name,
-        kind=int(kind),
-        shape=buffer.shape,
-        metric_kind=int(metric.kind),
-        metric_p=float(metric.p),
-        metric_axis=int(metric.axis),
-    )

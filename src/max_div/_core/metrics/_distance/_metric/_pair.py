@@ -19,6 +19,7 @@ from ._distance_metric import (
     METRIC_KIND_L2S,
     METRIC_KIND_LINF,
     METRIC_KIND_LMINUSINF,
+    METRIC_KIND_MARGINALS_AND_JOINT,
     METRIC_KIND_MINKOWSKI,
     METRIC_KIND_MINKOWSKI_P0125,
     METRIC_KIND_MINKOWSKI_P025,
@@ -85,6 +86,37 @@ def _lminusinf_pair(vectors: NDArray[np.float32], i: int | np.signedinteger, j: 
         if diff < acc:
             acc = diff
     return acc
+
+
+@numba.njit(
+    "float64(float32[:, ::1], int64, int64, float64)", inline="always", cache=True, fastmath={"reassoc", "contract"}
+)
+def _marginals_and_joint_pair(
+    vectors: NDArray[np.float32], i: int | np.signedinteger, j: int | np.signedinteger, joint_scale: np.float64
+) -> np.float64:
+    """Return the marginals-and-joint distance of vectors i and j, defined on `DistanceMetric.marginals_and_joint`.
+
+    The distance is computed in float64; for a far pair in a high dimension the joint term may overflow
+    to +inf, and the minimum then returns the smallest gap.
+    """
+    # --- smallest coordinate gap (L-∞) ---------
+    smallest_gap = _lminusinf_pair(vectors, i, j)
+
+    # --- joint term (L2 to the power d) ---------
+    # the metric is meant for small d, so the common dimensions skip the general power
+    squared_l2 = _l2sq_pair(vectors, i, j)
+    n_dims = vectors.shape[1]
+    if n_dims == 2:
+        joint_term = squared_l2
+    elif n_dims == 3:
+        joint_term = squared_l2 * np.sqrt(squared_l2)
+    elif n_dims == 4:
+        joint_term = squared_l2 * squared_l2
+    else:
+        joint_term = squared_l2 ** (0.5 * n_dims)
+
+    # --- minimum --------------------------------
+    return min(smallest_gap, joint_scale * joint_term)
 
 
 @numba.njit(
@@ -161,9 +193,12 @@ def _along_axis_pair(vectors: NDArray[np.float32], i: int | np.signedinteger, j:
     cache=True,
 )
 def _metric_pair(  # noqa: C901 -- flat dispatch, one arm per kind: complexity here is roster size, not tangledness
-    vectors: NDArray[np.float32], metric_kind: np.int32, metric_p: np.float64, i: np.int32, j: np.int32
+    vectors: NDArray[np.float32], metric_kind: np.int32, metric_param: np.float64, i: np.int32, j: np.int32
 ) -> np.float32:
     """Compute the distance between vectors i and j, per the given metric selector.
+
+    `metric_param` is the metric's `DistanceMetric.param`: the power `p` of a generic Minkowski kind,
+    or the `joint_scale` of marginals-and-joint.
 
     The selector is loop-invariant in every calling loop, so the branch order is not
     performance-relevant.  The specialized Minkowski kinds apply the outer root as repeated
@@ -185,10 +220,12 @@ def _metric_pair(  # noqa: C901 -- flat dispatch, one arm per kind: complexity h
         return np.float32(_geomean_pair(vectors, i, j))
     if metric_kind == METRIC_KIND_ALONG_AXIS:
         return np.float32(_along_axis_pair(vectors, i, j))  # along axis: the array holds that one coordinate
+    if metric_kind == METRIC_KIND_MARGINALS_AND_JOINT:
+        return np.float32(_marginals_and_joint_pair(vectors, i, j, metric_param))
     if metric_kind == METRIC_KIND_MINKOWSKI:
-        return np.float32(_minkowski_pair_powered(vectors, i, j, metric_p) ** (1.0 / metric_p))
+        return np.float32(_minkowski_pair_powered(vectors, i, j, metric_param) ** (1.0 / metric_param))
     if metric_kind == METRIC_KIND_MINKOWSKI_POWERED:
-        return np.float32(_minkowski_pair_powered(vectors, i, j, metric_p))
+        return np.float32(_minkowski_pair_powered(vectors, i, j, metric_param))
     if metric_kind == METRIC_KIND_MINKOWSKI_P05:
         acc = _minkowski_pair_powered_p05(vectors, i, j)
         return np.float32(acc * acc)

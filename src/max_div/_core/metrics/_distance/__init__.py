@@ -10,11 +10,11 @@ Each layer depends only on the ones before it:
 from ._build import compute_full_matrix, expand_condensed
 from ._metric import (
     NO_AXIS,
-    NO_P,
+    NO_PARAM,
     DistanceMetric,
     preprocess_vectors,
-    validate_axis_within_dimensions,
     validate_cosine_distance_vectors,
+    validate_metric_fits_dimensions,
 )
 from ._store import (
     DISTANCE_STORE_TYPE,

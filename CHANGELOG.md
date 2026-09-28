@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - `HybridDiversityMetric.geomean_of` and `mean_of` take a `weights` argument with one weight per term: in `geomean_of` each weight is its term's exponent, in `mean_of` each weight multiplies its term's value
 - `HybridDiversityMetric.min_of` maximizes the smallest of its terms, each multiplied by its weight, so terms on different scales can be made comparable
+- `DistanceMetric.marginals_and_joint()`: the smaller of the smallest per-coordinate gap and the L2 distance raised to the power of the number of dimensions, so that min-separation spreads a selection along every axis and in the full space at once
 
 ### Changed
 
