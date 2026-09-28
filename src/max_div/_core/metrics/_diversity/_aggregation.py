@@ -3,8 +3,8 @@
 What a weight means depends on the aggregation, so each aggregation holds its own weights. Below,
 s_t is term t's value and w_t its weight:
 
-- `GeometricMeanAggregation` — a weight is its term's exponent: (prod_t s_t ** w_t) ** (1 / sum(w)).
-- `ArithmeticMeanAggregation` — a weight multiplies its term's value: sum_t w_t * s_t / sum(w).
+- `HybridAggregationGeometricMean` — a weight is its term's exponent: (prod_t s_t ** w_t) ** (1 / sum(w)).
+- `HybridAggregationArithmeticMean` — a weight multiplies its term's value: sum_t w_t * s_t / sum(w).
 
 Both normalize by the weight sum, so equal weights give the plain mean.
 """
@@ -30,10 +30,10 @@ if TYPE_CHECKING:
 
 
 # =================================================================================================
-#  HybridAggregation
+#  HybridAggregationBase
 # =================================================================================================
 @dataclass(frozen=True)
-class HybridAggregation(ABC):
+class HybridAggregationBase(ABC):
     """A hybrid aggregation combines a hybrid objective's term values into one value, with one weight per term."""
 
     # `name` is the aggregation's short name: it starts the hybrid's label (`geomean(...)`), and appending
@@ -141,7 +141,7 @@ class HybridAggregation(ABC):
 #  Concrete aggregations
 # =================================================================================================
 @dataclass(frozen=True)
-class GeometricMeanAggregation(HybridAggregation):
+class HybridAggregationGeometricMean(HybridAggregationBase):
     """The weighted geometric mean uses each weight as its term's exponent, normalized by the weight sum.
 
     The mean is zero as soon as one term is zero. Scaling a term by a constant scales the mean by a
@@ -156,7 +156,7 @@ class GeometricMeanAggregation(HybridAggregation):
 
 
 @dataclass(frozen=True)
-class ArithmeticMeanAggregation(HybridAggregation):
+class HybridAggregationArithmeticMean(HybridAggregationBase):
     """The weighted arithmetic mean sums each term's value times its weight and divides by the weight sum."""
 
     name: ClassVar[str] = "mean"

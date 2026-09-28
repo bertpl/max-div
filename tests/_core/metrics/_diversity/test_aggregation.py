@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 
 from max_div._core._math.geomean import geomean_f32
-from max_div._core.metrics import ArithmeticMeanAggregation, GeometricMeanAggregation
+from max_div._core.metrics import HybridAggregationArithmeticMean, HybridAggregationGeometricMean
 
 
 def _random_rows(n_rows: int, n_terms: int) -> np.ndarray:
@@ -13,7 +13,7 @@ def _random_rows(n_rows: int, n_terms: int) -> np.ndarray:
 # =================================================================================================
 #  Weights
 # =================================================================================================
-@pytest.mark.parametrize("aggregation_type", [GeometricMeanAggregation, ArithmeticMeanAggregation])
+@pytest.mark.parametrize("aggregation_type", [HybridAggregationGeometricMean, HybridAggregationArithmeticMean])
 def test_with_unit_weights_weights_every_term_1(aggregation_type) -> None:
     """An aggregation built with unit weights holds a weight of 1 per term and has `has_non_unit_weights` False."""
     # --- act --------------------------
@@ -27,14 +27,14 @@ def test_with_unit_weights_weights_every_term_1(aggregation_type) -> None:
 def test_weights_are_stored_as_floats_and_compare_by_value() -> None:
     """Integer and numpy weights are stored as plain floats, and aggregations compare by type and weights."""
     # --- act --------------------------
-    aggregation = GeometricMeanAggregation((2, np.float32(0.5)))
+    aggregation = HybridAggregationGeometricMean((2, np.float32(0.5)))
 
     # --- assert -----------------------
     assert aggregation.weights == (2.0, 0.5)
     assert all(type(weight) is float for weight in aggregation.weights)
     assert aggregation.has_non_unit_weights
-    assert aggregation == GeometricMeanAggregation((2.0, 0.5))
-    assert aggregation != ArithmeticMeanAggregation((2.0, 0.5))
+    assert aggregation == HybridAggregationGeometricMean((2.0, 0.5))
+    assert aggregation != HybridAggregationArithmeticMean((2.0, 0.5))
 
 
 @pytest.mark.parametrize(
@@ -46,13 +46,13 @@ def test_a_weight_that_is_not_a_positive_finite_number_is_rejected(weight) -> No
     """A zero, negative, infinite, NaN, bool or non-numeric weight raises ValueError."""
     # --- act / assert -----------------
     with pytest.raises(ValueError, match="positive, finite number"):
-        ArithmeticMeanAggregation((1.0, weight))
+        HybridAggregationArithmeticMean((1.0, weight))
 
 
 def test_validate_term_count_rejects_a_weight_count_that_differs() -> None:
     """`validate_term_count` accepts the aggregation's own term count and rejects any other."""
     # --- arrange ----------------------
-    aggregation = GeometricMeanAggregation.with_unit_weights(2)
+    aggregation = HybridAggregationGeometricMean.with_unit_weights(2)
 
     # --- act / assert -----------------
     aggregation.validate_term_count(2)
@@ -63,9 +63,9 @@ def test_validate_term_count_rejects_a_weight_count_that_differs() -> None:
 @pytest.mark.parametrize(
     "aggregation, expected",
     [
-        (GeometricMeanAggregation((1.0, 1.0)), "geomean(A, B)"),
-        (ArithmeticMeanAggregation((1.0, 1.0)), "mean(A, B)"),
-        (ArithmeticMeanAggregation((31.6227766, 1000.0)), "mean(A, B; weights 31.62, 1000)"),
+        (HybridAggregationGeometricMean((1.0, 1.0)), "geomean(A, B)"),
+        (HybridAggregationArithmeticMean((1.0, 1.0)), "mean(A, B)"),
+        (HybridAggregationArithmeticMean((31.6227766, 1000.0)), "mean(A, B; weights 31.62, 1000)"),
     ],
 )
 def test_format_label_names_the_aggregation_and_the_weights_unless_all_1(aggregation, expected) -> None:
@@ -80,8 +80,8 @@ def test_format_label_names_the_aggregation_and_the_weights_unless_all_1(aggrega
 @pytest.mark.parametrize(
     "aggregation_type, row_mean",
     [
-        (GeometricMeanAggregation, geomean_f32),
-        (ArithmeticMeanAggregation, lambda row: np.mean(row, dtype=np.float32)),
+        (HybridAggregationGeometricMean, geomean_f32),
+        (HybridAggregationArithmeticMean, lambda row: np.mean(row, dtype=np.float32)),
     ],
     ids=["geometric", "arithmetic"],
 )
@@ -106,8 +106,8 @@ def test_an_aggregation_at_equal_weights_is_bit_for_bit_the_unweighted_mean(aggr
 @pytest.mark.parametrize(
     "aggregation, expected",
     [
-        (GeometricMeanAggregation((2.0, 1.0)), (np.array([4.0, 9.0]) ** 2 * np.array([2.0, 3.0])) ** (1.0 / 3.0)),
-        (ArithmeticMeanAggregation((3.0, 1.0)), (3.0 * np.array([4.0, 9.0]) + np.array([2.0, 3.0])) / 4.0),
+        (HybridAggregationGeometricMean((2.0, 1.0)), (np.array([4.0, 9.0]) ** 2 * np.array([2.0, 3.0])) ** (1.0 / 3.0)),
+        (HybridAggregationArithmeticMean((3.0, 1.0)), (3.0 * np.array([4.0, 9.0]) + np.array([2.0, 3.0])) / 4.0),
     ],
     ids=["geometric", "arithmetic"],
 )

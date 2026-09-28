@@ -1,12 +1,12 @@
 import pytest
 
 from max_div._core.metrics import (
-    ArithmeticMeanAggregation,
     DistanceMetric,
     DiversityContributionFamily,
     DiversityMetric,
     DiversityObjectiveSimple,
     DiversityTrackerSpec,
+    HybridAggregationArithmeticMean,
 )
 from max_div._core.solver._diversity_contribution import DiversityObjectiveBindings
 from tests.helpers import hybrid_objective
@@ -48,7 +48,7 @@ L2 = DistanceMetric.l2_euclidean()
                 hybrid_objective(
                     DiversityObjectiveSimple(DiversityMetric.NON_ZERO_SEPARATION_FRAC, L1),
                     DiversityObjectiveSimple(DiversityMetric.NON_ZERO_SEPARATION_FRAC, L2),
-                    aggregation_type=ArithmeticMeanAggregation,
+                    aggregation_type=HybridAggregationArithmeticMean,
                 ),
                 DiversityObjectiveSimple(DiversityMetric.MEAN_PAIRWISE_DISTANCE, L1),
             ],

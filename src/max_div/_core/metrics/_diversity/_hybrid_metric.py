@@ -12,7 +12,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from ._aggregation import ArithmeticMeanAggregation, GeometricMeanAggregation, HybridAggregation
+from ._aggregation import HybridAggregationArithmeticMean, HybridAggregationBase, HybridAggregationGeometricMean
 from ._enum import DiversityMetric
 from ._objective import DiversityObjectiveHybrid, DiversityObjectiveSimple
 
@@ -68,7 +68,7 @@ class HybridDiversityMetric:
 
     __slots__ = ("_aggregation", "_terms")
 
-    def __init__(self, terms: tuple[DiversityTerm | DiversityMetric, ...], aggregation: HybridAggregation) -> None:
+    def __init__(self, terms: tuple[DiversityTerm | DiversityMetric, ...], aggregation: HybridAggregationBase) -> None:
         """Validate the terms against the aggregation; use `geomean_of` or `mean_of` to construct a hybrid.
 
         Raises:
@@ -111,7 +111,7 @@ class HybridDiversityMetric:
             ValueError: If fewer than 2 terms are given, or a weight is missing, extra, or not a
                 positive, finite number.
         """
-        return cls(terms, GeometricMeanAggregation.from_weights(weights, len(terms)))
+        return cls(terms, HybridAggregationGeometricMean.from_weights(weights, len(terms)))
 
     @classmethod
     def mean_of(
@@ -132,7 +132,7 @@ class HybridDiversityMetric:
             ValueError: If fewer than 2 terms are given, or a weight is missing, extra, or not a
                 positive, finite number.
         """
-        return cls(terms, ArithmeticMeanAggregation.from_weights(weights, len(terms)))
+        return cls(terms, HybridAggregationArithmeticMean.from_weights(weights, len(terms)))
 
     # --------------------------------------------------------------------------
     #  Properties

@@ -1,14 +1,14 @@
 import pytest
 
 from max_div._core.metrics import (
-    ArithmeticMeanAggregation,
     DistanceMetric,
     DiversityMetric,
     DiversityObjectiveHybrid,
     DiversityObjectiveSimple,
     DiversityTerm,
-    GeometricMeanAggregation,
-    HybridAggregation,
+    HybridAggregationArithmeticMean,
+    HybridAggregationBase,
+    HybridAggregationGeometricMean,
     HybridDiversityMetric,
 )
 
@@ -63,10 +63,10 @@ def test_a_terms_label_and_repr_name_both_metrics() -> None:
 @pytest.mark.parametrize(
     "factory, weights, aggregation",
     [
-        (HybridDiversityMetric.geomean_of, None, GeometricMeanAggregation((1.0, 1.0))),
-        (HybridDiversityMetric.mean_of, None, ArithmeticMeanAggregation((1.0, 1.0))),
-        (HybridDiversityMetric.geomean_of, (2, 0.5), GeometricMeanAggregation((2.0, 0.5))),
-        (HybridDiversityMetric.mean_of, [3.0, 1.0], ArithmeticMeanAggregation((3.0, 1.0))),
+        (HybridDiversityMetric.geomean_of, None, HybridAggregationGeometricMean((1.0, 1.0))),
+        (HybridDiversityMetric.mean_of, None, HybridAggregationArithmeticMean((1.0, 1.0))),
+        (HybridDiversityMetric.geomean_of, (2, 0.5), HybridAggregationGeometricMean((2.0, 0.5))),
+        (HybridDiversityMetric.mean_of, [3.0, 1.0], HybridAggregationArithmeticMean((3.0, 1.0))),
     ],
     ids=["geomean", "mean", "weighted_geomean", "weighted_mean"],
 )
@@ -111,7 +111,7 @@ def test_a_repeated_term_counts_once_per_repeat() -> None:
 def test_every_aggregation_has_a_factory_named_after_it() -> None:
     """Each aggregation's `name` plus `_of` is the public factory that builds it, as `repr` assumes."""
     # --- arrange ----------------------
-    aggregation_types = HybridAggregation.__subclasses__()
+    aggregation_types = HybridAggregationBase.__subclasses__()
 
     # --- act --------------------------
     built = {

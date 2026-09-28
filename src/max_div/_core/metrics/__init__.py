@@ -1,6 +1,5 @@
 from ._distance import DistanceMetric, validate_axis_within_dimensions, validate_cosine_distance_vectors
 from ._diversity import (
-    ArithmeticMeanAggregation,
     DiversityContributionFamily,
     DiversityMetric,
     DiversityObjective,
@@ -8,7 +7,8 @@ from ._diversity import (
     DiversityObjectiveSimple,
     DiversityTerm,
     DiversityTrackerSpec,
-    GeometricMeanAggregation,
-    HybridAggregation,
+    HybridAggregationArithmeticMean,
+    HybridAggregationBase,
+    HybridAggregationGeometricMean,
     HybridDiversityMetric,
 )

@@ -4,7 +4,7 @@ A `DiversityObjective` is one of two kinds, each holding only the fields that ki
 
 - `DiversityObjectiveSimple` — one diversity metric over one distance metric.
 - `DiversityObjectiveHybrid` — several simple objectives (its terms) combined by a weighted aggregation,
-  a `HybridAggregation`.
+  a `HybridAggregationBase`.
 
 Every kind computes its own diversity score (`compute`) from the per-item contributions the solver
 tracks. The solver passes `compute` one array per spec of `tracker_specs`, in that order; a hybrid
@@ -32,7 +32,7 @@ from typing import TYPE_CHECKING, NamedTuple
 
 import numpy as np
 
-from ._aggregation import ArithmeticMeanAggregation, GeometricMeanAggregation, HybridAggregation
+from ._aggregation import HybridAggregationArithmeticMean, HybridAggregationBase, HybridAggregationGeometricMean
 from ._enum import DiversityContributionFamily, DiversityMetric
 
 if TYPE_CHECKING:
@@ -128,11 +128,11 @@ class DiversityObjective(ABC):
         # a hybrid tie-breaker aggregates its per-distance terms geometrically for the approximate
         # geomean and arithmetically for the non-zero fraction: on the arithmetic one, a distance with
         # no non-zero separation lowers the tie-breaker without making it zero
-        tie_breaker_metrics: list[tuple[DiversityMetric, type[HybridAggregation]]] = []
+        tie_breaker_metrics: list[tuple[DiversityMetric, type[HybridAggregationBase]]] = []
         if needs_approx_geomean:
-            tie_breaker_metrics.append((DiversityMetric.APPROX_GEOMEAN_SEPARATION, GeometricMeanAggregation))
+            tie_breaker_metrics.append((DiversityMetric.APPROX_GEOMEAN_SEPARATION, HybridAggregationGeometricMean))
         if needs_non_zero_frac:
-            tie_breaker_metrics.append((DiversityMetric.NON_ZERO_SEPARATION_FRAC, ArithmeticMeanAggregation))
+            tie_breaker_metrics.append((DiversityMetric.NON_ZERO_SEPARATION_FRAC, HybridAggregationArithmeticMean))
 
         # --- each over every distinct distance ------
         distance_metrics = self.distinct_distance_metrics()
@@ -207,7 +207,7 @@ class DiversityObjectiveHybrid(DiversityObjective):
     """
 
     terms: tuple[DiversityObjectiveSimple, ...]
-    aggregation: HybridAggregation
+    aggregation: HybridAggregationBase
 
     @property
     def label(self) -> str:

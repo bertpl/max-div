@@ -6,8 +6,8 @@ from max_div._core.benchmark_problems import BenchmarkProblemFactory
 from max_div._core.metrics import (
     DiversityObjectiveHybrid,
     DiversityObjectiveSimple,
-    GeometricMeanAggregation,
-    HybridAggregation,
+    HybridAggregationBase,
+    HybridAggregationGeometricMean,
 )
 
 
@@ -34,7 +34,7 @@ def _first_with_prefix(names: list[str], prefix: str) -> str:
 
 
 def hybrid_objective(
-    *terms: DiversityObjectiveSimple, aggregation_type: type[HybridAggregation] = GeometricMeanAggregation
+    *terms: DiversityObjectiveSimple, aggregation_type: type[HybridAggregationBase] = HybridAggregationGeometricMean
 ) -> DiversityObjectiveHybrid:
     """Build a `DiversityObjectiveHybrid` from simple objectives at equal weights, geometric-mean by default."""
     return DiversityObjectiveHybrid(terms, aggregation_type.with_unit_weights(len(terms)))
