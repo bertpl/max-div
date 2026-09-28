@@ -16,7 +16,7 @@ from numpy.typing import NDArray
 
 from max_div._core.metrics._distance._build import compute_full_matrix, expand_condensed
 from max_div._core.metrics._distance._metric import (
-    NO_P,
+    NO_PARAM,
     DistanceMetric,
     preprocess_vectors,
     validate_vector_array_layout,
@@ -60,7 +60,7 @@ class DistanceStore(NamedTuple):
     matrix: NDArray[np.float32]  # (n, n) full distance matrix (exactly symmetric), KIND_FULL_MATRIX
     preprocessed_vectors: NDArray[np.float32]  # (n, d) the vectors as preprocessed for the metric, KIND_LAZY
     metric_kind: np.int32  # pair-function selector, KIND_LAZY only
-    pair_function_param: np.float64  # `DistanceMetric.pair_function_param`, KIND_LAZY only
+    metric_param: np.float64  # `DistanceMetric.param`, KIND_LAZY only
 
     # --------------------------------------------------------------------------
     #  Factory methods
@@ -85,7 +85,7 @@ class DistanceStore(NamedTuple):
             matrix=_EMPTY_2D,
             preprocessed_vectors=_readonly(preprocessed_vectors),
             metric_kind=np.int32(metric.kind),
-            pair_function_param=np.float64(metric.pair_function_param),
+            metric_param=np.float64(metric.param),
         )
 
     @classmethod
@@ -111,7 +111,7 @@ class DistanceStore(NamedTuple):
             matrix=_readonly(matrix),
             preprocessed_vectors=_EMPTY_2D,
             metric_kind=np.int32(0),
-            pair_function_param=np.float64(NO_P),
+            metric_param=np.float64(NO_PARAM),
         )
 
     @classmethod

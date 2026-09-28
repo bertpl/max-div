@@ -72,12 +72,12 @@ def compute_full_matrix(
         _fill_matrix_parallel(
             preprocessed,
             np.int32(metric.kind),
-            np.float64(metric.pair_function_param),
+            np.float64(metric.param),
             np.int64(BUILD_BLOCK_WIDTH),
             out,
         )
     else:
-        _fill_matrix(preprocessed, np.int32(metric.kind), np.float64(metric.pair_function_param), out)
+        _fill_matrix(preprocessed, np.int32(metric.kind), np.float64(metric.param), out)
     return out
 
 
@@ -115,14 +115,14 @@ def _allocate_if_needed(out: NDArray[np.float32] | None, n: int) -> NDArray[np.f
     fastmath={"reassoc", "contract"},
 )
 def _fill_matrix(
-    vectors: NDArray[np.float32], metric_kind: np.int32, pair_function_param: np.float64, out: NDArray[np.float32]
+    vectors: NDArray[np.float32], metric_kind: np.int32, metric_param: np.float64, out: NDArray[np.float32]
 ) -> None:
     """Fill a full (n, n) distance matrix from vectors, sequentially; each pair written to both halves."""
     n = vectors.shape[0]
     for i in np.arange(n, dtype=np.int32):
         out[i, i] = np.float32(0.0)
         for j in np.arange(i + 1, n, dtype=np.int32):
-            value = _metric_pair(vectors, metric_kind, pair_function_param, i, j)
+            value = _metric_pair(vectors, metric_kind, metric_param, i, j)
             out[i, j] = value
             out[j, i] = value
 
@@ -136,7 +136,7 @@ def _fill_matrix(
 def _fill_matrix_parallel(
     vectors: NDArray[np.float32],
     metric_kind: np.int32,
-    pair_function_param: np.float64,
+    metric_param: np.float64,
     block_width: np.int64,
     out: NDArray[np.float32],
 ) -> None:
@@ -148,7 +148,7 @@ def _fill_matrix_parallel(
         j_end = min(j_block + block_width, n)
         for i in numba.prange(j_end):  # ty: ignore[not-iterable] -- prange is iterable inside njit; the stub doesn't know
             for j in range(max(j_block, np.int64(i) + 1), j_end):
-                value = _metric_pair(vectors, metric_kind, pair_function_param, np.int32(i), np.int32(j))
+                value = _metric_pair(vectors, metric_kind, metric_param, np.int32(i), np.int32(j))
                 out[i, j] = value
                 out[j, i] = value
 
