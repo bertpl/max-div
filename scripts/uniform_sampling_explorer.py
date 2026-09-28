@@ -100,8 +100,8 @@ def nearest_neighbors(
     """Return, per distance key, each item's nearest other item and its distance to it.
 
     A pair of items that share a coordinate is at distance 0 under every distance of `DISTANCES` except L2 and the
-    distance along the other axis; that pair is then each other's nearest neighbor, and the JavaScript draws the
-    degenerate level curve.
+    distance along the axis where the 2 items differ; that pair is then each other's nearest neighbor, and the
+    JavaScript draws the degenerate level curve.
     """
     x64 = np.asarray(x, dtype=np.float64)
     y64 = np.asarray(y, dtype=np.float64)

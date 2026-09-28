@@ -253,10 +253,10 @@ EXPERIMENT_LABELS = {
     "y": "**III.C** $y$ distance",
     "linf": "**IV.A** L\u2212\u221e distance",
     "geomean": "**IV.B** geometric-mean distance",
-    "hybrid": "**V.A** geometric-mean hybrid: L2, $x$ and $y$ terms",
-    "hybrid_banded": "**V.B** geometric-mean hybrid, 20 items per band",
-    "hybrid_long": "**V.C.1** geometric-mean hybrid, 4 h, 32 workers",
-    "hybrid_banded_long": "**V.C.2** geometric-mean hybrid, 20 items per band, 4 h, 32 workers",
+    "hybrid_geomean": "**V.A** geometric-mean hybrid: L2, $x$ and $y$ terms",
+    "hybrid_geomean_banded": "**V.B** geometric-mean hybrid, 20 items per band",
+    "hybrid_geomean_long": "**V.C.1** geometric-mean hybrid, 4 h, 32 workers",
+    "hybrid_geomean_banded_long": "**V.C.2** geometric-mean hybrid, 20 items per band, 4 h, 32 workers",
     "hybrid_weighted_min": "**V.D** minimum hybrid: L\u2212\u221e and L2 terms, weighted $k$ and $\\sqrt{k}$",
     "marginals_and_joint": "**V.E** marginals-and-joint distance",
 }
@@ -265,7 +265,10 @@ EXPERIMENT_LABELS = {
 LONG_BUDGET_SEC = 4 * 3600.0
 LONG_N_WORKERS = 32
 # Map each longer solve's run name to the name of the experiment that it re-solves.
-EXPERIMENT_NAME_BY_LONG_RUN = {"hybrid_long": "hybrid", "hybrid_banded_long": "hybrid_banded"}
+EXPERIMENT_NAME_BY_LONG_RUN = {
+    "hybrid_geomean_long": "hybrid_geomean",
+    "hybrid_geomean_banded_long": "hybrid_geomean_banded",
+}
 # A summary cell is colored by its achieved / reference fraction: red below LOW, green above HIGH.
 # The classes are styled in docs/stylesheets/extra.css; `uniform_sampling.md` states the rule.
 SUMMARY_LOW_PERCENT, SUMMARY_HIGH_PERCENT = 40, 60
@@ -290,8 +293,9 @@ class Experiment:
     """An experiment maximizes the min separation over one distance, or over several as a hybrid.
 
     `distance_keys` holds one key for a simple objective and one per term for a hybrid.
-    `hybrid_factory` combines a hybrid's per-distance terms, and `k_weight_exponents` weights them:
-    term t gets weight k ** k_weight_exponents[t], and None leaves every weight 1. `n_bands` cuts each
+    `hybrid_factory` combines a hybrid's per-distance terms and is called with a `weights` keyword
+    argument. `k_weight_exponents` sets those weights: term t gets weight k ** k_weight_exponents[t], and
+    None leaves every weight 1. `n_bands` cuts each
     axis into that many equal bands and requires every band to hold the same number of selected items,
     k / n_bands; None leaves the selection unconstrained.
     """
@@ -354,8 +358,8 @@ EXPERIMENTS = (
     Experiment("y", ("y",)),
     Experiment("linf", ("linf",)),
     Experiment("geomean", ("geomean",)),
-    Experiment("hybrid", ("l2", "x", "y")),
-    Experiment("hybrid_banded", ("l2", "x", "y"), n_bands=5),
+    Experiment("hybrid_geomean", ("l2", "x", "y")),
+    Experiment("hybrid_geomean_banded", ("l2", "x", "y"), n_bands=5),
     # in 2D the nearest-neighbor L-inf distance of k well-spread points scales like 1 / k and the L2
     # distance like 1 / sqrt(k), so the weights k and sqrt(k) bring both terms to a common scale
     Experiment(
