@@ -31,7 +31,8 @@ def weighted_mean_per_row_f32(
         weight_sum += weights[j]
         has_unit_weights = has_unit_weights and weights[j] == 1.0
 
-    # the unit-weight branch skips one multiply per entry; both branches give the same bits
+    # the unit-weight branch skips one multiply per entry; when every weight is 1, both branches give
+    # the same bits
     if has_unit_weights:
         for i in range(n_rows):
             row_sum = np.float32(0.0)
