@@ -4,12 +4,12 @@ from max_div._core.metrics import (
     DistanceMetric,
     DiversityContributionFamily,
     DiversityMetric,
-    DiversityObjectiveHybrid,
     DiversityObjectiveSimple,
     DiversityTrackerSpec,
-    HybridObjectiveType,
+    HybridAggregationArithmeticMean,
 )
 from max_div._core.solver._diversity_contribution import DiversityObjectiveBindings
+from tests.helpers import hybrid_objective
 
 SEPARATION = DiversityContributionFamily.SEPARATION
 MEAN_DISTANCE = DiversityContributionFamily.MEAN_DISTANCE
@@ -40,19 +40,15 @@ L2 = DistanceMetric.l2_euclidean()
         ),
         pytest.param(
             [
-                DiversityObjectiveHybrid(
-                    (
-                        DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L2),
-                        DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L1),
-                        DiversityObjectiveSimple(DiversityMetric.GEOMEAN_SEPARATION, L2),  # repeats the L2 spec
-                    )
+                hybrid_objective(
+                    DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L2),
+                    DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L1),
+                    DiversityObjectiveSimple(DiversityMetric.GEOMEAN_SEPARATION, L2),  # this term repeats the L2 spec
                 ),
-                DiversityObjectiveHybrid(
-                    (
-                        DiversityObjectiveSimple(DiversityMetric.NON_ZERO_SEPARATION_FRAC, L1),
-                        DiversityObjectiveSimple(DiversityMetric.NON_ZERO_SEPARATION_FRAC, L2),
-                    ),
-                    HybridObjectiveType.ARITHMETIC_MEAN,
+                hybrid_objective(
+                    DiversityObjectiveSimple(DiversityMetric.NON_ZERO_SEPARATION_FRAC, L1),
+                    DiversityObjectiveSimple(DiversityMetric.NON_ZERO_SEPARATION_FRAC, L2),
+                    aggregation_type=HybridAggregationArithmeticMean,
                 ),
                 DiversityObjectiveSimple(DiversityMetric.MEAN_PAIRWISE_DISTANCE, L1),
             ],

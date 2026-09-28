@@ -3,8 +3,8 @@
 A `DiversityObjective` is one of two kinds, each holding only the fields that kind of objective needs:
 
 - `DiversityObjectiveSimple` — one diversity metric over one distance metric.
-- `DiversityObjectiveHybrid` — several simple objectives (its terms) aggregated by a geometric or an
-  arithmetic mean.
+- `DiversityObjectiveHybrid` — several simple objectives (its terms) combined by a weighted aggregation,
+  a `HybridAggregationBase`.
 
 Every kind computes its own diversity score (`compute`) from the per-item contributions the solver
 tracks. The solver passes `compute` one array per spec of `tracker_specs`, in that order; a hybrid
@@ -27,14 +27,12 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from enum import StrEnum
 from functools import cached_property
 from typing import TYPE_CHECKING, NamedTuple
 
 import numpy as np
 
-from max_div._core._math.geomean import geomean_f32, geomean_per_row_f32
-
+from ._aggregation import HybridAggregationArithmeticMean, HybridAggregationBase, HybridAggregationGeometricMean
 from ._enum import DiversityContributionFamily, DiversityMetric
 
 if TYPE_CHECKING:
@@ -130,21 +128,21 @@ class DiversityObjective(ABC):
         # a hybrid tie-breaker aggregates its per-distance terms geometrically for the approximate
         # geomean and arithmetically for the non-zero fraction: on the arithmetic one, a distance with
         # no non-zero separation lowers the tie-breaker without making it zero
-        tie_breaker_metrics: list[tuple[DiversityMetric, HybridObjectiveType]] = []
+        tie_breaker_metrics: list[tuple[DiversityMetric, type[HybridAggregationBase]]] = []
         if needs_approx_geomean:
-            tie_breaker_metrics.append((DiversityMetric.APPROX_GEOMEAN_SEPARATION, HybridObjectiveType.GEOMETRIC_MEAN))
+            tie_breaker_metrics.append((DiversityMetric.APPROX_GEOMEAN_SEPARATION, HybridAggregationGeometricMean))
         if needs_non_zero_frac:
-            tie_breaker_metrics.append((DiversityMetric.NON_ZERO_SEPARATION_FRAC, HybridObjectiveType.ARITHMETIC_MEAN))
+            tie_breaker_metrics.append((DiversityMetric.NON_ZERO_SEPARATION_FRAC, HybridAggregationArithmeticMean))
 
         # --- each over every distinct distance ------
         distance_metrics = self.distinct_distance_metrics()
         tie_breakers: list[DiversityObjective] = []
-        for metric, aggregation in tie_breaker_metrics:
+        for metric, aggregation_type in tie_breaker_metrics:
             if len(distance_metrics) == 1:
                 tie_breakers.append(DiversityObjectiveSimple(metric, distance_metrics[0]))
             else:
                 terms = tuple(DiversityObjectiveSimple(metric, distance_metric) for distance_metric in distance_metrics)
-                tie_breakers.append(DiversityObjectiveHybrid(terms, aggregation))
+                tie_breakers.append(DiversityObjectiveHybrid(terms, aggregation_type.with_unit_weights(len(terms))))
         return tie_breakers
 
     @cached_property
@@ -199,40 +197,38 @@ class DiversityObjectiveSimple(DiversityObjective):
         return (self.diversity_metric,)
 
 
-class HybridObjectiveType(StrEnum):
-    """How a hybrid objective aggregates its terms: by their geometric mean or by their arithmetic mean."""
-
-    GEOMETRIC_MEAN = "GEOMETRIC_MEAN"
-    ARITHMETIC_MEAN = "ARITHMETIC_MEAN"
-
-
 @dataclass(frozen=True)
 class DiversityObjectiveHybrid(DiversityObjective):
-    """Several simple objectives (its terms) aggregated by their geometric or arithmetic mean.
+    """A hybrid objective combines several simple objectives (its terms) by a weighted aggregation, one weight per term.
 
     Terms are simple objectives only, so each term reads exactly one of the arrays passed to
-    `compute`. The solver maximizes a hybrid with the geometric aggregation.
+    `compute`. A hybrid's per-item contributions are its aggregation applied to each item's row of term
+    contributions, and its score is the same aggregation applied to the single row of term scores.
     """
 
     terms: tuple[DiversityObjectiveSimple, ...]
-    aggregation: HybridObjectiveType = HybridObjectiveType.GEOMETRIC_MEAN
+    aggregation: HybridAggregationBase
 
     @property
     def label(self) -> str:
         """Return e.g. `geomean(MIN_SEPARATION over L2, MIN_SEPARATION over axis 0)`."""
-        aggregation = "geomean" if self.aggregation == HybridObjectiveType.GEOMETRIC_MEAN else "mean"
-        return f"{aggregation}({', '.join(term.label for term in self.terms)})"
+        return self.aggregation.format_label([term.label for term in self.terms])
 
     def __post_init__(self) -> None:
-        """Reject fewer than two terms and any term that is not a simple objective.
+        """Validate the terms, and the aggregation's weight count against them.
 
         A one-term hybrid is a `DiversityObjectiveSimple`.
+
+        Raises:
+            ValueError: If fewer than 2 terms are given, or the weight count differs from the term count.
+            TypeError: If a term is not a simple objective.
         """
         if len(self.terms) < 2:
             raise ValueError(f"A hybrid objective needs at least two terms; got {len(self.terms)}.")
         for term in self.terms:
             if not isinstance(term, DiversityObjectiveSimple):
                 raise TypeError(f"A hybrid objective's terms must be simple objectives; got {type(term).__name__}.")
+        self.aggregation.validate_term_count(len(self.terms))
 
     def compute(self, contributions: Sequence[NDArray[np.float32]]) -> float:
         """Return the aggregation of the terms' diversity scores, each term reading its own array."""
@@ -240,10 +236,7 @@ class DiversityObjectiveHybrid(DiversityObjective):
             [term.compute((contribution,)) for term, contribution in zip(self.terms, contributions, strict=True)],
             dtype=np.float32,
         )
-        if self.aggregation == HybridObjectiveType.GEOMETRIC_MEAN:
-            return float(geomean_f32(term_scores))
-        else:
-            return float(np.mean(term_scores))
+        return self.aggregation.aggregate_scores(term_scores)
 
     def compute_per_item_contributions(self, contributions: Sequence[NDArray[np.float32]]) -> NDArray[np.float32]:
         """Return the elementwise aggregation of the terms' arrays, as a fresh float32 array.
@@ -254,12 +247,7 @@ class DiversityObjectiveHybrid(DiversityObjective):
         """
         # one row per item, one column per term, so each item's values are contiguous
         stacked = np.stack(contributions, axis=1).astype(np.float32, copy=False)
-        if self.aggregation == HybridObjectiveType.GEOMETRIC_MEAN:
-            aggregated = np.empty(stacked.shape[0], dtype=np.float32)
-            geomean_per_row_f32(stacked, aggregated)
-            return aggregated
-        else:
-            return stacked.mean(axis=1, dtype=np.float32)
+        return self.aggregation.aggregate_rows(stacked)
 
     @cached_property
     def tracker_specs(self) -> tuple[DiversityTrackerSpec, ...]:

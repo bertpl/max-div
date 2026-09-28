@@ -8,7 +8,8 @@ from max_div._core.metrics import (
     DiversityObjectiveHybrid,
     DiversityObjectiveSimple,
     DiversityTrackerSpec,
-    HybridObjectiveType,
+    HybridAggregationArithmeticMean,
+    HybridAggregationGeometricMean,
 )
 from tests.helpers import hybrid_objective
 
@@ -49,16 +50,17 @@ def test_a_hybrid_rejects_a_term_that_is_not_a_simple_objective() -> None:
         hybrid_objective(simple, hybrid)  # ty: ignore[invalid-argument-type]
 
 
-def test_a_hybrid_combines_by_the_geometric_mean_unless_told_otherwise() -> None:
-    """The geometric aggregation is the default: it is the one the solver maximizes."""
-    # --- act / assert -----------------
-    hybrid = DiversityObjectiveHybrid(
-        (
-            DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L1),
-            DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L2),
-        )
+def test_a_hybrid_needs_one_weight_per_term() -> None:
+    """An aggregation holding a different number of weights than the hybrid has terms is rejected."""
+    # --- arrange ----------------------
+    terms = (
+        DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L1),
+        DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L2),
     )
-    assert hybrid.aggregation == HybridObjectiveType.GEOMETRIC_MEAN
+
+    # --- act / assert -----------------
+    with pytest.raises(ValueError, match="one weight per term; got 3 weights for 2 terms"):
+        DiversityObjectiveHybrid(terms, HybridAggregationGeometricMean.with_unit_weights(3))
 
 
 # =================================================================================================
@@ -145,7 +147,7 @@ def test_simple_computes_its_metric_over_its_one_spec() -> None:
                 DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L1),
                 DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L2),
             ),
-            HybridObjectiveType.GEOMETRIC_MEAN,
+            HybridAggregationGeometricMean((1.0, 1.0)),
             (_f32([4.0, 8.0]), _f32([9.0, 3.0])),  # L1 array (min 4), L2 array (min 3)
             np.sqrt(4.0 * 3.0),
             id="geomean_of_two_distances",
@@ -156,17 +158,27 @@ def test_simple_computes_its_metric_over_its_one_spec() -> None:
                 DiversityObjectiveSimple(DiversityMetric.MEAN_SEPARATION, L1),  # same spec as the first term
                 DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L2),
             ),
-            HybridObjectiveType.GEOMETRIC_MEAN,
+            HybridAggregationGeometricMean((1.0, 1.0, 1.0)),
             (_f32([4.0, 8.0]), _f32([4.0, 8.0]), _f32([9.0, 3.0])),  # the L1 array twice (min 4, mean 6), L2 (min 3)
             (4.0 * 6.0 * 3.0) ** (1.0 / 3.0),
             id="geomean_with_a_shared_spec_receives_that_array_twice",
         ),
         pytest.param(
             (
+                DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L1),
+                DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L2),
+            ),
+            HybridAggregationGeometricMean((2.0, 1.0)),
+            (_f32([4.0, 8.0]), _f32([9.0, 3.0])),  # L1 array (min 4), L2 array (min 3)
+            (4.0**2 * 3.0) ** (1.0 / 3.0),
+            id="weighted_geomean_raises_each_term_to_its_weight",
+        ),
+        pytest.param(
+            (
                 DiversityObjectiveSimple(DiversityMetric.NON_ZERO_SEPARATION_FRAC, L1),
                 DiversityObjectiveSimple(DiversityMetric.NON_ZERO_SEPARATION_FRAC, L2),
             ),
-            HybridObjectiveType.ARITHMETIC_MEAN,
+            HybridAggregationArithmeticMean((1.0, 1.0)),
             (_f32([0.0, 0.0, 1.0, 2.0]), _f32([0.0, 3.0, 1.0, 2.0])),  # fractions 2/4 and 3/4
             (0.5 + 0.75) / 2,
             id="arithmetic_mean_of_two_fractions",
@@ -176,7 +188,17 @@ def test_simple_computes_its_metric_over_its_one_spec() -> None:
                 DiversityObjectiveSimple(DiversityMetric.NON_ZERO_SEPARATION_FRAC, L1),
                 DiversityObjectiveSimple(DiversityMetric.NON_ZERO_SEPARATION_FRAC, L2),
             ),
-            HybridObjectiveType.ARITHMETIC_MEAN,
+            HybridAggregationArithmeticMean((3.0, 1.0)),
+            (_f32([0.0, 0.0, 1.0, 2.0]), _f32([0.0, 3.0, 1.0, 2.0])),  # fractions 2/4 and 3/4
+            (3.0 * 0.5 + 0.75) / 4,
+            id="weighted_arithmetic_mean_of_two_fractions",
+        ),
+        pytest.param(
+            (
+                DiversityObjectiveSimple(DiversityMetric.NON_ZERO_SEPARATION_FRAC, L1),
+                DiversityObjectiveSimple(DiversityMetric.NON_ZERO_SEPARATION_FRAC, L2),
+            ),
+            HybridAggregationArithmeticMean((1.0, 1.0)),
             (_f32([0.0, 0.0]), _f32([0.0, 3.0])),  # fractions 0 and 1/2: the mean is not pinned at zero
             0.25,
             id="arithmetic_mean_survives_an_all_zero_term",
@@ -184,7 +206,7 @@ def test_simple_computes_its_metric_over_its_one_spec() -> None:
     ],
 )
 def test_hybrid_computes_the_aggregation_of_its_terms(terms, aggregation, contributions, expected) -> None:
-    """A hybrid returns the geometric or arithmetic mean of its terms' scores, one array per term."""
+    """A hybrid returns its aggregation of its terms' scores, one array per term."""
     # --- arrange ----------------------
     objective = DiversityObjectiveHybrid(terms, aggregation)
 
@@ -234,12 +256,12 @@ def test_a_geometric_hybrids_default_tie_breakers_are_hybrids_over_its_distinct_
         hybrid_objective(
             DiversityObjectiveSimple(DiversityMetric.APPROX_GEOMEAN_SEPARATION, L1),
             DiversityObjectiveSimple(DiversityMetric.APPROX_GEOMEAN_SEPARATION, L2),
-            aggregation=HybridObjectiveType.GEOMETRIC_MEAN,
+            aggregation_type=HybridAggregationGeometricMean,
         ),
         hybrid_objective(
             DiversityObjectiveSimple(DiversityMetric.NON_ZERO_SEPARATION_FRAC, L1),
             DiversityObjectiveSimple(DiversityMetric.NON_ZERO_SEPARATION_FRAC, L2),
-            aggregation=HybridObjectiveType.ARITHMETIC_MEAN,
+            aggregation_type=HybridAggregationArithmeticMean,
         ),
     ]
 
@@ -253,8 +275,8 @@ def test_an_arithmetic_hybrid_gets_the_same_tie_breakers() -> None:
     )
 
     # --- act / assert -----------------
-    geometric = hybrid_objective(*terms, aggregation=HybridObjectiveType.GEOMETRIC_MEAN).default_tie_breakers()
-    arithmetic = hybrid_objective(*terms, aggregation=HybridObjectiveType.ARITHMETIC_MEAN).default_tie_breakers()
+    geometric = hybrid_objective(*terms, aggregation_type=HybridAggregationGeometricMean).default_tie_breakers()
+    arithmetic = hybrid_objective(*terms, aggregation_type=HybridAggregationArithmeticMean).default_tie_breakers()
     assert arithmetic == geometric
 
 
@@ -290,7 +312,7 @@ def test_a_hybrids_default_tie_breakers_follow_its_terms_metrics(term_metrics, e
         hybrid_objective(
             DiversityObjectiveSimple(metric, L1),
             DiversityObjectiveSimple(metric, L2),
-            aggregation=HybridObjectiveType.ARITHMETIC_MEAN,
+            aggregation_type=HybridAggregationArithmeticMean,
         )
         for metric in expected_tie_breaker_metrics
     ]
@@ -328,21 +350,30 @@ def test_a_simple_objectives_per_item_contribution_is_its_one_array() -> None:
     "aggregation, expected",
     [
         (
-            HybridObjectiveType.GEOMETRIC_MEAN,
+            HybridAggregationGeometricMean((1.0, 1.0, 1.0)),
             np.cbrt(np.array([1.0, 4.0]) * np.array([8.0, 2.0]) * np.array([1.0, 4.0])),
         ),
-        (HybridObjectiveType.ARITHMETIC_MEAN, (np.array([1.0, 4.0]) + np.array([8.0, 2.0]) + np.array([1.0, 4.0])) / 3),
+        (
+            HybridAggregationArithmeticMean((1.0, 1.0, 1.0)),
+            (np.array([1.0, 4.0]) + np.array([8.0, 2.0]) + np.array([1.0, 4.0])) / 3,
+        ),
+        (
+            HybridAggregationGeometricMean((1.0, 2.0, 1.0)),
+            (np.array([1.0, 4.0]) * np.array([8.0, 2.0]) ** 2 * np.array([1.0, 4.0])) ** (1.0 / 4.0),
+        ),
     ],
-    ids=["geometric", "arithmetic"],
+    ids=["geometric", "arithmetic", "weighted_geometric"],
 )
 def test_a_hybrids_per_item_contribution_aggregates_its_terms_arrays_elementwise(aggregation, expected) -> None:
     """A hybrid aggregates the terms' arrays elementwise, a repeated spec once per term, as a fresh float32 array."""
     # --- arrange ----------------------
-    objective = hybrid_objective(
-        DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L1),
-        DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L2),
-        DiversityObjectiveSimple(DiversityMetric.GEOMEAN_SEPARATION, L1),  # repeats the L1 spec
-        aggregation=aggregation,
+    objective = DiversityObjectiveHybrid(
+        (
+            DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L1),
+            DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L2),
+            DiversityObjectiveSimple(DiversityMetric.GEOMEAN_SEPARATION, L1),  # this term repeats the L1 spec
+        ),
+        aggregation,
     )
     l1 = _f32([1.0, 4.0])
     l2 = _f32([8.0, 2.0])
@@ -364,13 +395,19 @@ def test_a_hybrids_per_item_contribution_aggregates_its_terms_arrays_elementwise
             "MIN_SEPARATION over axis 0",
         ),
         (
-            DiversityObjectiveHybrid(
-                (
-                    DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, DistanceMetric.l2_euclidean()),
-                    DiversityObjectiveSimple(DiversityMetric.MEAN_PAIRWISE_DISTANCE, DistanceMetric.along_axis(1)),
-                )
+            hybrid_objective(
+                DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, DistanceMetric.l2_euclidean()),
+                DiversityObjectiveSimple(DiversityMetric.MEAN_PAIRWISE_DISTANCE, DistanceMetric.along_axis(1)),
             ),
             "geomean(MIN_SEPARATION over L2, MEAN_PAIRWISE_DISTANCE over axis 1)",
+        ),
+        (
+            hybrid_objective(
+                DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, DistanceMetric.l2_euclidean()),
+                DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, DistanceMetric.along_axis(1)),
+                aggregation_type=HybridAggregationArithmeticMean,
+            ),
+            "mean(MIN_SEPARATION over L2, MIN_SEPARATION over axis 1)",
         ),
         (
             DiversityObjectiveHybrid(
@@ -378,13 +415,13 @@ def test_a_hybrids_per_item_contribution_aggregates_its_terms_arrays_elementwise
                     DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, DistanceMetric.l2_euclidean()),
                     DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, DistanceMetric.along_axis(1)),
                 ),
-                HybridObjectiveType.ARITHMETIC_MEAN,
+                HybridAggregationGeometricMean((31.6227766, 1000.0)),
             ),
-            "mean(MIN_SEPARATION over L2, MIN_SEPARATION over axis 1)",
+            "geomean(MIN_SEPARATION over L2, MIN_SEPARATION over axis 1; weights 31.62, 1000)",
         ),
     ],
 )
 def test_label_names_the_metric_and_its_distance(objective, expected) -> None:
-    """An objective's label reads like the public metric classes' labels: metric, distance, and the aggregation."""
+    """An objective's label reads like the public metric classes' labels: metric, distance, aggregation, weights."""
     # --- act / assert -----------------
     assert objective.label == expected

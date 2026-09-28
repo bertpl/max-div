@@ -1,7 +1,7 @@
-"""Compute the geometric mean of a float32 vector, or of each row of a matrix, as the exponential of the mean log.
+"""Compute the plain and the weighted geometric mean of float32 data, as the exponential of the mean log.
 
-Every function here requires at least one entry per reduced vector. `geomean_f32`, and
-`geomean_per_row_f32` which reduces each row with it, accept zero and +inf:
+Every function here requires at least one entry per reduced vector. `geomean_f32` and
+`weighted_geomean_per_row_f32` accept zero and +inf:
 
 - a zero entry makes the mean zero;
 - a +inf entry makes it +inf;
@@ -20,7 +20,7 @@ from .fast_log_exp import fast_exp2_f32, fast_log2_f32
 
 # Every function here uses the same fastmath subset as the pair-distance functions in
 # `_distance/_metric/_pair.py`. The subset omits the `ninf` flag, which would let the compiler assume
-# no infinities, so in `geomean_f32` and `geomean_per_row_f32` a +inf entry stays +inf through the sum
+# no infinities, so in `geomean_f32` and `weighted_geomean_per_row_f32` a +inf entry stays +inf through the sum
 # (`fast_geomean_f32` does not preserve it: its log and exp are approximations).
 @njit("float32(float32[::1])", fastmath={"reassoc", "contract"}, inline="always", cache=True)
 def geomean_f32(values: NDArray[np.float32]) -> np.float32:
@@ -50,13 +50,42 @@ def fast_geomean_f32(values: NDArray[np.float32]) -> np.float32:
     return fast_exp2_f32(log_sum / n)
 
 
-@njit("void(float32[:, ::1], float32[::1])", fastmath={"reassoc", "contract"}, cache=True)
-def geomean_per_row_f32(rows: NDArray[np.float32], out: NDArray[np.float32]) -> None:
-    """Write the geometric mean of each row of `rows` into `out`.
+@njit("void(float32[:, ::1], float32[::1], float32[::1])", fastmath={"reassoc", "contract"}, cache=True)
+def weighted_geomean_per_row_f32(
+    rows: NDArray[np.float32], weights: NDArray[np.float32], out: NDArray[np.float32]
+) -> None:
+    """Write the weighted geometric mean of each row of `rows` into `out`: each entry raised to its column's weight.
 
-    `rows` is a C-contiguous (n_rows, n_cols) array with n_cols at least one, and `out` has length
-    n_rows. Each row is reduced by `geomean_f32`, so its zero and +inf behavior applies per row.
+    The mean of row i is (prod_j rows[i, j] ** weights[j]) ** (1 / sum(weights)). A zero entry makes
+    its row's mean zero, a +inf entry makes it +inf, and a row holding both gives nan.
+
+    With every weight 1, each entry of `out` is bit for bit the `geomean_f32` of its row: the log sum
+    accumulates in float32 in the same order, and the division by the weight sum runs in the same
+    precision as `geomean_f32`'s division by the entry count (float64 under numba).
+
+    Args:
+        rows: a C-contiguous (n_rows, n_cols) array with n_cols at least one.
+        weights: one positive weight per column.
+        out: the output array, of length n_rows.
     """
-    n_rows = rows.shape[0]
-    for i in range(n_rows):
-        out[i] = geomean_f32(rows[i, :])
+    n_rows, n_cols = rows.shape
+    weight_sum = 0.0  # float64
+    has_unit_weights = True
+    for j in range(n_cols):
+        weight_sum += weights[j]
+        has_unit_weights = has_unit_weights and weights[j] == 1.0
+
+    # the unit-weight branch skips one multiply per entry; when every weight is 1, both branches give
+    # the same bits
+    if has_unit_weights:
+        for i in range(n_rows):
+            log_sum = np.float32(0.0)
+            for j in range(n_cols):
+                log_sum += np.log(rows[i, j])
+            out[i] = np.exp(log_sum / weight_sum)
+    else:
+        for i in range(n_rows):
+            log_sum = np.float32(0.0)
+            for j in range(n_cols):
+                log_sum += weights[j] * np.log(rows[i, j])
+            out[i] = np.exp(log_sum / weight_sum)

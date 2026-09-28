@@ -7,6 +7,8 @@ from ._diversity import (
     DiversityObjectiveSimple,
     DiversityTerm,
     DiversityTrackerSpec,
+    HybridAggregationArithmeticMean,
+    HybridAggregationBase,
+    HybridAggregationGeometricMean,
     HybridDiversityMetric,
-    HybridObjectiveType,
 )
