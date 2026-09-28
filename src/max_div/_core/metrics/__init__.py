@@ -10,5 +10,6 @@ from ._diversity import (
     HybridAggregationArithmeticMean,
     HybridAggregationBase,
     HybridAggregationGeometricMean,
+    HybridAggregationMinimum,
     HybridDiversityMetric,
 )

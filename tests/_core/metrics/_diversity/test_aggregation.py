@@ -2,7 +2,12 @@ import numpy as np
 import pytest
 
 from max_div._core._math.geomean import geomean_f32
-from max_div._core.metrics import HybridAggregationArithmeticMean, HybridAggregationGeometricMean
+from max_div._core.metrics import (
+    HybridAggregationArithmeticMean,
+    HybridAggregationBase,
+    HybridAggregationGeometricMean,
+    HybridAggregationMinimum,
+)
 
 
 def _random_rows(n_rows: int, n_terms: int) -> np.ndarray:
@@ -13,7 +18,7 @@ def _random_rows(n_rows: int, n_terms: int) -> np.ndarray:
 # =================================================================================================
 #  Weights
 # =================================================================================================
-@pytest.mark.parametrize("aggregation_type", [HybridAggregationGeometricMean, HybridAggregationArithmeticMean])
+@pytest.mark.parametrize("aggregation_type", HybridAggregationBase.__subclasses__())
 def test_with_unit_weights_weights_every_term_1(aggregation_type) -> None:
     """An aggregation built with unit weights holds a weight of 1 per term and has `has_non_unit_weights` False."""
     # --- act --------------------------
@@ -66,6 +71,7 @@ def test_validate_term_count_rejects_a_weight_count_that_differs() -> None:
         (HybridAggregationGeometricMean((1.0, 1.0)), "geomean(A, B)"),
         (HybridAggregationArithmeticMean((1.0, 1.0)), "mean(A, B)"),
         (HybridAggregationArithmeticMean((31.6227766, 1000.0)), "mean(A, B; weights 31.62, 1000)"),
+        (HybridAggregationMinimum((31.6227766, 1000.0)), "min(A, B; weights 31.62, 1000)"),
     ],
 )
 def test_format_label_names_the_aggregation_and_the_weights_unless_all_1(aggregation, expected) -> None:
@@ -108,11 +114,12 @@ def test_an_aggregation_at_equal_weights_is_bit_for_bit_the_unweighted_mean(aggr
     [
         (HybridAggregationGeometricMean((2.0, 1.0)), (np.array([4.0, 9.0]) ** 2 * np.array([2.0, 3.0])) ** (1.0 / 3.0)),
         (HybridAggregationArithmeticMean((3.0, 1.0)), (3.0 * np.array([4.0, 9.0]) + np.array([2.0, 3.0])) / 4.0),
+        (HybridAggregationMinimum((1.0, 4.0)), np.minimum(np.array([4.0, 9.0]), 4.0 * np.array([2.0, 3.0]))),
     ],
-    ids=["geometric", "arithmetic"],
+    ids=["geometric", "arithmetic", "minimum"],
 )
 def test_a_weighted_aggregation_combines_each_row_and_the_scores_alike(aggregation, expected) -> None:
-    """Each row combines by the aggregation's weighted mean; the score is that mean over the one row of scores."""
+    """Each row combines by the weighted formula, and `aggregate_scores` over one row gives the same value."""
     # --- arrange ----------------------
     rows = np.array([[4.0, 2.0], [9.0, 3.0]], dtype=np.float32)
 

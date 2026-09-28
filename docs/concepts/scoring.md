@@ -50,6 +50,10 @@ Each tie-breaker then applies to every distance that the hybrid's terms use, agg
 - the approximate geomean by a geometric mean;
 - the non-zero fraction by an arithmetic mean, so a distance with no non-zero separation lowers the tie-breaker without making it zero.
 
+A hybrid built with `min_of` first gets one more tie-breaker, ranked before these: the geometric mean of its own terms, with every weight 1.
+
+Only the term whose value is lowest after multiplying by its weight sets a `min_of` score, so a swap that improves any other term leaves the score unchanged; the geometric mean rewards such a swap.
+
 You can override the defaults via `MaxDivSolverBuilder.with_diversity_tie_breakers()`, except for a hybrid, whose tie-breakers cannot be overridden.
 
 ## IV. Soft constraints (advanced) { #soft-constraints-advanced }

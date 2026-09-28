@@ -9,6 +9,7 @@ from max_div._core.metrics import (
     HybridAggregationArithmeticMean,
     HybridAggregationBase,
     HybridAggregationGeometricMean,
+    HybridAggregationMinimum,
     HybridDiversityMetric,
 )
 
@@ -67,8 +68,10 @@ def test_a_terms_label_and_repr_name_both_metrics() -> None:
         (HybridDiversityMetric.mean_of, None, HybridAggregationArithmeticMean((1.0, 1.0))),
         (HybridDiversityMetric.geomean_of, (2, 0.5), HybridAggregationGeometricMean((2.0, 0.5))),
         (HybridDiversityMetric.mean_of, [3.0, 1.0], HybridAggregationArithmeticMean((3.0, 1.0))),
+        (HybridDiversityMetric.min_of, None, HybridAggregationMinimum((1.0, 1.0))),
+        (HybridDiversityMetric.min_of, (10, 100), HybridAggregationMinimum((10.0, 100.0))),
     ],
-    ids=["geomean", "mean", "weighted_geomean", "weighted_mean"],
+    ids=["geomean", "mean", "weighted_geomean", "weighted_mean", "min", "weighted_min"],
 )
 def test_a_hybrid_resolves_to_a_hybrid_objective_with_its_aggregation(factory, weights, aggregation) -> None:
     # --- arrange ----------------------
@@ -201,8 +204,15 @@ def test_hybrids_compare_and_hash_by_terms_aggregation_and_weights() -> None:
             "HybridDiversityMetric.geomean_of(DiversityMetric.MIN_SEPARATION, "
             "DiversityMetric.GEOMEAN_SEPARATION.over(DistanceMetric.along_axis(0)), weights=(31.6227766, 1000.0))",
         ),
+        (
+            HybridDiversityMetric.min_of,
+            (31.6227766, 1000),
+            "min(MIN_SEPARATION, GEOMEAN_SEPARATION over axis 0; weights 31.62, 1000)",
+            "HybridDiversityMetric.min_of(DiversityMetric.MIN_SEPARATION, "
+            "DiversityMetric.GEOMEAN_SEPARATION.over(DistanceMetric.along_axis(0)), weights=(31.6227766, 1000.0))",
+        ),
     ],
-    ids=["geomean", "mean_at_equal_weights", "weighted_geomean"],
+    ids=["geomean", "mean_at_equal_weights", "weighted_geomean", "weighted_min"],
 )
 def test_a_hybrids_label_and_repr_name_the_aggregation_the_terms_and_any_weights(
     factory, weights, expected_label, expected_repr
