@@ -104,7 +104,7 @@ def validate_metric_fits_dimensions(metric: DistanceMetric, n_dims: int) -> None
 
     Raises:
         ValueError: If the metric's axis is not below `n_dims`, or if the metric is marginals-and-joint and
-            `n_dims` is 1, where its 2 terms coincide.
+            `n_dims` is 1, where it only rescales the one coordinate gap.
     """
     if metric.axis != NO_AXIS and metric.axis >= n_dims:
         raise ValueError(f"{metric!r} reads a coordinate that {n_dims}-dimensional vectors do not have.")
