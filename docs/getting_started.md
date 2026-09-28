@@ -193,6 +193,8 @@ problem = MaxDivProblem.new(
 | `APPROX_GEOMEAN_SEPARATION` | Fast approximation of `GEOMEAN_SEPARATION` | Large-scale problems where speed matters |
 | `HARMONIC_MEAN_SEPARATION` | Harmonic mean of all separations | When a close pair should weigh more than under the geomean, without the many equal scores that the minimum produces |
 
+To spread a selection in several senses at once, for example in the full space and along each coordinate, combine several diversity metrics into a [hybrid diversity metric](concepts/diversity.md#hybrid-diversity-metrics).
+
 
 ## Solver Presets
 
