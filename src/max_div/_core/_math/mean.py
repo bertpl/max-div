@@ -26,10 +26,21 @@ def weighted_mean_per_row_f32(
     """
     n_rows, n_cols = rows.shape
     weight_sum = np.float32(0.0)
+    has_unit_weights = True
     for j in range(n_cols):
         weight_sum += weights[j]
-    for i in range(n_rows):
-        weighted_sum = np.float32(0.0)
-        for j in range(n_cols):
-            weighted_sum += weights[j] * rows[i, j]
-        out[i] = weighted_sum / weight_sum
+        has_unit_weights = has_unit_weights and weights[j] == 1.0
+
+    # the unit-weight branch skips one multiply per entry; both branches give the same bits
+    if has_unit_weights:
+        for i in range(n_rows):
+            row_sum = np.float32(0.0)
+            for j in range(n_cols):
+                row_sum += rows[i, j]
+            out[i] = row_sum / weight_sum
+    else:
+        for i in range(n_rows):
+            weighted_sum = np.float32(0.0)
+            for j in range(n_cols):
+                weighted_sum += weights[j] * rows[i, j]
+            out[i] = weighted_sum / weight_sum
