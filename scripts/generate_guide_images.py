@@ -3,7 +3,7 @@
 The figures of `geomean_separation.md` plot given selections controlled by a parameter alpha: three
 cases as dot rows, and the separation metrics against alpha below them; no solver is involved.
 
-The figures of `uniform_sampling.md` are seven solved selections of one random population, one per
+The figures of `uniform_sampling.md` are nine solved selections of one random population, one per
 experiment, plus a longer solve of each experiment that `EXPERIMENT_NAME_BY_LONG_RUN` names; only
 those run the solver.
 
@@ -233,7 +233,7 @@ def layout_constrained_group(alpha: float) -> NDArray[np.float64]:
 
 
 # ==================================================================================================
-#  Uniform sampling: seven solved experiments
+#  Uniform sampling: nine solved experiments
 # ==================================================================================================
 # The keys name the distances of `uniform_sampling_explorer.DISTANCES`.
 DISTANCE_METRICS = {
@@ -242,6 +242,7 @@ DISTANCE_METRICS = {
     "y": DistanceMetric.along_axis(1),
     "linf": DistanceMetric.l_minus_inf(),
     "geomean": DistanceMetric.geometric_mean(),
+    "marginals_and_joint": DistanceMetric.marginals_and_joint(),
 }
 REFERENCE_LABELS = {"l2": "L2", "x": "$x$", "y": "$y$"}
 # One row label per experiment, shared by the summary and the convergence tables; the section
@@ -252,10 +253,12 @@ EXPERIMENT_LABELS = {
     "y": "**III.C** $y$ distance",
     "linf": "**IV.A** L\u2212\u221e distance",
     "geomean": "**IV.B** geometric-mean distance",
-    "hybrid": "**V.A** hybrid: L2, $x$ and $y$ terms",
+    "hybrid": "**V.A** geometric-mean hybrid: L2, $x$ and $y$ terms",
     "hybrid_banded": "**V.B** hybrid, 20 items per band",
     "hybrid_long": "**V.C.1** hybrid, 4 h, 32 workers",
     "hybrid_banded_long": "**V.C.2** hybrid, 20 items per band, 4 h, 32 workers",
+    "hybrid_min": "**V.D** minimum hybrid: L\u2212\u221e and L2 terms, weighted $k$ and $\\sqrt{k}$",
+    "marginals_and_joint": "**V.E** marginals-and-joint distance",
 }
 # The replay figures of section V.C re-solve the experiments that `EXPERIMENT_NAME_BY_LONG_RUN` names, with this
 # budget and worker count.
@@ -286,15 +289,18 @@ class ExperimentSettings:
 class Experiment:
     """An experiment maximizes the min separation over one distance, or over several as a hybrid.
 
-    `distance_keys` holds one key for a simple objective and one per term for a hybrid, which is the
-    geometric mean of the per-distance terms. `n_bands` cuts each axis into that many equal bands and
-    requires every band to hold the same number of selected items, k / n_bands; None leaves the
-    selection unconstrained.
+    `distance_keys` holds one key for a simple objective and one per term for a hybrid.
+    `hybrid_factory` combines a hybrid's per-distance terms, and `k_weight_exponents` weights them:
+    term t gets weight k ** k_weight_exponents[t], and None leaves every weight 1. `n_bands` cuts each
+    axis into that many equal bands and requires every band to hold the same number of selected items,
+    k / n_bands; None leaves the selection unconstrained.
     """
 
     name: str
     distance_keys: tuple[str, ...]
     n_bands: int | None = None
+    hybrid_factory: Callable[..., HybridDiversityMetric] = HybridDiversityMetric.geomean_of
+    k_weight_exponents: tuple[float, ...] | None = None
 
     def band_edges(self) -> tuple[float, ...]:
         """Return the interior band edges along one axis, empty for an unconstrained experiment."""
@@ -326,13 +332,15 @@ class Experiment:
                 for band in range(self.n_bands)
             ]
 
-    def diversity_metric(self) -> DiversityMetric | HybridDiversityMetric:
-        """Return the objective the solver maximizes."""
+    def diversity_metric(self, k: int) -> DiversityMetric | HybridDiversityMetric:
+        """Return the objective the solver maximizes when it selects k items."""
         if len(self.distance_keys) == 1:
             return DiversityMetric.MIN_SEPARATION
         else:
-            return HybridDiversityMetric.geomean_of(
-                *(DiversityMetric.MIN_SEPARATION.over(DISTANCE_METRICS[key]) for key in self.distance_keys)
+            weights = None if self.k_weight_exponents is None else tuple(k**e for e in self.k_weight_exponents)
+            return self.hybrid_factory(
+                *(DiversityMetric.MIN_SEPARATION.over(DISTANCE_METRICS[key]) for key in self.distance_keys),
+                weights=weights,
             )
 
     def distance_metric(self) -> DistanceMetric:
@@ -348,6 +356,12 @@ EXPERIMENTS = (
     Experiment("geomean", ("geomean",)),
     Experiment("hybrid", ("l2", "x", "y")),
     Experiment("hybrid_banded", ("l2", "x", "y"), n_bands=5),
+    # in 2D the nearest-neighbor L-inf distance of k well-spread points scales like 1 / k and the L2
+    # distance like 1 / sqrt(k), so the weights k and sqrt(k) bring both terms to a common scale
+    Experiment(
+        "hybrid_min", ("linf", "l2"), hybrid_factory=HybridDiversityMetric.min_of, k_weight_exponents=(1.0, 0.5)
+    ),
+    Experiment("marginals_and_joint", ("marginals_and_joint",)),
 )
 
 
@@ -376,7 +390,7 @@ def build_experiment_problem(vectors: NDArray[np.float32], experiment: Experimen
         vectors=vectors,
         k=k,
         distance_metric=experiment.distance_metric(),
-        diversity_metric=experiment.diversity_metric(),
+        diversity_metric=experiment.diversity_metric(k),
         constraints=experiment.constraints(vectors, k),
     )
 
@@ -652,7 +666,8 @@ def render_uniform_sampling_experiments(settings: ExperimentSettings, should_reu
         selections[run_name] = render_uniform_sampling_replay(
             vectors, settings, should_reuse_solution, experiments_by_name[experiment_name], run_name
         )
-    write_summary(selections, settings.k)
+    # the summary lists the experiments in the order of the guide's sections, which `EXPERIMENT_LABELS` follows
+    write_summary({name: selections[name] for name in EXPERIMENT_LABELS}, settings.k)
     write_convergence(runs, settings.budget_sec)
 
 
