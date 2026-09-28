@@ -118,3 +118,72 @@ see [Objectives & the diversity-problem landscape](objectives.md).)
   are correct for this metric (its per-item contribution is the item's exact marginal
   contribution to the objective), but the separation metrics remain the most battle-tested
   choice.
+- **A [hybrid diversity metric](#hybrid-diversity-metrics)** when one notion of spread is not
+  enough, such as spread in the full space and along each coordinate at once.
+
+## VI. Hybrid diversity metrics { #hybrid-diversity-metrics }
+
+A **hybrid diversity metric** combines several diversity metrics, its **terms**, into one score. It is for selections that must be diverse in more than one sense at once: spread in the full space and along each coordinate, or spread under two different distances. The [uniform-sampling case study](../guides/uniform_sampling.md) shows what a hybrid delivers next to single metrics.
+
+### VI.A. Terms { #hybrid-terms }
+
+A term is a diversity metric over one distance metric:
+
+- `DiversityMetric.MIN_SEPARATION.over(DistanceMetric.along_axis(0))` reads the distance along axis 0;
+- a bare `DiversityMetric.MIN_SEPARATION` reads the problem's own distance metric.
+
+Every distance metric that a term names is computed and stored like the problem's own, and every term adds work to each iteration. A problem built from [precomputed distances](glossary.md#precomputed-distances) has no vectors, so none of its terms can name a distance metric; its terms all read the given distances. A hybrid needs at least 2 terms.
+
+### VI.B. Aggregations { #hybrid-aggregations }
+
+Three factories combine the terms' values into the hybrid's score:
+
+| Factory | Score | Choose it when |
+|---------|-------|----------------|
+| `HybridDiversityMetric.geomean_of(...)` | the geometric mean of the terms | **every term must be spread**: one term at zero makes the score zero |
+| `HybridDiversityMetric.mean_of(...)` | the arithmetic mean of the terms | **a strong term may make up for a weak one** |
+| `HybridDiversityMetric.min_of(...)` | the smallest of the terms | **the weakest term decides**: a high value in one term cannot make up for a low value in another |
+
+```python
+from max_div.metrics import DistanceMetric, DiversityMetric, HybridDiversityMetric
+
+objective = HybridDiversityMetric.geomean_of(
+    DiversityMetric.MIN_SEPARATION.over(DistanceMetric.l2_euclidean()),
+    DiversityMetric.MIN_SEPARATION.over(DistanceMetric.along_axis(0)),
+    DiversityMetric.MIN_SEPARATION.over(DistanceMetric.along_axis(1)),
+)
+problem = MaxDivProblem.new(vectors, k=100, diversity_metric=objective)
+```
+
+### VI.C. Weights { #hybrid-weights }
+
+Every factory takes `weights=`: one positive number per term, in term order, each 1 unless given. What a weight does depends on the aggregation, with $s_t$ the value of term $t$ and $w_t$ its weight:
+
+| Factory | Score | A weight … |
+|---------|-------|------------|
+| `geomean_of` | $\Big( \prod_t s_t^{\,w_t} \Big)^{1 / \sum_t w_t}$ | is its term's exponent: a larger weight gives the term more say |
+| `mean_of` | $\sum_t w_t \, s_t \,/\, \sum_t w_t$ | multiplies its term's value in a weighted mean |
+| `min_of` | $\min_t \; w_t \, s_t$ | multiplies its term's value; the weights are not normalized |
+
+- **The geometric mean does not depend on the scale of a term**: multiplying a term by a constant multiplies the score by a constant, so the same selection wins.
+- **The arithmetic mean and the minimum compare raw values**, so terms on different scales need weights that bring them onto a common one. Under the minimum an unweighted term can even be unable to ever set the score.
+
+For example, with $k$ well-spread points in the unit square, the min separation over L2 shrinks like $1/\sqrt{k}$ and the min separation along one axis like $1/k$. An L2 distance is also never smaller than the distance along one axis, so an unweighted minimum of the 2 always equals the axis term. Weights $\sqrt{k}$ and $k$ put all 3 terms on one scale:
+
+```python
+import math
+
+k = 100
+objective = HybridDiversityMetric.min_of(
+    DiversityMetric.MIN_SEPARATION.over(DistanceMetric.l2_euclidean()),
+    DiversityMetric.MIN_SEPARATION.over(DistanceMetric.along_axis(0)),
+    DiversityMetric.MIN_SEPARATION.over(DistanceMetric.along_axis(1)),
+    weights=(math.sqrt(k), k, k),
+)
+```
+
+The right weights depend on the data: in $d$ dimensions, the ratio between the L2 and the single-axis min separations grows like $k^{1 - 1/d}$.
+
+### VI.D. Tie-breakers { #hybrid-tie-breakers }
+
+A hybrid gets its default tie-breakers from its terms' metrics, and a `min_of` hybrid first gets the geometric mean of its own terms; a hybrid accepts no custom tie-breakers. The [scoring page](scoring.md#diversity-tie-breakers) gives the full rule.
