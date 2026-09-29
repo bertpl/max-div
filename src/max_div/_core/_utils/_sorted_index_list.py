@@ -46,7 +46,7 @@ Both paths are live, and the tests exercise this module in each mode.
 
 import numpy as np
 from llvmlite import ir
-from numba.core import types
+from numba import types
 from numba.extending import intrinsic, overload
 from numpy.typing import NDArray
 
@@ -57,12 +57,16 @@ from max_div._core.jit import lazy_njit
 #  Overlap-safe move
 # =================================================================================================
 @intrinsic
-def _llvm_memmove(typingctx, dest, dest_offset, src, src_offset, count):  # noqa: ANN001, ANN202
-    """Emit a call to `llvm.memmove` over the data pointers of `dest` and `src`.
+def _llvm_memmove(typingctx, dest_address, src_address, n_bytes):  # noqa: ANN001, ANN202
+    """Emit a call to `llvm.memmove` that moves `n_bytes` bytes from `src_address` to `dest_address`.
 
     The body runs while numba compiles a caller, not when the function is called, and returns the
     call's type signature plus the `codegen` that writes the instructions.  Inside `codegen`,
     `builder` is an LLVM instruction writer and `args` holds the caller's compiled arguments.
+
+    The addresses and the byte count arrive as plain integers, and `codegen` turns the addresses
+    into pointers itself, so it reads no array layout and needs no numba helper beyond the builder.
+    The call returns `dest_address`, which gives `codegen` a value to return.
 
     The `False` ending the emitted call is LLVM's `isvolatile` flag.  Marking an access volatile
     forbids the optimizer from reordering, merging or discarding it, which is what memory needs when
@@ -70,20 +74,18 @@ def _llvm_memmove(typingctx, dest, dest_offset, src, src_offset, count):  # noqa
     case.  A shift within an ordinary array is not that, so the flag stays false and the optimizer
     keeps its freedom.
     """
-    signature = types.void(dest, dest_offset, src, src_offset, count)
+    signature = types.intp(types.intp, types.intp, types.intp)
 
     def codegen(context, builder, sig, args):  # noqa: ANN001, ANN202
-        dest_array, dest_off, src_array, src_off, n = args
-        item_size = context.get_abi_sizeof(context.get_data_type(sig.args[0].dtype))
-        dest_struct = context.make_array(sig.args[0])(context, builder, dest_array)
-        src_struct = context.make_array(sig.args[2])(context, builder, src_array)
+        dest_address, src_address, n_bytes = args
+        # a byte pointer, which every supported llvmlite accepts; the opaque `ir.PointerType()`
+        # needs llvmlite 0.44 or newer
         byte_ptr = ir.IntType(8).as_pointer()
-        dest_ptr = builder.bitcast(builder.gep(dest_struct.data, [dest_off]), byte_ptr)
-        src_ptr = builder.bitcast(builder.gep(src_struct.data, [src_off]), byte_ptr)
-        n_bytes = builder.mul(builder.sext(n, ir.IntType(64)), ir.Constant(ir.IntType(64), item_size))
-        memmove = builder.module.declare_intrinsic("llvm.memmove", [byte_ptr, byte_ptr, ir.IntType(64)])
+        memmove = builder.module.declare_intrinsic("llvm.memmove", [byte_ptr, byte_ptr, n_bytes.type])
+        dest_ptr = builder.inttoptr(dest_address, byte_ptr)
+        src_ptr = builder.inttoptr(src_address, byte_ptr)
         builder.call(memmove, [dest_ptr, src_ptr, n_bytes, ir.Constant(ir.IntType(1), 0)])
-        return context.get_dummy_value()
+        return dest_address
 
     return signature, codegen
 
@@ -106,8 +108,10 @@ def _move_within_compiled(buffer, dest_offset, src_offset, count):  # noqa: ANN0
     """
 
     def implementation(buffer, dest_offset, src_offset, count):  # noqa: ANN001, ANN202
+        base_address = buffer.ctypes.data
+        item_size = buffer.itemsize
         # ty: ignore[missing-argument] -- the stub counts the typingctx parameter, which callers do not pass
-        _llvm_memmove(buffer, dest_offset, buffer, src_offset, count)
+        _llvm_memmove(base_address + dest_offset * item_size, base_address + src_offset * item_size, count * item_size)
 
     return implementation
 
