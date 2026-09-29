@@ -1,5 +1,10 @@
 """Helpers shared across the test suite."""
 
+import importlib.util
+import sys
+from pathlib import Path
+from types import ModuleType
+
 import numba
 
 from max_div._core.benchmark_problems import BenchmarkProblemFactory
@@ -38,3 +43,16 @@ def hybrid_objective(
 ) -> DiversityObjectiveHybrid:
     """Build a `DiversityObjectiveHybrid` from simple objectives at equal weights, geometric-mean by default."""
     return DiversityObjectiveHybrid(terms, aggregation_type.with_unit_weights(len(terms)))
+
+
+def load_script(name: str, path: Path) -> ModuleType:
+    """Import a script from `scripts/` by path, because `scripts/` is maintainer tooling, not an importable package.
+
+    The module is registered in `sys.modules` under `name` before it runs, so a script that imports
+    another script by that name finds it.
+    """
+    spec = importlib.util.spec_from_file_location(name, path)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module

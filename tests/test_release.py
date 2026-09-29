@@ -1,11 +1,11 @@
-"""Guards for the release script's wait on the 'Push to Main' CI run (scripts/release.py)."""
+"""These tests check how the release script waits for the 'Push to Main' CI run (scripts/release.py)."""
 
-import importlib.util
 import json
-import sys
 from pathlib import Path
 
 import pytest
+
+from tests.helpers import load_script
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SCRIPT = REPO_ROOT / "scripts" / "release.py"
@@ -13,27 +13,22 @@ SCRIPT = REPO_ROOT / "scripts" / "release.py"
 _HEAD = "a" * 40
 
 
-def _load_module():
-    """Import the script by path — `scripts/` is maintainer tooling, not an importable package."""
-    spec = importlib.util.spec_from_file_location("release", SCRIPT)
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[spec.name] = module
-    spec.loader.exec_module(module)
-    return module
-
-
-_mod = _load_module()
+_release = load_script("release", SCRIPT)
 
 
 def _fake_gh(monkeypatch: pytest.MonkeyPatch, runs_for_commit: list[dict], states: list[dict]) -> list[list[str]]:
-    """Answer `gh run list` with `runs_for_commit` and each `gh run view` with the next of `states`.
+    """Answer `gh run list` with `runs_for_commit` and each `gh run view` with the next entry of `states`.
 
-    Returns the list that records every command the script ran.
+    Also patches `time.sleep` in the script to return immediately, so the polling loop does not wait.
+
+    Returns:
+        The list of commands run by the script, in order.
     """
     commands: list[list[str]] = []
     remaining_states = list(states)
 
     def run_command(cmd: list[str], **kw: object) -> str:
+        """Record `cmd` and return the canned JSON answer for it; fail on any other command."""
         commands.append(cmd)
         if cmd[:3] == ["gh", "run", "list"]:
             return json.dumps(runs_for_commit)
@@ -42,8 +37,8 @@ def _fake_gh(monkeypatch: pytest.MonkeyPatch, runs_for_commit: list[dict], state
         else:
             raise AssertionError(f"unexpected command {cmd}")
 
-    monkeypatch.setattr(_mod, "run_command", run_command)
-    monkeypatch.setattr(_mod.time, "sleep", lambda _: None)
+    monkeypatch.setattr(_release, "run_command", run_command)
+    monkeypatch.setattr(_release.time, "sleep", lambda _: None)
     return commands
 
 
@@ -61,7 +56,7 @@ def test_an_in_flight_run_is_polled_by_its_id_until_it_succeeds(monkeypatch: pyt
     )
 
     # --- act --------------------------
-    run_id = _mod._wait_for_main_ci(_HEAD)
+    run_id = _release._wait_for_main_ci(_HEAD)
 
     # --- assert -----------------------
     assert run_id == "42"
@@ -87,4 +82,4 @@ def test_the_release_aborts_without_a_successful_run(
 
     # --- act / assert -----------------
     with pytest.raises(SystemExit):
-        _mod._wait_for_main_ci(_HEAD)
+        _release._wait_for_main_ci(_HEAD)

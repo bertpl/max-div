@@ -7,7 +7,6 @@ validator is only worth its failure cases, and a happy-path test would pass just
 a check that returned nothing at all.
 """
 
-import importlib.util
 import shutil
 import subprocess
 import sys
@@ -16,22 +15,15 @@ from pathlib import Path
 
 import pytest
 
+from tests.helpers import load_script
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SCRIPT = REPO_ROOT / "scripts" / "capability_data.py"
 
 
-def _load_module():
-    """Import the generator by path — `scripts/` is maintainer tooling, not an importable package."""
-    spec = importlib.util.spec_from_file_location("capability_data", SCRIPT)
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[spec.name] = module
-    spec.loader.exec_module(module)
-    return module
-
-
 @pytest.fixture(scope="module")
 def cd():
-    return _load_module()
+    return load_script("capability_data", SCRIPT)
 
 
 @pytest.fixture(scope="module")

@@ -196,11 +196,11 @@ class BadgeMetrics:
     test_union: int
 
 
-def _main_run_for(head_sha: str) -> str | None:
+def _main_run_id_for(head_sha: str) -> str | None:
     """Return the id of the newest 'Push to Main' run for commit `head_sha`, or None if it has none.
 
-    The lookup filters by commit: the unfiltered run list on `main` can briefly return a stale page,
-    which hides a run that exists.
+    The lookup filters by commit: the unfiltered `gh run list` on `main` can briefly return an
+    out-of-date result, which leaves out a run that exists.
     """
     out = run_command(
         [
@@ -224,8 +224,8 @@ def _main_run_for(head_sha: str) -> str | None:
         return None
 
 
-def _run_state(run_id: str) -> tuple[str, str]:
-    """Return (status, conclusion) of the workflow run `run_id`; conclusion is empty while it runs."""
+def _workflow_run_state(run_id: str) -> tuple[str, str]:
+    """Return (status, conclusion) of the workflow run `run_id`; conclusion is empty until the run completes."""
     state = json.loads(run_command(["gh", "run", "view", run_id, "--json", "status,conclusion"]))
     return state["status"], state.get("conclusion") or ""
 
@@ -235,15 +235,15 @@ def _wait_for_main_ci(local_head: str) -> str:
 
     Aborts when no run exists for `local_head` (the push did not trigger CI), when the run
     concluded without success, or after `CI_WAIT_TIMEOUT_SEC` of waiting. Once found, the run is
-    polled by its id, so a stale run list cannot lose it.
+    polled by its id, so an out-of-date result from `gh run list` cannot hide it.
     """
-    run_id = _main_run_for(local_head)
+    run_id = _main_run_id_for(local_head)
     if run_id is None:
         fail_with_message(f"no 'Push to Main' run found for HEAD {local_head[:8]} — did the push trigger CI?")
     deadline = time.monotonic() + CI_WAIT_TIMEOUT_SEC
     announced = False
     while True:
-        status, conclusion = _run_state(run_id)
+        status, conclusion = _workflow_run_state(run_id)
         if status == "completed":
             if conclusion != "success":
                 fail_with_message(f"'Push to Main' run for HEAD {local_head[:8]} concluded '{conclusion}'")
@@ -260,8 +260,8 @@ def _fetch_release_metrics() -> dict[str, float]:
     """Download CI's cumulative metrics for the commit being released.
 
     The numbers come from the matrix combine job, not a local run, so the
-    badge matches the CI gate exactly. An in-flight run for HEAD is waited
-    out; only a HEAD with no run at all, a failed run, or a timeout aborts.
+    badge matches the CI gate exactly. It waits for HEAD's 'Push to Main' run
+    to succeed; `_wait_for_main_ci` lists when the release aborts.
     """
     local_head = run_command(["git", "rev-parse", "HEAD"]).strip()
     run_id = _wait_for_main_ci(local_head)
