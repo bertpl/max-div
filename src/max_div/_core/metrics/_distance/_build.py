@@ -25,6 +25,8 @@ import numba
 import numpy as np
 from numpy.typing import NDArray
 
+from max_div._core.jit import lazy_njit
+
 from ._metric import DistanceMetric, _metric_pair, preprocess_vectors
 
 # Width in columns of the blocks the parallel fill cuts the pair space into.
@@ -109,7 +111,7 @@ def _allocate_if_needed(out: NDArray[np.float32] | None, n: int) -> NDArray[np.f
 # =================================================================================================
 #  Fills
 # =================================================================================================
-@numba.njit(
+@lazy_njit(
     numba.void(READONLY_F32_2D, numba.int32, numba.float64, WRITABLE_F32_2D),
     cache=True,
     fastmath={"reassoc", "contract"},
@@ -127,7 +129,7 @@ def _fill_matrix(
             out[j, i] = value
 
 
-@numba.njit(
+@lazy_njit(
     numba.void(READONLY_F32_2D, numba.int32, numba.float64, numba.int64, WRITABLE_F32_2D),
     parallel=True,
     cache=True,
@@ -153,7 +155,7 @@ def _fill_matrix_parallel(
                 out[j, i] = value
 
 
-@numba.njit(numba.void(READONLY_F32_1D, numba.int32, WRITABLE_F32_2D), cache=True)
+@lazy_njit(numba.void(READONLY_F32_1D, numba.int32, WRITABLE_F32_2D), cache=True)
 def _fill_matrix_from_condensed(condensed: NDArray[np.float32], n: np.int32, out: NDArray[np.float32]) -> None:
     """Expand a condensed distance vector into a full (n, n) matrix: each value written to both halves."""
     idx = np.int64(0)

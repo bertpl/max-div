@@ -1,5 +1,6 @@
-import numba
 import numpy as np
+
+from max_div._core.jit import lazy_njit
 
 # numpy array of float32 powers of 2 from 2^-150 to 2^128,
 # which - on each side - is 1 beyond full range of values >0 and <+inf.
@@ -19,7 +20,7 @@ _POWERS_OF_2_F32 = np.array(
 )
 
 
-@numba.njit("float32(int32)", fastmath=True, inline="always", cache=True)
+@lazy_njit("float32(int32)", fastmath=True, inline="always", cache=True)
 def power_of_2_f32(k: np.int32) -> np.float32:
     """Compute float32 2^k for arbitrary int32 k, using precomputed values in range [-150, 128].
 

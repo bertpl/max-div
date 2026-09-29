@@ -52,6 +52,8 @@ import numba
 import numpy as np
 from numpy.typing import NDArray
 
+from max_div._core.jit import lazy_njit
+
 
 # =================================================================================================
 #  Constraint class
@@ -190,19 +192,19 @@ def to_numpy_membership(con_indices: NDArray[np.int32], m: int, n: int) -> NDArr
 # =================================================================================================
 #  LOW-LEVEL HANDLING of numpy-based constraint representation
 # =================================================================================================
-@numba.njit("int32(int32[:,:],int32)", inline="always", fastmath=True, cache=True)
+@lazy_njit("int32(int32[:,:],int32)", inline="always", fastmath=True, cache=True)
 def _np_con_min_value(con_values: NDArray[np.int32], i_con: np.int32) -> np.int32:
     """Return min_value of i-th constraint from con_values array."""
     return con_values[i_con, 0]
 
 
-@numba.njit("int32(int32[:,:],int32)", inline="always", fastmath=True, cache=True)
+@lazy_njit("int32(int32[:,:],int32)", inline="always", fastmath=True, cache=True)
 def _np_con_max_value(con_values: NDArray[np.int32], i_con: np.int32) -> np.int32:
     """Return max_value of i-th constraint from con_values array."""
     return con_values[i_con, 1]
 
 
-@numba.njit("int32[:](int32[:],int32)", inline="always", fastmath=True, cache=True)
+@lazy_njit("int32[:](int32[:],int32)", inline="always", fastmath=True, cache=True)
 def _np_con_indices(con_indices: NDArray[np.int32], i_con: np.int32) -> NDArray[np.int32]:
     """Return the indices array for the i-th constraint from con_indices array."""
     start = con_indices[2 * i_con]
@@ -219,7 +221,7 @@ def _np_con_membership(con_membership: NDArray[np.int32], index: int | np.int32)
     return con_membership[con_membership[i] : con_membership[i + 1]]
 
 
-@numba.njit("int32(int32[:])", inline="always", fastmath=True, cache=True)
+@lazy_njit("int32(int32[:])", inline="always", fastmath=True, cache=True)
 def _np_largest_con_index(con_indices: NDArray[np.int32]) -> np.int32:
     """Return the largest index referenced in con_indices array, or -1 when every segment is empty."""
     m = np.int32(con_indices[0] // 2)
@@ -236,7 +238,7 @@ def _np_largest_con_index(con_indices: NDArray[np.int32]) -> np.int32:
     return largest
 
 
-@numba.njit("int32(int32[:,:])", inline="always", fastmath=True, cache=True)
+@lazy_njit("int32(int32[:,:])", inline="always", fastmath=True, cache=True)
 def _np_con_total_violation(con_values: NDArray[np.int32]) -> np.int32:
     """Return in total by how much constraints are not satisfied (unweighted, linear).
 
@@ -257,7 +259,7 @@ def _np_con_total_violation(con_values: NDArray[np.int32]) -> np.int32:
     return s
 
 
-@numba.njit(
+@lazy_njit(
     numba.float32(numba.int32[:, :], numba.float32[:], numba.boolean),
     inline="always",
     fastmath=True,

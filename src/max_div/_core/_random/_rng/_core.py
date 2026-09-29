@@ -9,10 +9,11 @@ This is based on the following:
   - splitmix64 for seed initialization by Sebastiano Vigna (http://xorshift.di.unimi.it/splitmix64.c)
 """
 
-import numba
 import numpy as np
 from numpy import float32, float64, uint64
 from numpy.typing import NDArray
+
+from max_div._core.jit import lazy_njit
 
 # =================================================================================================
 #  Constants
@@ -30,13 +31,13 @@ _TINY_F32 = np.float32((2**-8) * np.finfo(float32).eps)  # small (<< EPS_F32) no
 # =================================================================================================
 #  Core
 # =================================================================================================
-@numba.njit("uint64(uint64,uint64)", fastmath=True, inline="always", cache=True)
+@lazy_njit("uint64(uint64,uint64)", fastmath=True, inline="always", cache=True)
 def rotl(x: uint64, k: uint64) -> uint64:
     """Rotate left operation."""
     return (x << k) | (x >> (uint64(64) - k))
 
 
-@numba.njit("uint64(uint64[:])", fastmath=True, inline="always", cache=True)
+@lazy_njit("uint64(uint64[:])", fastmath=True, inline="always", cache=True)
 def _xoroshiro128plus_next(rng_state: NDArray[uint64]) -> uint64:
     """Generate next random uint64 and update state in-place."""
     s0 = rng_state[0]
@@ -50,7 +51,7 @@ def _xoroshiro128plus_next(rng_state: NDArray[uint64]) -> uint64:
     return result
 
 
-@numba.njit("uint64(uint64[:])", fastmath=True, inline="always", cache=True)
+@lazy_njit("uint64(uint64[:])", fastmath=True, inline="always", cache=True)
 def _splitmix64_next(init_state: NDArray[uint64]) -> uint64:
     """Used to initialize xoroshiro128+ state from single seed; init_state is a 1-element array, modified in-place."""
     z = init_state[0] + uint64(0x9E3779B97F4A7C15)

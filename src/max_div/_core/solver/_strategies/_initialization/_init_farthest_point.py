@@ -4,6 +4,7 @@ from numpy.typing import NDArray
 
 from max_div._core._math import select_k_max, select_k_max_into
 from max_div._core._random import P_UNIFORM, randint
+from max_div._core.jit import lazy_njit
 from max_div._core.metrics import DiversityContributionFamily, DiversityObjective
 from max_div._core.metrics._distance import DISTANCE_STORE_TYPE, DistanceStore, get_distance
 from max_div._core.solver._solver_state import SolverState
@@ -142,7 +143,7 @@ class InitFarthestPoint(InitializationStrategy):
 #  Helpers
 # =================================================================================================
 # The drawing loop is numba-compiled, and numba cannot compile methods, so it lives here beside the class.
-@numba.njit(
+@lazy_njit(
     numba.int64(
         numba.int32[:],
         numba.float32[:],

@@ -1,0 +1,1 @@
+from .lazily_compiled_function import LazilyCompiledFunction, lazy_njit

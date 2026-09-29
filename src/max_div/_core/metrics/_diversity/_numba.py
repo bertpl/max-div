@@ -32,17 +32,17 @@ that order, and neither reaches the reducer:
 """
 
 import numpy as np
-from numba import njit
 from numpy.typing import NDArray
 
 from max_div._core._math.bit_cast import float32_from_bits
 from max_div._core._math.geomean import fast_geomean_f32, geomean_f32
+from max_div._core.jit import lazy_njit
 
 # The +inf bit pattern: the integer minimum starts from it, as the float loop would start from +inf.
 _INF_BITS = np.int32(0x7F800000)
 
 
-@njit("float32(float32[::1])", fastmath={"reassoc", "contract"}, inline="always", cache=True)
+@lazy_njit("float32(float32[::1])", fastmath={"reassoc", "contract"}, inline="always", cache=True)
 def min_separation(sep: NDArray[np.float32]) -> np.float32:
     """Minimum separation of all selected items, as an integer minimum over the float bit patterns.
 
@@ -57,13 +57,13 @@ def min_separation(sep: NDArray[np.float32]) -> np.float32:
     return float32_from_bits(min_bits)
 
 
-@njit("float32(float32[::1])", fastmath={"reassoc", "contract"}, inline="always", cache=True)
+@lazy_njit("float32(float32[::1])", fastmath={"reassoc", "contract"}, inline="always", cache=True)
 def mean_separation(sep: NDArray[np.float32]) -> np.float32:
     """Arithmetic mean separation of all selected items."""
     return np.mean(sep)
 
 
-@njit("float32(float32[::1])", fastmath={"reassoc", "contract"}, inline="always", cache=True)
+@lazy_njit("float32(float32[::1])", fastmath={"reassoc", "contract"}, inline="always", cache=True)
 def mean_pairwise_distance(mean_dists: NDArray[np.float32]) -> np.float32:
     """Mean pairwise distance among all selected items, from their mean-distance contribution values.
 
@@ -73,13 +73,13 @@ def mean_pairwise_distance(mean_dists: NDArray[np.float32]) -> np.float32:
     return np.mean(mean_dists)
 
 
-@njit("float32(float32[::1])", fastmath={"reassoc", "contract"}, inline="always", cache=True)
+@lazy_njit("float32(float32[::1])", fastmath={"reassoc", "contract"}, inline="always", cache=True)
 def geomean_separation(sep: NDArray[np.float32]) -> np.float32:
     """Geometric mean separation of all selected items."""
     return geomean_f32(sep)
 
 
-@njit("float32(float32[::1])", fastmath={"reassoc", "contract"}, inline="always", cache=True)
+@lazy_njit("float32(float32[::1])", fastmath={"reassoc", "contract"}, inline="always", cache=True)
 def approx_geomean_separation(sep: NDArray[np.float32]) -> np.float32:
     """Approximate geometric mean separation of all selected items."""
     return fast_geomean_f32(sep)
@@ -87,7 +87,7 @@ def approx_geomean_separation(sep: NDArray[np.float32]) -> np.float32:
 
 # `error_model="numpy"` makes a float division by zero yield +inf instead of raising, so the zero and
 # +inf limits below need no branch in the loop, which lets it vectorize.
-@njit("float32(float32[::1])", fastmath={"reassoc", "contract"}, error_model="numpy", inline="always", cache=True)
+@lazy_njit("float32(float32[::1])", fastmath={"reassoc", "contract"}, error_model="numpy", inline="always", cache=True)
 def harmonic_mean_separation(sep: NDArray[np.float32]) -> np.float32:
     """Harmonic mean separation of all selected items: their count over the sum of their reciprocals.
 
@@ -102,7 +102,7 @@ def harmonic_mean_separation(sep: NDArray[np.float32]) -> np.float32:
     return np.float32(n) / reciprocal_sum
 
 
-@njit("float32(float32[::1])", fastmath={"reassoc", "contract"}, inline="always", cache=True)
+@lazy_njit("float32(float32[::1])", fastmath={"reassoc", "contract"}, inline="always", cache=True)
 def non_zero_separation_frac(sep: NDArray[np.float32]) -> np.float32:
     n = sep.shape[0]
     n_non_zero = np.int32(0)

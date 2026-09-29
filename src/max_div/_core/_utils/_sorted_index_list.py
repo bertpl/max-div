@@ -44,12 +44,13 @@ from it whenever the caller is being compiled:
 Both paths are live, and the tests exercise this module in each mode.
 """
 
-import numba
 import numpy as np
 from llvmlite import ir
 from numba.core import types
 from numba.extending import intrinsic, overload
 from numpy.typing import NDArray
+
+from max_div._core.jit import lazy_njit
 
 
 # =================================================================================================
@@ -114,7 +115,7 @@ def _move_within_compiled(buffer, dest_offset, src_offset, count):  # noqa: ANN0
 # =================================================================================================
 #  Sorted index list
 # =================================================================================================
-@numba.njit("void(int32[::1], int32, int32)", cache=True)
+@lazy_njit("void(int32[::1], int32, int32)", cache=True)
 def insert_sorted(index_list: NDArray[np.int32], n_live: np.int32, value: np.int32) -> None:
     """Insert `value` into the ascending `index_list` of length `n_live`, growing it by one.
 
@@ -125,7 +126,7 @@ def insert_sorted(index_list: NDArray[np.int32], n_live: np.int32, value: np.int
     index_list[position] = value
 
 
-@numba.njit("void(int32[::1], int32, int32)", cache=True)
+@lazy_njit("void(int32[::1], int32, int32)", cache=True)
 def delete_sorted(index_list: NDArray[np.int32], n_live: np.int32, value: np.int32) -> None:
     """Remove `value` from the ascending `index_list` of length `n_live`, shrinking it by one.
 

@@ -19,6 +19,7 @@ from typing import TYPE_CHECKING
 import numba
 import numpy as np
 
+from max_div._core.jit import lazy_njit
 from max_div._core.metrics._distance import DISTANCE_STORE_TYPE, DistanceStore, get_distance
 
 from ._backends._signatures import REMOVE_SIGNATURE
@@ -27,7 +28,7 @@ if TYPE_CHECKING:
     from numpy.typing import NDArray
 
 
-@numba.njit(numba.float32(DISTANCE_STORE_TYPE, numba.int32, numba.int32[::1]), inline="always", cache=True)
+@lazy_njit(numba.float32(DISTANCE_STORE_TYPE, numba.int32, numba.int32[::1]), inline="always", cache=True)
 def _nearest_selected(store: DistanceStore, j: np.int32, selection: NDArray[np.int32]) -> np.float32:
     """Return the distance from item j to its nearest neighbor within `selection`, or +inf."""
     nearest = np.float32(np.inf)
@@ -37,7 +38,7 @@ def _nearest_selected(store: DistanceStore, j: np.int32, selection: NDArray[np.i
     return nearest
 
 
-@numba.njit(REMOVE_SIGNATURE, cache=True)
+@lazy_njit(REMOVE_SIGNATURE, cache=True)
 def remove_trial(
     sep: NDArray[np.float32],
     store: DistanceStore,

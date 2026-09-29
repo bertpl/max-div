@@ -3,10 +3,10 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
-import numba
 import numpy as np
 
 from max_div._core._utils import ALMOST_ONE_F32
+from max_div._core.jit import lazy_njit
 from max_div._core.solver._parameters import (
     AdaptiveSampler,
     ParameterSchedule,
@@ -475,7 +475,7 @@ class SwapBasedOptimizationStrategy(OptimizationStrategy, ABC):
 # =================================================================================================
 #  Helper classes
 # =================================================================================================
-@numba.njit("void(int64[:], boolean)", fastmath=True, inline="always", cache=True)
+@lazy_njit("void(int64[:], boolean)", fastmath=True, inline="always", cache=True)
 def _update_success_rate_state(success_rate_state: NDArray[np.int64], success: bool) -> None:
     """Update success rate state in-place, based on provided success flag.
 
@@ -500,7 +500,7 @@ def _update_success_rate_state(success_rate_state: NDArray[np.int64], success: b
         success_rate_state[2 * n - 1] = it
 
 
-@numba.njit("float64(int64[:])", fastmath=True, inline="always", cache=True)
+@lazy_njit("float64(int64[:])", fastmath=True, inline="always", cache=True)
 def _estimate_success_rate(success_rate_state: NDArray[np.int64]) -> np.float64:
     """Estimates the success rate based on the provided success rate state.
 

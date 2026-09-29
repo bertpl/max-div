@@ -1,9 +1,10 @@
 import numpy as np
-from numba import njit
 from numpy.typing import NDArray
 
+from max_div._core.jit import lazy_njit
 
-@njit("float32(float32[::1])", fastmath=True, inline="always", cache=True)
+
+@lazy_njit("float32(float32[::1])", fastmath=True, inline="always", cache=True)
 def _p_max(p: NDArray[np.float32]) -> np.float32:
     """Return the maximum value in p array."""
     n = p.size
