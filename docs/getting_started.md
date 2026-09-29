@@ -18,10 +18,9 @@ free-threaded wheels, so a lower pin will try to build numba from source. Note t
 free-threading support means the package computes correctly on such an interpreter; the solver
 itself is single-threaded.
 
-max-div compiles its numerical functions with numba the first time they are used, and caches the
-compiled code on disk. The first solve in a fresh environment therefore takes longer, from a few
-seconds to about a minute depending on the machine and on which solver features it uses; later runs
-load the compiled code from the cache.
+max-div compiles its numerical functions with numba the first time they are used, and caches the compiled code on disk.
+
+The first solve in a fresh environment therefore takes longer, from a few seconds to about a minute depending on the machine and on which solver features the solve uses; later runs load the compiled code from the cache.
 
 ## Basic Usage
 

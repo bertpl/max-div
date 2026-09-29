@@ -1,8 +1,8 @@
-"""Package-wide checks on when max-div's numba functions compile.
+"""These tests check, across the whole package, when max-div's numba functions compile.
 
-Functions declared with `lazy_njit` compile on first use, not at import, so a broken signature
-string no longer fails when its module is imported. These tests restore that check, and guard
-against code that would compile at import again.
+Functions declared with `lazy_njit` compile on first use, not at import, so importing a module does
+not reveal a broken signature string. These tests build every such function to catch one, and check
+that importing the package compiles nothing.
 """
 
 import importlib
@@ -15,7 +15,7 @@ import pytest
 
 import max_div
 from max_div._core.extras import MissingExtraError
-from max_div._core.jit import lazy_dispatchers
+from max_div._core.jit import LazyDispatcher
 
 pytestmark = pytest.mark.skipif(numba.config.DISABLE_JIT, reason="with the JIT disabled nothing compiles")
 
@@ -27,15 +27,15 @@ def test_every_lazy_dispatcher_in_the_package_builds() -> None:
         try:
             importlib.import_module(module_info.name)
         except MissingExtraError:
-            continue  # a module behind an optional extra that is not installed here
+            continue  # the module needs an optional extra that is not installed here
 
     # --- act --------------------------
-    for lazy_dispatcher in lazy_dispatchers():
+    for lazy_dispatcher in LazyDispatcher.instances():
         lazy_dispatcher.build()
 
     # --- assert -----------------------
-    assert lazy_dispatchers()
-    assert all(lazy_dispatcher.is_built for lazy_dispatcher in lazy_dispatchers())
+    assert LazyDispatcher.instances()
+    assert all(lazy_dispatcher.is_built for lazy_dispatcher in LazyDispatcher.instances())
 
 
 def test_importing_the_package_compiles_nothing() -> None:
@@ -43,8 +43,8 @@ def test_importing_the_package_compiles_nothing() -> None:
     # --- arrange ----------------------
     code = (
         "import max_div\n"
-        "from max_div._core.jit import lazy_dispatchers\n"
-        "print(len(lazy_dispatchers()), sum(d.is_built for d in lazy_dispatchers()))\n"
+        "from max_div._core.jit import LazyDispatcher\n"
+        "print(len(LazyDispatcher.instances()), sum(d.is_built for d in LazyDispatcher.instances()))\n"
     )
 
     # --- act --------------------------

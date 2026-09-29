@@ -5,7 +5,6 @@ import numba
 import numpy as np
 import pytest
 
-from max_div._core.jit import lazy_dispatcher as lazy_dispatcher_module
 from max_div._core.jit.lazy_dispatcher import LazyDispatcher, lazy_njit
 
 _needs_jit = pytest.mark.skipif(numba.config.DISABLE_JIT, reason="needs numba's JIT")
@@ -17,11 +16,12 @@ def _double(x: float) -> float:
 
 
 def _new_lazy_double() -> LazyDispatcher:
-    """Return a new, unbuilt `LazyDispatcher` around `_double`, outside the registry and numba's disk cache."""
+    """Return a new, unbuilt `LazyDispatcher` around `_double` that numba does not cache on disk."""
     return LazyDispatcher(_double, "float64(float64)", {"cache": False})
 
 
-# bound under the function's own name, as the decorator binds it, so pickling by reference finds it
+# The `LazyDispatcher` is bound under the function's own name, as the decorator binds it, so pickling
+# by reference finds it
 def _halve(x: float) -> float:
     """Return half of `x`."""
     return 0.5 * x
@@ -30,9 +30,9 @@ def _halve(x: float) -> float:
 _halve = LazyDispatcher(_halve, "float64(float64)", {"cache": False})
 
 
-# ==================================================================================================
+# =================================================================================================
 #  Decorator
-# ==================================================================================================
+# =================================================================================================
 @pytest.mark.parametrize("is_jit_disabled", [False, True])
 def test_lazy_njit_wraps_the_function_unless_the_jit_is_disabled(
     monkeypatch: pytest.MonkeyPatch, is_jit_disabled: bool
@@ -40,7 +40,7 @@ def test_lazy_njit_wraps_the_function_unless_the_jit_is_disabled(
     """With the JIT on, `lazy_njit` returns a registered, unbuilt `LazyDispatcher`; with it off, the function."""
     # --- arrange ----------------------
     monkeypatch.setattr(numba.config, "DISABLE_JIT", is_jit_disabled)
-    monkeypatch.setattr(lazy_dispatcher_module, "_LAZY_DISPATCHERS", [])
+    monkeypatch.setattr(LazyDispatcher, "_instances", [])
 
     # --- act --------------------------
     decorated = lazy_njit("float64(float64)", cache=False)(_double)
@@ -48,16 +48,16 @@ def test_lazy_njit_wraps_the_function_unless_the_jit_is_disabled(
     # --- assert -----------------------
     if is_jit_disabled:
         assert decorated is _double
-        assert lazy_dispatcher_module.lazy_dispatchers() == ()
+        assert LazyDispatcher.instances() == ()
     else:
         assert isinstance(decorated, LazyDispatcher)
         assert not decorated.is_built
-        assert lazy_dispatcher_module.lazy_dispatchers() == (decorated,)
+        assert LazyDispatcher.instances() == (decorated,)
 
 
-# ==================================================================================================
+# =================================================================================================
 #  LazyDispatcher
-# ==================================================================================================
+# =================================================================================================
 def test_a_python_call_builds_the_dispatcher_once() -> None:
     """The first call builds the dispatcher and returns its result; later uses get the same dispatcher."""
     # --- arrange ----------------------
@@ -74,7 +74,7 @@ def test_a_python_call_builds_the_dispatcher_once() -> None:
 
 
 def test_calls_after_the_build_go_straight_to_the_dispatcher() -> None:
-    """Once built, the partial calls the dispatcher itself, not the build step."""
+    """Once built, the partial calls the dispatcher itself, not `_build_and_call`."""
     # --- arrange ----------------------
     lazy_double = _new_lazy_double()
 
@@ -163,17 +163,20 @@ def test_private_names_are_not_forwarded() -> None:
 
 
 def test_a_lazy_dispatcher_pickles_by_reference() -> None:
-    """Unpickling returns the module's own `LazyDispatcher`, without building it."""
+    """Unpickling returns the module's own `LazyDispatcher`, and neither step builds it."""
+    # --- arrange ----------------------
+    was_built = _halve.is_built  # the package-wide test may have built every instance already
+
     # --- act --------------------------
     unpickled = pickle.loads(pickle.dumps(_halve))  # noqa: S301 -- round trip of an object this test created
 
     # --- assert -----------------------
     assert unpickled is _halve
-    assert not _halve.is_built
+    assert _halve.is_built == was_built
 
 
 def test_repr_names_the_function_and_whether_it_is_built() -> None:
-    """The repr names the wrapped function and its build state."""
+    """The repr names the wrapped function and whether it is built."""
     # --- arrange ----------------------
     lazy_double = _new_lazy_double()
 
