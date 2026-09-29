@@ -1,14 +1,8 @@
 """Guards for the CI-matrix coverage check (scripts/check_python_matrix.py)."""
 
-from pathlib import Path
-
 from tests.helpers import load_script
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
-SCRIPT = REPO_ROOT / "scripts" / "check_python_matrix.py"
-
-
-_mod = load_script("check_python_matrix", SCRIPT)
+_mod = load_script("check_python_matrix")
 
 
 def test_reads_only_quoted_matrix_python_values(tmp_path):

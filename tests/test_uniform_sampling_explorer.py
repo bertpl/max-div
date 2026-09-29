@@ -5,21 +5,17 @@ a wrong hover on the built site.
 
 import json
 import re
-from pathlib import Path
 
 import numpy as np
 import pytest
 
 from tests.helpers import load_script
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
-MODULE = REPO_ROOT / "scripts" / "uniform_sampling_explorer.py"
-
 
 @pytest.fixture(scope="module")
 def explorer():
     """Return the module under test, loaded once."""
-    return load_script("uniform_sampling_explorer", MODULE)
+    return load_script("uniform_sampling_explorer")
 
 
 # The four items are chosen so that the distances disagree:

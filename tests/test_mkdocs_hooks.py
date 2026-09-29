@@ -13,13 +13,12 @@ import pytest
 from tests.helpers import load_script
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-HOOKS = REPO_ROOT / "scripts" / "mkdocs_hooks.py"
 README = REPO_ROOT / "README.md"
 
 
 @pytest.fixture(scope="module")
 def hooks():
-    return load_script("mkdocs_hooks", HOOKS)
+    return load_script("mkdocs_hooks")
 
 
 def _render(hooks, html: str, page_url: str = "", docs_dir: Path = REPO_ROOT / "docs") -> str:

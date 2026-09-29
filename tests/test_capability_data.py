@@ -23,7 +23,7 @@ SCRIPT = REPO_ROOT / "scripts" / "capability_data.py"
 
 @pytest.fixture(scope="module")
 def cd():
-    return load_script("capability_data", SCRIPT)
+    return load_script("capability_data")
 
 
 @pytest.fixture(scope="module")

@@ -4,22 +4,18 @@ the JavaScript-less render; a frame naming a wrong position would only show up a
 
 import json
 import re
-from pathlib import Path
 
 import numpy as np
 import pytest
 
 from tests.helpers import load_script
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
-SCRIPTS = REPO_ROOT / "scripts"
-
 
 @pytest.fixture(scope="module")
 def replay():
     """Return the module under test, loaded once, after the explorer module it imports."""
-    load_script("uniform_sampling_explorer", SCRIPTS / "uniform_sampling_explorer.py")
-    return load_script("uniform_sampling_replay", SCRIPTS / "uniform_sampling_replay.py")
+    load_script("uniform_sampling_explorer")
+    return load_script("uniform_sampling_replay")
 
 
 # The population has five items, of which item 4 is never selected, so the coordinate table holds four.

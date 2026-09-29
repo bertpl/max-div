@@ -45,13 +45,16 @@ def hybrid_objective(
     return DiversityObjectiveHybrid(terms, aggregation_type.with_unit_weights(len(terms)))
 
 
-def load_script(name: str, path: Path) -> ModuleType:
-    """Import a script from `scripts/` by path, because `scripts/` is maintainer tooling, not an importable package.
+SCRIPTS_DIR = Path(__file__).resolve().parent.parent / "scripts"
 
-    The module is registered in `sys.modules` under `name` before it runs, so a script that imports
-    another script by that name finds it.
+
+def load_script(name: str) -> ModuleType:
+    """Import `scripts/<name>.py` as module `name`, because `scripts/` is maintainer tooling, not an importable package.
+
+    The module is registered in `sys.modules` under `name` before its code runs, so a script loaded
+    afterwards that runs `import <name>` gets this module.
     """
-    spec = importlib.util.spec_from_file_location(name, path)
+    spec = importlib.util.spec_from_file_location(name, SCRIPTS_DIR / f"{name}.py")
     module = importlib.util.module_from_spec(spec)
     sys.modules[spec.name] = module
     spec.loader.exec_module(module)

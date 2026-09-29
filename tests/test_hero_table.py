@@ -13,19 +13,15 @@ answered by the data rather than by this renderer. The data's own rules belong t
 
 import re
 from copy import deepcopy
-from pathlib import Path
 
 import pytest
 
 from tests.helpers import load_script
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
-SCRIPT = REPO_ROOT / "scripts" / "build_hero_table.py"
-
 
 @pytest.fixture(scope="module")
 def builder():
-    return load_script("build_hero_table", SCRIPT)
+    return load_script("build_hero_table")
 
 
 @pytest.fixture(scope="module")

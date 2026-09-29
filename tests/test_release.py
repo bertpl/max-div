@@ -1,25 +1,22 @@
 """These tests check how the release script waits for the 'Push to Main' CI run (scripts/release.py)."""
 
 import json
-from pathlib import Path
 
 import pytest
 
 from tests.helpers import load_script
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
-SCRIPT = REPO_ROOT / "scripts" / "release.py"
+_release = load_script("release")
 
-_HEAD = "a" * 40
-
-
-_release = load_script("release", SCRIPT)
+_HEAD_SHA = "a" * 40
 
 
 def _fake_gh(monkeypatch: pytest.MonkeyPatch, runs_for_commit: list[dict], states: list[dict]) -> list[list[str]]:
-    """Answer `gh run list` with `runs_for_commit` and each `gh run view` with the next entry of `states`.
+    """Replace the script's `run_command` so it answers `gh run list` and `gh run view` with canned JSON.
 
-    Also patches `time.sleep` in the script to return immediately, so the polling loop does not wait.
+    `gh run list` gets `runs_for_commit`; each `gh run view` gets the next entry of `states`.
+
+    Also patch `time.sleep` in the script to return immediately, so the polling loop does not wait.
 
     Returns:
         The list of commands run by the script, in order.
@@ -56,13 +53,13 @@ def test_an_in_flight_run_is_polled_by_its_id_until_it_succeeds(monkeypatch: pyt
     )
 
     # --- act --------------------------
-    run_id = _release._wait_for_main_ci(_HEAD)
+    run_id = _release._wait_for_main_ci(_HEAD_SHA)
 
     # --- assert -----------------------
     assert run_id == "42"
-    list_commands = [cmd for cmd in commands if cmd[:3] == ["gh", "run", "list"]]
-    assert len(list_commands) == 1
-    assert list_commands[0][list_commands[0].index("--commit") + 1] == _HEAD
+    run_list_commands = [cmd for cmd in commands if cmd[:3] == ["gh", "run", "list"]]
+    assert len(run_list_commands) == 1
+    assert run_list_commands[0][run_list_commands[0].index("--commit") + 1] == _HEAD_SHA
     assert [cmd[3] for cmd in commands if cmd[:3] == ["gh", "run", "view"]] == ["42", "42", "42"]
 
 
@@ -82,4 +79,4 @@ def test_the_release_aborts_without_a_successful_run(
 
     # --- act / assert -----------------
     with pytest.raises(SystemExit):
-        _release._wait_for_main_ci(_HEAD)
+        _release._wait_for_main_ci(_HEAD_SHA)

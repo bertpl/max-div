@@ -233,9 +233,14 @@ def _workflow_run_state(run_id: str) -> tuple[str, str]:
 def _wait_for_main_ci(local_head: str) -> str:
     """Return the id of a successful 'Push to Main' run for `local_head`, waiting one out if in flight.
 
-    Aborts when no run exists for `local_head` (the push did not trigger CI), when the run
-    concluded without success, or after `CI_WAIT_TIMEOUT_SEC` of waiting. Once found, the run is
-    polled by its id, so an out-of-date result from `gh run list` cannot hide it.
+    Aborts when:
+
+    - no run exists for `local_head` (the push did not trigger CI);
+    - the run concluded without success;
+    - `CI_WAIT_TIMEOUT_SEC` passes without the run completing.
+
+    Once found, the run is polled by its id, so an out-of-date result from `gh run list` cannot
+    hide the run.
     """
     run_id = _main_run_id_for(local_head)
     if run_id is None:
@@ -260,8 +265,8 @@ def _fetch_release_metrics() -> dict[str, float]:
     """Download CI's cumulative metrics for the commit being released.
 
     The numbers come from the matrix combine job, not a local run, so the
-    badge matches the CI gate exactly. It waits for HEAD's 'Push to Main' run
-    to succeed; `_wait_for_main_ci` lists when the release aborts.
+    badge matches the CI gate exactly. It waits up to `CI_WAIT_TIMEOUT_SEC` for HEAD's
+    'Push to Main' run to succeed, and exits when no such run succeeds in time.
     """
     local_head = run_command(["git", "rev-parse", "HEAD"]).strip()
     run_id = _wait_for_main_ci(local_head)
