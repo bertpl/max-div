@@ -1,5 +1,5 @@
 import pickle
-from types import SimpleNamespace
+from types import MethodType, SimpleNamespace
 
 import numba
 import numpy as np
@@ -71,6 +71,40 @@ def test_a_python_call_builds_the_dispatcher_once() -> None:
     assert result == 3.0
     assert lazy_double.is_built
     assert lazy_double.build() is lazy_double.build()
+
+
+def test_calls_after_the_build_go_straight_to_the_dispatcher() -> None:
+    """Once built, the partial calls the dispatcher itself, not the build step."""
+    # --- arrange ----------------------
+    lazy_double = _new_lazy_double()
+
+    # --- act --------------------------
+    lazy_double(1.5)
+
+    # --- assert -----------------------
+    assert lazy_double.func is lazy_double.build()
+    assert lazy_double.args == ()
+
+
+def test_a_lazy_dispatcher_binds_as_a_method_when_read_from_an_instance() -> None:
+    """Stored on a class, a `LazyDispatcher` binds to an instance like a function does."""
+    # --- arrange ----------------------
+    lazy_double = _new_lazy_double()
+
+    class Holder:
+        method = lazy_double
+
+    holder = Holder()
+
+    # --- act --------------------------
+    bound = holder.method
+
+    # --- assert -----------------------
+    assert Holder.method is lazy_double
+    assert isinstance(bound, MethodType)
+    assert bound.__self__ is holder
+    assert bound.__func__ is lazy_double
+    assert not lazy_double.is_built
 
 
 @_needs_jit

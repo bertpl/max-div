@@ -18,8 +18,8 @@ The first use is whichever of these comes first:
 import functools
 import threading
 from collections.abc import Callable
-from types import FunctionType
-from typing import Any, TypeVar, cast
+from types import FunctionType, MethodType
+from typing import Any, Self, TypeVar, cast
 
 import numba
 from numba import config
@@ -31,8 +31,15 @@ _F = TypeVar("_F", bound=FunctionType)
 # =================================================================================================
 #  LazyDispatcher
 # =================================================================================================
-class LazyDispatcher:
-    """Stand-in for `numba.njit(signature, **options)(py_function)` that is built on first use."""
+class LazyDispatcher(functools.partial):
+    """Stand-in for `numba.njit(signature, **options)(py_function)` that is built on first use.
+
+    A `functools.partial`, because its call is implemented in C. Solver code calls compiled functions
+    from Python dozens of times per iteration, and forwarding each call through Python code would
+    add about 50 ns to every one of them. Until the first use, the partial calls `_build_and_call`;
+    the build then points the partial at the numba dispatcher, so later calls reach the dispatcher
+    with no Python code in between.
+    """
 
     # Guards storing a built dispatcher, not the build. Holding a lock during the build could
     # deadlock: the build takes numba's compiler lock, and a thread compiling a caller already holds
@@ -41,13 +48,25 @@ class LazyDispatcher:
     # the one every later use gets.
     _store_lock = threading.Lock()
 
-    def __init__(self, py_function: FunctionType, signature: object, options: dict[str, object]) -> None:
+    _py_function: FunctionType
+    _signature: object
+    _options: dict[str, object]
+    _dispatcher: Callable[..., Any] | None
+    _build_arguments: tuple[tuple[object, ...], dict[str, object]]
+
+    def __new__(cls, py_function: FunctionType, signature: object, options: dict[str, object]) -> Self:
         """Hold `py_function` with the arguments for `numba.njit`, without compiling anything."""
+        self = super().__new__(cls, cls._build_and_call)
         functools.update_wrapper(self, py_function)
         self._py_function = py_function
         self._signature = signature
         self._options = options
-        self._dispatcher: Callable[..., Any] | None = None
+        self._dispatcher = None
+        # The partial's arguments until the first build. Kept in the instance dict so that repointing
+        # the partial does not free them while another thread may still be calling through them.
+        self._build_arguments = ((self,), {})
+        self._point_partial_at(cls._build_and_call, *self._build_arguments)
+        return self
 
     # -------------------------------------------------------------------------
     #  Main API
@@ -60,7 +79,8 @@ class LazyDispatcher:
     def build(self) -> Callable[..., Any]:
         """Return the numba dispatcher, building it first if this is the first use.
 
-        Building compiles the declared signatures, or loads them from numba's cache.
+        Building compiles the declared signatures, or loads them from numba's cache, and points the
+        partial at the dispatcher.
         """
         if self._dispatcher is None:
             # numba's type stub has one overload per signature form; this passes whichever form it got
@@ -68,16 +88,16 @@ class LazyDispatcher:
             with LazyDispatcher._store_lock:
                 if self._dispatcher is None:
                     self._dispatcher = dispatcher
+                    self._point_partial_at(dispatcher, (), {})
         return self._dispatcher
 
     # -------------------------------------------------------------------------
-    #  Delegation to the dispatcher
+    #  Function behavior
     # -------------------------------------------------------------------------
-    @property
-    def __call__(self) -> Callable[..., Any]:
-        # A property, not a method: a call on the instance looks `__call__` up on the class, gets the
-        # dispatcher from this getter and calls it directly, so a call costs no extra Python frame.
-        return self._dispatcher if self._dispatcher is not None else self.build()
+    def __get__(self, instance: object, owner: type | None = None) -> Callable[..., Any]:
+        # Bind as a method when stored on a class and read from an instance, like a function or a
+        # numba dispatcher does. A partial binds that way only from Python 3.14 on.
+        return self if instance is None else MethodType(self, instance)
 
     def __getattr__(self, name: str) -> object:
         # Called only for names not found on the instance. Private and dunder names are never
@@ -93,6 +113,22 @@ class LazyDispatcher:
     def __repr__(self) -> str:
         name = f"{self._py_function.__module__}.{self._py_function.__qualname__}"
         return f"<LazyDispatcher {name} (built: {self.is_built})>"
+
+    # -------------------------------------------------------------------------
+    #  Helpers
+    # -------------------------------------------------------------------------
+    def _point_partial_at(
+        self, func: Callable[..., Any], args: tuple[object, ...], keywords: dict[str, object]
+    ) -> None:
+        """Make the partial call `func(*args, *call_args, **keywords, **call_kwargs)`, keeping the instance dict."""
+        # `__setstate__` is how pickle restores a partial, and the only way to change the function of
+        # an existing one; typeshed's partial stub does not declare it
+        self.__setstate__((func, args, keywords, self.__dict__))  # ty: ignore[call-non-callable]
+
+    @staticmethod
+    def _build_and_call(lazy_dispatcher: "LazyDispatcher", *args: object, **kwargs: object) -> object:
+        """Build the dispatcher of `lazy_dispatcher` and call it; the partial's function until the first build."""
+        return lazy_dispatcher.build()(*args, **kwargs)
 
 
 # =================================================================================================
