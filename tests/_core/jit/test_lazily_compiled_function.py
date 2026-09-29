@@ -5,7 +5,7 @@ import numba
 import numpy as np
 import pytest
 
-from max_div._core.jit.lazy_dispatcher import LazyDispatcher, lazy_njit
+from max_div._core.jit.lazily_compiled_function import LazilyCompiledFunction, lazy_njit
 
 _needs_jit = pytest.mark.skipif(numba.config.DISABLE_JIT, reason="needs numba's JIT")
 
@@ -15,19 +15,19 @@ def _double(x: float) -> float:
     return 2.0 * x
 
 
-def _new_lazy_double() -> LazyDispatcher:
-    """Return a new, unbuilt `LazyDispatcher` around `_double` that numba does not cache on disk."""
-    return LazyDispatcher(_double, "float64(float64)", {"cache": False})
+def _new_lazy_double() -> LazilyCompiledFunction:
+    """Return a new, uncompiled `LazilyCompiledFunction` around `_double` that numba does not cache on disk."""
+    return LazilyCompiledFunction(_double, "float64(float64)", {"cache": False})
 
 
-# The `LazyDispatcher` replaces `_halve` under the same name, as `lazy_njit` would, so that pickling by
-# reference finds the `LazyDispatcher` when pickle looks up `_halve` in this module.
+# The `LazilyCompiledFunction` replaces `_halve` under the same name, as `lazy_njit` would, so that pickling by
+# reference finds the `LazilyCompiledFunction` when pickle looks up `_halve` in this module.
 def _halve(x: float) -> float:
     """Return half of `x`."""
     return 0.5 * x
 
 
-_halve = LazyDispatcher(_halve, "float64(float64)", {"cache": False})
+_halve = LazilyCompiledFunction(_halve, "float64(float64)", {"cache": False})
 
 
 # =================================================================================================
@@ -37,10 +37,10 @@ _halve = LazyDispatcher(_halve, "float64(float64)", {"cache": False})
 def test_lazy_njit_wraps_the_function_unless_the_jit_is_disabled(
     monkeypatch: pytest.MonkeyPatch, is_jit_disabled: bool
 ) -> None:
-    """With the JIT on, `lazy_njit` returns an unbuilt `LazyDispatcher` in `instances()`; with it off, the function."""
+    """With the JIT on, `lazy_njit` returns an uncompiled, recorded `LazilyCompiledFunction`; off, the function."""
     # --- arrange ----------------------
     monkeypatch.setattr(numba.config, "DISABLE_JIT", is_jit_disabled)
-    monkeypatch.setattr(LazyDispatcher, "_instances", [])
+    monkeypatch.setattr(LazilyCompiledFunction, "_instances", [])
 
     # --- act --------------------------
     decorated = lazy_njit("float64(float64)", cache=False)(_double)
@@ -48,33 +48,33 @@ def test_lazy_njit_wraps_the_function_unless_the_jit_is_disabled(
     # --- assert -----------------------
     if is_jit_disabled:
         assert decorated is _double
-        assert LazyDispatcher.instances() == ()
+        assert LazilyCompiledFunction.instances() == ()
     else:
-        assert isinstance(decorated, LazyDispatcher)
-        assert not decorated.is_built
-        assert LazyDispatcher.instances() == (decorated,)
+        assert isinstance(decorated, LazilyCompiledFunction)
+        assert not decorated.is_compiled
+        assert LazilyCompiledFunction.instances() == (decorated,)
 
 
 # =================================================================================================
-#  LazyDispatcher
+#  LazilyCompiledFunction
 # =================================================================================================
-def test_a_python_call_builds_the_dispatcher_once() -> None:
-    """The first call builds the dispatcher and returns its result; later uses get the same dispatcher."""
+def test_a_python_call_compiles_the_function_once() -> None:
+    """The first call compiles the function and returns its result; later uses get the same compiled function."""
     # --- arrange ----------------------
     lazy_double = _new_lazy_double()
-    assert not lazy_double.is_built
+    assert not lazy_double.is_compiled
 
     # --- act --------------------------
     result = lazy_double(1.5)
 
     # --- assert -----------------------
     assert result == 3.0
-    assert lazy_double.is_built
-    assert lazy_double.build() is lazy_double.build()
+    assert lazy_double.is_compiled
+    assert lazy_double.compile() is lazy_double.compile()
 
 
-def test_calls_after_the_build_go_straight_to_the_dispatcher() -> None:
-    """Once built, the partial calls the dispatcher itself, not `_build_and_call`."""
+def test_calls_after_compiling_go_straight_to_the_compiled_function() -> None:
+    """Once compiled, the partial calls the compiled function itself, not `_compile_and_call`."""
     # --- arrange ----------------------
     lazy_double = _new_lazy_double()
 
@@ -82,12 +82,12 @@ def test_calls_after_the_build_go_straight_to_the_dispatcher() -> None:
     lazy_double(1.5)
 
     # --- assert -----------------------
-    assert lazy_double.func is lazy_double.build()
+    assert lazy_double.func is lazy_double.compile()
     assert lazy_double.args == ()
 
 
-def test_a_lazy_dispatcher_binds_as_a_method_when_read_from_an_instance() -> None:
-    """Stored on a class, a `LazyDispatcher` binds to an instance like a function does."""
+def test_a_lazily_compiled_function_binds_as_a_method_when_read_from_an_instance() -> None:
+    """Stored on a class, a `LazilyCompiledFunction` binds to an instance like a function does."""
     # --- arrange ----------------------
     lazy_double = _new_lazy_double()
 
@@ -104,12 +104,12 @@ def test_a_lazy_dispatcher_binds_as_a_method_when_read_from_an_instance() -> Non
     assert isinstance(bound, MethodType)
     assert bound.__self__ is holder
     assert bound.__func__ is lazy_double
-    assert not lazy_double.is_built
+    assert not lazy_double.is_compiled
 
 
 @_needs_jit
-def test_an_njit_caller_builds_the_dispatcher_it_calls() -> None:
-    """Compiling an njit function that calls a `LazyDispatcher` builds it, through numba's typing hook."""
+def test_compiling_an_njit_caller_compiles_the_function_it_calls() -> None:
+    """Compiling an njit function that calls a `LazilyCompiledFunction` compiles it too, through numba's typing hook."""
     # --- arrange ----------------------
     lazy_double = _new_lazy_double()
 
@@ -122,7 +122,7 @@ def test_an_njit_caller_builds_the_dispatcher_it_calls() -> None:
 
     # --- assert -----------------------
     assert result == 4.0
-    assert lazy_double.is_built
+    assert lazy_double.is_compiled
 
 
 @_needs_jit
@@ -134,51 +134,51 @@ def test_a_call_matching_no_declared_signature_raises_type_error() -> None:
         """Return the sum of `values`."""
         return values.sum()
 
-    lazy_sum = LazyDispatcher(sum_of, "float64(float64[::1])", {"cache": False})
+    lazy_sum = LazilyCompiledFunction(sum_of, "float64(float64[::1])", {"cache": False})
 
     # --- act / assert -----------------
     with pytest.raises(TypeError, match="No matching definition"):
         lazy_sum(np.arange(3, dtype=np.int64))
 
 
-def test_public_attributes_are_forwarded_to_the_dispatcher(monkeypatch: pytest.MonkeyPatch) -> None:
-    """A public attribute not found on the `LazyDispatcher` is read from its built numba dispatcher."""
+def test_public_attributes_are_forwarded_to_the_compiled_function(monkeypatch: pytest.MonkeyPatch) -> None:
+    """A public attribute not found on the `LazilyCompiledFunction` is read from its compiled function."""
     # --- arrange ----------------------
     lazy_double = _new_lazy_double()
-    monkeypatch.setattr(lazy_double, "build", lambda: SimpleNamespace(signatures=["declared"]))
+    monkeypatch.setattr(lazy_double, "compile", lambda: SimpleNamespace(signatures=["declared"]))
 
     # --- act / assert -----------------
     assert lazy_double.signatures == ["declared"]
 
 
 def test_private_names_are_not_forwarded() -> None:
-    """Reading a private or dunder name raises `AttributeError` without building the dispatcher."""
+    """Reading a private or dunder name raises `AttributeError` without compiling the function."""
     # --- arrange ----------------------
     lazy_double = _new_lazy_double()
 
     # --- act / assert -----------------
     with pytest.raises(AttributeError):
         _ = lazy_double._not_an_attribute
-    assert not lazy_double.is_built
+    assert not lazy_double.is_compiled
 
 
-def test_a_lazy_dispatcher_pickles_by_reference() -> None:
-    """Unpickling returns the module's own `LazyDispatcher`, and neither step builds it."""
+def test_a_lazily_compiled_function_pickles_by_reference() -> None:
+    """Unpickling returns the module's own `LazilyCompiledFunction`, and neither step compiles it."""
     # --- arrange ----------------------
-    was_built = _halve.is_built  # tests/test_jit_compilation.py may already have built every instance
+    was_compiled = _halve.is_compiled  # tests/test_jit_compilation.py may already have compiled every instance
 
     # --- act --------------------------
     unpickled = pickle.loads(pickle.dumps(_halve))  # noqa: S301 -- round trip of an object this test created
 
     # --- assert -----------------------
     assert unpickled is _halve
-    assert _halve.is_built == was_built
+    assert _halve.is_compiled == was_compiled
 
 
-def test_repr_names_the_function_and_whether_it_is_built() -> None:
-    """The repr names the wrapped function and whether it is built."""
+def test_repr_names_the_function_and_whether_it_is_compiled() -> None:
+    """The repr names the wrapped function and whether it is compiled."""
     # --- arrange ----------------------
     lazy_double = _new_lazy_double()
 
     # --- act / assert -----------------
-    assert repr(lazy_double) == f"<LazyDispatcher {__name__}._double (built: False)>"
+    assert repr(lazy_double) == f"<LazilyCompiledFunction {__name__}._double (compiled: False)>"

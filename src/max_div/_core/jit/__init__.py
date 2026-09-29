@@ -1,1 +1,1 @@
-from .lazy_dispatcher import LazyDispatcher, lazy_njit
+from .lazily_compiled_function import LazilyCompiledFunction, lazy_njit
