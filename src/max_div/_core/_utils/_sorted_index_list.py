@@ -65,8 +65,9 @@ def _llvm_memmove(typingctx, dest_address, src_address, n_bytes):  # noqa: ANN00
     `builder` is an LLVM instruction writer and `args` holds the caller's compiled arguments.
 
     The addresses and the byte count arrive as plain integers, and `codegen` turns the addresses
-    into pointers itself, so it reads no array layout and needs no numba helper beyond the builder.
-    The call returns `dest_address`, which gives `codegen` a value to return.
+    into pointers itself, so the intrinsic does not depend on how numba lays out an array.
+    `_llvm_memmove` returns `dest_address`, as C's `memmove` returns its destination, so `codegen`
+    needs no placeholder for a void result; callers ignore it.
 
     The `False` ending the emitted call is LLVM's `isvolatile` flag.  Marking an access volatile
     forbids the optimizer from reordering, merging or discarding it, which is what memory needs when
@@ -78,8 +79,8 @@ def _llvm_memmove(typingctx, dest_address, src_address, n_bytes):  # noqa: ANN00
 
     def codegen(context, builder, sig, args):  # noqa: ANN001, ANN202
         dest_address, src_address, n_bytes = args
-        # a byte pointer, which every supported llvmlite accepts; the opaque `ir.PointerType()`
-        # needs llvmlite 0.44 or newer
+        # Use a typed byte pointer: every llvmlite version that this package supports accepts it,
+        # while the untyped (opaque) `ir.PointerType()` needs llvmlite 0.44 or newer.
         byte_ptr = ir.IntType(8).as_pointer()
         memmove = builder.module.declare_intrinsic("llvm.memmove", [byte_ptr, byte_ptr, n_bytes.type])
         dest_ptr = builder.inttoptr(dest_address, byte_ptr)
@@ -108,6 +109,7 @@ def _move_within_compiled(buffer, dest_offset, src_offset, count):  # noqa: ANN0
     """
 
     def implementation(buffer, dest_offset, src_offset, count):  # noqa: ANN001, ANN202
+        # the address arithmetic assumes a contiguous buffer, which the callers' `int32[::1]` signatures guarantee
         base_address = buffer.ctypes.data
         item_size = buffer.itemsize
         # ty: ignore[missing-argument] -- the stub counts the typingctx parameter, which callers do not pass
