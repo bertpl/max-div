@@ -1,8 +1,8 @@
-"""These tests check, across the whole package, when max-div's numba functions compile.
+"""Check, across the whole package, when max-div's numba functions compile.
 
 Functions declared with `lazy_njit` compile on first use, not at import, so importing a module does
-not reveal a broken signature string. These tests build every such function to catch one, and check
-that importing the package compiles nothing.
+not reveal a broken signature string. These tests build every such function, so that a broken
+signature string fails a test, and check that importing the package compiles nothing.
 """
 
 import importlib
@@ -51,6 +51,6 @@ def test_importing_the_package_compiles_nothing() -> None:
     output = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, check=True).stdout  # noqa: S603 -- fixed args
 
     # --- assert -----------------------
-    n_declared, n_built = (int(count) for count in output.split())
-    assert n_declared > 0
+    n_dispatchers, n_built = (int(count) for count in output.split())
+    assert n_dispatchers > 0
     assert n_built == 0

@@ -20,8 +20,8 @@ def _new_lazy_double() -> LazyDispatcher:
     return LazyDispatcher(_double, "float64(float64)", {"cache": False})
 
 
-# The `LazyDispatcher` is bound under the function's own name, as the decorator binds it, so pickling
-# by reference finds it
+# The `LazyDispatcher` replaces `_halve` under the same name, as `lazy_njit` would, so that pickling by
+# reference finds the `LazyDispatcher` when pickle looks up `_halve` in this module.
 def _halve(x: float) -> float:
     """Return half of `x`."""
     return 0.5 * x
@@ -37,7 +37,7 @@ _halve = LazyDispatcher(_halve, "float64(float64)", {"cache": False})
 def test_lazy_njit_wraps_the_function_unless_the_jit_is_disabled(
     monkeypatch: pytest.MonkeyPatch, is_jit_disabled: bool
 ) -> None:
-    """With the JIT on, `lazy_njit` returns a registered, unbuilt `LazyDispatcher`; with it off, the function."""
+    """With the JIT on, `lazy_njit` returns an unbuilt `LazyDispatcher` in `instances()`; with it off, the function."""
     # --- arrange ----------------------
     monkeypatch.setattr(numba.config, "DISABLE_JIT", is_jit_disabled)
     monkeypatch.setattr(LazyDispatcher, "_instances", [])
@@ -127,7 +127,7 @@ def test_an_njit_caller_builds_the_dispatcher_it_calls() -> None:
 
 @_needs_jit
 def test_a_call_matching_no_declared_signature_raises_type_error() -> None:
-    """Only the declared signatures are compiled, as with `numba.njit(signature)`."""
+    """A call whose argument types match no declared signature raises `TypeError`, as with `numba.njit`."""
 
     # --- arrange ----------------------
     def sum_of(values: np.ndarray) -> float:
@@ -142,7 +142,7 @@ def test_a_call_matching_no_declared_signature_raises_type_error() -> None:
 
 
 def test_public_attributes_are_forwarded_to_the_dispatcher(monkeypatch: pytest.MonkeyPatch) -> None:
-    """A public attribute not found on the `LazyDispatcher` is read from the dispatcher it builds."""
+    """A public attribute not found on the `LazyDispatcher` is read from its built numba dispatcher."""
     # --- arrange ----------------------
     lazy_double = _new_lazy_double()
     monkeypatch.setattr(lazy_double, "build", lambda: SimpleNamespace(signatures=["declared"]))
@@ -165,7 +165,7 @@ def test_private_names_are_not_forwarded() -> None:
 def test_a_lazy_dispatcher_pickles_by_reference() -> None:
     """Unpickling returns the module's own `LazyDispatcher`, and neither step builds it."""
     # --- arrange ----------------------
-    was_built = _halve.is_built  # the package-wide test may have built every instance already
+    was_built = _halve.is_built  # tests/test_jit_compilation.py may already have built every instance
 
     # --- act --------------------------
     unpickled = pickle.loads(pickle.dumps(_halve))  # noqa: S301 -- round trip of an object this test created

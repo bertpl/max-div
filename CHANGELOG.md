@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
-- Importing max-div no longer compiles all numerical routines up front; each is compiled on first use, so a fresh environment compiles only what a solve needs
+- Importing max-div no longer compiles all numerical functions up front; each is compiled on first use, so a fresh environment compiles only what a solve needs
 
 ### Deprecated
 

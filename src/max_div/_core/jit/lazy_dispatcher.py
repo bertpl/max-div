@@ -1,8 +1,8 @@
 """Compile a numba function with declared signatures on its first use, not when its module is imported.
 
 `numba.njit(signature)` compiles as soon as the decorator runs, so every function declared that way
-compiles when its module is imported. On an empty numba cache that makes importing the package take
-tens of seconds, for functions that most programs never call.
+compiles when its module is imported. On an empty numba cache, this compilation makes importing the
+package take tens of seconds, for functions that most programs never call.
 
 `lazy_njit(signature)` wraps the function in a `LazyDispatcher`, which calls `numba.njit(signature)`
 on the function's first use and delegates to the resulting numba dispatcher from then on. The
@@ -41,20 +41,23 @@ class LazyDispatcher(functools.partial):
     code calls compiled functions from Python dozens of times per iteration, and forwarding each call
     through Python code would slow every one of them.
 
-    Until the first use, the partial calls `_build_and_call`; the build then points the partial at
-    the numba dispatcher, so later calls reach the dispatcher with no Python code in between.
+    Until the first use, calling the partial runs `_build_and_call`; `build` then replaces the
+    partial's function with the numba dispatcher, so later calls reach the dispatcher with no Python
+    code in between.
     """
 
     # The lock is held only while a built dispatcher is stored, not while it is built. Holding a lock
-    # during the build could deadlock: thread A would hold this lock and wait inside `numba.njit` for
-    # numba's compiler lock, while thread B, compiling a numba function that calls this one, would
-    # hold numba's compiler lock and wait inside `typeof_impl` for this lock.
+    # during compilation could deadlock:
+    #
+    # - thread A holds this lock and waits inside `numba.njit` for numba's compiler lock;
+    # - thread B, compiling a numba function that calls this one, holds numba's compiler lock and
+    #   waits inside `typeof_impl` for this lock.
     #
     # Therefore 2 threads may build the same dispatcher at once; the results are equivalent, and
     # every later use gets the first one stored.
     _dispatcher_assignment_lock = threading.Lock()
 
-    # Every instance, in creation order, so that tests can build all of them.
+    # Every instance is recorded here, in creation order, so that tests can build all of them.
     _instances: ClassVar[list["LazyDispatcher"]] = []
 
     _py_function: FunctionType
@@ -71,7 +74,7 @@ class LazyDispatcher(functools.partial):
         self._signature = signature
         self._options = options
         self._dispatcher = None
-        # `_build_and_call_arguments` holds the partial's arguments until the first build. The instance
+        # `_build_and_call_arguments` holds the partial's arguments until `build` first runs. The instance
         # dict keeps a reference to them, so that when `build` replaces the partial's function and
         # arguments, the old arguments are not freed while another thread is still inside a call that
         # uses them.
@@ -96,8 +99,7 @@ class LazyDispatcher(functools.partial):
     def build(self) -> Callable[..., Any]:
         """Return the numba dispatcher, building it first if this is the first use.
 
-        Building compiles the declared signatures, or loads them from numba's cache, and points the
-        partial at the dispatcher.
+        Building compiles the declared signatures, or loads them from numba's cache.
         """
         if self._dispatcher is None:
             # numba's type stub declares one overload per form of signature, and `self._signature` may
@@ -113,23 +115,32 @@ class LazyDispatcher(functools.partial):
     #  Function behavior
     # -------------------------------------------------------------------------
     def __get__(self, instance: object, owner: type | None = None) -> Callable[..., Any]:
-        # Bind as a method when stored on a class and read from an instance, like a function or a
-        # numba dispatcher does. A partial binds that way only from Python 3.14 on.
+        """Bind as a method when stored on a class and read from an instance, as a numba dispatcher does.
+
+        A `functools.partial` binds that way only from Python 3.14 on.
+        """
         return self if instance is None else MethodType(self, instance)
 
     def __getattr__(self, name: str) -> object:
-        # Python calls this method only for names not found on the instance. Private and dunder names
-        # are never forwarded, because a lookup such as `copy.deepcopy` checking for `__deepcopy__`
-        # must not trigger a compile.
+        """Read a public attribute not found on the instance from the numba dispatcher, building it first.
+
+        Private and dunder names are never forwarded, because a lookup such as `copy.deepcopy` checking
+        for `__deepcopy__` must not trigger a compile.
+        """
         if name.startswith("_"):
             raise AttributeError(name)
         return getattr(self.build(), name)
 
     def __reduce__(self) -> str:
-        # Pickle by reference, like a plain function: unpickling looks the name up in its module.
+        """Pickle by reference, like a plain function: unpickling looks the name up in its module.
+
+        Pickling therefore works only when the `LazyDispatcher` is bound at module level under the
+        function's own name, as `lazy_njit` used as a decorator binds it.
+        """
         return self._py_function.__qualname__
 
     def __repr__(self) -> str:
+        """Return a repr naming the wrapped function and whether it is built."""
         name = f"{self._py_function.__module__}.{self._py_function.__qualname__}"
         return f"<LazyDispatcher {name} (built: {self.is_built})>"
 
@@ -141,7 +152,7 @@ class LazyDispatcher(functools.partial):
     ) -> None:
         """Set the partial's function and arguments, keeping the instance dict.
 
-        Calling the partial with `call_args` and `call_kwargs` then runs
+        Calling the partial as `self(*call_args, **call_kwargs)` then runs
         `func(*args, *call_args, **keywords, **call_kwargs)`.
         """
         # `__setstate__` is how pickle restores a partial, and the only way to change the function of
@@ -150,10 +161,7 @@ class LazyDispatcher(functools.partial):
 
     @staticmethod
     def _build_and_call(lazy_dispatcher: "LazyDispatcher", *args: object, **kwargs: object) -> object:
-        """Build the dispatcher of `lazy_dispatcher` and call it.
-
-        The partial calls this function until the first build.
-        """
+        """Build the dispatcher of `lazy_dispatcher` and call it."""
         return lazy_dispatcher.build()(*args, **kwargs)
 
 
@@ -164,16 +172,17 @@ def lazy_njit(signature: object, **options: object) -> Callable[[_F], _F]:
     """Decorate a function like `numba.njit(signature, **options)`, but compile it on first use.
 
     Args:
-        signature: The declared signature(s), in any form `numba.njit` accepts. Only these are ever
+        signature: The declared signature(s), in any form accepted by `numba.njit`. Only these are ever
             compiled, and a call matching none of them raises `TypeError`, as with `numba.njit`.
         **options: Options passed on to `numba.njit` unchanged (`cache`, `fastmath`, `inline`, ...).
 
     Returns:
-        A decorator that returns a `LazyDispatcher`, or the undecorated function when numba's JIT is
-        disabled, as `numba.njit` does.
+        A decorator that returns a `LazyDispatcher`. When numba's JIT is disabled, the decorator
+        returns the function unchanged, as `numba.njit` does.
     """
 
     def decorator(py_function: _F) -> _F:
+        """Wrap `py_function` in a `LazyDispatcher`, or return it unchanged when numba's JIT is disabled."""
         if config.DISABLE_JIT:  # ty: ignore[unresolved-attribute] -- set at runtime from NUMBA_DISABLE_JIT
             return py_function
         else:
