@@ -34,7 +34,6 @@ that order, and neither reaches the reducer:
 import numpy as np
 from numpy.typing import NDArray
 
-from max_div._core._math.bit_cast import float32_from_bits
 from max_div._core._math.geomean import fast_geomean_f32, geomean_f32
 from max_div._core.jit import lazy_njit
 
@@ -54,7 +53,10 @@ def min_separation(sep: NDArray[np.float32]) -> np.float32:
     min_bits = _INF_BITS
     for i in range(n):
         min_bits = min(min_bits, bits[i])
-    return float32_from_bits(min_bits)
+    # `min_bits` is already an int32, but numba compiles `.view` on a scalar only if a NumPy
+    # constructor call inside the compiled function produced it, so `min_bits` is wrapped in
+    # `np.int32(...)` before the view.
+    return np.int32(min_bits).view(np.float32)
 
 
 @lazy_njit("float32(float32[::1])", fastmath={"reassoc", "contract"}, inline="always", cache=True)

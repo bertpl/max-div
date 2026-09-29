@@ -12,6 +12,7 @@ from max_div._core.metrics._diversity._numba import harmonic_mean_separation, mi
         pytest.param([np.inf, np.inf, np.inf], id="all_inf_gives_inf"),
         pytest.param([3.0, 0.0, 1.0], id="a_zero_wins"),
         pytest.param([1e-40, 1.0, 1e-39], id="denormals_keep_their_order"),
+        pytest.param([1.0, 1.4e-45], id="the_smallest_denormal_wins"),
         pytest.param([1e30, 3.4e38, 1e20], id="large_magnitudes"),
         pytest.param([0.5], id="single_item"),
         pytest.param(
