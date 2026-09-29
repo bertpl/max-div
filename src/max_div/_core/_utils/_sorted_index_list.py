@@ -66,8 +66,10 @@ def _llvm_memmove(typingctx, dest_address, src_address, n_bytes):  # noqa: ANN00
 
     The addresses and the byte count arrive as plain integers, and `codegen` turns the addresses
     into pointers itself, so the intrinsic does not depend on how numba lays out an array.
-    `_llvm_memmove` returns `dest_address`, as C's `memmove` returns its destination, so `codegen`
-    needs no placeholder for a void result; callers ignore it.
+
+    `_llvm_memmove` returns `dest_address`, as C's `memmove` returns its destination, because an
+    intrinsic that returns void would need `codegen` to build a dummy return value; callers ignore
+    the returned address.
 
     The `False` ending the emitted call is LLVM's `isvolatile` flag.  Marking an access volatile
     forbids the optimizer from reordering, merging or discarding it, which is what memory needs when
@@ -97,7 +99,11 @@ def move_within(
     src_offset: int | np.signedinteger,
     count: int | np.signedinteger,
 ) -> None:
-    """Move `count` entries of `buffer` from `src_offset` to `dest_offset`, correct on overlap."""
+    """Move `count` entries of `buffer` from `src_offset` to `dest_offset`, correct on overlap.
+
+    In compiled code `buffer` must be contiguous (`int32[::1]`), because the compiled move computes
+    byte addresses from the buffer's start and item size.
+    """
     buffer[dest_offset : dest_offset + count] = buffer[src_offset : src_offset + count]
 
 
