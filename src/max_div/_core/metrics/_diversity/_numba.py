@@ -53,8 +53,9 @@ def min_separation(sep: NDArray[np.float32]) -> np.float32:
     min_bits = _INF_BITS
     for i in range(n):
         min_bits = min(min_bits, bits[i])
-    # `min_bits` is already an int32, but numba compiles `.view` on a scalar only when a NumPy
-    # constructor in the compiled code created that scalar, so `min_bits` goes through `np.int32` first.
+    # `min_bits` is already an int32, but numba compiles `.view` on a scalar only if a NumPy
+    # constructor call inside the compiled function produced it, so `min_bits` is wrapped in
+    # `np.int32(...)` before the view.
     return np.int32(min_bits).view(np.float32)
 
 
