@@ -3,6 +3,7 @@ from numba import njit
 from numpy.typing import NDArray
 
 from max_div._core._math.fast_log_exp import fast_exp2_f32
+from max_div._core.jit import lazy_njit
 
 # The floor of the transformed range that the solver's sampling paths use.  It lives here rather
 # than as a parameter default because an eager signature declares an exact arity, so a call that
@@ -43,7 +44,7 @@ def _exponential_transform(
             p_out[i] = fast_exp2_f32(exponent * t_times_log2_low_value)
 
 
-@njit("void(float32[::1], float32[::1], float32, boolean, float32)", inline="always", cache=True)
+@lazy_njit("void(float32[::1], float32[::1], float32, boolean, float32)", inline="always", cache=True)
 def exponential_selectivity(
     p_in: NDArray[np.float32],
     p_out: NDArray[np.float32],

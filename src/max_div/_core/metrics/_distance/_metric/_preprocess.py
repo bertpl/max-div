@@ -8,6 +8,8 @@ import numba
 import numpy as np
 from numpy.typing import NDArray
 
+from max_div._core.jit import lazy_njit
+
 from ._distance_metric import (
     METRIC_KIND_ALONG_AXIS,
     METRIC_KIND_COS,
@@ -77,7 +79,7 @@ def preprocess_cosine_distance_vectors(vectors: NDArray[np.float32]) -> NDArray[
     return _normalize_rows(vectors)
 
 
-@numba.njit(numba.float32[:, ::1](numba.types.Array(numba.float32, 2, "C", readonly=True)), cache=True)
+@lazy_njit(numba.float32[:, ::1](numba.types.Array(numba.float32, 2, "C", readonly=True)), cache=True)
 def _normalize_rows(vectors: NDArray[np.float32]) -> NDArray[np.float32]:
     """Scale each row to unit L2 norm into a fresh float32 array.
 

@@ -271,6 +271,7 @@ exclude_also = [
     # happens on the coverage run, since that run disables compilation to see inside njit code
     "@intrinsic",
     "@overload",
+    "@typeof_impl.register",
 ]
 
 [tool.pytest.ini_options]

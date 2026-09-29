@@ -12,13 +12,14 @@ from typing import TYPE_CHECKING
 import numba
 import numpy as np
 
+from max_div._core.jit import lazy_njit
 from max_div._core.metrics._distance import DISTANCE_STORE_TYPE, DistanceStore, get_distance
 
 if TYPE_CHECKING:
     from numpy.typing import NDArray
 
 
-@numba.njit(numba.void(numba.float64[::1], DISTANCE_STORE_TYPE, numba.int32, numba.int32[::1]), cache=True)
+@lazy_njit(numba.void(numba.float64[::1], DISTANCE_STORE_TYPE, numba.int32, numba.int32[::1]), cache=True)
 def remove_trial(
     dist_sums: NDArray[np.float64],
     store: DistanceStore,

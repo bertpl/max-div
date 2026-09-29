@@ -9,6 +9,7 @@ import numpy as np
 from numpy.typing import NDArray
 
 from max_div._core.constraints.constraints import _np_con_indices, _np_con_max_value, _np_con_min_value
+from max_div._core.jit import lazy_njit
 
 from ._randint import randint1
 
@@ -19,7 +20,7 @@ _SCORE_PENALTY_ALREADY_SAMPLED = np.int32(2**30)
 # =================================================================================================
 #  randint_constrained
 # =================================================================================================
-@numba.njit("int32[:](int32,int32[:,:],int32[:],int32[:],boolean)", fastmath=True, cache=True)
+@lazy_njit("int32[:](int32,int32[:,:],int32[:],int32[:],boolean)", fastmath=True, cache=True)
 def _compute_score(
     n: np.int32,
     con_values: NDArray[np.int32],

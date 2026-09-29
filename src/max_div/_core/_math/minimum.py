@@ -1,11 +1,12 @@
 """Compute the weighted minimum of each row of a float32 matrix."""
 
 import numpy as np
-from numba import njit
 from numpy.typing import NDArray
 
+from max_div._core.jit import lazy_njit
 
-@njit("void(float32[:, ::1], float32[::1], float32[::1])", cache=True)
+
+@lazy_njit("void(float32[:, ::1], float32[::1], float32[::1])", cache=True)
 def weighted_minimum_per_row_f32(
     rows: NDArray[np.float32], weights: NDArray[np.float32], out: NDArray[np.float32]
 ) -> None:

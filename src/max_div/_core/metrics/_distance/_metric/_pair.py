@@ -10,6 +10,8 @@ import numba
 import numpy as np
 from numpy.typing import NDArray
 
+from max_div._core.jit import lazy_njit
+
 from ._distance_metric import (
     METRIC_KIND_ALONG_AXIS,
     METRIC_KIND_COS,
@@ -47,7 +49,7 @@ from ._distance_metric import (
 # of the solver documentation.
 
 
-@numba.njit("float64(float32[:, ::1], int64, int64)", inline="always", cache=True, fastmath={"reassoc", "contract"})
+@lazy_njit("float64(float32[:, ::1], int64, int64)", inline="always", cache=True, fastmath={"reassoc", "contract"})
 def _l1_pair(vectors: NDArray[np.float32], i: int | np.signedinteger, j: int | np.signedinteger) -> np.float64:
     """Return the L1 (Manhattan) distance between vectors i and j, accumulated in float64."""
     acc = np.float64(0.0)
@@ -56,7 +58,7 @@ def _l1_pair(vectors: NDArray[np.float32], i: int | np.signedinteger, j: int | n
     return acc
 
 
-@numba.njit("float64(float32[:, ::1], int64, int64)", inline="always", cache=True, fastmath={"reassoc", "contract"})
+@lazy_njit("float64(float32[:, ::1], int64, int64)", inline="always", cache=True, fastmath={"reassoc", "contract"})
 def _l2sq_pair(vectors: NDArray[np.float32], i: int | np.signedinteger, j: int | np.signedinteger) -> np.float64:
     """Return the squared L2 (Euclidean) distance between vectors i and j, accumulated in float64."""
     acc = np.float64(0.0)
@@ -66,7 +68,7 @@ def _l2sq_pair(vectors: NDArray[np.float32], i: int | np.signedinteger, j: int |
     return acc
 
 
-@numba.njit("float64(float32[:, ::1], int64, int64)", inline="always", cache=True, fastmath={"reassoc", "contract"})
+@lazy_njit("float64(float32[:, ::1], int64, int64)", inline="always", cache=True, fastmath={"reassoc", "contract"})
 def _linf_pair(vectors: NDArray[np.float32], i: int | np.signedinteger, j: int | np.signedinteger) -> np.float64:
     """Return the Linf (Chebyshev) distance between vectors i and j, accumulated in float64."""
     acc = np.float64(0.0)
@@ -77,7 +79,7 @@ def _linf_pair(vectors: NDArray[np.float32], i: int | np.signedinteger, j: int |
     return acc
 
 
-@numba.njit("float64(float32[:, ::1], int64, int64)", inline="always", cache=True, fastmath={"reassoc", "contract"})
+@lazy_njit("float64(float32[:, ::1], int64, int64)", inline="always", cache=True, fastmath={"reassoc", "contract"})
 def _lminusinf_pair(vectors: NDArray[np.float32], i: int | np.signedinteger, j: int | np.signedinteger) -> np.float64:
     """Return the L-∞ distance between vectors i and j: the smallest absolute coordinate difference."""
     acc = np.float64(np.inf)
@@ -88,7 +90,7 @@ def _lminusinf_pair(vectors: NDArray[np.float32], i: int | np.signedinteger, j: 
     return acc
 
 
-@numba.njit(
+@lazy_njit(
     "float64(float32[:, ::1], int64, int64, float64)", inline="always", cache=True, fastmath={"reassoc", "contract"}
 )
 def _marginals_and_joint_pair(
@@ -119,7 +121,7 @@ def _marginals_and_joint_pair(
     return min(smallest_gap, joint_scale * joint_term)
 
 
-@numba.njit(
+@lazy_njit(
     "float64(float32[:, ::1], int64, int64, float64)", inline="always", cache=True, fastmath={"reassoc", "contract"}
 )
 def _minkowski_pair_powered(
@@ -132,7 +134,7 @@ def _minkowski_pair_powered(
     return acc
 
 
-@numba.njit("float64(float32[:, ::1], int64, int64)", inline="always", cache=True, fastmath={"reassoc", "contract"})
+@lazy_njit("float64(float32[:, ::1], int64, int64)", inline="always", cache=True, fastmath={"reassoc", "contract"})
 def _minkowski_pair_powered_p05(
     vectors: NDArray[np.float32], i: int | np.signedinteger, j: int | np.signedinteger
 ) -> np.float64:
@@ -143,7 +145,7 @@ def _minkowski_pair_powered_p05(
     return acc
 
 
-@numba.njit("float64(float32[:, ::1], int64, int64)", inline="always", cache=True, fastmath={"reassoc", "contract"})
+@lazy_njit("float64(float32[:, ::1], int64, int64)", inline="always", cache=True, fastmath={"reassoc", "contract"})
 def _minkowski_pair_powered_p025(
     vectors: NDArray[np.float32], i: int | np.signedinteger, j: int | np.signedinteger
 ) -> np.float64:
@@ -154,7 +156,7 @@ def _minkowski_pair_powered_p025(
     return acc
 
 
-@numba.njit("float64(float32[:, ::1], int64, int64)", inline="always", cache=True, fastmath={"reassoc", "contract"})
+@lazy_njit("float64(float32[:, ::1], int64, int64)", inline="always", cache=True, fastmath={"reassoc", "contract"})
 def _minkowski_pair_powered_p0125(
     vectors: NDArray[np.float32], i: int | np.signedinteger, j: int | np.signedinteger
 ) -> np.float64:
@@ -165,7 +167,7 @@ def _minkowski_pair_powered_p0125(
     return acc
 
 
-@numba.njit("float64(float32[:, ::1], int64, int64)", inline="always", cache=True, fastmath={"reassoc", "contract"})
+@lazy_njit("float64(float32[:, ::1], int64, int64)", inline="always", cache=True, fastmath={"reassoc", "contract"})
 def _geomean_pair(vectors: NDArray[np.float32], i: int | np.signedinteger, j: int | np.signedinteger) -> np.float64:
     """Return the geometric mean of the per-dimension absolute differences of vectors i and j.
 
@@ -181,13 +183,13 @@ def _geomean_pair(vectors: NDArray[np.float32], i: int | np.signedinteger, j: in
     return np.exp(log_sum / d)
 
 
-@numba.njit("float64(float32[:, ::1], int64, int64)", inline="always", cache=True)
+@lazy_njit("float64(float32[:, ::1], int64, int64)", inline="always", cache=True)
 def _along_axis_pair(vectors: NDArray[np.float32], i: int | np.signedinteger, j: int | np.signedinteger) -> np.float64:
     """Return the absolute difference of column 0 of vectors i and j, the coordinate that preprocessing kept."""
     return abs(np.float64(vectors[i, 0]) - np.float64(vectors[j, 0]))
 
 
-@numba.njit(
+@lazy_njit(
     numba.float32(numba.float32[:, ::1], numba.int32, numba.float64, numba.int32, numba.int32),
     inline="always",
     cache=True,

@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING
 import numba
 import numpy as np
 
+from max_div._core.jit import lazy_njit
 from max_div._core.metrics._distance import DISTANCE_STORE_TYPE, DistanceStore, get_distance_lazy
 
 from ._signatures import (
@@ -24,7 +25,7 @@ if TYPE_CHECKING:
     from numpy.typing import NDArray
 
 
-@numba.njit(ADD_SIGNATURE, cache=True, fastmath={"reassoc", "contract"})
+@lazy_njit(ADD_SIGNATURE, cache=True, fastmath={"reassoc", "contract"})
 def add(sep: NDArray[np.float32], store: DistanceStore, i_added: np.int32) -> None:
     """Update separation of each item wrt selection after adding i_added."""
     for j in range(i_added):
@@ -33,7 +34,7 @@ def add(sep: NDArray[np.float32], store: DistanceStore, i_added: np.int32) -> No
         sep[j] = min(sep[j], get_distance_lazy(store, i_added, j))
 
 
-@numba.njit(ADD_MANY_SIGNATURE, parallel=True, cache=True, fastmath={"reassoc", "contract"})
+@lazy_njit(ADD_MANY_SIGNATURE, parallel=True, cache=True, fastmath={"reassoc", "contract"})
 def add_many(sep: NDArray[np.float32], store: DistanceStore, i_added_many: NDArray[np.int32], parallel: bool) -> None:
     """Update separation of each item wrt selection after adding all of i_added_many, in one fused pass.
 
@@ -56,7 +57,7 @@ def add_many(sep: NDArray[np.float32], store: DistanceStore, i_added_many: NDArr
             sep[j] = nearest
 
 
-@numba.njit(
+@lazy_njit(
     numba.float32(DISTANCE_STORE_TYPE, numba.int64, numba.int32[::1]),
     inline="always",
     cache=True,
@@ -71,7 +72,7 @@ def _nearest_selected(store: DistanceStore, j: int | np.integer, selection: NDAr
     return nearest
 
 
-@numba.njit(REMOVE_SIGNATURE, cache=True, fastmath={"reassoc", "contract"})
+@lazy_njit(REMOVE_SIGNATURE, cache=True, fastmath={"reassoc", "contract"})
 def remove(
     sep: NDArray[np.float32],
     store: DistanceStore,

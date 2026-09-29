@@ -26,6 +26,7 @@ from numba import njit
 from numpy.typing import NDArray
 
 from max_div._core._random._rng import rand_float32
+from max_div._core.jit import lazy_njit
 
 
 # Defined ahead of its caller: the caller declares a signature, so it compiles when the decorator
@@ -50,7 +51,7 @@ def _modified_power_transform(u: np.float32, m: np.float32) -> np.float32:
     return (m * u) + one_minus_m * (u**p)
 
 
-@njit("float32(float32, uint64[:])", fastmath=True, inline="always", cache=True)
+@lazy_njit("float32(float32, uint64[:])", fastmath=True, inline="always", cache=True)
 def sample_modified_power_distribution(m: np.float32, rng_state: NDArray[np.uint64]) -> np.float32:
     if m == 0.0:
         return np.float32(0.0)

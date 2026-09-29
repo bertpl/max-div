@@ -12,11 +12,11 @@ blocks in cache at a time over data that is O(n²) by definition.
 
 import warnings
 
-import numba
 import numpy as np
 from numpy.typing import NDArray
 
 from max_div._core._warnings import DistanceInputWarning
+from max_div._core.jit import lazy_njit
 
 # side length of the square tiles the blocked scans walk; two float32 tiles fit comfortably in L2
 _BLOCK = 128
@@ -29,7 +29,7 @@ _DIAGONAL_ATOL = 1e-6
 # =================================================================================================
 #  Kernels
 # =================================================================================================
-@numba.njit(
+@lazy_njit(
     "Tuple((int64, int64, int64, float64, float64))(float32[:, ::1], int64, int64, int64, int64)",
     inline="always",
     cache=True,
@@ -66,7 +66,7 @@ def _scan_square_block(
     return n_nonfinite, n_negative, n_asym, max_abs_delta, max_rel_delta
 
 
-@numba.njit("Tuple((int64, int64, float64, int64, float64, float64))(float32[:, ::1])", cache=True)
+@lazy_njit("Tuple((int64, int64, float64, int64, float64, float64))(float32[:, ::1])", cache=True)
 def _scan_square(matrix: NDArray[np.float32]) -> tuple[int, int, float, int, float, float]:
     """Read-only blocked scan of a square distance matrix.
 
@@ -99,7 +99,7 @@ def _scan_square(matrix: NDArray[np.float32]) -> tuple[int, int, float, int, flo
     return n_nonfinite, n_negative, max_abs_diag, n_asym, max_abs_delta, max_rel_delta
 
 
-@numba.njit("void(float32[:, ::1])", cache=True)
+@lazy_njit("void(float32[:, ::1])", cache=True)
 def _symmetrize_square(matrix: NDArray[np.float32]) -> None:
     """Make `matrix` exactly symmetric in place: each differing (i, j)/(j, i) pair gets its mean."""
     n = matrix.shape[0]
@@ -118,7 +118,7 @@ def _symmetrize_square(matrix: NDArray[np.float32]) -> None:
                         matrix[j, i] = mean
 
 
-@numba.njit("Tuple((int64, int64))(float32[::1])", cache=True)
+@lazy_njit("Tuple((int64, int64))(float32[::1])", cache=True)
 def _scan_condensed(values: NDArray[np.float32]) -> tuple[int, int]:
     """Single-pass scan of a condensed distance vector: counts of non-finite and negative values."""
     n_nonfinite = 0

@@ -4,12 +4,14 @@ import numba
 import numpy as np
 from numpy.typing import NDArray
 
+from max_div._core.jit import lazy_njit
+
 
 # =================================================================================================
 #  select_k_min
 # =================================================================================================
 # Same fastmath subset as `_distance/_metric/_pair.py`, on all three selectors: callers pass +inf sentinels.
-@numba.njit(
+@lazy_njit(
     ["int32[:](float32[:], int32)", "int32[:](float64[:], int32)"],
     fastmath={"reassoc", "contract"},
     inline="always",
@@ -141,7 +143,7 @@ def select_k_min(arr: NDArray[np.float32] | NDArray[np.float64], k: np.int32) ->
 # =================================================================================================
 #  select_k_max
 # =================================================================================================
-@numba.njit(
+@lazy_njit(
     ["int32[:](float32[:], int32)", "int32[:](float64[:], int32)"],
     fastmath={"reassoc", "contract"},
     inline="always",
@@ -273,7 +275,7 @@ def select_k_max(arr: NDArray[np.float32] | NDArray[np.float64], k: np.int32) ->
 # =================================================================================================
 #  select_k_max_masked
 # =================================================================================================
-@numba.njit("int32[:](float32[:], int32, boolean[:])", fastmath={"reassoc", "contract"}, cache=True)
+@lazy_njit("int32[:](float32[:], int32, boolean[:])", fastmath={"reassoc", "contract"}, cache=True)
 def select_k_max_masked(  # noqa: C901 — case-dispatch structure is clearer un-split
     arr: NDArray[np.float32], k: np.int32, excluded: NDArray[np.bool]
 ) -> NDArray[np.int32]:
@@ -379,7 +381,7 @@ def select_k_max_masked(  # noqa: C901 — case-dispatch structure is clearer un
 # =================================================================================================
 # `_sift_down_min_heap` comes first: an explicit signature compiles `select_k_max_into` at import,
 # and its callee must exist by then.
-@numba.njit(
+@lazy_njit(
     numba.void(numba.float32[:], numba.int32[:], numba.int64, numba.int64),
     inline="always",
     cache=True,
@@ -410,7 +412,7 @@ def _sift_down_min_heap(
         i_parent = i_min
 
 
-@numba.njit(
+@lazy_njit(
     numba.float32(numba.float32[:], numba.int64, numba.int64, numba.int32[:]),
     cache=True,
     fastmath={"reassoc", "contract"},

@@ -1,11 +1,11 @@
-import numba
 import numpy as np
 from numpy.typing import NDArray
 
 from max_div._core._random._randint import randint, randint1
+from max_div._core.jit import lazy_njit
 
 
-@numba.njit("int32[:](int32[:], int32, bool, float32[:], uint64[:])", fastmath=True, cache=True)
+@lazy_njit("int32[:](int32[:], int32, bool, float32[:], uint64[:])", fastmath=True, cache=True)
 def choice(
     values: NDArray[np.int32],
     k: np.int32,
@@ -40,7 +40,7 @@ def choice(
     return samples
 
 
-@numba.njit("int32(int32[:], float32[:], uint64[:])", fastmath=True, inline="always", cache=True)
+@lazy_njit("int32(int32[:], float32[:], uint64[:])", fastmath=True, inline="always", cache=True)
 def choice1(
     values: NDArray[np.int32],
     p: NDArray[np.float32],

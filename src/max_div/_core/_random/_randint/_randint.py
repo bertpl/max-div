@@ -4,7 +4,6 @@ Significantly faster due to use of faster underlying RNG functionality (see `max
 algorithms for each case, making use of a.o. the fact that we only want to sample int32 values here.
 """
 
-import numba
 import numpy as np
 from numpy.typing import NDArray
 
@@ -16,6 +15,7 @@ from max_div._core._random._rng import (
     rand_int32_array,
     rand_nz_float32,
 )
+from max_div._core.jit import lazy_njit
 
 _SMALLEST_F32 = np.finfo(np.float32).smallest_subnormal
 
@@ -28,7 +28,7 @@ P_UNIFORM = np.zeros(0, dtype=np.float32)
 #  randint
 # =================================================================================================
 # Same fastmath subset as `_distance/_metric/_pair.py`: zero-probability items get +inf keys.
-@numba.njit("int32[:](int32, int32, bool, float32[:], uint64[:])", fastmath={"reassoc", "contract"}, cache=True)
+@lazy_njit("int32[:](int32, int32, bool, float32[:], uint64[:])", fastmath={"reassoc", "contract"}, cache=True)
 def randint(  # noqa: C901 — case-dispatch structure is clearer un-split
     n: np.int32,
     k: np.int32,
@@ -227,7 +227,7 @@ def randint(  # noqa: C901 — case-dispatch structure is clearer un-split
 # =================================================================================================
 #  randint1
 # =================================================================================================
-@numba.njit("int32(int32, float32[:], uint64[:])", fastmath=True, cache=True)
+@lazy_njit("int32(int32, float32[:], uint64[:])", fastmath=True, cache=True)
 def randint1(
     n: np.int32,
     p: NDArray[np.float32],

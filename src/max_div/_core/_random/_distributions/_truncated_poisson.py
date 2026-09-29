@@ -3,9 +3,10 @@ from numba import njit
 from numpy.typing import NDArray
 
 from max_div._core._random import randint1
+from max_div._core.jit import lazy_njit
 
 
-@njit("int32(int32, int32, float32, uint64[:])", fastmath=True, inline="always", cache=True)
+@lazy_njit("int32(int32, int32, float32, uint64[:])", fastmath=True, inline="always", cache=True)
 def sample_truncated_poisson(
     min_value: np.int32,
     max_value: np.int32,
