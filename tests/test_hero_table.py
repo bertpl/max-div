@@ -11,30 +11,17 @@ answered by the data rather than by this renderer. The data's own rules belong t
 `scripts/capability_data.py` and are tested with it.
 """
 
-import importlib.util
 import re
-import sys
 from copy import deepcopy
-from pathlib import Path
 
 import pytest
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
-SCRIPT = REPO_ROOT / "scripts" / "build_hero_table.py"
-
-
-def _load_builder():
-    """Import the generator by path — `scripts/` is maintainer tooling, not an importable package."""
-    spec = importlib.util.spec_from_file_location("build_hero_table", SCRIPT)
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[spec.name] = module
-    spec.loader.exec_module(module)
-    return module
+from tests.helpers import load_script
 
 
 @pytest.fixture(scope="module")
 def builder():
-    return _load_builder()
+    return load_script("build_hero_table")
 
 
 @pytest.fixture(scope="module")

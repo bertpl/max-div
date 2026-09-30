@@ -2,33 +2,20 @@
 the JavaScript-less render; a frame naming a wrong position would only show up as a wrong picture on the built site.
 """
 
-import importlib.util
 import json
 import re
-import sys
-from pathlib import Path
 
 import numpy as np
 import pytest
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
-SCRIPTS = REPO_ROOT / "scripts"
-
-
-def _load_module(name: str):
-    """Import a script module by path — `scripts/` is maintainer tooling, not an importable package."""
-    spec = importlib.util.spec_from_file_location(name, SCRIPTS / f"{name}.py")
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[spec.name] = module
-    spec.loader.exec_module(module)
-    return module
+from tests.helpers import load_script
 
 
 @pytest.fixture(scope="module")
 def replay():
     """Return the module under test, loaded once, after the explorer module it imports."""
-    _load_module("uniform_sampling_explorer")
-    return _load_module("uniform_sampling_replay")
+    load_script("uniform_sampling_explorer")
+    return load_script("uniform_sampling_replay")
 
 
 # The population has five items, of which item 4 is never selected, so the coordinate table holds four.

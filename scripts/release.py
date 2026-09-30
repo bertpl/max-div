@@ -20,6 +20,7 @@ import urllib.request
 from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
+from typing import NoReturn
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 PYPROJECT = REPO_ROOT / "pyproject.toml"
@@ -57,7 +58,7 @@ def print_step(n: int, msg: str) -> None:
     print(f"  [{n:>2}] {msg}")
 
 
-def fail_with_message(msg: str, code: int = 1) -> None:
+def fail_with_message(msg: str, code: int = 1) -> NoReturn:
     """Print an error and exit."""
     print(f"\nERROR: {msg}", file=sys.stderr)
     sys.exit(code)
@@ -195,8 +196,12 @@ class BadgeMetrics:
     test_union: int
 
 
-def _latest_main_coverage_run() -> tuple[str, str]:
-    """Return (run_id, head_sha) of the latest successful 'Push to Main' run."""
+def _main_run_id_for(head_sha: str) -> str | None:
+    """Return the id of the newest 'Push to Main' run for commit `head_sha`, or None if it has none.
+
+    The lookup filters by commit: the unfiltered `gh run list` on `main` can briefly return an
+    out-of-date result, which leaves out a run that exists.
+    """
     out = run_command(
         [
             "gh",
@@ -204,58 +209,46 @@ def _latest_main_coverage_run() -> tuple[str, str]:
             "list",
             "--workflow",
             "push_to_main.yml",
-            "--branch",
-            "main",
-            "--status",
-            "success",
+            "--commit",
+            head_sha,
             "--limit",
             "1",
             "--json",
-            "databaseId,headSha",
+            "databaseId",
         ]
     )
     runs = json.loads(out)
-    if not runs:
-        fail_with_message("no successful 'Push to Main' run found to source coverage metrics from")
-    return str(runs[0]["databaseId"]), runs[0]["headSha"]
+    if runs:
+        return str(runs[0]["databaseId"])
+    else:
+        return None
 
 
-def _main_run_for(head_sha: str) -> tuple[str, str, str] | None:
-    """Return (run_id, status, conclusion) of the latest 'Push to Main' run for `head_sha`, or None."""
-    out = run_command(
-        [
-            "gh",
-            "run",
-            "list",
-            "--workflow",
-            "push_to_main.yml",
-            "--branch",
-            "main",
-            "--limit",
-            "10",
-            "--json",
-            "databaseId,headSha,status,conclusion",
-        ]
-    )
-    for run in json.loads(out):
-        if run["headSha"] == head_sha:
-            return str(run["databaseId"]), run["status"], run.get("conclusion") or ""
-    return None
+def _workflow_run_state(run_id: str) -> tuple[str, str]:
+    """Return (status, conclusion) of the workflow run `run_id`; conclusion is empty until the run completes."""
+    state = json.loads(run_command(["gh", "run", "view", run_id, "--json", "status,conclusion"]))
+    return state["status"], state.get("conclusion") or ""
 
 
 def _wait_for_main_ci(local_head: str) -> str:
-    """Return the run id of a successful 'Push to Main' run for `local_head`, waiting one out if in flight.
+    """Return the id of a successful 'Push to Main' run for `local_head`, waiting one out if in flight.
 
-    Aborts when no run exists for `local_head` (the push did not trigger CI), when the run
-    concluded without success, or after `CI_WAIT_TIMEOUT_SEC` of waiting.
+    Aborts when:
+
+    - no run exists for `local_head` (the push did not trigger CI);
+    - the run concluded without success;
+    - `CI_WAIT_TIMEOUT_SEC` passes without the run completing.
+
+    Once found, the run is polled by its id, so an out-of-date result from `gh run list` cannot
+    hide the run.
     """
-    found = _main_run_for(local_head)
-    if found is None:
+    run_id = _main_run_id_for(local_head)
+    if run_id is None:
         fail_with_message(f"no 'Push to Main' run found for HEAD {local_head[:8]} — did the push trigger CI?")
     deadline = time.monotonic() + CI_WAIT_TIMEOUT_SEC
     announced = False
     while True:
-        run_id, status, conclusion = found
+        status, conclusion = _workflow_run_state(run_id)
         if status == "completed":
             if conclusion != "success":
                 fail_with_message(f"'Push to Main' run for HEAD {local_head[:8]} concluded '{conclusion}'")
@@ -266,23 +259,17 @@ def _wait_for_main_ci(local_head: str) -> str:
         if time.monotonic() >= deadline:
             fail_with_message(f"timed out after {CI_WAIT_TIMEOUT_SEC // 60} min waiting for CI on {local_head[:8]}")
         time.sleep(CI_POLL_INTERVAL_SEC)
-        found = _main_run_for(local_head)
-        if found is None:
-            fail_with_message(f"the 'Push to Main' run for HEAD {local_head[:8]} disappeared while waiting")
 
 
 def _fetch_release_metrics() -> dict[str, float]:
     """Download CI's cumulative metrics for the commit being released.
 
     The numbers come from the matrix combine job, not a local run, so the
-    badge matches the CI gate exactly. When the latest green main run is not
-    the commit at HEAD, an in-flight run for HEAD is waited out; only a HEAD
-    with no run at all, a failed run, or a timeout aborts.
+    badge matches the CI gate exactly. It waits up to `CI_WAIT_TIMEOUT_SEC` for HEAD's
+    'Push to Main' run to succeed, and exits when no such run succeeds in time.
     """
-    run_id, head_sha = _latest_main_coverage_run()
     local_head = run_command(["git", "rev-parse", "HEAD"]).strip()
-    if head_sha != local_head:
-        run_id = _wait_for_main_ci(local_head)
+    run_id = _wait_for_main_ci(local_head)
     with tempfile.TemporaryDirectory() as tmp:
         run_command(["gh", "run", "download", run_id, "--name", "release-metrics", "--dir", tmp])
         return json.loads((Path(tmp) / "metrics.json").read_text())

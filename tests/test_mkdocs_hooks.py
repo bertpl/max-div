@@ -4,31 +4,21 @@ These tests pin the two rewrites in `scripts/mkdocs_hooks.py`, since nothing els
 they stop happening — a broken or mis-sized image is invisible to the docs build.
 """
 
-import importlib.util
 import struct
-import sys
 from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
 
+from tests.helpers import load_script
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
-HOOKS = REPO_ROOT / "scripts" / "mkdocs_hooks.py"
 README = REPO_ROOT / "README.md"
-
-
-def _load_hooks():
-    """Import the hook module by path — `scripts/` is maintainer tooling, not an importable package."""
-    spec = importlib.util.spec_from_file_location("mkdocs_hooks", HOOKS)
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[spec.name] = module
-    spec.loader.exec_module(module)
-    return module
 
 
 @pytest.fixture(scope="module")
 def hooks():
-    return _load_hooks()
+    return load_script("mkdocs_hooks")
 
 
 def _render(hooks, html: str, page_url: str = "", docs_dir: Path = REPO_ROOT / "docs") -> str:
