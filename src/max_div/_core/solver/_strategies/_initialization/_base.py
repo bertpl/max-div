@@ -121,14 +121,17 @@ class InitializationStrategy(StrategyBase, ABC):
 
     @classmethod
     def guided_batches(cls, batch_size: int = 1, nc: int = 8) -> InitGuidedBatches:
-        """Create an initialization that adds items in batches, each the best of `nc` draws guided by diversity.
+        """Create a batched initialization: each batch is the best of `nc` draws favoring items far from the selection.
 
-        Every draw favors items far from the selection so far, and on a constrained problem it is
-        steered toward satisfying the constraints, so the start is both spread out and close to
-        feasible.  See `InitGuidedBatches` for what the 2 parameters trade off and for the cost.
+        On a constrained problem every draw also moves the selection toward satisfying the
+        constraints, so the starting selection is both spread out and close to feasible.  Meant for
+        constrained problems: every candidate batch is provisionally added and scored, so at large n
+        and k it is far slower than `farthest_point`, which also reaches a higher diversity on an
+        unconstrained problem.
 
         Args:
-            batch_size: Items added per iteration; 1 draws every item against the selection so far.
+            batch_size: Items added per iteration; with 1, the draw probabilities are recomputed
+                after every added item.
             nc: Candidate batches drawn per iteration, the best of which is added; 1 adds the one
                 draw without scoring it.
 

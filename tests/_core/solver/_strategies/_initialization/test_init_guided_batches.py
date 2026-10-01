@@ -30,7 +30,7 @@ def _final_diversity(batch_size: int, nc: int, seed: int) -> float:
 @pytest.mark.parametrize("problem_has_constraints", [True, False])
 @pytest.mark.parametrize("batch_size, nc", [(16, 1), (1, 1), (1, 16), (50, 4), (7, 2)])
 def test_init_guided_batches_completes_selection(problem_has_constraints: bool, batch_size: int, nc: int):
-    """The selection has k distinct items, satisfying the constraints when the problem has them."""
+    """The selection has k distinct items, and on the helper's constrained problem it satisfies the constraints."""
     # --- arrange ----------------------
     state = new_solver_state(problem_has_constraints)
     step = InitializationStep(InitializationStrategy.guided_batches(batch_size=batch_size, nc=nc))
@@ -60,7 +60,7 @@ def test_init_guided_batches_last_batch_is_capped_by_k_remaining():
 
 
 def test_init_guided_batches_leaves_the_state_unchanged_while_scoring():
-    """Scoring the nc candidate batches is provisional: the state holds its items only after the step adds them."""
+    """Scoring the candidate batches leaves the state unchanged: the returned batch is not yet in the selection."""
     # --- arrange ----------------------
     state = new_solver_state(has_constraints=False)
     state.add(np.int32(0))

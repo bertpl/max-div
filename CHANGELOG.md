@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
-- `InitializationStrategy.guided_batches(batch_size, nc)` builds the starting selection in batches, each the best of `nc` draws that favor items far from the selection and, on a constrained problem, move toward satisfying the constraints; the 2 parameters trade speed for quality
+- `InitializationStrategy.guided_batches(batch_size, nc)` builds the starting selection in batches, each the best-scoring of `nc` candidate batches drawn to favor items far from the selection and, on a constrained problem, to move toward satisfying the constraints; a smaller `batch_size` or a larger `nc` gives a better starting selection at a higher cost. Meant for constrained problems; `farthest_point` suits unconstrained ones better
 
 ### Changed
 
