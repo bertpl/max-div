@@ -27,12 +27,12 @@ def _final_diversity(batch_size: int, nc: int, seed: int) -> float:
 # =================================================================================================
 #  Selection
 # =================================================================================================
-@pytest.mark.parametrize("problem_has_constraints", [True, False])
+@pytest.mark.parametrize("has_constraints", [True, False])
 @pytest.mark.parametrize("batch_size, nc", [(16, 1), (1, 1), (1, 16), (50, 4), (7, 2)])
-def test_init_guided_batches_completes_selection(problem_has_constraints: bool, batch_size: int, nc: int):
+def test_init_guided_batches_completes_selection(has_constraints: bool, batch_size: int, nc: int):
     """The selection has k distinct items, and on the helper's constrained problem it satisfies the constraints."""
     # --- arrange ----------------------
-    state = new_solver_state(problem_has_constraints)
+    state = new_solver_state(has_constraints)
     step = InitializationStep(InitializationStrategy.guided_batches(batch_size=batch_size, nc=nc))
 
     # --- act --------------------------
@@ -41,7 +41,7 @@ def test_init_guided_batches_completes_selection(problem_has_constraints: bool, 
     # --- assert -----------------------
     assert state.score.size == 1.0
     assert len(np.unique(state.selected_index_array)) == state.k
-    if problem_has_constraints:
+    if has_constraints:
         assert state.score.constraints == 1.0
 
 
@@ -78,11 +78,11 @@ def test_init_guided_batches_more_candidates_give_more_diversity():
     """Over several seeds, the best of 16 draws per item reaches a higher diversity than 1 draw per item."""
     # --- arrange / act ----------------
     seeds = range(5)
-    diversity_1 = np.mean([_final_diversity(batch_size=1, nc=1, seed=seed) for seed in seeds])
-    diversity_16 = np.mean([_final_diversity(batch_size=1, nc=16, seed=seed) for seed in seeds])
+    diversity_nc_1 = np.mean([_final_diversity(batch_size=1, nc=1, seed=seed) for seed in seeds])
+    diversity_nc_16 = np.mean([_final_diversity(batch_size=1, nc=16, seed=seed) for seed in seeds])
 
     # --- assert -----------------------
-    assert diversity_16 > diversity_1
+    assert diversity_nc_16 > diversity_nc_1
 
 
 def test_init_guided_batches_is_deterministic_per_seed():

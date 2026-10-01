@@ -124,10 +124,10 @@ class InitializationStrategy(StrategyBase, ABC):
         """Create a batched initialization: each batch is the best of `nc` draws favoring items far from the selection.
 
         On a constrained problem every draw also moves the selection toward satisfying the
-        constraints, so the starting selection is both spread out and close to feasible.  Meant for
-        constrained problems: every candidate batch is provisionally added and scored, so at large n
-        and k it is far slower than `farthest_point`, which also reaches a higher diversity on an
-        unconstrained problem.
+        constraints, so the starting selection is both spread out and close to feasible.  The
+        strategy is meant for constrained problems; on an unconstrained one, `farthest_point` is
+        faster and reaches a higher diversity.  See `InitGuidedBatches` for how each batch is drawn
+        and what it costs.
 
         Args:
             batch_size: Items added per iteration; with 1, the draw probabilities are recomputed
