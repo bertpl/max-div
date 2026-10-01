@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 
 from max_div._core.metrics import DistanceMetric
-from max_div._core.metrics._distance._metric import preprocess_vectors, validate_vector_array_layout
+from max_div._core.metrics._distance._metric import validate_vector_array_layout
 
 
 def _vectors() -> np.ndarray:
@@ -19,7 +19,7 @@ def test_preprocess_follows_the_metrics_declaration(metric: DistanceMetric):
     vectors = _vectors()
 
     # --- act --------------------------
-    preprocessed = preprocess_vectors(vectors, metric)
+    preprocessed = metric.preprocess(vectors)
 
     # --- assert -----------------------
     if metric.needs_preprocessed_vectors:
@@ -35,7 +35,7 @@ def test_preprocess_leaves_the_input_untouched(metric: DistanceMetric):
     before = vectors.copy()
 
     # --- act --------------------------
-    preprocess_vectors(vectors, metric)
+    metric.preprocess(vectors)
 
     # --- assert -----------------------
     np.testing.assert_array_equal(vectors, before)
@@ -44,7 +44,7 @@ def test_preprocess_leaves_the_input_untouched(metric: DistanceMetric):
 def test_preprocess_returns_the_layout_reads_expect(metric: DistanceMetric):
     """What comes out is in the form every distance read expects, whether copied or not."""
     # --- act --------------------------
-    preprocessed = preprocess_vectors(_vectors(), metric)
+    preprocessed = metric.preprocess(_vectors())
 
     # --- assert -----------------------
     validate_vector_array_layout(preprocessed)  # raises on violation
@@ -56,7 +56,7 @@ def test_preprocess_returns_the_layout_reads_expect(metric: DistanceMetric):
 def test_cosine_preprocessing_normalizes_rows():
     """Cosine's preprocessed copy has unit-length rows."""
     # --- act --------------------------
-    preprocessed = preprocess_vectors(_vectors(), DistanceMetric.cosine())
+    preprocessed = DistanceMetric.cosine().preprocess(_vectors())
 
     # --- assert -----------------------
     np.testing.assert_allclose(np.linalg.norm(preprocessed, axis=1), 1.0, rtol=1e-6)
@@ -69,7 +69,7 @@ def test_cosine_preprocessing_rejects_zero_rows():
 
     # --- act / assert -----------------
     with pytest.raises(ValueError, match=r"zero vector.*row 1"):
-        preprocess_vectors(vectors, DistanceMetric.cosine())
+        DistanceMetric.cosine().preprocess(vectors)
 
 
 # ==================================================================================================
@@ -100,7 +100,7 @@ def test_along_axis_preprocessing_keeps_the_one_coordinate():
     vectors = _vectors()
 
     # --- act --------------------------
-    preprocessed = preprocess_vectors(vectors, DistanceMetric.along_axis(2))
+    preprocessed = DistanceMetric.along_axis(2).preprocess(vectors)
 
     # --- assert -----------------------
     assert preprocessed.shape == (vectors.shape[0], 1)
@@ -113,7 +113,7 @@ def test_along_axis_preprocessing_copies_a_single_column_too():
     vectors = np.ascontiguousarray(_vectors()[:, :1])
 
     # --- act --------------------------
-    preprocessed = preprocess_vectors(vectors, DistanceMetric.along_axis(0))
+    preprocessed = DistanceMetric.along_axis(0).preprocess(vectors)
 
     # --- assert -----------------------
     assert not np.shares_memory(preprocessed, vectors)
@@ -124,4 +124,4 @@ def test_along_axis_preprocessing_rejects_a_missing_coordinate():
     """An axis at or beyond the dimension count is refused."""
     # --- act / assert -----------------
     with pytest.raises(ValueError, match="do not have"):
-        preprocess_vectors(_vectors(), DistanceMetric.along_axis(3))
+        DistanceMetric.along_axis(3).preprocess(_vectors())

@@ -1,7 +1,7 @@
 """Every distance the package produces is computed by one of the pair functions here.
 
 The builds in `_build` and the on-demand reads in `_store` all go through these, which is what
-keeps stored and on-demand values bit-equal.  Every function reads the array that `preprocess_vectors`
+keeps stored and on-demand values bit-equal.  Every function reads the array that `DistanceMetric.preprocess`
 returns, which is either a preprocessed array for those distance metrics that need it, or the original
 array of vectors for those that don't.
 """
@@ -199,8 +199,8 @@ def _metric_pair(  # noqa: C901 -- flat dispatch, one arm per kind: complexity h
 ) -> np.float32:
     """Compute the distance between vectors i and j, per the given metric selector.
 
-    `metric_param` is the metric's `DistanceMetric.param`: the power `p` of a generic Minkowski kind,
-    or the `joint_scale` of marginals-and-joint.
+    `metric_param` is the metric's `DistanceMetric.compiled_param`: the power `p` of a generic Minkowski
+    kind, or the `joint_scale` of marginals-and-joint.
 
     The selector is loop-invariant in every calling loop, so the branch order is not
     performance-relevant.  The specialized Minkowski kinds apply the outer root as repeated

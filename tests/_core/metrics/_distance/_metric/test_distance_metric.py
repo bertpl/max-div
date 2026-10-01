@@ -5,7 +5,7 @@ import numpy as np
 import pytest
 
 from max_div._core.metrics import DistanceMetric
-from max_div._core.metrics._distance._metric import NO_AXIS, NO_PARAM
+from max_div._core.metrics._distance._metric import NO_PARAM
 
 # Every metric with a dedicated factory method of its own.
 _FACTORY_METRICS = (
@@ -21,6 +21,14 @@ _FACTORY_METRICS = (
 )
 
 
+def _vectors() -> np.ndarray:
+    """Return a small float32 C-contiguous array with no zero rows, so every metric accepts it."""
+    return np.ascontiguousarray(np.random.default_rng(7).random((6, 3), dtype=np.float32) + 0.1)
+
+
+# ==================================================================================================
+#  Factories and kinds
+# ==================================================================================================
 def test_factory_metrics_have_distinct_kinds():
     """Each factory must map to its own selector value, or two metrics would dispatch identically."""
     # --- act / assert -----------------
@@ -28,15 +36,30 @@ def test_factory_metrics_have_distinct_kinds():
     assert len(set(kinds)) == len(kinds)
 
 
+def test_factory_metrics_are_distinct_subclasses():
+    """Each factory returns an instance of its own `DistanceMetric` subclass, which owns that kind's behavior."""
+    # --- act / assert -----------------
+    classes = [type(metric) for metric in _FACTORY_METRICS]
+    assert len(set(classes)) == len(classes)
+    assert all(isinstance(metric, DistanceMetric) and type(metric) is not DistanceMetric for metric in _FACTORY_METRICS)
+
+
+def test_a_bare_distance_metric_cannot_be_created():
+    """The base class computes no distance, so constructing it directly is refused."""
+    # --- act / assert -----------------
+    with pytest.raises(TypeError, match="factory methods"):
+        DistanceMetric()
+
+
 @pytest.mark.parametrize(
     "factory_metric",
     [metric for metric in _FACTORY_METRICS if metric != DistanceMetric.marginals_and_joint()],
     ids=repr,
 )
-def test_factory_metrics_without_a_float_parameter_store_no_param(factory_metric: DistanceMetric):
-    """Every dedicated factory but `marginals_and_joint` has no float parameter and stores NO_PARAM."""
+def test_factory_metrics_without_a_float_parameter_take_no_compiled_param(factory_metric: DistanceMetric):
+    """Every dedicated factory but `marginals_and_joint` has no float parameter, so its pair function takes NO_PARAM."""
     # --- act / assert -----------------
-    assert factory_metric.param == NO_PARAM
+    assert factory_metric.compiled_param == NO_PARAM
 
 
 def test_equal_factories_compare_equal():
@@ -44,6 +67,16 @@ def test_equal_factories_compare_equal():
     # --- act / assert -----------------
     assert DistanceMetric.l2_euclidean() == DistanceMetric.l2_euclidean()
     assert DistanceMetric.l2_euclidean() != DistanceMetric.l2s_euclidean_squared()
+
+
+def test_metrics_are_usable_as_dict_keys():
+    """Every factory metric is hashable and keys its own entry, as the stores-by-distance mapping needs."""
+    # --- act --------------------------
+    by_metric = {metric: index for index, metric in enumerate(_FACTORY_METRICS)}
+
+    # --- assert -----------------------
+    assert len(by_metric) == len(_FACTORY_METRICS)
+    assert by_metric[DistanceMetric.cosine()] == _FACTORY_METRICS.index(DistanceMetric.cosine())
 
 
 def test_repr_round_trips(metric: DistanceMetric):
@@ -54,63 +87,6 @@ def test_repr_round_trips(metric: DistanceMetric):
     # --- assert -----------------------
     assert text.startswith("DistanceMetric.")
     assert eval(text) == metric  # noqa: S307 -- round-trip of our own repr
-
-
-@pytest.mark.parametrize(
-    "p, root, expected",
-    [
-        (1.0, True, DistanceMetric.l1_manhattan()),
-        (1.0, False, DistanceMetric.l1_manhattan()),
-        (2.0, True, DistanceMetric.l2_euclidean()),
-        (2.0, False, DistanceMetric.l2s_euclidean_squared()),
-        (math.inf, True, DistanceMetric.linf_chebyshev()),
-        (math.inf, False, DistanceMetric.linf_chebyshev()),
-    ],
-)
-def test_minkowski_canonicalizes_onto_named_metrics(p: float, root: bool, expected: DistanceMetric):
-    """A p coinciding with a dedicated metric must return that metric, never a generic Minkowski value."""
-    # --- act / assert -----------------
-    assert DistanceMetric.minkowski(p, root=root) == expected
-
-
-@pytest.mark.parametrize("p", [0.5, 0.25, 0.125])
-@pytest.mark.parametrize("root", [True, False])
-def test_minkowski_canonicalizes_specializable_p(p: float, root: bool):
-    """A specializable p must return its dedicated kind with p=None, so only one code path computes it."""
-    # --- act --------------------------
-    metric = DistanceMetric.minkowski(p, root=root)
-
-    # --- assert -----------------------
-    assert metric.param == NO_PARAM
-    assert metric.kind not in {m.kind for m in _FACTORY_METRICS}
-    assert metric.kind != DistanceMetric.minkowski(3, root=root).kind
-
-
-def test_minkowski_generic_carries_p():
-    """A non-specializable p stays on the generic kinds, carried in the value."""
-    # --- act --------------------------
-    rooted = DistanceMetric.minkowski(3)
-    powered = DistanceMetric.minkowski(3, root=False)
-
-    # --- assert -----------------------
-    assert rooted.param == 3.0
-    assert powered.param == 3.0
-    assert rooted.kind != powered.kind
-
-
-@pytest.mark.parametrize("p", [0.0, -1.0, -math.inf, math.nan])
-def test_minkowski_rejects_non_positive_p(p: float):
-    """The factory must reject p values outside (0, inf]."""
-    # --- act / assert -----------------
-    with pytest.raises(ValueError, match="requires p > 0"):
-        DistanceMetric.minkowski(p)
-
-
-def test_kinds_without_an_exponent_store_no_p():
-    """A kind without a power parameter stores NO_PARAM, so every metric crosses the njit boundary as it is."""
-    # --- act / assert -----------------
-    assert DistanceMetric.l2_euclidean().param == NO_PARAM
-    assert DistanceMetric.minkowski(3).param == 3.0
 
 
 def test_a_metric_survives_pickling(metric: DistanceMetric):
@@ -151,22 +127,68 @@ def test_only_cosine_and_along_axis_need_preprocessed_vectors(metric: DistanceMe
 
 
 # ==================================================================================================
+#  Minkowski
+# ==================================================================================================
+@pytest.mark.parametrize(
+    "p, root, expected",
+    [
+        (1.0, True, DistanceMetric.l1_manhattan()),
+        (1.0, False, DistanceMetric.l1_manhattan()),
+        (2.0, True, DistanceMetric.l2_euclidean()),
+        (2.0, False, DistanceMetric.l2s_euclidean_squared()),
+        (math.inf, True, DistanceMetric.linf_chebyshev()),
+        (math.inf, False, DistanceMetric.linf_chebyshev()),
+    ],
+)
+def test_minkowski_canonicalizes_onto_named_metrics(p: float, root: bool, expected: DistanceMetric):
+    """A p coinciding with a dedicated metric must return that metric, never a generic Minkowski value."""
+    # --- act / assert -----------------
+    assert DistanceMetric.minkowski(p, root=root) == expected
+
+
+@pytest.mark.parametrize("p", [0.5, 0.25, 0.125])
+@pytest.mark.parametrize("root", [True, False])
+def test_minkowski_canonicalizes_specializable_p(p: float, root: bool):
+    """A specializable p dispatches to its dedicated kind, which takes no parameter: one code path computes it."""
+    # --- act --------------------------
+    metric = DistanceMetric.minkowski(p, root=root)
+
+    # --- assert -----------------------
+    assert metric.compiled_param == NO_PARAM
+    assert metric.kind not in {m.kind for m in _FACTORY_METRICS}
+    assert metric.kind != DistanceMetric.minkowski(3, root=root).kind
+    assert metric.p == p
+
+
+def test_minkowski_generic_carries_p():
+    """A non-specializable p stays on the generic kinds, and its pair function takes p."""
+    # --- act --------------------------
+    rooted = DistanceMetric.minkowski(3)
+    powered = DistanceMetric.minkowski(3, root=False)
+
+    # --- assert -----------------------
+    assert rooted.compiled_param == 3.0
+    assert powered.compiled_param == 3.0
+    assert rooted.kind != powered.kind
+    assert rooted != powered
+
+
+@pytest.mark.parametrize("p", [0.0, -1.0, -math.inf, math.nan])
+def test_minkowski_rejects_non_positive_p(p: float):
+    """The factory must reject p values outside (0, inf]."""
+    # --- act / assert -----------------
+    with pytest.raises(ValueError, match="requires p > 0"):
+        DistanceMetric.minkowski(p)
+
+
+# ==================================================================================================
 #  Along one axis
 # ==================================================================================================
-def test_along_axis_carries_the_axis_and_nothing_else_does():
-    """The along-axis kind stores its coordinate; every other kind stores NO_AXIS."""
+def test_along_axis_carries_the_axis():
+    """The along-axis metric stores its coordinate as a plain int, and metrics over different axes differ."""
     # --- act / assert -----------------
     assert DistanceMetric.along_axis(3).axis == 3
     assert DistanceMetric.along_axis(np.int64(2)).axis == 2
-    assert all(
-        metric.axis == NO_AXIS for metric in _FACTORY_METRICS if metric.kind != DistanceMetric.along_axis(0).kind
-    )
-    assert DistanceMetric.minkowski(3).axis == NO_AXIS
-
-
-def test_along_axis_metrics_differ_by_axis():
-    """Two along-axis metrics over different coordinates are different metrics."""
-    # --- act / assert -----------------
     assert DistanceMetric.along_axis(0) == DistanceMetric.along_axis(0)
     assert DistanceMetric.along_axis(0) != DistanceMetric.along_axis(1)
 
@@ -182,11 +204,11 @@ def test_along_axis_rejects_anything_but_a_non_negative_integer(axis):
 # ==================================================================================================
 #  Marginals and joint
 # ==================================================================================================
-def test_marginals_and_joint_stores_its_joint_scale_as_param():
-    """The marginals-and-joint kind stores its joint scale, 1 by default, in `param`."""
+def test_marginals_and_joint_carries_its_joint_scale():
+    """The marginals-and-joint metric stores its joint scale, 1 by default, and hands it to its pair function."""
     # --- act / assert -----------------
-    assert DistanceMetric.marginals_and_joint().param == 1.0
-    assert DistanceMetric.marginals_and_joint(joint_scale=2).param == 2.0
+    assert DistanceMetric.marginals_and_joint().joint_scale == 1.0
+    assert DistanceMetric.marginals_and_joint(joint_scale=2).compiled_param == 2.0
     assert DistanceMetric.marginals_and_joint(joint_scale=0.5) != DistanceMetric.marginals_and_joint()
 
 
@@ -196,3 +218,36 @@ def test_marginals_and_joint_rejects_a_joint_scale_that_is_not_positive_and_fini
     # --- act / assert -----------------
     with pytest.raises(ValueError, match="positive, finite joint_scale"):
         DistanceMetric.marginals_and_joint(joint_scale=joint_scale)
+
+
+# ==================================================================================================
+#  Validation against a problem's vectors
+# ==================================================================================================
+def test_validate_accepts_vectors_every_metric_can_compute_on(metric: DistanceMetric):
+    """3-dimensional vectors without a zero row pass every metric's checks."""
+    # --- act / assert -----------------
+    metric.validate(_vectors())  # raises on rejection
+
+
+def test_cosine_rejects_zero_rows():
+    """A zero row has no direction, so the cosine metric rejects it, naming the row."""
+    # --- arrange ----------------------
+    vectors = np.array([[1, 2], [0, 0], [3, 4]], dtype=np.float32)
+
+    # --- act / assert -----------------
+    with pytest.raises(ValueError, match=r"zero vector.*row 1"):
+        DistanceMetric.cosine().validate(vectors)
+
+
+def test_along_axis_rejects_a_missing_coordinate():
+    """An axis at or beyond the dimension count is refused."""
+    # --- act / assert -----------------
+    with pytest.raises(ValueError, match="do not have"):
+        DistanceMetric.along_axis(3).validate(_vectors())
+
+
+def test_marginals_and_joint_rejects_one_dimension():
+    """The marginals-and-joint distance needs at least 2 dimensions."""
+    # --- act / assert -----------------
+    with pytest.raises(ValueError, match="needs at least 2 dimensions"):
+        DistanceMetric.marginals_and_joint().validate(np.ascontiguousarray(_vectors()[:, :1]))

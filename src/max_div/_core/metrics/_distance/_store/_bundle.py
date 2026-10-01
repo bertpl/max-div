@@ -4,7 +4,7 @@ A namedtuple of numpy arrays and scalars, so it crosses the njit boundary withou
 fields a backend does not use hold zero-length arrays.  Which field carries the distances is what
 `kind` selects, and `_reads` is the only place that knows how to index each one.
 
-A lazy store holds the vectors as `preprocess_vectors` returns them for the metric it was built for,
+A lazy store holds the vectors as `DistanceMetric.preprocess` returns them for the metric it was built for,
 so only metrics with the same preprocessing may share it.
 """
 
@@ -18,7 +18,6 @@ from max_div._core.metrics._distance._build import compute_full_matrix, expand_c
 from max_div._core.metrics._distance._metric import (
     NO_PARAM,
     DistanceMetric,
-    preprocess_vectors,
     validate_vector_array_layout,
 )
 
@@ -60,7 +59,7 @@ class DistanceStore(NamedTuple):
     matrix: NDArray[np.float32]  # (n, n) full distance matrix (exactly symmetric), KIND_FULL_MATRIX
     preprocessed_vectors: NDArray[np.float32]  # (n, d) the vectors as preprocessed for the metric, KIND_LAZY
     metric_kind: np.int32  # pair-function selector, KIND_LAZY only
-    metric_param: np.float64  # `DistanceMetric.param`, KIND_LAZY only
+    metric_param: np.float64  # `DistanceMetric.compiled_param`, KIND_LAZY only
 
     # --------------------------------------------------------------------------
     #  Factory methods
@@ -74,8 +73,8 @@ class DistanceStore(NamedTuple):
         caller's job (`lazy_from_vectors` preprocesses, then calls `lazy`).
 
         Args:
-            preprocessed_vectors: (n x d ndarray) the vectors as `preprocess_vectors` returns them for the
-                metric.
+            preprocessed_vectors: (n x d ndarray) the vectors as `DistanceMetric.preprocess` returns them for
+                the metric.
             metric: (DistanceMetric) the distance metric the store computes.
         """
         validate_vector_array_layout(preprocessed_vectors)
@@ -85,13 +84,13 @@ class DistanceStore(NamedTuple):
             matrix=_EMPTY_2D,
             preprocessed_vectors=_readonly(preprocessed_vectors),
             metric_kind=np.int32(metric.kind),
-            metric_param=np.float64(metric.param),
+            metric_param=np.float64(metric.compiled_param),
         )
 
     @classmethod
     def lazy_from_vectors(cls, vectors: NDArray[np.float32], metric: DistanceMetric) -> "DistanceStore":
         """Return a lazy DistanceStore over the user's vectors, preprocessed for the metric first."""
-        return cls.lazy(preprocess_vectors(vectors, metric), metric)
+        return cls.lazy(metric.preprocess(vectors), metric)
 
     @classmethod
     def full_matrix(cls, matrix: NDArray[np.float32]) -> "DistanceStore":

@@ -1,13 +1,20 @@
-"""`DistanceMetric` says which distance is meant.
+"""`DistanceMetric` says which distance is meant, and each metric class owns what its kind needs.
 
-The `kind` selectors below are the same ints the compiled pair functions branch on, so the
-user-facing metric value and the compiled dispatch share a single classification.
+The compiled pair functions in `_pair` branch on an int selector, the metric's `kind`, so the
+user-facing metric value and the compiled dispatch share a single classification.  What the compiled
+side cannot hold lives on the metric class: the checks of a metric against a problem's vectors, the
+preprocessing of those vectors into the form its pair function reads, and the one float parameter
+that the pair function takes.
 """
 
 import math
-from typing import NamedTuple
+from dataclasses import dataclass
+from typing import ClassVar
 
 import numpy as np
+from numpy.typing import NDArray
+
+from ._preprocess import _normalize_rows, validate_vector_array_layout
 
 # These selector values let njit functions branch on the metric without object-mode.
 METRIC_KIND_L1 = 0
@@ -28,78 +35,40 @@ METRIC_KIND_ALONG_AXIS = 14
 METRIC_KIND_LMINUSINF = 15
 METRIC_KIND_MARGINALS_AND_JOINT = 16
 
-# `__repr__` looks up each kind's factory-method name here; a kind whose factory takes an argument is
-# left out, and `__repr__` builds its call with that argument.
-_FACTORY_NAMES = {
-    METRIC_KIND_L1: "l1_manhattan",
-    METRIC_KIND_L2: "l2_euclidean",
-    METRIC_KIND_L2S: "l2s_euclidean_squared",
-    METRIC_KIND_COS: "cosine",
-    METRIC_KIND_LINF: "linf_chebyshev",
-    METRIC_KIND_GEOMEAN: "geometric_mean",
-    METRIC_KIND_LMINUSINF: "l_minus_inf",
-}
-
-# `label` looks up each kind listed here; a kind whose factory takes an argument builds its label from
-# that argument.  This label appears in the solution summary;
-# the docs use a separate `hero_label` (in data/capability_axes.yaml), kept apart so product code and
-# docs do not couple.
-_KIND_LABELS = {
-    METRIC_KIND_L1: "L1",
-    METRIC_KIND_L2: "L2",
-    METRIC_KIND_L2S: "L2²",
-    METRIC_KIND_COS: "cosine",
-    METRIC_KIND_LINF: "L∞",
-    METRIC_KIND_GEOMEAN: "geomean",
-    METRIC_KIND_LMINUSINF: "L-∞",
-}
-
-# `_IMPLIED_P` gives the p each specialized Minkowski kind implies, for `__repr__`; a metric of
-# these kinds stores param=NO_PARAM.
-_IMPLIED_P = {
-    METRIC_KIND_MINKOWSKI_P05: 0.5,
-    METRIC_KIND_MINKOWSKI_P05_POWERED: 0.5,
-    METRIC_KIND_MINKOWSKI_P025: 0.25,
-    METRIC_KIND_MINKOWSKI_P025_POWERED: 0.25,
-    METRIC_KIND_MINKOWSKI_P0125: 0.125,
-    METRIC_KIND_MINKOWSKI_P0125_POWERED: 0.125,
-}
-
-# Kinds that need a preprocessed form of the vectors (see `_preprocess`), not the user's array.
-_PREPROCESSING_KINDS = frozenset({METRIC_KIND_COS, METRIC_KIND_ALONG_AXIS})
-
-# These Minkowski kinds skip the outer 1/p root.
-_POWERED_KINDS = (
-    METRIC_KIND_MINKOWSKI_POWERED,
-    METRIC_KIND_MINKOWSKI_P05_POWERED,
-    METRIC_KIND_MINKOWSKI_P025_POWERED,
-    METRIC_KIND_MINKOWSKI_P0125_POWERED,
-)
-
-
-# `param` is stored as the compiled distance functions read it, so a metric crosses the njit boundary
-# without conversion: a float, with NO_PARAM marking a kind without one (every kind that has one
-# requires it to be > 0, so 0.0 is free to mean "none").  `axis` is an int, with NO_AXIS marking every
-# kind that does not read one coordinate.
+# The float that a compiled pair function takes; NO_PARAM for a kind that takes none (every kind that
+# takes one requires it to be > 0, so 0.0 is free to mean "none").
 NO_PARAM = 0.0
-NO_AXIS = -1
 
 
-class DistanceMetric(NamedTuple):
-    """A distance metric: a `kind` selector plus the parameters that kind needs.
+# =================================================================================================
+#  DistanceMetric
+# =================================================================================================
+@dataclass(frozen=True, repr=False)
+class DistanceMetric:
+    """A distance metric: which distance is meant, and what its compiled pair function needs.
 
-    Create instances via the factory methods only, so metrics that compute the same distance
-    compare equal.  Each parameter field holds a sentinel for every kind that does not use it:
+    Create instances via the factory methods only; they canonicalize their arguments, so metrics
+    that compute the same distance compare equal.  Each kind of distance is a subclass that stores
+    only its own arguments and owns:
 
-    - `param`: the kind's float parameter, the one the compiled distance functions read: the power `p`
-      of a generic Minkowski kind, or the `joint_scale` of `marginals_and_joint`; `NO_PARAM` for every
-      other kind
-    - `axis`: the coordinate that `along_axis` reads; `NO_AXIS` for every other kind
+    - `kind`: the selector that the compiled pair functions branch on;
+    - `compiled_param`: the one float that the compiled pair function takes, `NO_PARAM` for a kind
+      that takes none;
+    - `validate`: the checks of the metric against a problem's vectors;
+    - `preprocess`: the form of the vectors that its pair function reads;
+    - `label`, and the repr, which is the factory call that reconstructs the metric.
     """
 
-    kind: int
-    param: float = NO_PARAM
-    axis: int = NO_AXIS
+    # Every subclass sets these; `kind` and `label` read them unless the subclass computes its own.
+    _kind: ClassVar[int]
+    _label: ClassVar[str]
+    _factory_name: ClassVar[str]
+    needs_preprocessed_vectors: ClassVar[bool] = False  # whether `preprocess` returns a new array, not the input
+
+    def __post_init__(self) -> None:
+        """Reject a bare `DistanceMetric`: only the factory methods' subclasses compute a distance."""
+        if type(self) is DistanceMetric:
+            raise TypeError("Create a DistanceMetric through its factory methods, e.g. DistanceMetric.l2_euclidean().")
 
     # --------------------------------------------------------------------------
     #  Factory methods
@@ -107,12 +76,12 @@ class DistanceMetric(NamedTuple):
     @classmethod
     def l1_manhattan(cls) -> "DistanceMetric":
         """Return the L1 (Manhattan) distance metric: ``sum_i |x_i - y_i|``."""
-        return cls(kind=METRIC_KIND_L1)
+        return L1Manhattan()
 
     @classmethod
     def l2_euclidean(cls) -> "DistanceMetric":
         """Return the L2 (Euclidean) distance metric: ``sqrt( sum_i (x_i - y_i)^2 )``."""
-        return cls(kind=METRIC_KIND_L2)
+        return L2Euclidean()
 
     @classmethod
     def l2s_euclidean_squared(cls) -> "DistanceMetric":
@@ -121,12 +90,12 @@ class DistanceMetric(NamedTuple):
         The squared form avoids the square root and produces identical solutions under the
         GEOMEAN_SEPARATION diversity metric.
         """
-        return cls(kind=METRIC_KIND_L2S)
+        return L2sEuclideanSquared()
 
     @classmethod
     def linf_chebyshev(cls) -> "DistanceMetric":
         """Return the Linf (Chebyshev) distance metric: ``max_i |x_i - y_i|``."""
-        return cls(kind=METRIC_KIND_LINF)
+        return LinfChebyshev()
 
     @classmethod
     def cosine(cls) -> "DistanceMetric":
@@ -134,7 +103,7 @@ class DistanceMetric(NamedTuple):
 
         The range is [0, 2].  Zero vectors have no defined angle and are rejected with an error.
         """
-        return cls(kind=METRIC_KIND_COS)
+        return Cosine()
 
     @classmethod
     def geometric_mean(cls) -> "DistanceMetric":
@@ -146,7 +115,7 @@ class DistanceMetric(NamedTuple):
         It is not a strict metric (distinct points can be at distance zero, and the triangle
         inequality fails); the solver relies on neither.  It costs one ``log`` per dimension.
         """
-        return cls(kind=METRIC_KIND_GEOMEAN)
+        return GeometricMean()
 
     @classmethod
     def l_minus_inf(cls) -> "DistanceMetric":
@@ -161,7 +130,7 @@ class DistanceMetric(NamedTuple):
         It is not a metric in the mathematical sense (distinct points can be at distance zero,
         and the triangle inequality fails); the solver relies on neither.
         """
-        return cls(kind=METRIC_KIND_LMINUSINF)
+        return LMinusInf()
 
     @classmethod
     def along_axis(cls, axis: int) -> "DistanceMetric":
@@ -178,7 +147,7 @@ class DistanceMetric(NamedTuple):
         """
         if isinstance(axis, bool) or not isinstance(axis, (int, np.integer)) or axis < 0:
             raise ValueError(f"along_axis requires a non-negative integer axis; here: {axis!r}.")
-        return cls(kind=METRIC_KIND_ALONG_AXIS, axis=int(axis))
+        return AlongAxis(axis=int(axis))
 
     @classmethod
     def marginals_and_joint(cls, joint_scale: float = 1.0) -> "DistanceMetric":
@@ -219,7 +188,7 @@ class DistanceMetric(NamedTuple):
         joint_scale = float(joint_scale)
         if not (math.isfinite(joint_scale) and joint_scale > 0):
             raise ValueError(f"marginals_and_joint requires a positive, finite joint_scale; here: {joint_scale}.")
-        return cls(kind=METRIC_KIND_MARGINALS_AND_JOINT, param=joint_scale)
+        return MarginalsAndJoint(joint_scale=joint_scale)
 
     @classmethod
     def minkowski(cls, p: float, root: bool = True) -> "DistanceMetric":
@@ -247,54 +216,258 @@ class DistanceMetric(NamedTuple):
             raise ValueError(f"Minkowski distance requires p > 0; here: {p}.")
         if p == math.inf:
             return cls.linf_chebyshev()
-        if p == 1.0:
+        elif p == 1.0:
             return cls.l1_manhattan()
-        if p == 2.0:
+        elif p == 2.0:
             return cls.l2_euclidean() if root else cls.l2s_euclidean_squared()
-        if p == 0.5:
-            return cls(kind=METRIC_KIND_MINKOWSKI_P05 if root else METRIC_KIND_MINKOWSKI_P05_POWERED)
-        if p == 0.25:
-            return cls(kind=METRIC_KIND_MINKOWSKI_P025 if root else METRIC_KIND_MINKOWSKI_P025_POWERED)
-        if p == 0.125:
-            return cls(kind=METRIC_KIND_MINKOWSKI_P0125 if root else METRIC_KIND_MINKOWSKI_P0125_POWERED)
-        return cls(kind=METRIC_KIND_MINKOWSKI if root else METRIC_KIND_MINKOWSKI_POWERED, param=p)
-
-    # --------------------------------------------------------------------------
-    #  Properties
-    # --------------------------------------------------------------------------
-    @property
-    def needs_preprocessed_vectors(self) -> bool:
-        """Return whether this metric's distances read a preprocessed copy of the vectors (see `_preprocess`)."""
-        return self.kind in _PREPROCESSING_KINDS
-
-    @property
-    def label(self) -> str:
-        """Return a short label for the metric, e.g. `L1`, `geomean`, `axis 2`, `L3-powered`."""
-        if self.kind in _KIND_LABELS:
-            return _KIND_LABELS[self.kind]
-        elif self.kind == METRIC_KIND_ALONG_AXIS:
-            return f"axis {self.axis}"
-        elif self.kind == METRIC_KIND_MARGINALS_AND_JOINT:
-            scale_suffix = f" (joint scale {self.param:g})" if self.param != 1.0 else ""
-            return f"marginals+joint{scale_suffix}"
         else:
-            p = self.param if self.param != NO_PARAM else _IMPLIED_P[self.kind]
-            powered = "-powered" if self.kind in _POWERED_KINDS else ""
-            return f"L{p:g}{powered}"
+            return Minkowski(p=p, root=root)
+
+    # --------------------------------------------------------------------------
+    #  What the compiled pair function needs
+    # --------------------------------------------------------------------------
+    @property
+    def kind(self) -> int:
+        """Return the selector that the compiled pair functions branch on."""
+        return self._kind
+
+    @property
+    def compiled_param(self) -> float:
+        """Return the float that the compiled pair function takes; `NO_PARAM` for a kind that takes none."""
+        return NO_PARAM
+
+    def validate(self, vectors: NDArray[np.float32]) -> None:
+        """Raise ValueError if this metric cannot be computed on `vectors`.
+
+        A no-op for a kind that computes on any vectors, so a caller can call it on every metric.
+        """
+
+    def preprocess(self, vectors: NDArray[np.float32]) -> NDArray[np.float32]:
+        """Return the vectors as this metric's pair function reads them: the input itself, unless the kind preprocesses.
+
+        The input is never written; a preprocessed result is a new array.
+
+        Raises:
+            ValueError: If `vectors` is not a 2D float32 C-contiguous array, or `validate` rejects it.
+        """
+        validate_vector_array_layout(vectors)
+        self.validate(vectors)
+        return self._preprocessed(vectors)
+
+    def _preprocessed(self, vectors: NDArray[np.float32]) -> NDArray[np.float32]:
+        """Return the array that the pair function reads, for vectors that passed the checks; the input by default."""
+        return vectors
 
     # --------------------------------------------------------------------------
     #  Representation
     # --------------------------------------------------------------------------
+    @property
+    def label(self) -> str:
+        """Return a short label for the metric, e.g. `L1`, `geomean`, `axis 2`, `L3-powered`."""
+        return self._label
+
     def __repr__(self) -> str:
         """Return the factory call that constructs this metric, leaving out an argument that equals its default."""
-        if self.kind in _FACTORY_NAMES:
-            return f"DistanceMetric.{_FACTORY_NAMES[self.kind]}()"
-        elif self.kind == METRIC_KIND_ALONG_AXIS:
-            return f"DistanceMetric.along_axis({self.axis})"
-        elif self.kind == METRIC_KIND_MARGINALS_AND_JOINT:
-            scale_arg = f"joint_scale={self.param!r}" if self.param != 1.0 else ""
-            return f"DistanceMetric.marginals_and_joint({scale_arg})"
-        else:
-            p = self.param if self.param != NO_PARAM else _IMPLIED_P[self.kind]
-            root_arg = ", root=False" if self.kind in _POWERED_KINDS else ""
-            return f"DistanceMetric.minkowski(p={p}{root_arg})"
+        return f"DistanceMetric.{self._factory_name}({', '.join(self._factory_args())})"
+
+    def _factory_args(self) -> tuple[str, ...]:
+        """Return the factory arguments as source text, in the factory's order, leaving out those at their default."""
+        return ()
+
+
+# =================================================================================================
+#  Minkowski family
+# =================================================================================================
+@dataclass(frozen=True, repr=False)
+class L1Manhattan(DistanceMetric):
+    """The L1 (Manhattan) distance; see `DistanceMetric.l1_manhattan`."""
+
+    _kind = METRIC_KIND_L1
+    _label = "L1"
+    _factory_name = "l1_manhattan"
+
+
+@dataclass(frozen=True, repr=False)
+class L2Euclidean(DistanceMetric):
+    """The L2 (Euclidean) distance; see `DistanceMetric.l2_euclidean`."""
+
+    _kind = METRIC_KIND_L2
+    _label = "L2"
+    _factory_name = "l2_euclidean"
+
+
+@dataclass(frozen=True, repr=False)
+class L2sEuclideanSquared(DistanceMetric):
+    """The squared L2 distance; see `DistanceMetric.l2s_euclidean_squared`."""
+
+    _kind = METRIC_KIND_L2S
+    _label = "L2²"
+    _factory_name = "l2s_euclidean_squared"
+
+
+@dataclass(frozen=True, repr=False)
+class LinfChebyshev(DistanceMetric):
+    """The Linf (Chebyshev) distance; see `DistanceMetric.linf_chebyshev`."""
+
+    _kind = METRIC_KIND_LINF
+    _label = "L∞"
+    _factory_name = "linf_chebyshev"
+
+
+# The Minkowski values of p that compute through a specialized pair function, by (p, root); the
+# specialized kinds apply the root as repeated squarings and take no parameter.
+_MINKOWSKI_SPECIALIZED_KINDS: dict[tuple[float, bool], int] = {
+    (0.5, True): METRIC_KIND_MINKOWSKI_P05,
+    (0.5, False): METRIC_KIND_MINKOWSKI_P05_POWERED,
+    (0.25, True): METRIC_KIND_MINKOWSKI_P025,
+    (0.25, False): METRIC_KIND_MINKOWSKI_P025_POWERED,
+    (0.125, True): METRIC_KIND_MINKOWSKI_P0125,
+    (0.125, False): METRIC_KIND_MINKOWSKI_P0125_POWERED,
+}
+
+
+@dataclass(frozen=True, repr=False)
+class Minkowski(DistanceMetric):
+    """The Minkowski distance for a p without a dedicated class; see `DistanceMetric.minkowski`."""
+
+    p: float
+    root: bool
+
+    _factory_name = "minkowski"
+
+    @property
+    def kind(self) -> int:
+        """Return the specialized selector for p in {0.5, 0.25, 0.125}, else the generic one for the root choice."""
+        generic = METRIC_KIND_MINKOWSKI if self.root else METRIC_KIND_MINKOWSKI_POWERED
+        return _MINKOWSKI_SPECIALIZED_KINDS.get((self.p, self.root), generic)
+
+    @property
+    def compiled_param(self) -> float:
+        """Return p for the generic kinds; a specialized kind has p built in and takes none."""
+        return NO_PARAM if (self.p, self.root) in _MINKOWSKI_SPECIALIZED_KINDS else self.p
+
+    @property
+    def label(self) -> str:
+        """Return `L<p>`, with `-powered` appended when the root is skipped."""
+        return f"L{self.p:g}{'' if self.root else '-powered'}"
+
+    def _factory_args(self) -> tuple[str, ...]:
+        return (f"p={self.p!r}",) if self.root else (f"p={self.p!r}", "root=False")
+
+
+# =================================================================================================
+#  Angular
+# =================================================================================================
+@dataclass(frozen=True, repr=False)
+class Cosine(DistanceMetric):
+    """The cosine distance; see `DistanceMetric.cosine`.
+
+    Its pair function reads rows scaled to unit L2 norm, so the distance is half the squared L2
+    distance of the scaled rows; `preprocess` does the scaling.
+    """
+
+    _kind = METRIC_KIND_COS
+    _label = "cosine"
+    _factory_name = "cosine"
+    needs_preprocessed_vectors = True
+
+    def validate(self, vectors: NDArray[np.float32]) -> None:
+        """Raise ValueError if any vector is all-zero: cosine distance is undefined for zero vectors."""
+        zero_rows = np.flatnonzero(~vectors.any(axis=1))
+        if zero_rows.size > 0:
+            raise ValueError(
+                f"Cosine distance is undefined for zero vectors; found an all-zero vector at row {zero_rows[0]}."
+            )
+
+    def _preprocessed(self, vectors: NDArray[np.float32]) -> NDArray[np.float32]:
+        """Return a fresh float32 array with each row scaled to unit L2 norm."""
+        return _normalize_rows(vectors)
+
+
+# =================================================================================================
+#  Coordinate-wise
+# =================================================================================================
+@dataclass(frozen=True, repr=False)
+class GeometricMean(DistanceMetric):
+    """The geometric-mean distance; see `DistanceMetric.geometric_mean`."""
+
+    _kind = METRIC_KIND_GEOMEAN
+    _label = "geomean"
+    _factory_name = "geometric_mean"
+
+
+@dataclass(frozen=True, repr=False)
+class LMinusInf(DistanceMetric):
+    """The L-∞ distance; see `DistanceMetric.l_minus_inf`."""
+
+    _kind = METRIC_KIND_LMINUSINF
+    _label = "L-∞"
+    _factory_name = "l_minus_inf"
+
+
+@dataclass(frozen=True, repr=False)
+class AlongAxis(DistanceMetric):
+    """The distance along one coordinate axis; see `DistanceMetric.along_axis`.
+
+    Its pair function reads column 0 of the array it is given, so `preprocess` slices the axis out
+    into an (n, 1) array and the axis itself never crosses the compiled boundary.
+    """
+
+    axis: int
+
+    _kind = METRIC_KIND_ALONG_AXIS
+    _factory_name = "along_axis"
+    needs_preprocessed_vectors = True
+
+    @property
+    def label(self) -> str:
+        """Return `axis <i>`."""
+        return f"axis {self.axis}"
+
+    def validate(self, vectors: NDArray[np.float32]) -> None:
+        """Raise ValueError if the axis is not a coordinate of `vectors`."""
+        n_dims = vectors.shape[1]
+        if self.axis >= n_dims:
+            raise ValueError(f"{self!r} reads a coordinate that {n_dims}-dimensional vectors do not have.")
+
+    def _preprocessed(self, vectors: NDArray[np.float32]) -> NDArray[np.float32]:
+        """Return a fresh (n, 1) float32 array holding the one coordinate that the pair function reads."""
+        return vectors[:, self.axis : self.axis + 1].copy()
+
+    def _factory_args(self) -> tuple[str, ...]:
+        return (repr(self.axis),)
+
+
+# =================================================================================================
+#  Marginals and joint
+# =================================================================================================
+@dataclass(frozen=True, repr=False)
+class MarginalsAndJoint(DistanceMetric):
+    """The marginals-and-joint distance; see `DistanceMetric.marginals_and_joint`."""
+
+    joint_scale: float
+
+    _kind = METRIC_KIND_MARGINALS_AND_JOINT
+    _factory_name = "marginals_and_joint"
+
+    @property
+    def compiled_param(self) -> float:
+        """Return the joint scale, the factor on the joint term."""
+        return self.joint_scale
+
+    @property
+    def label(self) -> str:
+        """Return `marginals+joint`, with the joint scale appended when it is not 1."""
+        scale_suffix = f" (joint scale {self.joint_scale:g})" if self.joint_scale != 1.0 else ""
+        return f"marginals+joint{scale_suffix}"
+
+    def validate(self, vectors: NDArray[np.float32]) -> None:
+        """Raise ValueError below 2 dimensions, where the distance only rescales the one coordinate gap."""
+        if vectors.shape[1] < 2:
+            raise ValueError(
+                f"{self!r} needs at least 2 dimensions; in 1 it only rescales the one coordinate gap, "
+                "so use DistanceMetric.l1_manhattan() instead."
+            )
+
+    def _factory_args(self) -> tuple[str, ...]:
+        return (f"joint_scale={self.joint_scale!r}",) if self.joint_scale != 1.0 else ()

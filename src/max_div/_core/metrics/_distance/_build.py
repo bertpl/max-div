@@ -27,7 +27,7 @@ from numpy.typing import NDArray
 
 from max_div._core.jit import lazy_njit
 
-from ._metric import DistanceMetric, _metric_pair, preprocess_vectors
+from ._metric import DistanceMetric, _metric_pair
 
 # Width in columns of the blocks the parallel fill cuts the pair space into.
 BUILD_BLOCK_WIDTH = 64
@@ -68,18 +68,18 @@ def compute_full_matrix(
         ((n, n) ndarray) full pairwise-distance matrix, float32 C-contiguous — `out` itself
         whenever one was given, following numpy's convention for such a parameter.
     """
-    preprocessed = preprocess_vectors(vectors, metric)
+    preprocessed = metric.preprocess(vectors)
     out = _allocate_if_needed(out, preprocessed.shape[0])
     if parallel_build_enabled():
         _fill_matrix_parallel(
             preprocessed,
             np.int32(metric.kind),
-            np.float64(metric.param),
+            np.float64(metric.compiled_param),
             np.int64(BUILD_BLOCK_WIDTH),
             out,
         )
     else:
-        _fill_matrix(preprocessed, np.int32(metric.kind), np.float64(metric.param), out)
+        _fill_matrix(preprocessed, np.int32(metric.kind), np.float64(metric.compiled_param), out)
     return out
 
 

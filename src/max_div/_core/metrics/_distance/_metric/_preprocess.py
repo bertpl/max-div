@@ -1,7 +1,7 @@
-"""Some metrics need a preprocessed form of the vectors; this module is the only place that preprocessing happens.
+"""Vector-array helpers behind `DistanceMetric.preprocess`: the layout every distance function expects, and row scaling.
 
-`DistanceMetric.needs_preprocessed_vectors` declares whether a metric needs it; `preprocess_vectors`
-applies it.
+Each metric class preprocesses its own vectors; this module holds what is shared, or what numba
+must compile.
 """
 
 import numba
@@ -10,18 +10,7 @@ from numpy.typing import NDArray
 
 from max_div._core.jit import lazy_njit
 
-from ._distance_metric import (
-    METRIC_KIND_ALONG_AXIS,
-    METRIC_KIND_COS,
-    METRIC_KIND_MARGINALS_AND_JOINT,
-    NO_AXIS,
-    DistanceMetric,
-)
 
-
-# =================================================================================================
-#  Preconditions
-# =================================================================================================
 def validate_vector_array_layout(vectors: NDArray[np.float32]) -> None:
     """Raise ValueError unless `vectors` is a 2D float32 C-contiguous array, as every distance function expects."""
     if vectors.ndim != 2 or vectors.dtype != np.float32 or not vectors.flags.c_contiguous:
@@ -31,54 +20,7 @@ def validate_vector_array_layout(vectors: NDArray[np.float32]) -> None:
         )
 
 
-# =================================================================================================
-#  Preprocessing
-# =================================================================================================
-def preprocess_vectors(vectors: NDArray[np.float32], metric: DistanceMetric) -> NDArray[np.float32]:
-    """Return the vectors as the metric needs them: preprocessed when it requires that, the input itself otherwise.
-
-    The input is never written; a preprocessed result is a new array.
-
-    Raises:
-        ValueError: If `vectors` is not in the required form, or when a distance-specific validation
-            check does not pass.
-    """
-    validate_vector_array_layout(vectors)
-    if not metric.needs_preprocessed_vectors:
-        return vectors
-    if metric.kind == METRIC_KIND_COS:
-        preprocessed = preprocess_cosine_distance_vectors(vectors)
-    elif metric.kind == METRIC_KIND_ALONG_AXIS:
-        validate_metric_fits_dimensions(metric, vectors.shape[1])
-        preprocessed = preprocess_along_axis_vectors(vectors, metric.axis)
-    else:  # pragma: no cover -- every preprocessing kind has a branch above; a kind that lacks one lands here
-        raise NotImplementedError(
-            f"{metric!r} declares that it preprocesses vectors, but no preprocessing exists for it."
-        )
-    if np.shares_memory(preprocessed, vectors):  # pragma: no cover
-        raise RuntimeError(f"Preprocessing for {metric!r} returned an array sharing memory with its input.")
-    return preprocessed
-
-
-def validate_cosine_distance_vectors(vectors: NDArray[np.float32]) -> None:
-    """Raise ValueError if any vector is all-zero — cosine distance is undefined for zero vectors."""
-    zero_rows = np.flatnonzero(~vectors.any(axis=1))
-    if zero_rows.size > 0:
-        raise ValueError(
-            f"Cosine distance is undefined for zero vectors; found an all-zero vector at row {zero_rows[0]}."
-        )
-
-
-def preprocess_cosine_distance_vectors(vectors: NDArray[np.float32]) -> NDArray[np.float32]:
-    """Return a fresh float32 array with each row of `vectors` scaled to unit L2 norm, after rejecting all-zero rows.
-
-    Raises:
-        ValueError: If any row is all-zero, since it has no direction.
-    """
-    validate_cosine_distance_vectors(vectors)
-    return _normalize_rows(vectors)
-
-
+# Serves the cosine metric class only, but stays module-level because numba compiles it.
 @lazy_njit(numba.float32[:, ::1](numba.types.Array(numba.float32, 2, "C", readonly=True)), cache=True)
 def _normalize_rows(vectors: NDArray[np.float32]) -> NDArray[np.float32]:
     """Scale each row to unit L2 norm into a fresh float32 array.
@@ -97,31 +39,3 @@ def _normalize_rows(vectors: NDArray[np.float32]) -> NDArray[np.float32]:
         for c in range(d):
             normalized[i, c] = np.float32(np.float64(vectors[i, c]) / norm)
     return normalized
-
-
-def validate_metric_fits_dimensions(metric: DistanceMetric, n_dims: int) -> None:
-    """Raise ValueError if `metric` cannot be computed on `n_dims`-dimensional vectors.
-
-    A no-op for a metric that works in any dimension, so a caller can hand it any metric.
-
-    Raises:
-        ValueError: If the metric's axis is not below `n_dims`, or if the metric is marginals-and-joint and
-            `n_dims` is 1, where it only rescales the one coordinate gap.
-    """
-    if metric.axis != NO_AXIS and metric.axis >= n_dims:
-        raise ValueError(f"{metric!r} reads a coordinate that {n_dims}-dimensional vectors do not have.")
-    if metric.kind == METRIC_KIND_MARGINALS_AND_JOINT and n_dims < 2:
-        raise ValueError(
-            f"{metric!r} needs at least 2 dimensions; in 1 it only rescales the one coordinate gap, "
-            "so use DistanceMetric.l1_manhattan() instead."
-        )
-
-
-def preprocess_along_axis_vectors(vectors: NDArray[np.float32], axis: int) -> NDArray[np.float32]:
-    """Return a fresh (n, 1) float32 array holding the one coordinate that the along-axis distance reads.
-
-    The slice lets the pair function read column 0 of a contiguous array, so the axis itself never
-    crosses the compiled boundary.  The axis must be a coordinate of `vectors`;
-    `validate_metric_fits_dimensions` is the check.
-    """
-    return vectors[:, axis : axis + 1].copy()

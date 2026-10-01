@@ -16,8 +16,6 @@ from max_div._core.metrics import (
     DiversityObjective,
     DiversityObjectiveSimple,
     HybridDiversityMetric,
-    validate_cosine_distance_vectors,
-    validate_metric_fits_dimensions,
 )
 from max_div._core.metrics._distance import compute_full_matrix, expand_condensed
 
@@ -130,7 +128,7 @@ class MaxDivProblem(ABC):
         cls,
         vectors: np.ndarray,
         k: int,
-        distance_metric: DistanceMetric = DistanceMetric.l2_euclidean(),  # noqa: B008 -- immutable NamedTuple, safe as a default
+        distance_metric: DistanceMetric = DistanceMetric.l2_euclidean(),  # noqa: B008 -- immutable frozen dataclass, safe as a default
         diversity_metric: DiversityMetric | HybridDiversityMetric = DiversityMetric.GEOMEAN_SEPARATION,
         constraints: list[Constraint] | None = None,
     ) -> "VectorMaxDivProblem":
@@ -154,9 +152,7 @@ class MaxDivProblem(ABC):
             raise ValueError("Vectors must have at least one dimension.")
         vectors = np.ascontiguousarray(vectors, dtype=np.float32)  # the form every distance function expects
         for metric in cls._distance_metrics_read(distance_metric, diversity_metric):
-            if metric == DistanceMetric.cosine():
-                validate_cosine_distance_vectors(vectors)  # fail fast: zero vectors have no defined angle
-            validate_metric_fits_dimensions(metric, vectors.shape[1])
+            metric.validate(vectors)  # fail fast, before any distance store is built
 
         cls._validate_k(k, vectors.shape[0])
 
