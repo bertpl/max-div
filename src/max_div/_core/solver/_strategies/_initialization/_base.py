@@ -13,6 +13,7 @@ if TYPE_CHECKING:
 
     from ._init_farthest_point import InitFarthestPoint
     from ._init_given_selection import InitGivenSelection
+    from ._init_guided_batches import InitGuidedBatches
     from ._init_most_feasible import InitMostFeasible
     from ._init_random_selection import InitRandomSelection
 
@@ -117,6 +118,26 @@ class InitializationStrategy(StrategyBase, ABC):
         from ._init_given_selection import InitGivenSelection
 
         return InitGivenSelection(indices)
+
+    @classmethod
+    def guided_batches(cls, batch_size: int = 1, nc: int = 8) -> InitGuidedBatches:
+        """Create an initialization that adds items in batches, each the best of `nc` draws guided by diversity.
+
+        Every draw favors items far from the selection so far, and on a constrained problem it is
+        steered toward satisfying the constraints, so the start is both spread out and close to
+        feasible.  See `InitGuidedBatches` for what the 2 parameters trade off and for the cost.
+
+        Args:
+            batch_size: Items added per iteration; 1 draws every item against the selection so far.
+            nc: Candidate batches drawn per iteration, the best of which is added; 1 adds the one
+                draw without scoring it.
+
+        Raises:
+            ValueError: If `batch_size` or `nc` is below 1.
+        """
+        from ._init_guided_batches import InitGuidedBatches
+
+        return InitGuidedBatches(batch_size=batch_size, nc=nc)
 
     @classmethod
     def most_feasible(cls, max_iter: int | None = None) -> InitMostFeasible:

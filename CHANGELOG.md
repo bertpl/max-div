@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+- `InitializationStrategy.guided_batches(batch_size, nc)` builds the starting selection in batches, each the best of `nc` draws that favor items far from the selection and, on a constrained problem, move toward satisfying the constraints; the 2 parameters trade speed for quality
 
 ### Changed
 
