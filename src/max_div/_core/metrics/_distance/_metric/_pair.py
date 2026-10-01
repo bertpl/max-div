@@ -195,11 +195,11 @@ def _along_axis_pair(vectors: NDArray[np.float32], i: int | np.signedinteger, j:
     cache=True,
 )
 def _metric_pair(  # noqa: C901 -- flat dispatch, one arm per kind: complexity here is roster size, not tangledness
-    vectors: NDArray[np.float32], metric_kind: np.int32, metric_param: np.float64, i: np.int32, j: np.int32
+    vectors: NDArray[np.float32], metric_kind: np.int32, metric_compiled_param: np.float64, i: np.int32, j: np.int32
 ) -> np.float32:
     """Compute the distance between vectors i and j, per the given metric selector.
 
-    `metric_param` is the metric's `DistanceMetric.compiled_param`: the power `p` of a generic Minkowski
+    `metric_compiled_param` is the metric's `DistanceMetric.compiled_param`: the power `p` of a generic Minkowski
     kind, or the `joint_scale` of marginals-and-joint.
 
     The selector is loop-invariant in every calling loop, so the branch order is not
@@ -223,11 +223,13 @@ def _metric_pair(  # noqa: C901 -- flat dispatch, one arm per kind: complexity h
     if metric_kind == METRIC_KIND_ALONG_AXIS:
         return np.float32(_along_axis_pair(vectors, i, j))  # along axis: the array holds that one coordinate
     if metric_kind == METRIC_KIND_MARGINALS_AND_JOINT:
-        return np.float32(_marginals_and_joint_pair(vectors, i, j, metric_param))
+        return np.float32(_marginals_and_joint_pair(vectors, i, j, metric_compiled_param))
     if metric_kind == METRIC_KIND_MINKOWSKI:
-        return np.float32(_minkowski_pair_powered(vectors, i, j, metric_param) ** (1.0 / metric_param))
+        return np.float32(
+            _minkowski_pair_powered(vectors, i, j, metric_compiled_param) ** (1.0 / metric_compiled_param)
+        )
     if metric_kind == METRIC_KIND_MINKOWSKI_POWERED:
-        return np.float32(_minkowski_pair_powered(vectors, i, j, metric_param))
+        return np.float32(_minkowski_pair_powered(vectors, i, j, metric_compiled_param))
     if metric_kind == METRIC_KIND_MINKOWSKI_P05:
         acc = _minkowski_pair_powered_p05(vectors, i, j)
         return np.float32(acc * acc)

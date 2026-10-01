@@ -29,7 +29,9 @@ def get_distance_full_matrix(store: DistanceStore, i: int | np.integer, j: int |
 @lazy_njit(numba.float32(DISTANCE_STORE_TYPE, numba.int64, numba.int64), inline="always", cache=True)
 def get_distance_lazy(store: DistanceStore, i: int | np.integer, j: int | np.integer) -> np.float32:
     """Compute the distance between two items from a lazy store's preprocessed array."""
-    return _metric_pair(store.preprocessed_vectors, store.metric_kind, store.metric_param, np.int32(i), np.int32(j))
+    return _metric_pair(
+        store.preprocessed_vectors, store.metric_kind, store.metric_compiled_param, np.int32(i), np.int32(j)
+    )
 
 
 @lazy_njit(numba.float32(DISTANCE_STORE_TYPE, numba.int32, numba.int32), inline="always", cache=True)
@@ -47,4 +49,4 @@ def get_distance(store: DistanceStore, i: np.int32, j: np.int32) -> np.float32:
         return np.float32(0.0)
     if store.kind == KIND_FULL_MATRIX:
         return store.matrix[i, j]
-    return _metric_pair(store.preprocessed_vectors, store.metric_kind, store.metric_param, i, j)
+    return _metric_pair(store.preprocessed_vectors, store.metric_kind, store.metric_compiled_param, i, j)

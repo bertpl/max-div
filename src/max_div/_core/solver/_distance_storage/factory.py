@@ -207,7 +207,7 @@ class DistanceStoreFactory:
                 compute_full_matrix(problem.vectors, distance, out=matrix)
                 stores.append(DistanceStore.full_matrix(matrix))
             else:
-                # `preprocess` returns problem.vectors itself for a metric that does not preprocess,
+                # `DistanceMetric.preprocess` returns problem.vectors itself for a metric that does not preprocess,
                 # so the shared-memory allocator sees one array and puts it in one segment
                 adopted = allocator.adopt(distance.preprocess(problem.vectors), KIND_LAZY, distance)
                 stores.append(DistanceStore.lazy(adopted, distance))

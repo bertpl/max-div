@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `InitializationStrategy.constraint_aware_diverse(batch_size, nc)` builds the starting selection of a constrained problem in batches, each the best-scoring of `nc` candidate batches that favor items far from the selection and move toward satisfying the constraints; a smaller `batch_size` or a larger `nc` gives a better starting selection at a higher cost
 
 ### Changed
+- `DistanceMetric` is no longer a tuple: its `param` and `axis` fields are gone, and a metric is created through the factory methods only, as before
 
 ### Deprecated
 

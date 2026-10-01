@@ -21,11 +21,6 @@ _FACTORY_METRICS = (
 )
 
 
-def _vectors() -> np.ndarray:
-    """Return a small float32 C-contiguous array with no zero rows, so every metric accepts it."""
-    return np.ascontiguousarray(np.random.default_rng(7).random((6, 3), dtype=np.float32) + 0.1)
-
-
 # ==================================================================================================
 #  Factories and kinds
 # ==================================================================================================
@@ -36,12 +31,14 @@ def test_factory_metrics_have_distinct_kinds():
     assert len(set(kinds)) == len(kinds)
 
 
-def test_factory_metrics_are_distinct_subclasses():
-    """Each factory returns an instance of its own `DistanceMetric` subclass, which owns that kind's behavior."""
-    # --- act / assert -----------------
+def test_factory_metrics_cover_every_subclass_once():
+    """Each factory returns an instance of its own `DistanceMetric` subclass, and together they cover every subclass."""
+    # --- act --------------------------
     classes = [type(metric) for metric in _FACTORY_METRICS]
+
+    # --- assert -----------------------
     assert len(set(classes)) == len(classes)
-    assert all(isinstance(metric, DistanceMetric) and type(metric) is not DistanceMetric for metric in _FACTORY_METRICS)
+    assert set(classes) | {type(DistanceMetric.minkowski(3))} == set(DistanceMetric.__subclasses__())
 
 
 def test_a_bare_distance_metric_cannot_be_created():
@@ -62,6 +59,17 @@ def test_factory_metrics_without_a_float_parameter_take_no_compiled_param(factor
     assert factory_metric.compiled_param == NO_PARAM
 
 
+def test_compiled_args_are_the_kind_and_param_as_numpy_scalars():
+    """The compiled arguments pair the kind and the parameter in the types the pair functions are compiled for."""
+    # --- act --------------------------
+    kind, param = DistanceMetric.minkowski(3).compiled_args
+
+    # --- assert -----------------------
+    assert (kind, param) == (DistanceMetric.minkowski(3).kind, 3.0)
+    assert isinstance(kind, np.int32)
+    assert isinstance(param, np.float64)
+
+
 def test_equal_factories_compare_equal():
     """Two calls of the same factory yield equal, interchangeable values."""
     # --- act / assert -----------------
@@ -70,7 +78,7 @@ def test_equal_factories_compare_equal():
 
 
 def test_metrics_are_usable_as_dict_keys():
-    """Every factory metric is hashable and keys its own entry, as the stores-by-distance mapping needs."""
+    """Every factory metric is hashable, and distinct metrics occupy distinct dict entries."""
     # --- act --------------------------
     by_metric = {metric: index for index, metric in enumerate(_FACTORY_METRICS)}
 
@@ -149,7 +157,7 @@ def test_minkowski_canonicalizes_onto_named_metrics(p: float, root: bool, expect
 @pytest.mark.parametrize("p", [0.5, 0.25, 0.125])
 @pytest.mark.parametrize("root", [True, False])
 def test_minkowski_canonicalizes_specializable_p(p: float, root: bool):
-    """A specializable p dispatches to its dedicated kind, which takes no parameter: one code path computes it."""
+    """A p of 0.5, 0.25 or 0.125 gets its own specialized kind, whose pair function takes no parameter."""
     # --- act --------------------------
     metric = DistanceMetric.minkowski(p, root=root)
 
@@ -223,31 +231,33 @@ def test_marginals_and_joint_rejects_a_joint_scale_that_is_not_positive_and_fini
 # ==================================================================================================
 #  Validation against a problem's vectors
 # ==================================================================================================
-def test_validate_accepts_vectors_every_metric_can_compute_on(metric: DistanceMetric):
-    """3-dimensional vectors without a zero row pass every metric's checks."""
+def test_validate_accepts_vectors_every_metric_can_compute_on(metric: DistanceMetric, vectors: np.ndarray):
+    """Vectors of 3 dimensions without a zero row pass every metric's checks."""
     # --- act / assert -----------------
-    metric.validate(_vectors())  # raises on rejection
+    metric.validate(vectors)  # raises on rejection
 
 
-def test_cosine_rejects_zero_rows():
-    """A zero row has no direction, so the cosine metric rejects it, naming the row."""
+@pytest.mark.parametrize("check", ["validate", "preprocess"])
+def test_cosine_rejects_zero_rows(check: str):
+    """A zero row has no direction, so cosine's validation and its preprocessing both refuse it, naming the row."""
     # --- arrange ----------------------
     vectors = np.array([[1, 2], [0, 0], [3, 4]], dtype=np.float32)
 
     # --- act / assert -----------------
     with pytest.raises(ValueError, match=r"zero vector.*row 1"):
-        DistanceMetric.cosine().validate(vectors)
+        getattr(DistanceMetric.cosine(), check)(vectors)
 
 
-def test_along_axis_rejects_a_missing_coordinate():
-    """An axis at or beyond the dimension count is refused."""
+@pytest.mark.parametrize("check", ["validate", "preprocess"])
+def test_along_axis_rejects_a_missing_coordinate(check: str, vectors: np.ndarray):
+    """An axis at or beyond the dimension count is refused by the metric's validation and its preprocessing alike."""
     # --- act / assert -----------------
     with pytest.raises(ValueError, match="do not have"):
-        DistanceMetric.along_axis(3).validate(_vectors())
+        getattr(DistanceMetric.along_axis(3), check)(vectors)
 
 
-def test_marginals_and_joint_rejects_one_dimension():
+def test_marginals_and_joint_rejects_one_dimension(vectors: np.ndarray):
     """The marginals-and-joint distance needs at least 2 dimensions."""
     # --- act / assert -----------------
     with pytest.raises(ValueError, match="needs at least 2 dimensions"):
-        DistanceMetric.marginals_and_joint().validate(np.ascontiguousarray(_vectors()[:, :1]))
+        DistanceMetric.marginals_and_joint().validate(np.ascontiguousarray(vectors[:, :1]))

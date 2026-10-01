@@ -4,7 +4,7 @@ A namedtuple of numpy arrays and scalars, so it crosses the njit boundary withou
 fields a backend does not use hold zero-length arrays.  Which field carries the distances is what
 `kind` selects, and `_reads` is the only place that knows how to index each one.
 
-A lazy store holds the vectors as `DistanceMetric.preprocess` returns them for the metric it was built for,
+A lazy store holds the vectors as `DistanceMetric.preprocess` returns them for the metric that it was built for,
 so only metrics with the same preprocessing may share it.
 """
 
@@ -59,7 +59,7 @@ class DistanceStore(NamedTuple):
     matrix: NDArray[np.float32]  # (n, n) full distance matrix (exactly symmetric), KIND_FULL_MATRIX
     preprocessed_vectors: NDArray[np.float32]  # (n, d) the vectors as preprocessed for the metric, KIND_LAZY
     metric_kind: np.int32  # pair-function selector, KIND_LAZY only
-    metric_param: np.float64  # `DistanceMetric.compiled_param`, KIND_LAZY only
+    metric_compiled_param: np.float64  # `DistanceMetric.compiled_param`, KIND_LAZY only
 
     # --------------------------------------------------------------------------
     #  Factory methods
@@ -78,13 +78,14 @@ class DistanceStore(NamedTuple):
             metric: (DistanceMetric) the distance metric the store computes.
         """
         validate_vector_array_layout(preprocessed_vectors)
+        metric_kind, metric_compiled_param = metric.compiled_args
         return cls(
             kind=KIND_LAZY,
             n=np.int32(preprocessed_vectors.shape[0]),
             matrix=_EMPTY_2D,
             preprocessed_vectors=_readonly(preprocessed_vectors),
-            metric_kind=np.int32(metric.kind),
-            metric_param=np.float64(metric.compiled_param),
+            metric_kind=metric_kind,
+            metric_compiled_param=metric_compiled_param,
         )
 
     @classmethod
@@ -110,7 +111,7 @@ class DistanceStore(NamedTuple):
             matrix=_readonly(matrix),
             preprocessed_vectors=_EMPTY_2D,
             metric_kind=np.int32(0),
-            metric_param=np.float64(NO_PARAM),
+            metric_compiled_param=np.float64(NO_PARAM),
         )
 
     @classmethod

@@ -1,8 +1,16 @@
 """Fixtures shared across the distance test tree live here."""
 
+import numpy as np
 import pytest
 
 from max_div._core.metrics import DistanceMetric
+
+
+@pytest.fixture
+def vectors() -> np.ndarray:
+    """Return a small float32 C-contiguous array with no zero rows, so every metric accepts it."""
+    return np.ascontiguousarray(np.random.default_rng(7).random((6, 3), dtype=np.float32) + 0.1)
+
 
 # NAMED_METRICS lists every metric with a factory method of its own; the along-axis one reads a
 # coordinate that every test array has.
