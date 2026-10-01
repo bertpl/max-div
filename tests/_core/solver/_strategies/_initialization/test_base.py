@@ -11,7 +11,7 @@ from max_div._core.solver._strategies import InitializationStrategy
 _FACTORY_IDS = [
     "farthest_point",
     "given_selection",
-    "guided_batches",
+    "constraint_aware_diverse",
     "most_feasible",
     "random_selection",
     "random_selection(uncon)",
@@ -23,7 +23,7 @@ _FACTORY_IDS = [
     [
         partial(InitializationStrategy.farthest_point, top_k=4),
         partial(InitializationStrategy.given_selection, [0, 1, 2]),
-        partial(InitializationStrategy.guided_batches, batch_size=2, nc=3),
+        partial(InitializationStrategy.constraint_aware_diverse, batch_size=2, nc=3),
         partial(InitializationStrategy.most_feasible),
         partial(InitializationStrategy.random_selection, ignore_constraints=False),
         partial(InitializationStrategy.random_selection, ignore_constraints=True),

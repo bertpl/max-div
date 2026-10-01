@@ -7,7 +7,7 @@ from max_div._core.solver._strategies._sampling import build_add_probabilities, 
 from ._base import InitializationStrategy
 
 
-class InitGuidedBatches(InitializationStrategy):
+class InitConstraintAwareDiverse(InitializationStrategy):
     """Initialize in batches, each the best-scoring of `nc` candidate batches favoring items far from the selection.
 
     Each iteration adds `batch_size` items (fewer when fewer remain to be selected):
@@ -36,7 +36,7 @@ class InitGuidedBatches(InitializationStrategy):
     the last picks can therefore leave some constraints 1 or 2 items away from their required
     counts; the optimization steps repair that shortfall.
 
-    `InitGuidedBatches` is meant for constrained problems.  On an unconstrained problem it works,
+    `InitConstraintAwareDiverse` is meant for constrained problems.  On an unconstrained problem it works,
     drawing with the diversity-based probabilities alone, but `farthest_point` reaches a higher
     diversity in less time there.
 
@@ -44,7 +44,7 @@ class InitGuidedBatches(InitializationStrategy):
        - O(nc * k / batch_size) candidate batches are evaluated.  Each one is provisionally added,
          scored and removed again, and each of those 3 steps costs O(n) or more; on a constrained
          problem each draw also recomputes how much every item helps the constraints.
-       - At large n and k, `InitGuidedBatches` is far slower than `farthest_point`.
+       - At large n and k, `InitConstraintAwareDiverse` is far slower than `farthest_point`.
     """
 
     def __init__(self, batch_size: int = 1, nc: int = 8) -> None:
@@ -57,7 +57,7 @@ class InitGuidedBatches(InitializationStrategy):
             raise ValueError(f"batch_size must be >= 1, got {batch_size}")
         if nc < 1:
             raise ValueError(f"nc must be >= 1, got {nc}")
-        super().__init__(f"InitGuidedBatches({batch_size},{nc})")
+        super().__init__(f"InitConstraintAwareDiverse({batch_size},{nc})")
         self._batch_size = batch_size
         self._nc = nc
 

@@ -11,9 +11,9 @@ if TYPE_CHECKING:
 
     from max_div._core.solver._solver_state import SolverState
 
+    from ._init_constraint_aware_diverse import InitConstraintAwareDiverse
     from ._init_farthest_point import InitFarthestPoint
     from ._init_given_selection import InitGivenSelection
-    from ._init_guided_batches import InitGuidedBatches
     from ._init_most_feasible import InitMostFeasible
     from ._init_random_selection import InitRandomSelection
 
@@ -120,13 +120,13 @@ class InitializationStrategy(StrategyBase, ABC):
         return InitGivenSelection(indices)
 
     @classmethod
-    def guided_batches(cls, batch_size: int = 1, nc: int = 8) -> InitGuidedBatches:
+    def constraint_aware_diverse(cls, batch_size: int = 1, nc: int = 8) -> InitConstraintAwareDiverse:
         """Create a batched initialization: each batch is the best of `nc` draws favoring items far from the selection.
 
         On a constrained problem every draw also moves the selection toward satisfying the
         constraints, so the starting selection is both spread out and close to feasible.  The
         strategy is meant for constrained problems; on an unconstrained one, `farthest_point` is
-        faster and reaches a higher diversity.  See `InitGuidedBatches` for how each batch is drawn
+        faster and reaches a higher diversity.  See `InitConstraintAwareDiverse` for how each batch is drawn
         and what it costs.
 
         Args:
@@ -138,9 +138,9 @@ class InitializationStrategy(StrategyBase, ABC):
         Raises:
             ValueError: If `batch_size` or `nc` is below 1.
         """
-        from ._init_guided_batches import InitGuidedBatches
+        from ._init_constraint_aware_diverse import InitConstraintAwareDiverse
 
-        return InitGuidedBatches(batch_size=batch_size, nc=nc)
+        return InitConstraintAwareDiverse(batch_size=batch_size, nc=nc)
 
     @classmethod
     def most_feasible(cls, max_iter: int | None = None) -> InitMostFeasible:
