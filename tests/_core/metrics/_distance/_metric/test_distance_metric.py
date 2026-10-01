@@ -5,7 +5,7 @@ import numpy as np
 import pytest
 
 from max_div._core.metrics import DistanceMetric
-from max_div._core.metrics._distance._metric import NO_PARAM
+from max_div._core.metrics._distance._metric import NO_PARAM, validate_vector_array_layout
 
 # Every metric with a dedicated factory method of its own.
 _FACTORY_METRICS = (
@@ -56,18 +56,18 @@ def test_a_bare_distance_metric_cannot_be_created():
 def test_factory_metrics_without_a_float_parameter_take_no_compiled_param(factory_metric: DistanceMetric):
     """Every dedicated factory but `marginals_and_joint` has no float parameter, so its pair function takes NO_PARAM."""
     # --- act / assert -----------------
-    assert factory_metric.compiled_param == NO_PARAM
+    assert factory_metric.pair_function_param == NO_PARAM
 
 
-def test_compiled_args_are_the_kind_and_param_as_numpy_scalars():
-    """The compiled arguments pair the kind and the parameter in the types the pair functions are compiled for."""
+def test_pair_function_args_are_the_kind_and_param_as_numpy_scalars():
+    """`pair_function_args` returns the kind as np.int32 and the parameter as np.float64."""
     # --- act --------------------------
-    kind, param = DistanceMetric.minkowski(3).compiled_args
+    kind, pair_function_param = DistanceMetric.minkowski(3).pair_function_args
 
     # --- assert -----------------------
-    assert (kind, param) == (DistanceMetric.minkowski(3).kind, 3.0)
+    assert (kind, pair_function_param) == (DistanceMetric.minkowski(3).kind, 3.0)
     assert isinstance(kind, np.int32)
-    assert isinstance(param, np.float64)
+    assert isinstance(pair_function_param, np.float64)
 
 
 def test_equal_factories_compare_equal():
@@ -162,7 +162,7 @@ def test_minkowski_canonicalizes_specializable_p(p: float, root: bool):
     metric = DistanceMetric.minkowski(p, root=root)
 
     # --- assert -----------------------
-    assert metric.compiled_param == NO_PARAM
+    assert metric.pair_function_param == NO_PARAM
     assert metric.kind not in {m.kind for m in _FACTORY_METRICS}
     assert metric.kind != DistanceMetric.minkowski(3, root=root).kind
     assert metric.p == p
@@ -175,8 +175,8 @@ def test_minkowski_generic_carries_p():
     powered = DistanceMetric.minkowski(3, root=False)
 
     # --- assert -----------------------
-    assert rooted.compiled_param == 3.0
-    assert powered.compiled_param == 3.0
+    assert rooted.pair_function_param == 3.0
+    assert powered.pair_function_param == 3.0
     assert rooted.kind != powered.kind
     assert rooted != powered
 
@@ -216,7 +216,7 @@ def test_marginals_and_joint_carries_its_joint_scale():
     """The marginals-and-joint metric stores its joint scale, 1 by default, and hands it to its pair function."""
     # --- act / assert -----------------
     assert DistanceMetric.marginals_and_joint().joint_scale == 1.0
-    assert DistanceMetric.marginals_and_joint(joint_scale=2).compiled_param == 2.0
+    assert DistanceMetric.marginals_and_joint(joint_scale=2).pair_function_param == 2.0
     assert DistanceMetric.marginals_and_joint(joint_scale=0.5) != DistanceMetric.marginals_and_joint()
 
 
@@ -261,3 +261,77 @@ def test_marginals_and_joint_rejects_one_dimension(vectors: np.ndarray):
     # --- act / assert -----------------
     with pytest.raises(ValueError, match="needs at least 2 dimensions"):
         DistanceMetric.marginals_and_joint().validate(np.ascontiguousarray(vectors[:, :1]))
+
+
+# ==================================================================================================
+#  Preprocessing
+# ==================================================================================================
+def test_preprocess_follows_the_metrics_declaration(metric: DistanceMetric, vectors: np.ndarray):
+    """A metric that does not preprocess gets its input back; one that does gets a new array."""
+    # --- act --------------------------
+    preprocessed = metric.preprocess(vectors)
+
+    # --- assert -----------------------
+    if metric.needs_preprocessed_vectors:
+        assert not np.shares_memory(preprocessed, vectors)
+    else:
+        assert preprocessed is vectors
+
+
+def test_preprocess_leaves_the_input_untouched(metric: DistanceMetric, vectors: np.ndarray):
+    """Preprocessing never writes into the user's array, whichever metric asks."""
+    # --- arrange ----------------------
+    before = vectors.copy()
+
+    # --- act --------------------------
+    metric.preprocess(vectors)
+
+    # --- assert -----------------------
+    np.testing.assert_array_equal(vectors, before)
+
+
+def test_preprocess_returns_the_layout_reads_expect(metric: DistanceMetric, vectors: np.ndarray):
+    """What comes out is in the form every distance read expects, whether copied or not."""
+    # --- act --------------------------
+    preprocessed = metric.preprocess(vectors)
+
+    # --- assert -----------------------
+    validate_vector_array_layout(preprocessed)  # raises on violation
+
+
+# ==================================================================================================
+#  Cosine
+# ==================================================================================================
+def test_cosine_preprocessing_normalizes_rows(vectors: np.ndarray):
+    """Cosine's preprocessed copy has unit-length rows."""
+    # --- act --------------------------
+    preprocessed = DistanceMetric.cosine().preprocess(vectors)
+
+    # --- assert -----------------------
+    np.testing.assert_allclose(np.linalg.norm(preprocessed, axis=1), 1.0, rtol=1e-6)
+
+
+# ==================================================================================================
+#  Along one axis
+# ==================================================================================================
+def test_along_axis_preprocessing_keeps_the_one_coordinate(vectors: np.ndarray):
+    """The along-axis copy is an (n, 1) array holding exactly the requested coordinate."""
+    # --- act --------------------------
+    preprocessed = DistanceMetric.along_axis(2).preprocess(vectors)
+
+    # --- assert -----------------------
+    assert preprocessed.shape == (vectors.shape[0], 1)
+    np.testing.assert_array_equal(preprocessed[:, 0], vectors[:, 2])
+
+
+def test_along_axis_preprocessing_copies_a_single_column_too(vectors: np.ndarray):
+    """Preprocessing copies the sliced coordinate, so a one-dimensional input yields a new array, not a view."""
+    # --- arrange ----------------------
+    single_column = np.ascontiguousarray(vectors[:, :1])
+
+    # --- act --------------------------
+    preprocessed = DistanceMetric.along_axis(0).preprocess(single_column)
+
+    # --- assert -----------------------
+    assert not np.shares_memory(preprocessed, single_column)
+    np.testing.assert_array_equal(preprocessed, single_column)
