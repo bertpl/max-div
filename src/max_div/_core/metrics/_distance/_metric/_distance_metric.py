@@ -151,8 +151,8 @@ class DistanceMetric:
         distance: the smallest gap between their projections onto a single coordinate axis.  The second
         part, the L2 part, is their L2 distance raised to the power d.
 
-        Under min-separation a selection is then spread along every coordinate axis (its 1-dimensional
-        projections) and in the full space at once.
+        Under min-separation a selection is then spread in its projection onto every coordinate axis and
+        in the full space at once.
 
         The 2 parts are comparable only for a population that fills the unit cube [0, 1]^d, so scale
         the vectors into it first.  It needs at least 2 dimensions: in 1 it only rescales the one

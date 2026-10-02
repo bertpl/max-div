@@ -265,7 +265,7 @@ $$
 d(a, b) = \min\Big( \min\big(\lvert a_x - b_x \rvert, \lvert a_y - b_y \rvert\big),\; \lVert a - b \rVert_2^{\,2} \Big)
 $$
 
-- **The first part is the L−∞ distance** of IV.A, which covers both marginal goals.
+- **The first part is the L−∞ distance** of IV.A, the smallest gap between the 2 points' projections onto a single axis, which covers both marginal goals.
 - **The second part is the L2 distance raised to the power of the dimension**, here squared. Among $k$ well-spread points in the square, both parts of a nearest-neighbor pair are about $1/k$, so neither part needs a weight that depends on $k$.
 
 ```python
