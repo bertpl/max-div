@@ -36,7 +36,7 @@ class InitPreset(StrEnum):
     MF = "mf"
 
     # --- constraint-aware diverse ---------------
-    # The fast, in-between and thorough settings that InitConstraintAwareDiverse's docstring describes.
+    # The 3 settings below follow InitConstraintAwareDiverse's docstring, from fast to thorough.
     CAD_16_1 = "cad(16,1)"
     CAD_1_1 = "cad(1,1)"
     CAD_1_16 = "cad(1,16)"
