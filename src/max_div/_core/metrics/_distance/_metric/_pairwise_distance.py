@@ -18,10 +18,10 @@ from ._distance_metric import (
     METRIC_KIND_GEOMEAN,
     METRIC_KIND_L1,
     METRIC_KIND_L2,
+    METRIC_KIND_L2_AND_PROJECTIONS,
     METRIC_KIND_L2S,
     METRIC_KIND_LINF,
     METRIC_KIND_LMINUSINF,
-    METRIC_KIND_MARGINALS_AND_JOINT,
     METRIC_KIND_MINKOWSKI,
     METRIC_KIND_MINKOWSKI_P0125,
     METRIC_KIND_MINKOWSKI_P025,
@@ -95,32 +95,32 @@ def _lminusinf_distance(
 @lazy_njit(
     "float64(float32[:, ::1], int64, int64, float64)", inline="always", cache=True, fastmath={"reassoc", "contract"}
 )
-def _marginals_and_joint_distance(
-    vectors: NDArray[np.float32], i: int | np.signedinteger, j: int | np.signedinteger, joint_scale: np.float64
+def _l2_and_projections_distance(
+    vectors: NDArray[np.float32], i: int | np.signedinteger, j: int | np.signedinteger, l2_scale: np.float64
 ) -> np.float64:
-    """Return the marginals-and-joint distance of vectors i and j, defined on `DistanceMetric.marginals_and_joint`.
+    """Return the L2-and-projections distance of vectors i and j, defined on `DistanceMetric.l2_and_projections`.
 
-    The distance is computed in float64; for a far pair in a high dimension the joint term may overflow
+    The distance is computed in float64; for a far pair in a high dimension the L2 part may overflow
     to +inf, and the minimum then returns the smallest gap.
     """
     # --- smallest coordinate gap (L-∞) ---------
     smallest_gap = _lminusinf_distance(vectors, i, j)
 
-    # --- joint term (L2 to the power d) ---------
+    # --- L2 part (L2 to the power d) ---------
     # the metric is meant for small d, so the common dimensions skip the general power
     squared_l2 = _l2sq_distance(vectors, i, j)
     n_dims = vectors.shape[1]
     if n_dims == 2:
-        joint_term = squared_l2
+        l2_part = squared_l2
     elif n_dims == 3:
-        joint_term = squared_l2 * np.sqrt(squared_l2)
+        l2_part = squared_l2 * np.sqrt(squared_l2)
     elif n_dims == 4:
-        joint_term = squared_l2 * squared_l2
+        l2_part = squared_l2 * squared_l2
     else:
-        joint_term = squared_l2 ** (0.5 * n_dims)
+        l2_part = squared_l2 ** (0.5 * n_dims)
 
     # --- minimum --------------------------------
-    return min(smallest_gap, joint_scale * joint_term)
+    return min(smallest_gap, l2_scale * l2_part)
 
 
 @lazy_njit(
@@ -208,7 +208,7 @@ def _pairwise_distance(  # noqa: C901 -- flat dispatch, one arm per kind: comple
     """Compute the distance between vectors i and j, per the given metric selector.
 
     `metric_float_param` is the metric's `DistanceMetric.float_param`: the power `p` of a
-    generic Minkowski kind, or the `joint_scale` of marginals-and-joint.
+    generic Minkowski kind, or the `l2_scale` of L2-and-projections.
 
     The selector is loop-invariant in every calling loop, so the branch order is not
     performance-relevant.  The specialized Minkowski kinds apply the outer root as repeated
@@ -230,8 +230,8 @@ def _pairwise_distance(  # noqa: C901 -- flat dispatch, one arm per kind: comple
         return np.float32(_geomean_distance(vectors, i, j))
     if metric_kind == METRIC_KIND_ALONG_AXIS:
         return np.float32(_along_axis_distance(vectors, i, j))  # along axis: the array holds that one coordinate
-    if metric_kind == METRIC_KIND_MARGINALS_AND_JOINT:
-        return np.float32(_marginals_and_joint_distance(vectors, i, j, metric_float_param))
+    if metric_kind == METRIC_KIND_L2_AND_PROJECTIONS:
+        return np.float32(_l2_and_projections_distance(vectors, i, j, metric_float_param))
     if metric_kind == METRIC_KIND_MINKOWSKI:
         return np.float32(_minkowski_distance_powered(vectors, i, j, metric_float_param) ** (1.0 / metric_float_param))
     if metric_kind == METRIC_KIND_MINKOWSKI_POWERED:

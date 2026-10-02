@@ -19,7 +19,7 @@ from max_div._core.solver._solver_state import SolverState
 from max_div._core.solver._solver_step import OptimizationStep, SolverStep
 from max_div._core.solver._step_identity import SolverStepIdentity
 from max_div._core.solver._strategies import InitializationStrategy, OptimizationStrategy
-from tests._core.metrics._distance.helpers import condensed_distances, marginals_and_joint_reference
+from tests._core.metrics._distance.helpers import condensed_distances, l2_and_projections_reference
 
 
 # =================================================================================================
@@ -505,14 +505,14 @@ def test_solver_hybrid_metric_solves_in_parallel(factory, expected_score):
     assert solution.score.diversity == pytest.approx(expected, rel=1e-5)
 
 
-def test_min_separation_over_marginals_and_joint_is_the_smallest_pair_distance_of_the_selection():
-    """A min-separation solve over marginals-and-joint scores the smallest pairwise marginals-and-joint distance."""
+def test_min_separation_over_l2_and_projections_is_the_smallest_pair_distance_of_the_selection():
+    """A min-separation solve over L2-and-projections scores the smallest pairwise L2-and-projections distance."""
     # --- arrange ----------------------
     vectors = np.random.default_rng(20260928).random((60, 2)).astype(np.float32)
     problem = MaxDivProblem.new(
         vectors,
         k=10,
-        distance_metric=DistanceMetric.marginals_and_joint(),
+        distance_metric=DistanceMetric.l2_and_projections(),
         diversity_metric=DiversityMetric.MIN_SEPARATION,
     )
 
@@ -524,7 +524,7 @@ def test_min_separation_over_marginals_and_joint_is_the_smallest_pair_distance_o
     # --- assert -----------------------
     selected = vectors[solution.i_selected].astype(np.float64)
     pair_distances = [
-        marginals_and_joint_reference(a, b, joint_scale=1.0)
+        l2_and_projections_reference(a, b, l2_scale=1.0)
         for index, a in enumerate(selected)
         for b in selected[index + 1 :]
     ]

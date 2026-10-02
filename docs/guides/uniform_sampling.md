@@ -7,7 +7,7 @@
     - that a [hybrid objective](../reference/metrics/HybridDiversityMetric.md) with one term per goal delivers all 3 at once;
     - what exact per-band counts cost on top of it.
 
-    A hybrid that takes the minimum over weighted terms, not their geometric mean, spreads the selection further over the square without spreading it less along either axis. Min separation under the marginals-and-joint distance, a single distance that is the minimum of an L−∞ part and an L2 part, gives the lowest of the 3 goals the highest value of any 60 s experiment.
+    A hybrid that takes the minimum over weighted terms, not their geometric mean, spreads the selection further over the square without spreading it less along either axis. Min separation under the L2-and-projections distance, a single distance that is the minimum of an L−∞ part and an L2 part, gives the lowest of the 3 goals the highest value of any 60 s experiment.
 
 ## I. Problem statement
 
@@ -118,7 +118,7 @@ Each objective below combines a part for the L2 goal with parts for the marginal
 
 - **V.A to V.C** use a [hybrid objective](../concepts/diversity.md#hybrid-diversity-metrics) with one term per goal, each the min separation under that goal's distance, combined by their geometric mean so that no term dominates by its scale.
 - **V.D** takes the minimum of 2 weighted terms, so the lowest weighted term sets the score.
-- **V.E** uses a single distance, the marginals-and-joint distance, that is the minimum of an L−∞ part and an L2 part, with no weights.
+- **V.E** uses a single distance, the L2-and-projections distance, that is the minimum of an L−∞ part and an L2 part, with no weights.
 
 ### V.A. Unconstrained
 
@@ -251,13 +251,13 @@ Against the geometric-mean hybrid of V.A, the L2 goal rises from 56 % to 63 % of
 
 With 2 terms instead of 3, each iteration is also faster, as the convergence table in VI shows.
 
-### V.E. Marginals-and-joint distance
+### V.E. L2-and-projections distance { #ve-marginals-and-joint-distance }
 
 Min separation takes a minimum over pairs, and V.D's objective takes a minimum over terms. The 2 minimums can be swapped: taking, for each term, the weighted distance of its closest pair and then the smallest of those values gives the same number as taking, for each pair, the smallest of its weighted term distances and then the smallest over all pairs.
 
 V.D's objective is therefore the min separation under a single distance, $\min(k \cdot d_{\text{L}-\infty},\ \sqrt{k} \cdot d_{\text{L2}})$.
 
-The [marginals-and-joint distance](../concepts/diversity.md#distance-metrics) is, like V.D's single distance, a minimum of an L−∞ part and an L2 part, but with no weight that depends on $k$. In 2D it is
+The [L2-and-projections distance](../concepts/diversity.md#distance-metrics) is, like V.D's single distance, a minimum of an L−∞ part and an L2 part, but with no weight that depends on $k$. In 2D it is
 
 $$
 d(a, b) = \min\Big( \min\big(\lvert a_x - b_x \rvert, \lvert a_y - b_y \rvert\big),\; \lVert a - b \rVert_2^{\,2} \Big)
@@ -273,27 +273,27 @@ from max_div.problem import MaxDivProblem
 problem = MaxDivProblem.new(
     vectors=vectors,
     k=100,
-    distance_metric=DistanceMetric.marginals_and_joint(),
+    distance_metric=DistanceMetric.l2_and_projections(),
     diversity_metric=DiversityMetric.MIN_SEPARATION,
 )
 ```
 
-Hover over a dot to see the level curve of this distance: the L−∞ curve of IV.A, with the corner of each quadrant cut off by a circle. Points are close under the marginals-and-joint distance when they are close along one axis, or close under the L2 distance.
+Hover over a dot to see the level curve of this distance: the L−∞ curve of IV.A, with the corner of each quadrant cut off by a circle. Points are close under the L2-and-projections distance when they are close along one axis, or close under the L2 distance.
 
---8<-- "generated/uniform_sampling_marginals_and_joint_figure.html"
+--8<-- "generated/uniform_sampling_l2_and_projections_figure.html"
 
---8<-- "generated/uniform_sampling_marginals_and_joint_separations.md"
+--8<-- "generated/uniform_sampling_l2_and_projections_separations.md"
 
 Against V.D, the L2 goal rises from 63 % to 72 % of its reference, and the 2 marginal goals drop from 72 % and 71 % to 66 % and 67 %. The lowest of the 3 goals, at 66 %, is the highest of any 60 s experiment.
 
 A solve under a single distance also iterates as fast as the single-distance experiments of III and IV, as the convergence table in VI shows.
 
-The L2 goal gains because V.D's weighted minimum and the marginals-and-joint distance turn the same L−∞ separation into different L2 separations. A solve that maximizes a minimum of 2 parts ends with the 2 parts about equal, so equating the 2 parts at each solve's achieved L−∞ separation gives the L2 separation that the solve should reach:
+The L2 goal gains because V.D's weighted minimum and the L2-and-projections distance turn the same L−∞ separation into different L2 separations. A solve that maximizes a minimum of 2 parts ends with the 2 parts about equal, so equating the 2 parts at each solve's achieved L−∞ separation gives the L2 separation that the solve should reach:
 
 - **V.D:** $\sqrt{k} \cdot d_{\text{L2}} = k \cdot d_{\text{L}-\infty}$ gives $d_{\text{L2}} = \sqrt{k} \cdot d_{\text{L}-\infty} = 10 \times 0.0072 = 0.072$;
 - **V.E:** $d_{\text{L2}}^{\,2} = d_{\text{L}-\infty}$ gives $d_{\text{L2}} = \sqrt{0.0067} = 0.082$.
 
-Both match the L2 separations that the solves reached. `marginals_and_joint(joint_scale=...)` multiplies the second part by `joint_scale`: a value above 1 favors the 2 marginal goals, and one below 1 favors the L2 goal; this guide keeps the default of 1.
+Both match the L2 separations that the solves reached. `l2_and_projections(l2_scale=...)` multiplies the second part by `l2_scale`: a value above 1 favors the 2 marginal goals, and one below 1 favors the L2 goal; this guide keeps the default of 1.
 
 ## VI. Summary
 
@@ -307,7 +307,7 @@ Every experiment's achieved min separation under the three reference distances, 
 - **Exact counts per band come at no cost in diversity**: under them the geometric-mean hybrid reaches the same 3 separations.
 - **A longer budget still improves the result**: with 32 workers for 4 h, both 4 h solves end above their 60 s counterparts on all 3 separations, and both were still improving in the last hour.
 - **A minimum of 2 weighted terms improves on the geometric mean of 3**: in 60 s it comes within 2 percentage points, on each goal, of what V.C.1 reaches on V.A's objective in 4 h.
-- **The marginals-and-joint distance gives the lowest of the 3 goals the highest value of any 60 s experiment**, 66 % of its reference, with a single distance and no weights to choose.
+- **The L2-and-projections distance gives the lowest of the 3 goals the highest value of any 60 s experiment**, 66 % of its reference, with a single distance and no weights to choose.
 
 The slower iterations are visible in the iteration counts. The table gives, per experiment, how many iterations the worker holding the final selection completed in the 60 s budget, and the best objective any worker held at three elapsed marks as a fraction of the final value:
 

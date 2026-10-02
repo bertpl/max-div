@@ -69,11 +69,11 @@ function lInfPaths(cx, cy, d) {
   ];
 }
 
-// Return the marginals-and-joint level curve at value d around (cx, cy), at joint scale 1 in 2
+// Return the L2-and-projections level curve at value d around (cx, cy), at L2 scale 1 in 2
 // dimensions: min(min(|dx|, |dy|), dx^2 + dy^2) = d. It is the L-inf curve with the corner of each
 // quadrant cut by the circle of radius sqrt(d): the circle crosses the line |dx| = d at
 // |dy| = q = sqrt(d - d^2), and it cuts the corner only while q > d, which holds for every d < 1/2.
-function marginalsAndJointPaths(cx, cy, d, samples = 24) {
+function l2AndProjectionsPaths(cx, cy, d, samples = 24) {
   const q = Math.sqrt(Math.max(d - d * d, 0));
   if (q <= d) return lInfPaths(cx, cy, d);
   const radius = Math.sqrt(d);
@@ -100,7 +100,7 @@ function marginalsAndJointPaths(cx, cy, d, samples = 24) {
 // Return the level curve of a distance at value d around (cx, cy) as SVG path strings in data units:
 // - L2: a circle;
 // - x or y: the two lines at that coordinate offset;
-// - L-inf and marginals-and-joint: see `lInfPaths` and `marginalsAndJointPaths`;
+// - L-inf and L2-and-projections: see `lInfPaths` and `l2AndProjectionsPaths`;
 // - geometric mean: the hyperbolas.
 function levelPaths(key, cx, cy, d) {
   switch (key) {
@@ -112,8 +112,8 @@ function levelPaths(key, cx, cy, d) {
       return [`M${-FAR},${cy - d}L${FAR},${cy - d}`, `M${-FAR},${cy + d}L${FAR},${cy + d}`];
     case "linf":
       return lInfPaths(cx, cy, d);
-    case "marginals_and_joint":
-      return marginalsAndJointPaths(cx, cy, d);
+    case "l2_and_projections":
+      return l2AndProjectionsPaths(cx, cy, d);
     default:
       return geomeanPaths(cx, cy, d);
   }

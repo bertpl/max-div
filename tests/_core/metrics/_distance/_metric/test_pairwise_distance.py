@@ -5,7 +5,7 @@ from scipy.spatial.distance import pdist as scipy_pdist
 from max_div._core.metrics._distance import (
     DistanceMetric,
 )
-from tests._core.metrics._distance.helpers import condensed_distances, marginals_and_joint_reference
+from tests._core.metrics._distance.helpers import condensed_distances, l2_and_projections_reference
 
 _SCIPY_METRIC = {
     DistanceMetric.l1_manhattan(): "cityblock",
@@ -44,7 +44,7 @@ def test_pairwise_distance_metrics(metric: DistanceMetric):
         (DistanceMetric.geometric_mean(), 12.0**0.5),
         (DistanceMetric.l_minus_inf(), 3.0),
         (DistanceMetric.along_axis(1), 4.0),
-        (DistanceMetric.marginals_and_joint(), 3.0),
+        (DistanceMetric.l2_and_projections(), 3.0),
     ],
 )
 def test_pairwise_distance_values(metric: DistanceMetric, expected_value: float):
@@ -223,17 +223,17 @@ def test_pairwise_distance_lminusinf_values(x: list[float], y: list[float], expe
 
 
 # ==================================================================================================
-#  Marginals and joint
+#  L2 and projections
 # ==================================================================================================
 @pytest.mark.parametrize("n_dims", [2, 3, 4, 5, 10])
-@pytest.mark.parametrize("joint_scale", [1.0, 0.25])
-def test_pairwise_distance_marginals_and_joint_matches_reference(n_dims: int, joint_scale: float):
+@pytest.mark.parametrize("l2_scale", [1.0, 0.25])
+def test_pairwise_distance_l2_and_projections_matches_reference(n_dims: int, l2_scale: float):
     """Every pair's distance is the smaller of the smallest coordinate gap and the scaled L2 distance to the power d."""
     # --- arrange ----------------------
     vectors = np.random.default_rng(20260928).random((40, n_dims)).astype(np.float32)
-    metric = DistanceMetric.marginals_and_joint(joint_scale=joint_scale)
+    metric = DistanceMetric.l2_and_projections(l2_scale=l2_scale)
     expected = [
-        marginals_and_joint_reference(vectors[i], vectors[j], joint_scale)
+        l2_and_projections_reference(vectors[i], vectors[j], l2_scale)
         for i in range(len(vectors))
         for j in range(i + 1, len(vectors))
     ]
@@ -248,31 +248,31 @@ def test_pairwise_distance_marginals_and_joint_matches_reference(n_dims: int, jo
 @pytest.mark.parametrize(
     "a, b, expected_value",
     [
-        ([0.0, 0.0], [0.3, 0.4], 0.25),  # the joint term 0.5^2 is below both gaps
-        ([0.0, 0.0], [0.1, 0.9], 0.1),  # a gap is below the joint term 0.82
+        ([0.0, 0.0], [0.3, 0.4], 0.25),  # the L2 part 0.5^2 is below both gaps
+        ([0.0, 0.0], [0.1, 0.9], 0.1),  # a gap is below the L2 part 0.82
         ([0.2, 0.7], [0.2, 0.1], 0.0),  # a shared coordinate gives distance zero
     ],
 )
-def test_pairwise_distance_marginals_and_joint_values(a: list[float], b: list[float], expected_value: float):
+def test_pairwise_distance_l2_and_projections_values(a: list[float], b: list[float], expected_value: float):
     """In 2 dimensions the distance is the smaller of the 2 gaps and the squared L2 distance."""
     # --- arrange ----------------------
     vectors = np.array([a, b], dtype=np.float32)
 
     # --- act --------------------------
-    d = condensed_distances(vectors, metric=DistanceMetric.marginals_and_joint())
+    d = condensed_distances(vectors, metric=DistanceMetric.l2_and_projections())
 
     # --- assert -----------------------
     assert d[0] == pytest.approx(expected_value, rel=1e-6)
 
 
-def test_pairwise_distance_marginals_and_joint_ignores_an_overflowing_joint_term():
-    """A far pair in a high dimension, whose joint term overflows, still gets its smallest gap as the distance."""
+def test_pairwise_distance_l2_and_projections_ignores_an_overflowing_l2_part():
+    """A far pair in a high dimension, whose L2 part overflows, still gets its smallest gap as the distance."""
     # --- arrange ----------------------
     vectors = np.array([np.zeros(400), np.full(400, 1e3)], dtype=np.float32)
     vectors[1, 7] = 2.0
 
     # --- act --------------------------
-    d = condensed_distances(vectors, metric=DistanceMetric.marginals_and_joint())
+    d = condensed_distances(vectors, metric=DistanceMetric.l2_and_projections())
 
     # --- assert -----------------------
     assert d[0] == np.float32(2.0)

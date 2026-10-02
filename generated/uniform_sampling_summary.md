@@ -10,4 +10,4 @@
 | **V.C.1** geometric-mean hybrid, 4 h, 32 workers | <span class="usx-high">0.0722 (63%)</span> | <span class="usx-high">0.0075 (74%)</span> | <span class="usx-high">0.0072 (71%)</span> |
 | **V.C.2** geometric-mean hybrid, 20 items per band, 4 h, 32 workers | <span class="usx-high">0.0710 (62%)</span> | <span class="usx-high">0.0073 (72%)</span> | <span class="usx-high">0.0077 (76%)</span> |
 | **V.D** minimum hybrid: L−∞ and L2 terms, weighted $k$ and $\sqrt{k}$ | <span class="usx-high">0.0727 (63%)</span> | <span class="usx-high">0.0072 (72%)</span> | <span class="usx-high">0.0072 (71%)</span> |
-| **V.E** marginals-and-joint distance | <span class="usx-high">0.0822 (72%)</span> | <span class="usx-high">0.0067 (66%)</span> | <span class="usx-high">0.0068 (67%)</span> |
+| **V.E** L2-and-projections distance | <span class="usx-high">0.0822 (72%)</span> | <span class="usx-high">0.0067 (66%)</span> | <span class="usx-high">0.0068 (67%)</span> |

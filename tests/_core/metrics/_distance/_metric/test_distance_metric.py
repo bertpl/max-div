@@ -17,7 +17,7 @@ _FACTORY_METRICS = (
     DistanceMetric.geometric_mean(),
     DistanceMetric.l_minus_inf(),
     DistanceMetric.along_axis(0),
-    DistanceMetric.marginals_and_joint(),
+    DistanceMetric.l2_and_projections(),
 )
 
 
@@ -50,11 +50,11 @@ def test_a_bare_distance_metric_cannot_be_created():
 
 @pytest.mark.parametrize(
     "factory_metric",
-    [metric for metric in _FACTORY_METRICS if metric != DistanceMetric.marginals_and_joint()],
+    [metric for metric in _FACTORY_METRICS if metric != DistanceMetric.l2_and_projections()],
     ids=repr,
 )
 def test_factory_metrics_without_a_float_parameter_have_no_float_param(factory_metric: DistanceMetric):
-    """Every dedicated factory but `marginals_and_joint` returns a metric whose float parameter is `NO_FLOAT_PARAM`."""
+    """Every dedicated factory but `l2_and_projections` returns a metric whose float parameter is `NO_FLOAT_PARAM`."""
     # --- act / assert -----------------
     assert factory_metric.float_param == NO_FLOAT_PARAM
 
@@ -114,8 +114,8 @@ def test_a_metric_survives_pickling(metric: DistanceMetric):
         (DistanceMetric.geometric_mean(), "geomean"),
         (DistanceMetric.l_minus_inf(), "L-∞"),
         (DistanceMetric.along_axis(2), "axis 2"),
-        (DistanceMetric.marginals_and_joint(), "marginals+joint"),
-        (DistanceMetric.marginals_and_joint(joint_scale=0.5), "marginals+joint (joint scale 0.5)"),
+        (DistanceMetric.l2_and_projections(), "L2+projections"),
+        (DistanceMetric.l2_and_projections(l2_scale=0.5), "L2+projections (L2 scale 0.5)"),
         (DistanceMetric.minkowski(3), "L3"),
         (DistanceMetric.minkowski(3, root=False), "L3-powered"),
         (DistanceMetric.minkowski(0.5), "L0.5"),
@@ -210,22 +210,22 @@ def test_along_axis_rejects_anything_but_a_non_negative_integer(axis):
 
 
 # ==================================================================================================
-#  Marginals and joint
+#  L2 and projections
 # ==================================================================================================
-def test_marginals_and_joint_carries_its_joint_scale():
-    """The marginals-and-joint metric stores its joint scale, 1 by default, as its float parameter."""
+def test_l2_and_projections_carries_its_l2_scale():
+    """The L2-and-projections metric stores its L2 scale, 1 by default, as its float parameter."""
     # --- act / assert -----------------
-    assert DistanceMetric.marginals_and_joint().joint_scale == 1.0
-    assert DistanceMetric.marginals_and_joint(joint_scale=2).float_param == 2.0
-    assert DistanceMetric.marginals_and_joint(joint_scale=0.5) != DistanceMetric.marginals_and_joint()
+    assert DistanceMetric.l2_and_projections().l2_scale == 1.0
+    assert DistanceMetric.l2_and_projections(l2_scale=2).float_param == 2.0
+    assert DistanceMetric.l2_and_projections(l2_scale=0.5) != DistanceMetric.l2_and_projections()
 
 
-@pytest.mark.parametrize("joint_scale", [0.0, -1.0, math.inf, math.nan])
-def test_marginals_and_joint_rejects_a_joint_scale_that_is_not_positive_and_finite(joint_scale: float):
-    """The joint scale must be a positive, finite number."""
+@pytest.mark.parametrize("l2_scale", [0.0, -1.0, math.inf, math.nan])
+def test_l2_and_projections_rejects_an_l2_scale_that_is_not_positive_and_finite(l2_scale: float):
+    """The L2 scale must be a positive, finite number."""
     # --- act / assert -----------------
-    with pytest.raises(ValueError, match="positive, finite joint_scale"):
-        DistanceMetric.marginals_and_joint(joint_scale=joint_scale)
+    with pytest.raises(ValueError, match="positive, finite l2_scale"):
+        DistanceMetric.l2_and_projections(l2_scale=l2_scale)
 
 
 # ==================================================================================================
@@ -256,11 +256,11 @@ def test_along_axis_rejects_a_missing_coordinate(check: str, vectors: np.ndarray
         getattr(DistanceMetric.along_axis(3), check)(vectors)
 
 
-def test_marginals_and_joint_rejects_one_dimension(vectors: np.ndarray):
-    """The marginals-and-joint distance needs at least 2 dimensions."""
+def test_l2_and_projections_rejects_one_dimension(vectors: np.ndarray):
+    """The L2-and-projections distance needs at least 2 dimensions."""
     # --- act / assert -----------------
     with pytest.raises(ValueError, match="needs at least 2 dimensions"):
-        DistanceMetric.marginals_and_joint().validate(np.ascontiguousarray(vectors[:, :1]))
+        DistanceMetric.l2_and_projections().validate(np.ascontiguousarray(vectors[:, :1]))
 
 
 # ==================================================================================================
