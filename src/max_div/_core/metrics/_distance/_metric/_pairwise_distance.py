@@ -19,6 +19,7 @@ from ._distance_metric import (
     METRIC_KIND_L1,
     METRIC_KIND_L2,
     METRIC_KIND_L2_AND_PROJECTIONS,
+    METRIC_KIND_L2_AND_PROJECTIONS_FOR_K,
     METRIC_KIND_L2S,
     METRIC_KIND_LINF,
     METRIC_KIND_LMINUSINF,
@@ -126,6 +127,20 @@ def _l2_and_projections_distance(
 @lazy_njit(
     "float64(float32[:, ::1], int64, int64, float64)", inline="always", cache=True, fastmath={"reassoc", "contract"}
 )
+def _l2_and_projections_for_k_distance(
+    vectors: NDArray[np.float32], i: int | np.signedinteger, j: int | np.signedinteger, l2_factor: np.float64
+) -> np.float64:
+    """Return the L2-and-projections distance for k items: the smaller of the smallest gap and `l2_factor` * L2.
+
+    `l2_factor` is the metric's `DistanceMetric.float_param(n_dims)`, which combines the L2 scale, k and the
+    dimension count into 1 factor.
+    """
+    return min(_lminusinf_distance(vectors, i, j), l2_factor * np.sqrt(_l2sq_distance(vectors, i, j)))
+
+
+@lazy_njit(
+    "float64(float32[:, ::1], int64, int64, float64)", inline="always", cache=True, fastmath={"reassoc", "contract"}
+)
 def _minkowski_distance_powered(
     vectors: NDArray[np.float32], i: int | np.signedinteger, j: int | np.signedinteger, p: np.float64
 ) -> np.float64:
@@ -208,7 +223,8 @@ def _pairwise_distance(  # noqa: C901 -- flat dispatch, one arm per kind: comple
     """Compute the distance between vectors i and j, per the given metric selector.
 
     `metric_float_param` is the metric's `DistanceMetric.float_param`: the power `p` of a
-    generic Minkowski kind, or the `l2_scale` of the L2-and-projections distance.
+    generic Minkowski kind, the `l2_scale` of the L2-and-projections distance, or, weighted for k
+    items, the factor on its L2 distance.
 
     The selector is loop-invariant in every calling loop, so the branch order is not
     performance-relevant.  The specialized Minkowski kinds apply the outer root as repeated
@@ -232,6 +248,8 @@ def _pairwise_distance(  # noqa: C901 -- flat dispatch, one arm per kind: comple
         return np.float32(_along_axis_distance(vectors, i, j))  # along axis: the array holds that one coordinate
     if metric_kind == METRIC_KIND_L2_AND_PROJECTIONS:
         return np.float32(_l2_and_projections_distance(vectors, i, j, metric_float_param))
+    if metric_kind == METRIC_KIND_L2_AND_PROJECTIONS_FOR_K:
+        return np.float32(_l2_and_projections_for_k_distance(vectors, i, j, metric_float_param))
     if metric_kind == METRIC_KIND_MINKOWSKI:
         return np.float32(_minkowski_distance_powered(vectors, i, j, metric_float_param) ** (1.0 / metric_float_param))
     if metric_kind == METRIC_KIND_MINKOWSKI_POWERED:

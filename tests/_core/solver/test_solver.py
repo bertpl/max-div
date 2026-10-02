@@ -505,14 +505,15 @@ def test_solver_hybrid_metric_solves_in_parallel(factory, expected_score):
     assert solution.score.diversity == pytest.approx(expected, rel=1e-5)
 
 
-def test_min_separation_over_l2_and_projections_is_the_smallest_pair_distance_of_the_selection():
-    """A min-separation solve over L2-and-projections scores the smallest pairwise L2-and-projections distance."""
+@pytest.mark.parametrize("k", [None, 10])
+def test_min_separation_over_l2_and_projections_is_the_smallest_pair_distance_of_the_selection(k: int | None):
+    """A min-separation solve over L2-and-projections, with or without `k`, scores the closest selected pair."""
     # --- arrange ----------------------
     vectors = np.random.default_rng(20260928).random((60, 2)).astype(np.float32)
     problem = MaxDivProblem.new(
         vectors,
         k=10,
-        distance_metric=DistanceMetric.l2_and_projections(),
+        distance_metric=DistanceMetric.l2_and_projections(k=k),
         diversity_metric=DiversityMetric.MIN_SEPARATION,
     )
 
@@ -524,7 +525,33 @@ def test_min_separation_over_l2_and_projections_is_the_smallest_pair_distance_of
     # --- assert -----------------------
     selected = vectors[solution.i_selected].astype(np.float64)
     pair_distances = [
-        l2_and_projections_reference(a, b, l2_scale=1.0)
+        l2_and_projections_reference(a, b, l2_scale=1.0, k=k)
+        for index, a in enumerate(selected)
+        for b in selected[index + 1 :]
+    ]
+    assert solution.score.diversity == pytest.approx(min(pair_distances), rel=1e-5)
+
+
+def test_min_separation_over_l2_and_projections_with_k_solves_in_parallel_from_lazy_stores():
+    """A 2-worker solve from lazy stores over `l2_and_projections(k=...)` scores the closest selected pair."""
+    # --- arrange ----------------------
+    k = 10
+    vectors = np.random.default_rng(20260928).random((60, 2)).astype(np.float32)
+    problem = MaxDivProblem.new(
+        vectors,
+        k=k,
+        distance_metric=DistanceMetric.l2_and_projections(k=k),
+        diversity_metric=DiversityMetric.MIN_SEPARATION,
+    )
+    builder = ParallelMaxDivSolverBuilder(problem).with_seed(3).with_distance_storage(DistanceStorageType.LAZY)
+
+    # --- act --------------------------
+    solution = builder.with_workers(iterations(300), 2).build().solve(verbosity=Verbosity.SILENT)
+
+    # --- assert -----------------------
+    selected = vectors[solution.i_selected].astype(np.float64)
+    pair_distances = [
+        l2_and_projections_reference(a, b, l2_scale=1.0, k=k)
         for index, a in enumerate(selected)
         for b in selected[index + 1 :]
     ]

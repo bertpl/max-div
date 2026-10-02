@@ -7,10 +7,14 @@ from max_div._core.metrics import DistanceMetric
 from max_div._core.metrics._distance import compute_full_matrix
 
 
-def l2_and_projections_reference(a: np.ndarray, b: np.ndarray, l2_scale: float) -> float:
-    """Return the L2-and-projections distance of 2 vectors, computed in float64 with numpy."""
+def l2_and_projections_reference(a: np.ndarray, b: np.ndarray, l2_scale: float, k: int | None = None) -> float:
+    """Return the L2-and-projections distance of 2 vectors in float64 with numpy; with `k`, the form for k items."""
     gaps = np.abs(a.astype(np.float64) - b.astype(np.float64))
-    return float(min(gaps.min(), l2_scale * np.linalg.norm(gaps) ** len(gaps)))
+    l2 = np.linalg.norm(gaps)
+    if k is None:
+        return float(min(gaps.min(), l2_scale * l2 ** len(gaps)))
+    else:
+        return float(min(gaps.min(), l2_scale * (k ** (1.0 / len(gaps)) - 1.0) / (k - 1.0) * l2))
 
 
 def condensed_distances(vectors: np.ndarray, metric: DistanceMetric) -> np.ndarray:

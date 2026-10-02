@@ -21,6 +21,11 @@ _FACTORY_METRICS = (
 )
 
 
+def _all_subclasses(cls: type) -> set[type]:
+    """Return every direct and indirect subclass of `cls`."""
+    return {subclass for direct in cls.__subclasses__() for subclass in (direct, *_all_subclasses(direct))}
+
+
 # ==================================================================================================
 #  Factories and kinds
 # ==================================================================================================
@@ -32,13 +37,14 @@ def test_factory_metrics_have_distinct_kinds():
 
 
 def test_factory_metrics_cover_every_subclass_once():
-    """Each factory returns an instance of its own `DistanceMetric` subclass, and together they cover every subclass."""
+    """Each factory returns its own subclass; with the Minkowski and k-weighted forms, they cover every subclass."""
     # --- act --------------------------
     classes = [type(metric) for metric in _FACTORY_METRICS]
+    other_forms = {type(DistanceMetric.minkowski(3)), type(DistanceMetric.l2_and_projections(k=3))}
 
     # --- assert -----------------------
     assert len(set(classes)) == len(classes)
-    assert set(classes) | {type(DistanceMetric.minkowski(3))} == set(DistanceMetric.__subclasses__())
+    assert set(classes) | other_forms == _all_subclasses(DistanceMetric)
 
 
 def test_a_bare_distance_metric_cannot_be_created():
@@ -56,13 +62,13 @@ def test_a_bare_distance_metric_cannot_be_created():
 def test_factory_metrics_without_a_float_parameter_have_no_float_param(factory_metric: DistanceMetric):
     """Every dedicated factory but `l2_and_projections` returns a metric whose float parameter is `NO_FLOAT_PARAM`."""
     # --- act / assert -----------------
-    assert factory_metric.float_param == NO_FLOAT_PARAM
+    assert factory_metric.float_param(3) == NO_FLOAT_PARAM
 
 
 def test_pairwise_distance_args_are_the_kind_and_float_param_as_numpy_scalars():
     """`pairwise_distance_args` returns the kind as np.int32 and the parameter as np.float64."""
     # --- act --------------------------
-    kind, float_param = DistanceMetric.minkowski(3).pairwise_distance_args
+    kind, float_param = DistanceMetric.minkowski(3).pairwise_distance_args(5)
 
     # --- assert -----------------------
     assert (kind, float_param) == (DistanceMetric.minkowski(3).kind, 3.0)
@@ -116,6 +122,8 @@ def test_a_metric_survives_pickling(metric: DistanceMetric):
         (DistanceMetric.along_axis(2), "axis 2"),
         (DistanceMetric.l2_and_projections(), "L2+projections"),
         (DistanceMetric.l2_and_projections(l2_scale=0.5), "L2+projections (L2 scale 0.5)"),
+        (DistanceMetric.l2_and_projections(k=100), "L2+projections (k=100)"),
+        (DistanceMetric.l2_and_projections(l2_scale=0.5, k=100), "L2+projections (L2 scale 0.5, k=100)"),
         (DistanceMetric.minkowski(3), "L3"),
         (DistanceMetric.minkowski(3, root=False), "L3-powered"),
         (DistanceMetric.minkowski(0.5), "L0.5"),
@@ -162,7 +170,7 @@ def test_minkowski_canonicalizes_specializable_p(p: float, root: bool):
     metric = DistanceMetric.minkowski(p, root=root)
 
     # --- assert -----------------------
-    assert metric.float_param == NO_FLOAT_PARAM
+    assert metric.float_param(3) == NO_FLOAT_PARAM
     assert metric.kind not in {m.kind for m in _FACTORY_METRICS}
     assert metric.kind != DistanceMetric.minkowski(3, root=root).kind
     assert metric.p == p
@@ -175,8 +183,8 @@ def test_minkowski_generic_carries_p():
     powered = DistanceMetric.minkowski(3, root=False)
 
     # --- assert -----------------------
-    assert rooted.float_param == 3.0
-    assert powered.float_param == 3.0
+    assert rooted.float_param(3) == 3.0
+    assert powered.float_param(3) == 3.0
     assert rooted.kind != powered.kind
     assert rooted != powered
 
@@ -216,7 +224,7 @@ def test_l2_and_projections_carries_its_l2_scale():
     """The L2-and-projections metric stores its L2 scale, 1 by default, as its float parameter."""
     # --- act / assert -----------------
     assert DistanceMetric.l2_and_projections().l2_scale == 1.0
-    assert DistanceMetric.l2_and_projections(l2_scale=2).float_param == 2.0
+    assert DistanceMetric.l2_and_projections(l2_scale=2).float_param(3) == 2.0
     assert DistanceMetric.l2_and_projections(l2_scale=0.5) != DistanceMetric.l2_and_projections()
 
 
@@ -226,6 +234,45 @@ def test_l2_and_projections_rejects_an_l2_scale_that_is_not_positive_and_finite(
     # --- act / assert -----------------
     with pytest.raises(ValueError, match="positive, finite l2_scale"):
         DistanceMetric.l2_and_projections(l2_scale=l2_scale)
+
+
+def test_l2_and_projections_with_k_is_a_kind_of_its_own_that_stores_k():
+    """With `k` the metric is a kind of its own that stores `k`, as a plain int, beside the L2 scale."""
+    # --- act --------------------------
+    with_k = DistanceMetric.l2_and_projections(k=100)
+
+    # --- assert -----------------------
+    assert with_k.kind != DistanceMetric.l2_and_projections().kind
+    assert (with_k.l2_scale, with_k.k) == (1.0, 100)
+    assert type(DistanceMetric.l2_and_projections(k=np.int64(100)).k) is int
+    assert with_k != DistanceMetric.l2_and_projections(k=50)
+    assert with_k != DistanceMetric.l2_and_projections()
+
+
+@pytest.mark.parametrize("k", [1, 0, -5, 1.5, "100", True])
+def test_l2_and_projections_rejects_a_k_that_is_not_an_integer_of_at_least_2(k):
+    """`k` must be an integer of at least 2, where the factor on the L2 distance is defined."""
+    # --- act / assert -----------------
+    with pytest.raises(ValueError, match="integer k >= 2"):
+        DistanceMetric.l2_and_projections(k=k)
+
+
+@pytest.mark.parametrize(
+    "metric, n_dims, expected",
+    [
+        (DistanceMetric.l2_and_projections(k=100), 2, 9 / 99),
+        (DistanceMetric.l2_and_projections(k=100), 3, (100 ** (1 / 3) - 1) / 99),
+        (DistanceMetric.l2_and_projections(l2_scale=0.5, k=2), 2, 0.5 * (2**0.5 - 1)),
+        (DistanceMetric.l2_and_projections(l2_scale=0.5), 2, 0.5),
+    ],
+    ids=str,
+)
+def test_l2_and_projections_float_param_combines_k_and_the_dimension_count(
+    metric: DistanceMetric, n_dims: int, expected: float
+):
+    """With `k` the float parameter is the L2 scale times (k^(1/d) - 1) / (k - 1); without `k` it is the L2 scale."""
+    # --- act / assert -----------------
+    assert metric.float_param(n_dims) == pytest.approx(expected)
 
 
 # ==================================================================================================
@@ -256,11 +303,24 @@ def test_along_axis_rejects_a_missing_coordinate(check: str, vectors: np.ndarray
         getattr(DistanceMetric.along_axis(3), check)(vectors)
 
 
-def test_l2_and_projections_rejects_one_dimension(vectors: np.ndarray):
-    """The L2-and-projections distance needs at least 2 dimensions."""
+@pytest.mark.parametrize("k", [None, 3])
+def test_l2_and_projections_rejects_one_dimension(k: int | None, vectors: np.ndarray):
+    """The L2-and-projections distance, with or without `k`, needs at least 2 dimensions."""
     # --- act / assert -----------------
     with pytest.raises(ValueError, match="needs at least 2 dimensions"):
-        DistanceMetric.l2_and_projections().validate(np.ascontiguousarray(vectors[:, :1]))
+        DistanceMetric.l2_and_projections(k=k).validate(np.ascontiguousarray(vectors[:, :1]))
+
+
+def test_l2_and_projections_with_k_rejects_a_problem_that_selects_another_k(vectors: np.ndarray):
+    """Weighted for k items, the distance accepts its own k or none, and rejects any other."""
+    # --- arrange ----------------------
+    metric = DistanceMetric.l2_and_projections(k=4)
+
+    # --- act / assert -----------------
+    metric.validate(vectors, 4)  # raises on rejection
+    metric.validate(vectors)  # raises on rejection
+    with pytest.raises(ValueError, match="selects k=3"):
+        metric.validate(vectors, 3)
 
 
 # ==================================================================================================
