@@ -22,6 +22,8 @@ from dataclasses import dataclass
 import numpy as np
 from numpy.typing import NDArray
 
+from max_div.metrics import DistanceMetric
+
 # The axes extend past the unit square: room for the rug ticks below and left of it, and for the
 # legend above it.
 X_MIN, X_MAX = -0.06, 1.02
@@ -73,14 +75,6 @@ class Distance:
     pairwise: Callable[[NDArray[np.float64], NDArray[np.float64]], NDArray[np.float64]]
 
 
-def _l2_factor_for_k(k: int) -> float:
-    """Return r = (sqrt(k) - 1) / (k - 1), the factor that `l2_and_projections(k=k)` puts on the L2 distance in 2D.
-
-    `uniform_sampling_explorer.js` computes the same factor from the fragment's `data-k`.
-    """
-    return (math.sqrt(k) - 1.0) / (k - 1.0)
-
-
 DISTANCES = {
     distance.key: distance
     for distance in (
@@ -97,12 +91,15 @@ DISTANCES = {
             lambda dx, dy: np.minimum(np.minimum(dx, dy), dx * dx + dy * dy),
         ),
         # The entry below is `DistanceMetric.l2_and_projections(k=k)` with its default `l2_scale` of 1; in 2
-        # dimensions its L2 part is r times the L2 distance, r = (sqrt(k) - 1) / (k - 1). The gap matrices are
+        # dimensions its L2 part is the metric's `float_param(2)` times the L2 distance. The gap matrices are
         # those of the k selected items, so their size is k.
         Distance(
             "l2_and_projections_k",
             "L2-and-projections distance with k",
-            lambda dx, dy: np.minimum(np.minimum(dx, dy), _l2_factor_for_k(len(dx)) * np.sqrt(dx * dx + dy * dy)),
+            lambda dx, dy: np.minimum(
+                np.minimum(dx, dy),
+                DistanceMetric.l2_and_projections(k=len(dx)).float_param(2) * np.sqrt(dx * dx + dy * dy),
+            ),
         ),
     )
 }
@@ -118,6 +115,9 @@ def nearest_neighbors(
     A pair of items that share a coordinate is at distance 0 under every distance of `DISTANCES` except L2 and the
     distance along the axis where the 2 items differ; that pair is then each other's nearest neighbor, and the
     JavaScript draws the degenerate level curve.
+
+    `x` and `y` must hold exactly the k selected items: the `l2_and_projections_k` distance computes its L2 factor
+    from their count.
     """
     x64 = np.asarray(x, dtype=np.float64)
     y64 = np.asarray(y, dtype=np.float64)
@@ -312,7 +312,8 @@ def explorer_fragment(
     Args:
         x, y: Coordinates of the k selected items, in the solver's input coordinates.
         n: Population size, for the legend.
-        k: Selection size, for the legend.
+        k: Selection size, for the legend and for the SVG's `data-k`, from which the JavaScript draws the
+            level curve of the L2-and-projections form with k.
         objective_keys: Keys into `DISTANCES` of the distances the experiment's objective uses; one for a
             simple objective, one per term for a hybrid. The interaction draws one level curve per key.
         population_image_url: URL of the population raster, relative to the page that includes the fragment.

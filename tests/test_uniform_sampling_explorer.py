@@ -120,7 +120,7 @@ def test_every_dot_names_its_neighbors_under_the_objective_and_reference_distanc
 
 
 def test_fragment_carries_the_selection_size(fragment):
-    """`uniform_sampling_explorer.js` reads `data-k` to draw the level curve of the L2-and-projections form with k."""
+    """The SVG carries the selection size in `data-k`, from which the JavaScript draws the form with k's level curve."""
     # --- assert -----------------------
     assert re.search(r'<svg class="usx"[^>]* data-k="4"', fragment)
 

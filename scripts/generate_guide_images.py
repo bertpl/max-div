@@ -235,9 +235,9 @@ def layout_constrained_group(alpha: float) -> NDArray[np.float64]:
 # ==================================================================================================
 #  Uniform sampling: solved experiments
 # ==================================================================================================
-# The keys name the distances of `uniform_sampling_explorer.DISTANCES`; each value returns the distance
-# metric for a selection of k items, which only the L2-and-projections form with k depends on.
-DISTANCE_METRICS: dict[str, Callable[[int], DistanceMetric]] = {
+# The keys name the distances of `uniform_sampling_explorer.DISTANCES`; each value maps the selection size k
+# to the distance metric, and only the L2-and-projections form with k uses k.
+DISTANCE_METRIC_FACTORIES: dict[str, Callable[[int], DistanceMetric]] = {
     "l2": lambda k: DistanceMetric.l2_euclidean(),
     "x": lambda k: DistanceMetric.along_axis(0),
     "y": lambda k: DistanceMetric.along_axis(1),
@@ -346,13 +346,13 @@ class Experiment:
         else:
             weights = None if self.k_weight_exponents is None else tuple(k**e for e in self.k_weight_exponents)
             return self.hybrid_factory(
-                *(DiversityMetric.MIN_SEPARATION.over(DISTANCE_METRICS[key](k)) for key in self.distance_keys),
+                *(DiversityMetric.MIN_SEPARATION.over(DISTANCE_METRIC_FACTORIES[key](k)) for key in self.distance_keys),
                 weights=weights,
             )
 
     def distance_metric(self, k: int) -> DistanceMetric:
         """Return the problem's distance metric for k selected items; a hybrid carries its distances in its terms."""
-        return DISTANCE_METRICS[self.distance_keys[0]](k)
+        return DISTANCE_METRIC_FACTORIES[self.distance_keys[0]](k)
 
 
 EXPERIMENTS = (

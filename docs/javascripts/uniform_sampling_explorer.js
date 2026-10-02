@@ -70,11 +70,8 @@ function lInfPaths(cx, cy, d) {
 }
 
 // Return the L2-and-projections level curve at value d around (cx, cy), in 2 dimensions: the L-inf
-// curve with the corner of each quadrant cut by the circle on which the L2 part equals d. The radius of
-// that circle depends on the form, with `l2_scale` = 1:
-// - without k, the L2 part is dx^2 + dy^2, so the radius is sqrt(d);
-// - with k, the L2 part is r * sqrt(dx^2 + dy^2), with r = (sqrt(k) - 1) / (k - 1), so the radius is d / r.
-// The circle crosses the line |dx| = d at |dy| = q = sqrt(radius^2 - d^2), and it cuts the corner only
+// curve with the corner of each quadrant cut by the circle on which the L2 part equals d. `radius` is
+// the radius of that circle, which levelPaths computes for each form. The circle crosses the line |dx| = d at |dy| = q = sqrt(radius^2 - d^2), and it cuts the corner only
 // while q > d.
 function l2AndProjectionsPaths(cx, cy, d, radius, samples = 24) {
   const q = Math.sqrt(Math.max(radius * radius - d * d, 0));
@@ -105,6 +102,9 @@ function l2AndProjectionsPaths(cx, cy, d, radius, samples = 24) {
 // - L-inf and both L2-and-projections forms: see `lInfPaths` and `l2AndProjectionsPaths`;
 // - geometric mean: the hyperbolas.
 // k is the selection size, which only the L2-and-projections form with k reads.
+// The L2-and-projections radius depends on the form, with `l2_scale` = 1:
+// - without k, the L2 part is dx^2 + dy^2, so the radius is sqrt(d);
+// - with k, the L2 part is r * sqrt(dx^2 + dy^2), with r = (sqrt(k) - 1) / (k - 1), so the radius is d / r.
 function levelPaths(key, cx, cy, d, k) {
   switch (key) {
     case "l2":
@@ -118,7 +118,7 @@ function levelPaths(key, cx, cy, d, k) {
     case "l2_and_projections":
       return l2AndProjectionsPaths(cx, cy, d, Math.sqrt(d));
     case "l2_and_projections_k":
-      // must match _l2_factor_for_k in scripts/uniform_sampling_explorer.py
+      // The factor r here must match DistanceMetric.l2_and_projections(k=k).float_param(2).
       return l2AndProjectionsPaths(cx, cy, d, (d * (k - 1)) / (Math.sqrt(k) - 1));
     default:
       return geomeanPaths(cx, cy, d);
