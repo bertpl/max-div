@@ -106,21 +106,21 @@ def _l2_and_projections_distance(
     # --- smallest coordinate gap (L-∞) ---------
     smallest_gap = _lminusinf_distance(vectors, i, j)
 
-    # --- L2 part (L2 to the power d) ---------
+    # --- L2 part (L2 to the power d) ------------
     # the metric is meant for small d, so the common dimensions skip the general power
     squared_l2 = _l2sq_distance(vectors, i, j)
     n_dims = vectors.shape[1]
     if n_dims == 2:
-        l2_part = squared_l2
+        l2_to_power_d = squared_l2
     elif n_dims == 3:
-        l2_part = squared_l2 * np.sqrt(squared_l2)
+        l2_to_power_d = squared_l2 * np.sqrt(squared_l2)
     elif n_dims == 4:
-        l2_part = squared_l2 * squared_l2
+        l2_to_power_d = squared_l2 * squared_l2
     else:
-        l2_part = squared_l2 ** (0.5 * n_dims)
+        l2_to_power_d = squared_l2 ** (0.5 * n_dims)
 
     # --- minimum --------------------------------
-    return min(smallest_gap, l2_scale * l2_part)
+    return min(smallest_gap, l2_scale * l2_to_power_d)
 
 
 @lazy_njit(
@@ -208,7 +208,7 @@ def _pairwise_distance(  # noqa: C901 -- flat dispatch, one arm per kind: comple
     """Compute the distance between vectors i and j, per the given metric selector.
 
     `metric_float_param` is the metric's `DistanceMetric.float_param`: the power `p` of a
-    generic Minkowski kind, or the `l2_scale` of L2-and-projections.
+    generic Minkowski kind, or the `l2_scale` of the L2-and-projections distance.
 
     The selector is loop-invariant in every calling loop, so the branch order is not
     performance-relevant.  The specialized Minkowski kinds apply the outer root as repeated

@@ -7,7 +7,9 @@
     - that a [hybrid objective](../reference/metrics/HybridDiversityMetric.md) with one term per goal delivers all 3 at once;
     - what exact per-band counts cost on top of it.
 
-    A hybrid that takes the minimum over weighted terms, not their geometric mean, spreads the selection further over the square without spreading it less along either axis. Min separation under the L2-and-projections distance, a single distance that is the minimum of an L−∞ part and an L2 part, gives the lowest of the 3 goals the highest value of any 60 s experiment.
+    A hybrid that takes the minimum over weighted terms, not their geometric mean, spreads the selection further over the square without spreading it less along either axis.
+
+    Min separation under the L2-and-projections distance, a single distance that is the minimum of an L−∞ part and an L2 part, gives the lowest of the 3 goals the highest value of any 60 s experiment.
 
 ## I. Problem statement
 
@@ -288,7 +290,9 @@ Against V.D, the L2 goal rises from 63 % to 72 % of its reference, and the 2 mar
 
 A solve under a single distance also iterates as fast as the single-distance experiments of III and IV, as the convergence table in VI shows.
 
-The L2 goal gains because V.D's weighted minimum and the L2-and-projections distance turn the same L−∞ separation into different L2 separations. A solve that maximizes a minimum of 2 parts ends with the 2 parts about equal, so equating the 2 parts at each solve's achieved L−∞ separation gives the L2 separation that the solve should reach:
+The L2 goal gains because V.D's weighted minimum and the L2-and-projections distance turn the same L−∞ separation into different L2 separations.
+
+A solve that maximizes a minimum of 2 parts ends with the 2 parts about equal, so equating the 2 parts at each solve's achieved L−∞ separation gives the L2 separation that the solve should reach:
 
 - **V.D:** $\sqrt{k} \cdot d_{\text{L2}} = k \cdot d_{\text{L}-\infty}$ gives $d_{\text{L2}} = \sqrt{k} \cdot d_{\text{L}-\infty} = 10 \times 0.0072 = 0.072$;
 - **V.E:** $d_{\text{L2}}^{\,2} = d_{\text{L}-\infty}$ gives $d_{\text{L2}} = \sqrt{0.0067} = 0.082$.

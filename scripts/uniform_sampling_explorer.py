@@ -81,8 +81,8 @@ DISTANCES = {
         Distance("y", "y distance", lambda dx, dy: dy),
         Distance("linf", "L\u2212\u221e distance", np.minimum),
         Distance("geomean", "geometric-mean distance", lambda dx, dy: np.sqrt(dx * dy)),
-        # This is `DistanceMetric.l2_and_projections()` at its default L2 scale of 1; in 2 dimensions its L2 part
-        # is the squared L2 distance
+        # The entry below is `DistanceMetric.l2_and_projections()` with its default `l2_scale` of 1; in 2 dimensions
+        # its L2 part is the squared L2 distance
         Distance(
             "l2_and_projections",
             "L2-and-projections distance",

@@ -148,8 +148,8 @@ class DistanceMetric:
         """Return the L2-and-projections distance: ``min( min_i |a_i - b_i|, l2_scale * ||a - b||_2^d )``.
 
         For 2 vectors a and b of dimension d, the first part, the L-∞ part, is the `l_minus_inf()`
-        distance: the gap in the coordinate where they are closest.  The second part, the L2 part, is
-        their L2 distance raised to the power d.
+        distance: the smallest gap between their projections onto a single coordinate axis.  The second
+        part, the L2 part, is their L2 distance raised to the power d.
 
         Under min-separation a selection is then spread along every coordinate axis (its 1-dimensional
         projections) and in the full space at once.

@@ -48,7 +48,8 @@ The distance metric determines how the distance between two vectors is measured.
 - **Speed depends on `p`.** The values $p \in \{1, 2, \infty, 0.5, 0.25, 0.125\}$ compute with hardware arithmetic; every other $p$ pays a `pow` call per dimension, well over an order of magnitude more per term.
 - **`root=False` skips the outer $1/p$ root**, exactly as `l2s_euclidean_squared()` does for `l2_euclidean()` -- see that row above.
 - **For $0 < p < 1$ the `root=True` form violates the triangle inequality** and is not a strict metric, while the `root=False` form is one -- the solver never relies on the triangle inequality, so both are usable.
-- **`l2_and_projections()` assumes vectors scaled into the unit cube $[0,1]^d$**, the only population for which its 2 parts are comparable, and at least 2 dimensions: in 1 it only rescales the one coordinate gap. In higher dimensions the L2 part rarely sets the minimum; an `l2_scale` below 1 shrinks the L2 part, so that the L2 part sets the minimum more often: about 1/1.4 gives the 2 parts equal weight for $d = 3$, and about 1/40 for $d = 10$.
+- **`l2_and_projections()` assumes vectors scaled into the unit cube $[0,1]^d$**, the only population for which its 2 parts are comparable, and at least 2 dimensions: in 1 it only rescales the one coordinate gap.
+- **An `l2_scale` below 1 lets the L2 part set the minimum more often.** In higher dimensions the L2 part rarely sets the minimum; about 1/1.4 gives the 2 parts equal weight for $d = 3$, and about 1/40 for $d = 10$.
 - **`geometric_mean()` is computed through logarithms**, one per dimension with a single exponential at the end, so the product cannot underflow or overflow at any dimension count.
 - **Distinct points can be at distance zero under `geometric_mean()`, `l_minus_inf()`, `along_axis(axis)` and `l2_and_projections()`**; the solver treats them as a coincident pair -- see the [scoring page](scoring.md#diversity-tie-breakers) for the tie-breaker that removes one of them.
 
@@ -187,7 +188,9 @@ objective = HybridDiversityMetric.min_of(
 )
 ```
 
-A `min_of` hybrid whose terms all use min-separation scores a selection exactly as min-separation over a single distance: the weighted minimum of the terms' distances. [`l2_and_projections()`](#distance-metrics) is such a distance: the minimum of the `l_minus_inf()` distance and the L2 part, with `l2_scale` as the weight on the L2 part. Under min-separation it spreads a selection along every axis and in the full space at once.
+A `min_of` hybrid whose terms all use min-separation scores a selection exactly as min-separation over a single distance: the weighted minimum of the terms' distances.
+
+[`l2_and_projections()`](#distance-metrics) is such a distance: the minimum of the `l_minus_inf()` distance and `l2_scale` times the L2 distance raised to the power $d$, the number of dimensions. Under min-separation it spreads a selection along every axis and in the full space at once.
 
 ### VI.D. Tie-breakers { #hybrid-tie-breakers }
 

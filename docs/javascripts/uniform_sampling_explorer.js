@@ -69,7 +69,7 @@ function lInfPaths(cx, cy, d) {
   ];
 }
 
-// Return the L2-and-projections level curve at value d around (cx, cy), at L2 scale 1 in 2
+// Return the L2-and-projections level curve at value d around (cx, cy), with `l2_scale` = 1 and in 2
 // dimensions: min(min(|dx|, |dy|), dx^2 + dy^2) = d. It is the L-inf curve with the corner of each
 // quadrant cut by the circle of radius sqrt(d): the circle crosses the line |dx| = d at
 // |dy| = q = sqrt(d - d^2), and it cuts the corner only while q > d, which holds for every d < 1/2.
