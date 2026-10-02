@@ -36,9 +36,10 @@ class InitPreset(StrEnum):
     MF = "mf"
 
     # --- constraint-aware diverse ---------------
-    CAD_16_1 = "cad(16,1)"  # batch_size=16, nc=1: the fast setting
+    # The fast, in-between and thorough settings that InitConstraintAwareDiverse's docstring describes.
+    CAD_16_1 = "cad(16,1)"
     CAD_1_1 = "cad(1,1)"
-    CAD_1_16 = "cad(1,16)"  # batch_size=1, nc=16: the slow setting
+    CAD_1_16 = "cad(1,16)"
 
     # -------------------------------------------------------------------------
     #  Factory
