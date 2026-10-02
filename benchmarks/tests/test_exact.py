@@ -44,39 +44,39 @@ def _brute_force_optimum(problem: MaxDivProblem, metric_name: str) -> float:
 
 
 def test_cpsat_maxmin_matches_brute_force():
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     problem = _tiny_problem(DiversityMetric.MIN_SEPARATION)
     oracle = _brute_force_optimum(problem, "MIN_SEPARATION")
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     result = solve_maxmin_cpsat(problem, time_limit_sec=30)
     achieved = evaluate_selection(problem, result.i_selected)["MIN_SEPARATION"]
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert result.proven_optimal
     assert achieved == pytest.approx(oracle, rel=1e-6)
 
 
 @pytest.mark.parametrize("metric", [DiversityMetric.MEAN_SEPARATION, DiversityMetric.GEOMEAN_SEPARATION])
 def test_scip_nn_separation_matches_brute_force(metric):
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     problem = _tiny_problem(metric)
     oracle = _brute_force_optimum(problem, metric.name)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     result = solve_nn_separation_scip(problem, metric, time_limit_sec=60)
     achieved = evaluate_selection(problem, result.i_selected)[metric.name]
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert result.proven_optimal
     assert achieved == pytest.approx(oracle, rel=1e-5)
 
 
 def test_scip_rejects_unsupported_metric():
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     problem = _tiny_problem(DiversityMetric.MIN_SEPARATION)
 
-    # --- act / assert ------------------------------------
+    # --- act / assert -----------------
     with pytest.raises(ValueError, match="Unsupported metric"):
         solve_nn_separation_scip(problem, DiversityMetric.MIN_SEPARATION)
 
@@ -85,25 +85,25 @@ def test_scip_rejects_unsupported_metric():
 def test_cpsat_nn_assignment_matches_brute_force(metric):
     # the CP-SAT rebuild of the assignment model must agree with the brute-force oracle,
     # which also validates its integer weight scaling end to end
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     problem = _tiny_problem(metric)
     oracle = _brute_force_optimum(problem, metric.name)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     result = solve_nn_assignment_cpsat(problem, metric, time_limit_sec=60, num_workers=1)
     achieved = evaluate_selection(problem, result.i_selected)[metric.name]
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert result.proven_optimal
     assert achieved == pytest.approx(oracle, rel=1e-5)
     assert result.objective_bound == pytest.approx(result.objective_value, rel=1e-5)
 
 
 def test_cpsat_nn_assignment_rejects_unsupported_metric():
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     problem = _tiny_problem(DiversityMetric.MIN_SEPARATION)
 
-    # --- act / assert ------------------------------------
+    # --- act / assert -----------------
     with pytest.raises(ValueError, match="Unsupported metric"):
         solve_nn_assignment_cpsat(problem, DiversityMetric.MIN_SEPARATION)
 
@@ -143,13 +143,13 @@ def _solve_highs_in_child(connection, constrained: bool) -> None:  # noqa: ANN00
 @pytest.mark.parametrize("problem", [_mip_problem(), _mip_constrained_problem()], ids=["unconstrained", "constrained"])
 def test_scip_maxmin_certifies_the_brute_force_optimum(problem):
     """SCIP certifies the max-min optimum, fairness constraints included, and reports the optimum with the selection."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     oracle = _mip_oracle(problem)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     result = solve_maxmin_scip(problem, time_limit_sec=60)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert result.proven_optimal
     assert result.min_separation == pytest.approx(oracle, rel=1e-5)
     assert evaluate_selection(problem, result.i_selected)["MIN_SEPARATION"] == pytest.approx(oracle, rel=1e-5)
@@ -158,20 +158,20 @@ def test_scip_maxmin_certifies_the_brute_force_optimum(problem):
 @pytest.mark.parametrize("constrained", [False, True], ids=["unconstrained", "constrained"])
 def test_highs_maxmin_certifies_the_brute_force_optimum(constrained):
     """HiGHS certifies the max-min optimum, fairness constraints included, run in its own process as the harness does."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     problem = _mip_constrained_problem() if constrained else _mip_problem()
     oracle = _mip_oracle(problem)
     context = get_context("spawn")
     parent, child = context.Pipe(duplex=False)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     process = context.Process(target=_solve_highs_in_child, args=(child, constrained))
     process.start()
     child.close()
     result = parent.recv()
     process.join()
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert result.proven_optimal
     assert result.min_separation == pytest.approx(oracle, rel=1e-5)
     assert evaluate_selection(problem, result.i_selected)["MIN_SEPARATION"] == pytest.approx(oracle, rel=1e-5)

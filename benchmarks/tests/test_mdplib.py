@@ -152,27 +152,27 @@ def mdplib_available() -> None:
 
 
 def test_families_have_expected_instance_counts(mdplib_available):
-    # --- act / assert ------------------------------------
+    # --- act / assert -----------------
     assert len(list_instances("Glover")) == 15
     assert len(list_instances("Geo")) == 60
     assert len(list_instances("Ran")) == 60
 
 
 def test_coordinate_instance_loads_as_vector_problem(mdplib_available):
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     problem = load_instance("Geo", "Geo 100 1.txt", k=10)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert isinstance(problem, VectorMaxDivProblem)
     assert problem.n == 100
     assert problem.k == 10
 
 
 def test_edge_list_instance_loads_as_distance_problem(mdplib_available):
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     problem = load_instance("Ran", "Ran 100 1.txt", k=10)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert isinstance(problem, DistanceMaxDivProblem)
     assert problem.n == 100
     matrix = problem.full_matrix()
@@ -181,6 +181,6 @@ def test_edge_list_instance_loads_as_distance_problem(mdplib_available):
 
 
 def test_unknown_family_is_rejected():
-    # --- act / assert ------------------------------------
+    # --- act / assert -----------------
     with pytest.raises(ValueError, match="Unknown MMDP family"):
         list_instances("Nope")

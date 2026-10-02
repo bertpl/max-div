@@ -7,7 +7,7 @@ from benchmarks.common.records import budget_sec, budget_tag, iteration_count, i
 
 
 def test_records_round_trip(tmp_path: Path):
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     records = [
         RunRecord(
             tool="max-div[SMART]",
@@ -40,12 +40,12 @@ def test_records_round_trip(tmp_path: Path):
         ),
     ]
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     path = tmp_path / "sub" / "records.jsonl"
     save_records(records, path)
     loaded = load_records(path)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert loaded == records
 
 
