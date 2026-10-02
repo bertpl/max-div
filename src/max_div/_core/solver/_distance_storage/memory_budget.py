@@ -5,10 +5,10 @@ from typing import ClassVar
 
 # Under AUTO the full matrices together may claim this fraction of *total* physical RAM.  Total is cheap and
 # stable to probe, unlike available memory, which fluctuates and is awkward to read on some
-# platforms; the conservative fraction absorbs the machine load the probe deliberately ignores.
+# platforms; the fraction leaves the other half for the machine load the probe deliberately ignores.
 # Overshooting would page — worse than the foregone speedup — while undershooting only loses the
 # full matrix for problems just above the threshold, where the user can pin `FULL_MATRIX` explicitly.
-AUTO_MEMORY_FRACTION = 1 / 3
+AUTO_MEMORY_FRACTION = 1 / 2
 
 
 def full_matrix_bytes(n: int) -> int:

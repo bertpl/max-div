@@ -14,6 +14,7 @@ from max_div._core.metrics._distance import (
 from max_div._core.problem import MaxDivProblem
 from max_div._core.solver import MaxDivSolverBuilder, SolverPreset, Verbosity
 from max_div._core.solver._distance_storage import DistanceStorageType, DistanceStoreFactory, attached_distance_store
+from max_div._core.solver._distance_storage.memory_budget import AUTO_MEMORY_FRACTION, full_matrix_bytes
 from max_div._core.solver._duration import iterations
 
 # ==================================================================================================
@@ -42,12 +43,12 @@ def _factory(problem: MaxDivProblem, storage: DistanceStorageType, total_memory:
     return DistanceStoreFactory(problem, [problem.default_distance_metric], storage, total_memory)
 
 
-def _stub_vector_problem(n: int):
-    """Return a stand-in exposing only what the policy reads (isinstance, n, the metric), without allocations."""
+def _stub_vector_problem(n: int, d: int = 0):
+    """Return a stand-in exposing only what the AUTO storage decision reads (isinstance, n, d, the metric)."""
     from max_div._core.problem import VectorMaxDivProblem
 
     stub = object.__new__(VectorMaxDivProblem)
-    object.__setattr__(stub, "vectors", np.zeros((n, 0), dtype=np.float32))
+    object.__setattr__(stub, "vectors", np.zeros((n, d), dtype=np.float32))
     object.__setattr__(stub, "distance_metric", L2)
     return stub
 
@@ -102,14 +103,14 @@ def test_explicit_choice_passes_through(storage: DistanceStorageType):
     [
         (10, 64 * GIB, DistanceStorageType.FULL_MATRIX),  # tiny problem: matrix always fits
         (10, None, DistanceStorageType.LAZY),  # probe failed: the one storage type that cannot page
-        (50_000, 32 * GIB, DistanceStorageType.FULL_MATRIX),  # 10.0 GiB matrix <= 1/3 of 32 GiB
+        (50_000, 32 * GIB, DistanceStorageType.FULL_MATRIX),  # 9.3 GiB matrix <= half of 32 GiB
         (50_000, 16 * GIB, DistanceStorageType.LAZY),  # matrix over budget
     ],
 )
 def test_auto_on_vectors_is_the_full_matrix_when_it_fits(
     n: int, total_memory: int | None, expected: DistanceStorageType
 ):
-    """AUTO on vector problems: the full matrix when its bytes fit within a third of total RAM, else lazy."""
+    """AUTO on vector problems: the full matrix when its bytes fit within the memory budget, else lazy."""
     # --- arrange ----------------------
     problem = _vector_problem() if n == 10 else _stub_vector_problem(n)
 
@@ -117,14 +118,32 @@ def test_auto_on_vectors_is_the_full_matrix_when_it_fits(
     assert _factory(problem, DistanceStorageType.AUTO, total_memory).determine_storage_types() == [expected]
 
 
-def test_auto_decides_on_the_bytes_of_every_matrix_together():
-    """Two distances over a problem whose one matrix fits, but whose two do not, both go lazy."""
+_MIXED_COST_DISTANCES = [DistanceMetric.along_axis(0), L2, DistanceMetric.geometric_mean()]
+
+
+@pytest.mark.parametrize(
+    "distances, n_matrices_in_budget, expected",
+    [
+        (_MIXED_COST_DISTANCES, 0, ["lazy", "lazy", "lazy"]),
+        # the geometric mean is the most expensive to compute
+        (_MIXED_COST_DISTANCES, 1, ["lazy", "lazy", "full_matrix"]),
+        (_MIXED_COST_DISTANCES, 2, ["lazy", "full_matrix", "full_matrix"]),
+        (_MIXED_COST_DISTANCES, 3, ["full_matrix", "full_matrix", "full_matrix"]),
+        # L1 and L2 have the same estimated cost, so the distance earlier in the list gets the full matrix
+        ([L1, L2], 1, ["full_matrix", "lazy"]),
+    ],
+)
+def test_auto_gives_the_full_matrices_that_fit_to_the_distances_most_expensive_to_compute(
+    distances: list[DistanceMetric], n_matrices_in_budget: int, expected: list[str]
+):
+    """When only some full matrices fit the memory budget, the costliest distances get them and the rest stay lazy."""
     # --- arrange ----------------------
-    problem = _stub_vector_problem(50_000)  # one matrix is 10 GiB
-    factory = DistanceStoreFactory(problem, [L2, DistanceMetric.l1_manhattan()], DistanceStorageType.AUTO, 32 * GIB)
+    problem = _stub_vector_problem(50_000, d=2)
+    total_memory = int(n_matrices_in_budget * full_matrix_bytes(50_000) / AUTO_MEMORY_FRACTION) + GIB
+    factory = DistanceStoreFactory(problem, distances, DistanceStorageType.AUTO, total_memory)
 
     # --- act / assert -----------------
-    assert factory.determine_storage_types() == [DistanceStorageType.LAZY, DistanceStorageType.LAZY]
+    assert [storage.value for storage in factory.determine_storage_types()] == expected
 
 
 @pytest.mark.parametrize("form", ["condensed", "square"])

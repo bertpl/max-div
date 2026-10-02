@@ -276,6 +276,54 @@ def test_l2_and_projections_float_param_combines_k_and_the_dimension_count(
 
 
 # ==================================================================================================
+#  Estimated cost of computing a distance
+# ==================================================================================================
+@pytest.mark.parametrize("n_dims", [1, 2, 100])
+def test_every_metric_estimates_a_positive_cost_that_never_falls_with_more_dimensions(
+    metric: DistanceMetric, n_dims: int
+):
+    """Every kind estimates a positive cost per distance, and one dimension more never costs less."""
+    # --- act / assert -----------------
+    assert metric.estimated_lazy_cost_ns(n_dims) > 0
+    assert metric.estimated_lazy_cost_ns(n_dims + 1) >= metric.estimated_lazy_cost_ns(n_dims)
+
+
+def test_the_cost_estimate_ranks_along_axis_lowest_and_a_generic_minkowski_highest():
+    """At 2 dimensions, `along_axis` is the cheapest to compute, a Minkowski with a generic kind the costliest."""
+    # --- arrange ----------------------
+    along_axis, generic_minkowski = DistanceMetric.along_axis(0), DistanceMetric.minkowski(3)
+    others = [m for m in _FACTORY_METRICS if m != along_axis] + [
+        DistanceMetric.l2_and_projections(k=100),
+        DistanceMetric.minkowski(0.5),
+    ]
+
+    # --- act --------------------------
+    costs = [m.estimated_lazy_cost_ns(2) for m in others]
+
+    # --- assert -----------------------
+    assert along_axis.estimated_lazy_cost_ns(2) < min(costs)
+    assert generic_minkowski.estimated_lazy_cost_ns(2) > max(costs)
+
+
+def test_a_metric_kind_without_its_own_coefficients_gets_the_default_estimate(monkeypatch: pytest.MonkeyPatch):
+    """A kind that sets no coefficients of its own, as a new kind would, inherits the default (2.0, 0.2)."""
+    # --- arrange ----------------------
+    metric = DistanceMetric.l2_euclidean()
+    monkeypatch.delattr(type(metric), "_lazy_cost_coefficients_ns")
+
+    # --- act / assert -----------------
+    assert metric.estimated_lazy_cost_ns(10) == pytest.approx(2.0 + 0.2 * 10)
+
+
+def test_a_generic_minkowski_without_root_is_estimated_costlier_than_a_specialized_one():
+    """Without the outer root too, a Minkowski with a generic kind is estimated costlier than a specialized one."""
+    # --- act / assert -----------------
+    assert DistanceMetric.minkowski(3, root=False).estimated_lazy_cost_ns(2) > DistanceMetric.minkowski(
+        0.5, root=False
+    ).estimated_lazy_cost_ns(2)
+
+
+# ==================================================================================================
 #  Validation against a problem's vectors
 # ==================================================================================================
 def test_validate_accepts_vectors_every_metric_can_compute_on(metric: DistanceMetric, vectors: np.ndarray):
