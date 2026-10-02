@@ -30,12 +30,14 @@ class VectorProblemDistanceStoreFactory(DistanceStoreFactory):
     """This factory builds one distance store per distance metric over a vector problem's vectors.
 
     A store is a full matrix that is computed up front, or a lazy store that computes each distance
-    on demand.  Every lazy store whose metric does not preprocess the vectors reads the user's raw
-    vectors, so those stores share one array and one shared-memory segment; a metric that
-    preprocesses gets an array of its own.
+    on demand.
 
-    The memory probe is injected, so that the storage-type policy is a pure function of its
-    arguments and can be tested without the machine's RAM.
+    Every lazy store whose metric does not preprocess the vectors reads the user's raw vectors, so
+    those stores share one array and one shared-memory segment; a metric that preprocesses gets an
+    array of its own.
+
+    The machine's total RAM is passed in as `total_memory_bytes`, so that the storage-type policy
+    depends only on its arguments and can be tested without probing the machine's RAM.
     """
 
     # --------------------------------------------------------------------------
@@ -78,8 +80,9 @@ class VectorProblemDistanceStoreFactory(DistanceStoreFactory):
         """Return full matrices when all of them fit in `AUTO_MEMORY_FRACTION` of the total RAM, else lazy stores.
 
         The distances of a vector problem are an internal artifact that the user never sees, so AUTO
-        is free to compute them on demand.  This is one decision for all the stores.  When the total
-        RAM is unknown, AUTO picks lazy, the one storage type that cannot page.
+        is free to compute them on demand.  AUTO makes one decision for all the stores.  When the
+        total RAM is unknown, AUTO picks lazy, because a lazy store holds only the vectors and so
+        cannot force the machine to page to disk.
         """
         count = len(self._distance_metrics)
         if self._total_memory_bytes is None:
@@ -98,14 +101,14 @@ class VectorProblemDistanceStoreFactory(DistanceStoreFactory):
         Raises:
             ValueError: When the full matrices cannot fit in physical memory at all.
         """
-        store_types = self.determine_storage_types()
+        storage_types = self.determine_storage_types()
         n = self._n
-        n_full = sum(store_type == DistanceStorageType.FULL_MATRIX for store_type in store_types)
+        n_full = sum(storage_type == DistanceStorageType.FULL_MATRIX for storage_type in storage_types)
         if n_full:
             check_fits_physical_memory(n_full * full_matrix_bytes(n), lazy_available=True)
         stores = []
-        for distance_metric, store_type in zip(self._distance_metrics, store_types, strict=True):
-            if store_type == DistanceStorageType.FULL_MATRIX:
+        for distance_metric, storage_type in zip(self._distance_metrics, storage_types, strict=True):
+            if storage_type == DistanceStorageType.FULL_MATRIX:
                 matrix = allocator.allocate((n, n), KIND_FULL_MATRIX)
                 compute_full_matrix(self._vectors, distance_metric, out=matrix)
                 stores.append(DistanceStore.full_matrix(matrix))

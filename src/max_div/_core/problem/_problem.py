@@ -68,7 +68,7 @@ class MaxDivProblem(ABC):
     @property
     @abstractmethod
     def diversity_objective(self) -> DiversityObjective:
-        """Return the objective the solver maximizes: the diversity metric resolved to its internal form.
+        """Return the solver's objective: the diversity metric resolved to its internal form.
 
         A `DiversityMetric` becomes a simple objective, a `HybridDiversityMetric` a hybrid objective
         over its terms.  Each flavor decides which distance a term reads when the term names none.
@@ -92,7 +92,7 @@ class MaxDivProblem(ABC):
     ) -> DistanceStoreFactory:
         """Return the factory that builds this problem's distance stores, one per entry of `distance_metrics`.
 
-        The method is internal: the solver builders call it, and each flavor returns its own factory class.
+        Each flavor returns its own factory class.
 
         Args:
             distance_metrics: the distance metric of each store, as the diversity objectives name them;
@@ -328,7 +328,7 @@ class VectorMaxDivProblem(MaxDivProblem):
 
     @property
     def diversity_objective(self) -> DiversityObjective:
-        """Return the objective the solver maximizes; a term that names no distance metric gets the problem's own."""
+        """Return the solver's objective; a term that names no distance metric gets the problem's own."""
         return self._diversity_objective_of(self.diversity_metric, self.distance_metric)
 
     @property
@@ -344,7 +344,10 @@ class VectorMaxDivProblem(MaxDivProblem):
         storage_type: DistanceStorageType,
         total_memory_bytes: int | None,
     ) -> VectorProblemDistanceStoreFactory:
-        """Return the factory that computes each store's distances from the vectors; None is the own distance metric."""
+        """Return the factory that computes each store's distances from the vectors.
+
+        A None entry stands for the problem's own distance metric.
+        """
         return VectorProblemDistanceStoreFactory(
             self.vectors,
             [self.distance_metric if metric is None else metric for metric in distance_metrics],
@@ -372,7 +375,7 @@ class DistanceMaxDivProblem(MaxDivProblem):
 
     @property
     def diversity_objective(self) -> DiversityObjective:
-        """Return the objective the solver maximizes; no term carries a distance metric, as the distances are given."""
+        """Return the solver's objective; no term carries a distance metric, as the distances are given."""
         return self._diversity_objective_of(self.diversity_metric, None)
 
     @property

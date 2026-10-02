@@ -14,11 +14,11 @@ L2 = DistanceMetric.l2_euclidean()
 
 
 class _TwoStoreFactory(DistanceStoreFactory):
-    """A minimal factory with 2 stores, each a 3 by 3 matrix of ones, whose AUTO is the full matrix."""
+    """A factory with 2 stores, each a 3 by 3 matrix of ones, whose AUTO storage type resolves to the full matrix."""
 
     @property
     def distance_metrics(self) -> tuple[DistanceMetric, ...]:
-        """Return the 2 metrics that the stores are reported under."""
+        """Return the 2 metrics of the stores."""
         return (L1, L2)
 
     def _determine_auto_storage_types(self) -> list[DistanceStorageType]:
@@ -39,18 +39,18 @@ class _TwoStoreFactory(DistanceStoreFactory):
 #  Policy
 # ==================================================================================================
 @pytest.mark.parametrize(
-    "storage, expected",
+    "storage_type, expected",
     [
         (DistanceStorageType.LAZY, DistanceStorageType.LAZY),  # an explicit choice passes through
         (DistanceStorageType.AUTO, DistanceStorageType.FULL_MATRIX),  # AUTO is the subclass's decision
     ],
 )
 def test_storage_types_are_the_explicit_choice_or_the_subclass_decision(
-    storage: DistanceStorageType, expected: DistanceStorageType
+    storage_type: DistanceStorageType, expected: DistanceStorageType
 ):
     """An explicit storage type applies to every store; AUTO resolves to what the subclass decides."""
     # --- arrange ----------------------
-    factory = _TwoStoreFactory(storage)
+    factory = _TwoStoreFactory(storage_type)
 
     # --- act / assert -----------------
     assert factory.determine_storage_types() == [expected, expected]
@@ -76,7 +76,7 @@ def test_published_stores_are_read_back_in_store_order():
 
 
 def test_leaving_the_publish_block_destroys_the_segments():
-    """After the block the segments are gone, so an attach with a stale spec fails instead of reading freed memory."""
+    """After the block the segments are gone, so attaching with a stale spec fails instead of reading freed memory."""
     # --- arrange ----------------------
     with _TwoStoreFactory(DistanceStorageType.AUTO).publish_distance_stores() as specs:
         stale = specs[0]

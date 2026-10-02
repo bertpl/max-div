@@ -5,7 +5,6 @@ from max_div._core.distance_storage import DistanceStorageType, DistanceStoreFac
 from max_div._core.metrics import DistanceMetric, DiversityMetric, DiversityObjectiveSimple
 from max_div._core.problem import MaxDivProblem
 from max_div._core.solver._builders import MaxDivSolverBuilder
-from max_div._core.solver._diversity_contribution import DiversityObjectiveBindings
 from max_div._core.solver._duration import iterations
 from max_div._core.solver._presets import SolverPreset
 from max_div._core.solver._progress_reporting import Verbosity
@@ -17,12 +16,6 @@ def _builder() -> MaxDivSolverBuilder:
     rng = np.random.default_rng(1234)
     problem = MaxDivProblem.new(rng.random((40, 3)).astype(np.float32), k=4)
     return MaxDivSolverBuilder(problem).with_preset(iterations(20), SolverPreset.SMART)
-
-
-def _stores_by_distance(factory: DistanceStoreFactory, config) -> dict:
-    """Build the factory's stores and return them keyed by distance metric, as the builder does."""
-    bindings = DiversityObjectiveBindings.for_objectives(config.diversity_objectives)
-    return bindings.stores_by_distance(factory.create_stores())
 
 
 def test_resolve_returns_the_factory_and_a_config_over_it():
@@ -40,7 +33,7 @@ def test_resolve_returns_the_factory_and_a_config_over_it():
     assert config.k == 4
     assert config.diversity_objectives[0] == DiversityObjectiveSimple(
         DiversityMetric.GEOMEAN_SEPARATION, DistanceMetric.l2_euclidean()
-    )  # the problem's own diversity metric, over its own distance metric
+    )  # the primary objective is the problem's own diversity metric, over its own distance metric
 
 
 def test_a_config_builds_a_solver_over_any_store():
@@ -50,7 +43,7 @@ def test_a_config_builds_a_solver_over_any_store():
     factory, config = builder.prepare_storage_and_config()
 
     # --- act --------------------------
-    solver = config.build_solver(stores_by_distance=_stores_by_distance(factory, config))
+    solver = config.build_solver(stores=factory.create_stores())
 
     # --- assert -----------------------
     assert isinstance(solver, MaxDivSolver)
@@ -67,10 +60,10 @@ def test_a_config_builds_a_solver_that_defers_its_store():
     def provide_stores():
         nonlocal calls
         calls += 1
-        return _stores_by_distance(factory, config)
+        return factory.create_stores()
 
     # --- act --------------------------
-    solver = config.build_solver(stores_by_distance_provider=provide_stores)
+    solver = config.build_solver(stores_provider=provide_stores)
 
     # --- assert -----------------------
     assert calls == 0  # nothing built until we solve
@@ -82,11 +75,11 @@ def test_a_config_builds_a_solver_that_defers_its_store():
     "kwargs",
     [
         {},  # neither
-        {"stores_by_distance": {}, "stores_by_distance_provider": dict},  # both
+        {"stores": [], "stores_provider": list},  # both
     ],
 )
 def test_build_solver_requires_exactly_one_store_source(kwargs):
-    """Neither or both of stores_by_distance / its provider is a caller error, not a silent fallback."""
+    """Neither or both of stores / its provider is a caller error, not a silent fallback."""
     # --- arrange ----------------------
     _, config = _builder().prepare_storage_and_config()
 

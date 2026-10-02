@@ -43,7 +43,7 @@ def test_a_distance_named_twice_gets_one_store(builder_class: type[SolverBuilder
     l2 = DistanceMetric.l2_euclidean()
     axis_0 = DistanceMetric.along_axis(0)
     hybrid = HybridDiversityMetric.geomean_of(
-        DiversityMetric.MIN_SEPARATION,  # reads the problem's own distance metric, which is L2
+        DiversityMetric.MIN_SEPARATION,  # a bare term reads the problem's own distance metric, which is L2
         DiversityMetric.MIN_SEPARATION.over(l2),
         DiversityMetric.MIN_SEPARATION.over(axis_0),
     )

@@ -23,15 +23,15 @@ def _square_distances() -> np.ndarray:
     return compute_full_matrix(vectors, DistanceMetric.l2_euclidean())
 
 
-def _factory(form: str, storage: DistanceStorageType) -> DistanceProblemDistanceStoreFactory:
+def _factory(form: str, storage_type: DistanceStorageType) -> DistanceProblemDistanceStoreFactory:
     """Return a factory over the small distances, given as a square matrix or as a condensed vector."""
     square = _square_distances()
     distances = square if form == "square" else squareform(square, checks=False)
-    return DistanceProblemDistanceStoreFactory(distances, N, storage)
+    return DistanceProblemDistanceStoreFactory(distances, N, storage_type)
 
 
 def _all_pairs(store: DistanceStore) -> list[float]:
-    """Return every (i, j) distance the store reports, self-pairs included."""
+    """Return the store's distance for every (i, j) pair, self-pairs included."""
     return [get_distance(store, np.int32(i), np.int32(j)) for i in range(N) for j in range(N)]
 
 
@@ -92,7 +92,7 @@ def test_lazy_raises():
 # ==================================================================================================
 @pytest.mark.parametrize("form", ["square", "condensed"])
 def test_published_store_holds_the_given_distances(form: str):
-    """The given distances land in a segment whatever their form, since the bytes must live there."""
+    """In either form, the given distances are copied into a shared-memory segment, which is all that workers read."""
     # --- arrange ----------------------
     factory = _factory(form, DistanceStorageType.AUTO)
     (expected,) = factory.create_stores()

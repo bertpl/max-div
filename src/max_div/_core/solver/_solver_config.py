@@ -5,7 +5,7 @@ and read by several processes, while each process assembles its own solver over 
 this record — which is why the record must stay small enough to pickle.
 """
 
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, replace
 
 from max_div._core.constraints import Constraint
@@ -14,6 +14,7 @@ from max_div._core.metrics import DistanceMetric, DiversityObjective
 from max_div._core.metrics._distance import DistanceStore
 
 from ._constraint_penalty import ConstraintPenalty
+from ._diversity_contribution import DiversityObjectiveBindings
 from ._duration import E2eBudget
 from ._solver import MaxDivSolver
 from ._solver_step import REPORTING_BATCH_SECONDS, SolverStep
@@ -45,28 +46,33 @@ class SolverConfig:
     def build_solver(
         self,
         *,
-        stores_by_distance: Mapping[DistanceMetric | None, DistanceStore] | None = None,
-        stores_by_distance_provider: Callable[[], Mapping[DistanceMetric | None, DistanceStore]] | None = None,
+        stores: Sequence[DistanceStore] | None = None,
+        stores_provider: Callable[[], Sequence[DistanceStore]] | None = None,
     ) -> MaxDivSolver:
-        """Return a solver configured as this record describes, given the distances it will read.
+        """Return a solver configured as this record describes, given the distance stores it will read.
+
+        The stores come in the store order of `DiversityObjectiveBindings` over this config's
+        `diversity_objectives`; this method pairs each one with its distance metric.
 
         Pass exactly one of:
 
         Args:
-            stores_by_distance: an already-built distance -> store mapping — the parallel solver's
-                workers attach to the shared stores and hand the mapping in.
-            stores_by_distance_provider: a callable that yields the mapping when the solve starts,
-                so `build` stays lean and the stores are built inside `solve`.
+            stores: already-built distance stores — the parallel solver's workers attach to the
+                shared stores and hand them in.
+            stores_provider: a callable that yields the stores when the solve starts, so `build`
+                stays lean and the stores are built inside `solve`.
 
         Raises:
             ValueError: if neither or both are given.
         """
-        if stores_by_distance is not None and stores_by_distance_provider is None:
-            provider: Callable[[], Mapping[DistanceMetric | None, DistanceStore]] = lambda: stores_by_distance
-        elif stores_by_distance is None and stores_by_distance_provider is not None:
-            provider = stores_by_distance_provider
+        bindings = DiversityObjectiveBindings.for_objectives(self.diversity_objectives)
+        if stores is not None and stores_provider is None:
+            mapping = bindings.stores_by_distance(stores)
+            provider: Callable[[], Mapping[DistanceMetric | None, DistanceStore]] = lambda: mapping
+        elif stores is None and stores_provider is not None:
+            provider = lambda: bindings.stores_by_distance(stores_provider())
         else:
-            raise ValueError("Pass exactly one of `stores_by_distance` or `stores_by_distance_provider`.")
+            raise ValueError("Pass exactly one of `stores` or `stores_provider`.")
         return MaxDivSolver(
             n=self.n,
             stores_by_distance_provider=provider,

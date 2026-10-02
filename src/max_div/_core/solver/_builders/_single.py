@@ -4,7 +4,6 @@ from typing import Self
 
 from max_div._core.distance_storage import DistanceStoreFactory
 from max_div._core.problem import MaxDivProblem
-from max_div._core.solver._diversity_contribution import DiversityObjectiveBindings
 from max_div._core.solver._duration import TargetDuration
 from max_div._core.solver._presets import SolverPreset, get_preset_strategies
 from max_div._core.solver._solver import MaxDivSolver
@@ -118,10 +117,7 @@ class MaxDivSolverBuilder(SolverBuilderBase):
                 with no `with_preset` call after it.
         """
         factory, config = self.prepare_storage_and_config()
-        bindings = DiversityObjectiveBindings.for_objectives(config.diversity_objectives)
-        return config.build_solver(
-            stores_by_distance_provider=lambda: bindings.stores_by_distance(factory.create_stores())
-        )
+        return config.build_solver(stores_provider=factory.create_stores)
 
     def prepare_storage_and_config(self) -> tuple[DistanceStoreFactory, SolverConfig]:
         """Return the factory building this configuration's stores, and the solver config over them.

@@ -4,7 +4,8 @@
 - `memory_budget` sizes a full matrix in bytes, probes the machine's RAM, and refuses a matrix that cannot fit.
 - `allocation` decides where the arrays of a distance store are placed in memory.
 - `shared_memory` lets a worker process read a distance store that another process built in shared memory.
-- `factory_base` holds what the distance store factory of every problem flavor shares.
+- `factory_base` holds what the distance store factories of both problem flavors (vector problems and
+  distance-input problems) share.
 - `factory_vector_problem` builds the stores of a vector problem, from its vectors.
 - `factory_distance_problem` builds the store of a distance-input problem, from its given distances.
 

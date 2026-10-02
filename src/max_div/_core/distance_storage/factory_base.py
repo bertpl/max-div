@@ -19,14 +19,15 @@ from .storage import DistanceStorageType, DistanceStorageTypes
 #  DistanceStoreFactory
 # ==================================================================================================
 class DistanceStoreFactory(ABC):
-    """A distance store factory builds the distance stores that one solve reads, one per distance.
+    """A distance store factory builds the distance stores of one solve, one per distance.
 
     Each problem flavor has a subclass, which decides what `AUTO` storage resolves to and builds the
     stores from that flavor's data.  The base class passes an explicitly chosen storage type through
     and places the stores in memory: in this process, or in shared memory for worker processes.
 
     "Storage type" names a `DistanceStorageType` value throughout; "kind" is reserved for
-    `DistanceStore.kind`, the compiled selector that a distance store carries.
+    `DistanceStore.kind`, the integer code that tells the compiled distance lookup whether a store is a
+    full matrix or lazy.
     """
 
     # --------------------------------------------------------------------------
@@ -45,7 +46,10 @@ class DistanceStoreFactory(ABC):
     #  Policy
     # --------------------------------------------------------------------------
     def determine_storage_types(self) -> list[DistanceStorageType]:
-        """Return the storage type of each store; an explicit choice passes through, the subclass decides AUTO."""
+        """Return the storage type of each store.
+
+        An explicit choice applies to every store, and the subclass decides what AUTO resolves to.
+        """
         if self._storage_type != DistanceStorageType.AUTO:
             return [self._storage_type] * len(self.distance_metrics)
         else:
@@ -74,9 +78,9 @@ class DistanceStoreFactory(ABC):
     def publish_distance_stores(self) -> Iterator[tuple[SharedStoreSpec, ...]]:
         """Build the distance stores in shared memory and yield their specs, for the duration of the block.
 
-        This is a context manager.  Inside the block the shared-memory segments exist and worker
-        processes can attach to them with the yielded specs, through `attach_distance_stores`.  On
-        exit the segments are destroyed, so leave the block only after every worker is done.
+        Inside the block the shared-memory segments exist and worker processes can attach to them
+        with the yielded specs, through `attach_distance_stores`.  On exit the segments are
+        destroyed, so leave the block only after every worker is done.
 
         Raises:
             ValueError: as `create_stores`.
@@ -102,4 +106,4 @@ class DistanceStoreFactory(ABC):
 
     @abstractmethod
     def _build(self, allocator: DistanceStoreAllocator) -> list[DistanceStore]:
-        """Build every distance store through the given allocator, after the memory check the allocations need."""
+        """Build every distance store through the given allocator, after checking that its matrices fit in memory."""

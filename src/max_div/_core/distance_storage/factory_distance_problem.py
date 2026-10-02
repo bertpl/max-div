@@ -38,7 +38,7 @@ class DistanceProblemDistanceStoreFactory(DistanceStoreFactory):
 
     @property
     def distance_metrics(self) -> tuple[None]:
-        """Return the single entry of the one store, which is None: the given distances have no metric."""
+        """Return one entry, None, for the single store: the given distances have no metric."""
         return (None,)
 
     # --------------------------------------------------------------------------
@@ -52,7 +52,7 @@ class DistanceProblemDistanceStoreFactory(DistanceStoreFactory):
     #  Construction of the stores
     # --------------------------------------------------------------------------
     def _build(self, allocator: DistanceStoreAllocator) -> list[DistanceStore]:
-        """Build the full-matrix distance store over the given distances; a condensed input is expanded.
+        """Build the full-matrix distance store over the given distances.
 
         Raises:
             ValueError: For the LAZY storage type, which has no vectors to compute distances from, or

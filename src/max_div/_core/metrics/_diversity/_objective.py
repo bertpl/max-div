@@ -51,7 +51,7 @@ class DiversityTrackerSpec(NamedTuple):
     The solver builds one contribution tracker for each distinct spec.
     """
 
-    distance_metric: DistanceMetric | None  # None → given distances, which have no metric
+    distance_metric: DistanceMetric | None  # None stands for given distances, which have no metric
     contribution_family: DiversityContributionFamily
 
 

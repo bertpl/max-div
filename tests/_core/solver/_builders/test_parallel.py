@@ -553,7 +553,7 @@ class _FailingConfig:
 
     seed: int = 99
 
-    def build_solver(self, stores_by_distance) -> None:
+    def build_solver(self, stores) -> None:
         raise RuntimeError("boom: deliberately failing worker")
 
 

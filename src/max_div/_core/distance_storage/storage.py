@@ -9,10 +9,14 @@ from max_div._core.metrics._distance import DistanceMetric
 class DistanceStorageType(StrEnum):
     """A `DistanceStorageType` names how the solver stores pairwise distances during search.
 
-    `AUTO` (the default) lets max-div decide; the `DistanceStoreFactory` subclass of each problem
-    flavor states its policy.  The resolved storage type is reported in the solution summary.  Pinning a storage type
-    overrides the policy — `LAZY` requires vectors, so it is unavailable for distance-input
-    problems.  A condensed distance input is expanded to the full matrix, at twice its memory.
+    `AUTO` (the default) lets max-div decide: a vector problem gets full matrices when they all fit in
+    a fixed fraction of the machine's RAM, and lazy stores otherwise or when the RAM is unknown; a
+    distance-input problem always gets the full matrix.  The resolved storage type is reported in the
+    solution summary.
+
+    Pinning a storage type overrides the policy — `LAZY` requires vectors, so it is unavailable for
+    distance-input problems.  A condensed distance input is expanded to the full matrix, at twice its
+    memory.
     """
 
     AUTO = "auto"

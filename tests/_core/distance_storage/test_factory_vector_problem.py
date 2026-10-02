@@ -28,13 +28,15 @@ def _vectors(n: int = 10) -> np.ndarray:
 
 
 def _factory(
-    storage: DistanceStorageType,
+    storage_type: DistanceStorageType,
     metrics: tuple[DistanceMetric, ...] = (L2,),
     vectors: np.ndarray | None = None,
     total_memory: int | None = 64 * GIB,
 ) -> VectorProblemDistanceStoreFactory:
     """Return a factory over the small vectors and one L2 store, with a generous RAM figure, unless told otherwise."""
-    return VectorProblemDistanceStoreFactory(_vectors() if vectors is None else vectors, metrics, storage, total_memory)
+    return VectorProblemDistanceStoreFactory(
+        _vectors() if vectors is None else vectors, metrics, storage_type, total_memory
+    )
 
 
 def _vectors_without_columns(n: int) -> np.ndarray:
@@ -43,7 +45,7 @@ def _vectors_without_columns(n: int) -> np.ndarray:
 
 
 def _all_pairs(store: DistanceStore, n: int) -> list[float]:
-    """Return every (i, j) distance the store reports, self-pairs included."""
+    """Return the store's distance for every (i, j) pair, self-pairs included."""
     return [get_distance(store, np.int32(i), np.int32(j)) for i in range(n) for j in range(n)]
 
 
@@ -70,11 +72,11 @@ def test_distance_metrics_are_reported_in_store_order():
 # ==================================================================================================
 #  Policy
 # ==================================================================================================
-@pytest.mark.parametrize("storage", [DistanceStorageType.FULL_MATRIX, DistanceStorageType.LAZY])
-def test_explicit_choice_passes_through(storage: DistanceStorageType):
+@pytest.mark.parametrize("storage_type", [DistanceStorageType.FULL_MATRIX, DistanceStorageType.LAZY])
+def test_explicit_choice_passes_through(storage_type: DistanceStorageType):
     """A pinned storage type is the resolved one, whatever the memory."""
     # --- act / assert -----------------
-    assert _factory(storage).determine_storage_types() == [storage]
+    assert _factory(storage_type).determine_storage_types() == [storage_type]
 
 
 @pytest.mark.parametrize(
@@ -87,7 +89,7 @@ def test_explicit_choice_passes_through(storage: DistanceStorageType):
     ],
 )
 def test_auto_is_the_full_matrix_when_it_fits(n: int, total_memory: int | None, expected: DistanceStorageType):
-    """AUTO picks the full matrix when its bytes fit within a third of total RAM, else lazy."""
+    """AUTO picks the full matrix when its bytes fit within `AUTO_MEMORY_FRACTION` of total RAM, else lazy."""
     # --- arrange ----------------------
     factory = _factory(DistanceStorageType.AUTO, vectors=_vectors_without_columns(n), total_memory=total_memory)
 
@@ -113,13 +115,13 @@ def test_auto_decides_on_the_bytes_of_every_matrix_together():
 #  Store construction, in process
 # ==================================================================================================
 @pytest.mark.parametrize(
-    "storage, expected_kind",
+    "storage_type, expected_kind",
     [(DistanceStorageType.FULL_MATRIX, KIND_FULL_MATRIX), (DistanceStorageType.LAZY, KIND_LAZY)],
 )
-def test_create_stores(storage: DistanceStorageType, expected_kind: np.int32):
+def test_create_stores(storage_type: DistanceStorageType, expected_kind: np.int32):
     """Each storage type builds a store of the matching kind over the items."""
     # --- act --------------------------
-    stores = _factory(storage).create_stores()
+    stores = _factory(storage_type).create_stores()
 
     # --- assert -----------------------
     assert len(stores) == 1
@@ -198,8 +200,8 @@ def test_infeasible_full_matrix_raises_early():
 # same items: distances may differ in their last bits between storage types, the search is chaotic,
 # and one flipped comparison sends it down a different path to an equally good answer.  These
 # assert the property that survives that — quality, and feasibility on constrained problems.
-@pytest.mark.parametrize("storage", [DistanceStorageType.FULL_MATRIX, DistanceStorageType.LAZY])
-def test_every_storage_type_reaches_equivalent_quality(storage: DistanceStorageType):
+@pytest.mark.parametrize("storage_type", [DistanceStorageType.FULL_MATRIX, DistanceStorageType.LAZY])
+def test_every_storage_type_reaches_equivalent_quality(storage_type: DistanceStorageType):
     """Each storage type solves an unconstrained problem to within a small margin of the others."""
     # --- arrange ----------------------
     rng = np.random.default_rng(20260804)
@@ -211,7 +213,7 @@ def test_every_storage_type_reaches_equivalent_quality(storage: DistanceStorageT
         MaxDivSolverBuilder(problem)
         .with_preset(iterations(200), SolverPreset.SMART)
         .with_seed(7)
-        .with_distance_storage(storage)
+        .with_distance_storage(storage_type)
         .build()
         .solve(verbosity=Verbosity.SILENT)
     )
@@ -222,8 +224,8 @@ def test_every_storage_type_reaches_equivalent_quality(storage: DistanceStorageT
     assert len({int(i) for i in solution.i_selected}) == 12  # a selection, not a multiset
 
 
-@pytest.mark.parametrize("storage", [DistanceStorageType.FULL_MATRIX, DistanceStorageType.LAZY])
-def test_every_storage_type_reaches_feasibility(storage: DistanceStorageType):
+@pytest.mark.parametrize("storage_type", [DistanceStorageType.FULL_MATRIX, DistanceStorageType.LAZY])
+def test_every_storage_type_reaches_feasibility(storage_type: DistanceStorageType):
     """Each storage type satisfies a reachable count constraint, whatever items it ends up choosing."""
     # --- arrange ----------------------
     rng = np.random.default_rng(20260804)
@@ -241,7 +243,7 @@ def test_every_storage_type_reaches_feasibility(storage: DistanceStorageType):
         MaxDivSolverBuilder(problem)
         .with_preset(iterations(400), SolverPreset.SMART)
         .with_seed(7)
-        .with_distance_storage(storage)
+        .with_distance_storage(storage_type)
         .build()
         .solve(verbosity=Verbosity.SILENT)
     )
@@ -254,12 +256,12 @@ def test_every_storage_type_reaches_feasibility(storage: DistanceStorageType):
 # ==================================================================================================
 #  Shared-memory construction
 # ==================================================================================================
-@pytest.mark.parametrize("storage", [DistanceStorageType.FULL_MATRIX, DistanceStorageType.LAZY])
+@pytest.mark.parametrize("storage_type", [DistanceStorageType.FULL_MATRIX, DistanceStorageType.LAZY])
 @pytest.mark.parametrize("metric", [L2, DistanceMetric.cosine()], ids=["non-preprocessing", "preprocessing"])
-def test_published_stores_match_the_in_process_build(storage: DistanceStorageType, metric: DistanceMetric):
+def test_published_stores_match_the_in_process_build(storage_type: DistanceStorageType, metric: DistanceMetric):
     """A distance store that is published to shared memory holds bit-identical distances to the in-process build."""
     # --- arrange ----------------------
-    factory = _factory(storage, metrics=(metric,))
+    factory = _factory(storage_type, metrics=(metric,))
     (expected,) = factory.create_stores()
 
     # --- act --------------------------
