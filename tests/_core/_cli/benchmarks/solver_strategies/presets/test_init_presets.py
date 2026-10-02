@@ -6,7 +6,7 @@ from max_div._core.solver._strategies import InitializationStrategy
 
 def test_init_preset_count():
     """Forces focus on these unit tests when changing InitPreset."""
-    assert len(list(InitPreset)) == 6
+    assert len(list(InitPreset)) == 9
     assert InitPreset.all() == list(InitPreset)
 
 

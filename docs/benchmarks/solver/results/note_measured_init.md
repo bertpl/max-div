@@ -1,1 +1,1 @@
-*Measured with max-div v0.18.2.*
+*Measured with max-div v0.20.0.*
