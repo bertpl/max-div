@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.20.0 (2026-10-02)
 
 ### Added
 - `InitializationStrategy.constraint_aware_diverse(batch_size, nc)` builds the starting selection of a constrained problem in batches, each the best-scoring of `nc` candidate batches, so that the starting selection is spread out and moves toward satisfying the constraints
@@ -17,14 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `DistanceMetric.marginals_and_joint(joint_scale)` is renamed to `DistanceMetric.l2_and_projections(l2_scale)`
 - `DistanceMetric` is no longer a tuple: each factory method returns a subclass that stores only its own arguments as named fields (`p` of a generic `minkowski` metric, `axis` of `along_axis`, `l2_scale` of `l2_and_projections`), the `param` field is gone, and constructing `DistanceMetric` directly raises `TypeError`
 
-### Deprecated
-
-### Removed
-
 ### Fixed
 - A parallel solve with lazy distance storage over 2 or more `cosine` or `along_axis` distances could compute one of those distances from the vectors prepared for another one
-
-### Security
 
 ## 0.19.1 (2026-09-29)
 
