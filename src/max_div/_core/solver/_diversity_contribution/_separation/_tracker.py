@@ -16,9 +16,9 @@ if TYPE_CHECKING:
     from max_div._core.metrics._distance import DistanceStore
 
 
-# =================================================================================================
+# ==================================================================================================
 #  SeparationTracker
-# =================================================================================================
+# ==================================================================================================
 class SeparationTracker(DiversityContributionTracker):
     """Diversity-contribution tracker of the separation family: contribution = distance to nearest selected point.
 

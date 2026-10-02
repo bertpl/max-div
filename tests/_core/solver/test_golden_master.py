@@ -56,9 +56,9 @@ from max_div._core.solver import MaxDivSolverBuilder, SolverPreset, Verbosity
 from max_div._core.solver._duration import iterations
 from max_div._core.solver._solution import MaxDivSolution
 
-# =================================================================================================
+# ==================================================================================================
 #  Matrix & expected data
-# =================================================================================================
+# ==================================================================================================
 PROBLEMS = ["U1", "U2", "U3", "U4", "C1", "C2", "C3", "C4"]
 PRESETS = [SolverPreset.RANDOM, SolverPreset.GUIDED, SolverPreset.SMART, SolverPreset.THOROUGH]
 SEEDS = [42, 123]
@@ -150,9 +150,9 @@ def _case_key(problem_name: str, preset: SolverPreset, seed: int) -> str:
     return f"{problem_name}|{preset.name}|{seed}"
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Tests
-# =================================================================================================
+# ==================================================================================================
 @pytest.mark.parametrize("seed", SEEDS)
 @pytest.mark.parametrize("preset", PRESETS)
 @pytest.mark.parametrize("problem_name", PROBLEMS)
@@ -173,9 +173,9 @@ def test_golden_master(problem_name: str, preset: SolverPreset, seed: int):
     assert _as_record(solution) == expected  # exact equality, incl. float bits (see module docstring)
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Regeneration mode
-# =================================================================================================
+# ==================================================================================================
 def regenerate_active_regime() -> None:
     """Recompute and overwrite the expected data file of the active numba regime, for the full matrix."""
     records = {}

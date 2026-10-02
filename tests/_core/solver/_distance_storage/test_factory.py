@@ -16,9 +16,9 @@ from max_div._core.solver import MaxDivSolverBuilder, SolverPreset, Verbosity
 from max_div._core.solver._distance_storage import DistanceStorageType, DistanceStoreFactory, attached_distance_store
 from max_div._core.solver._duration import iterations
 
-# =================================================================================================
+# ==================================================================================================
 #  Fixtures / helpers
-# =================================================================================================
+# ==================================================================================================
 GIB = 2**30
 L2 = DistanceMetric.l2_euclidean()
 L1 = DistanceMetric.l1_manhattan()
@@ -57,9 +57,9 @@ def _all_pairs(store: DistanceStore, n: int) -> list[float]:
     return [get_distance(store, np.int32(i), np.int32(j)) for i in range(n) for j in range(n)]
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Construction
-# =================================================================================================
+# ==================================================================================================
 @pytest.mark.parametrize(
     "problem, distances, message",
     [
@@ -87,9 +87,9 @@ def test_resolved_storage_reports_the_none_distance_as_the_problems_metric():
     assert distance == L2
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Policy
-# =================================================================================================
+# ==================================================================================================
 @pytest.mark.parametrize("storage", [DistanceStorageType.FULL_MATRIX, DistanceStorageType.LAZY])
 def test_explicit_choice_passes_through(storage: DistanceStorageType):
     """A pinned storage type is the resolved one, whatever the memory."""
@@ -136,9 +136,9 @@ def test_auto_on_distance_input_is_the_full_matrix(form: str):
     ]
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Store construction, in process
-# =================================================================================================
+# ==================================================================================================
 @pytest.mark.parametrize(
     "storage, expected_kind",
     [(DistanceStorageType.FULL_MATRIX, KIND_FULL_MATRIX), (DistanceStorageType.LAZY, KIND_LAZY)],
@@ -253,9 +253,9 @@ def test_infeasible_full_matrix_raises_early():
         _factory(stub, DistanceStorageType.FULL_MATRIX).create_stores()
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Per-storage-type solve behavior
-# =================================================================================================
+# ==================================================================================================
 # What a storage type guarantees is that it solves the same problem as well, not that it picks the
 # same items: distances may differ in their last bits between storage types, the search is chaotic,
 # and one flipped comparison sends it down a different path to an equally good answer.  These
@@ -313,9 +313,9 @@ def test_every_storage_type_reaches_feasibility(storage: DistanceStorageType):
     assert n_from_first_half == 6
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Shared-memory construction
-# =================================================================================================
+# ==================================================================================================
 @pytest.mark.parametrize("storage", [DistanceStorageType.FULL_MATRIX, DistanceStorageType.LAZY])
 @pytest.mark.parametrize("metric", [L2, DistanceMetric.cosine()], ids=["non-preprocessing", "preprocessing"])
 def test_published_stores_match_the_in_process_build(storage: DistanceStorageType, metric: DistanceMetric):

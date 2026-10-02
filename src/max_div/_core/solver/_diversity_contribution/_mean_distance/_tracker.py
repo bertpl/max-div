@@ -16,9 +16,9 @@ if TYPE_CHECKING:
     from max_div._core.metrics._distance import DistanceStore
 
 
-# =================================================================================================
+# ==================================================================================================
 #  MeanDistanceTracker
-# =================================================================================================
+# ==================================================================================================
 class MeanDistanceTracker(DiversityContributionTracker):
     """Diversity-contribution tracker of the mean-distance family: contribution = mean distance to selected points.
 

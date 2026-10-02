@@ -8,9 +8,9 @@ from max_div._core._cli.benchmarks.solver_presets.scope import (
 from max_div._core.solver import SolverPreset
 
 
-# =================================================================================================
+# ==================================================================================================
 #  determine_benchmark_scope
-# =================================================================================================
+# ==================================================================================================
 def test_determine_benchmark_scope_full_series():
     """speed=0 produces the full docs-page configuration: single and parallel runs each on their own budget series."""
     # --- arrange ----------------------

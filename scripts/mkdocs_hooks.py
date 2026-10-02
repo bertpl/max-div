@@ -61,9 +61,9 @@ def on_files(files, config):
     return files.__class__([f for f in files if f.src_uri not in UNPUBLISHED_RECORDS])
 
 
-# =================================================================================================
+# ==================================================================================================
 #  README image paths
-# =================================================================================================
+# ==================================================================================================
 def _relative_prefix(page_url: str) -> str:
     """Return the `../` chain that walks from a page back up to the site root.
 
@@ -86,9 +86,9 @@ def _re_anchor_readme_paths(html: str, page_url: str) -> str:
     return DOCS_RELATIVE_ATTR.sub(rewrite, html)
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Figure display width
-# =================================================================================================
+# ==================================================================================================
 def figure_dpi() -> float:
     """Return `savefig.dpi` from the docs style sheet, the resolution every raster figure is rendered at."""
     match = re.search(r"^savefig\.dpi\s*:\s*([\d.]+)", STYLE_SHEET.read_text(encoding="utf-8"), re.MULTILINE)
@@ -160,9 +160,9 @@ def _size_figures(html: str, docs_dir: Path, page_url: str, dpi: float) -> str:
     return IMG_TAG.sub(lambda m: _sized_img_tag(m.group(0), docs_dir, page_url, dpi), html)
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Hook entry point
-# =================================================================================================
+# ==================================================================================================
 def on_page_content(html: str, *, page, config, files) -> str:
     """Re-anchor the README's image paths, and size the raster figures of every page but the home page."""
     html = _re_anchor_readme_paths(html, page.url)

@@ -25,9 +25,9 @@ from max_div._core.metrics import DistanceMetric
 from .shared_memory import SharedStoreSpec
 
 
-# =================================================================================================
+# ==================================================================================================
 #  DistanceStoreAllocator
-# =================================================================================================
+# ==================================================================================================
 class DistanceStoreAllocator(ABC):
     """This is the interface through which the distance store factory obtains the arrays of its distance stores."""
 
@@ -55,9 +55,9 @@ class DistanceStoreAllocator(ABC):
         """
 
 
-# =================================================================================================
+# ==================================================================================================
 #  InProcessDistanceStoreAllocator
-# =================================================================================================
+# ==================================================================================================
 class InProcessDistanceStoreAllocator(DistanceStoreAllocator):
     """This allocator allocates arrays in this process only; nothing is shared with other processes."""
 
@@ -70,9 +70,9 @@ class InProcessDistanceStoreAllocator(DistanceStoreAllocator):
         return array
 
 
-# =================================================================================================
+# ==================================================================================================
 #  SharedMemoryDistanceStoreAllocator
-# =================================================================================================
+# ==================================================================================================
 class SharedMemoryDistanceStoreAllocator(DistanceStoreAllocator):
     """This allocator allocates arrays in shared-memory segments, so that worker processes can read the same arrays.
 

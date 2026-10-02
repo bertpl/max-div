@@ -96,9 +96,9 @@ def problems(cd, synthetic_triple):
     return cd.check_structure(axes, registry, records, cd.COMPARISON_PAGE)
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Drift — the committed fragments are build products
-# =================================================================================================
+# ==================================================================================================
 def test_committed_fragments_match_a_fresh_render(cd, real):
     # --- arrange ----------------------
     axes, registry, records = real
@@ -192,9 +192,9 @@ def test_a_page_without_a_solver_block_is_not_a_record(cd, tmp_path):
     assert records == {}
 
 
-# =================================================================================================
+# ==================================================================================================
 #  The committed data is well formed
-# =================================================================================================
+# ==================================================================================================
 def test_committed_data_passes_both_checks(cd, real):
     # --- act --------------------------
     structural, near_duplicates = cd.validate(*real)
@@ -204,9 +204,9 @@ def test_committed_data_passes_both_checks(cd, real):
     assert near_duplicates == []
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Structural rejections — one test per rule the check claims to enforce
-# =================================================================================================
+# ==================================================================================================
 def test_unknown_axis_is_rejected(cd, synthetic):
     # --- arrange ----------------------
     synthetic[2]["tool"][0]["capabilities"]["distance.made_up"] = {"mark": "full"}
@@ -369,9 +369,9 @@ def test_an_excluded_record_needs_no_include(cd, synthetic):
     assert cd.check_structure(axes, registry, records) == []
 
 
-# =================================================================================================
+# ==================================================================================================
 #  The comparison page
-# =================================================================================================
+# ==================================================================================================
 def test_comparison_page_without_its_include_is_rejected(cd, tmp_path):
     # --- arrange ----------------------
     page = tmp_path / "comparison.md"
@@ -500,9 +500,9 @@ def test_only_the_excluded_tool_is_unlinked(cd, real):
         assert linked is tool.get("profile", True)
 
 
-# =================================================================================================
+# ==================================================================================================
 #  The capability-definitions page
-# =================================================================================================
+# ==================================================================================================
 def test_definitions_page_without_its_include_is_rejected(cd, tmp_path):
     """The include is the only thing tying the generated definitions to the page that shows them."""
     # --- arrange ----------------------
@@ -560,9 +560,9 @@ def test_every_declared_definition_reaches_the_page(cd, real):
         assert cd.inline(spec["definition"]) in rendered
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Near-duplicate notes
-# =================================================================================================
+# ==================================================================================================
 def _with_notes(records, first, second):
     record = records["tool"][0]
     record["capabilities"]["distance.l2"] = {"mark": "partial", "note": first}
@@ -617,9 +617,9 @@ def test_the_same_text_under_different_urls_is_two_notes(cd, synthetic):
     assert cd.check_near_duplicate_notes(records) == []
 
 
-# =================================================================================================
+# ==================================================================================================
 #  The command, not just the functions
-# =================================================================================================
+# ==================================================================================================
 @pytest.fixture
 def repo_copy(tmp_path):
     """A throwaway copy of everything the generator reads and writes.

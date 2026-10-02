@@ -7,9 +7,9 @@ from ._models import SolverPresetBenchmarkParams, SolverPresetBenchmarkResult, r
 from ._utils import get_n_processes
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Main function
-# =================================================================================================
+# ==================================================================================================
 def execute_solver_presets_benchmark(
     scope: list[SolverPresetBenchmarkParams],
     json_file_name: Path | None,

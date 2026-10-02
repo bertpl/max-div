@@ -16,9 +16,9 @@ import pytest
 from max_div._core._utils import BenchmarkResult, benchmark
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Control logic (fake clock)
-# =================================================================================================
+# ==================================================================================================
 @pytest.mark.parametrize("index_range", [None, 1000])
 def test_benchmark_stats_recover_the_cost_per_execution(fake_clock, index_range: int | None):
     """Every run measures exactly the workload's cost, so all three quantiles equal it."""
@@ -92,9 +92,9 @@ def test_benchmark_prints_progress_unless_silent(fake_clock, capsys):
     assert capsys.readouterr().out == ""
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Aggregation
-# =================================================================================================
+# ==================================================================================================
 @pytest.mark.parametrize(
     "method,expected_q25,expected_q50,expected_q75",
     [
@@ -134,9 +134,9 @@ def test_micro_benchmark_result_aggregation_raises_value_error(results, method):
         BenchmarkResult.aggregate(results, method=method)
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Against the real clock
-# =================================================================================================
+# ==================================================================================================
 def test_benchmark_measures_the_real_clock():
     """Guard against the fake clock hiding a benchmark that never times anything.
 

@@ -22,9 +22,9 @@ from max_div._core.metrics._distance import compute_full_matrix, expand_condense
 from ._validate_distances import _n_from_condensed_size, validated_condensed_distances, validated_square_distances
 
 
-# =================================================================================================
+# ==================================================================================================
 #  MaxDivProblem (base)
-# =================================================================================================
+# ==================================================================================================
 @dataclass(frozen=True, slots=True, kw_only=True)
 class MaxDivProblem(ABC):
     """Immutable definition of a Maximum Diversity Problem.
@@ -276,9 +276,9 @@ class MaxDivProblem(ABC):
                 )
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Flavors
-# =================================================================================================
+# ==================================================================================================
 @dataclass(frozen=True, slots=True, kw_only=True)
 class VectorMaxDivProblem(MaxDivProblem):
     """MaxDivProblem flavor defined by ``n`` vectors in ``d`` dimensions plus a distance metric.

@@ -11,9 +11,9 @@ if TYPE_CHECKING:
     from max_div._core.metrics import DistanceMetric, DiversityObjective, DiversityTrackerSpec
 
 
-# =================================================================================================
+# ==================================================================================================
 #  DiversityObjectiveBindings
-# =================================================================================================
+# ==================================================================================================
 @dataclass(frozen=True)
 class DiversityObjectiveBindings:
     """The bindings map one solve's diversity objectives to one store per distance metric and one tracker per spec.

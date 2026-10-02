@@ -32,9 +32,9 @@ from max_div._core.solver._strategies._initialization._init_most_feasible import
 from tests.helpers import swept_benchmark_problems
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Fixture
-# =================================================================================================
+# ==================================================================================================
 @pytest.fixture
 def dummy_problem() -> MaxDivProblem:
     return MaxDivProblem.new(
@@ -44,9 +44,9 @@ def dummy_problem() -> MaxDivProblem:
     )
 
 
-# =================================================================================================
+# ==================================================================================================
 #  MaxDivSolverBuilder - Modifiers
-# =================================================================================================
+# ==================================================================================================
 @pytest.mark.parametrize(
     "strategy, expected_ok",
     [
@@ -94,9 +94,9 @@ def test_solver_builder_add_solver_steps(dummy_problem, strategies: list, expect
             _ = builder.add_solver_steps(solver_steps)
 
 
-# =================================================================================================
+# ==================================================================================================
 #  MaxDivSolverBuilder - Tie-Breaker Metrics
-# =================================================================================================
+# ==================================================================================================
 @pytest.mark.parametrize(
     "diversity_metric, expected_tie_breakers",
     [
@@ -169,9 +169,9 @@ def test_max_div_solver_builder_refuses_custom_tie_breakers_for_a_hybrid_metric(
         MaxDivSolverBuilder(problem).with_diversity_tie_breakers([DiversityMetric.MEAN_SEPARATION])
 
 
-# =================================================================================================
+# ==================================================================================================
 #  MaxDivSolverBuilder - Store built in solve(), not build()
-# =================================================================================================
+# ==================================================================================================
 def test_the_store_is_built_by_solve_not_by_build(dummy_problem, monkeypatch):
     """build() only assembles the solver; each solve() builds the store, so its cost sits in solve()."""
     # --- arrange ----------------------
@@ -196,9 +196,9 @@ def test_the_store_is_built_by_solve_not_by_build(dummy_problem, monkeypatch):
     assert builds == 2  # one store built per solve
 
 
-# =================================================================================================
+# ==================================================================================================
 #  MaxDivSolverBuilder - End-to-End
-# =================================================================================================
+# ==================================================================================================
 def test_max_div_solver_builder_end_to_end():
     # --- arrange ----------------------
     vectors = np.random.rand(10, 5).astype(np.float32)
@@ -246,9 +246,9 @@ def test_max_div_solver_builder_end_to_end():
     assert solver._seed == 123
 
 
-# =================================================================================================
+# ==================================================================================================
 #  MaxDivSolverBuilder - Constraint penalty
-# =================================================================================================
+# ==================================================================================================
 def test_solver_builder_constraint_penalty_default(dummy_problem):
     # --- act --------------------------
     solver = MaxDivSolverBuilder(dummy_problem).build()
@@ -290,9 +290,9 @@ def test_max_div_solver_quadratic_penalty_end_to_end():
     assert score_after_optimization >= score_after_initialization
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Presets
-# =================================================================================================
+# ==================================================================================================
 @pytest.mark.parametrize("n", [100, 500])
 @pytest.mark.parametrize("problem_name", swept_benchmark_problems())
 @pytest.mark.parametrize("preset", list(SolverPreset))
@@ -359,9 +359,9 @@ def test_with_preset_switches_init_on_constraints(
     assert isinstance(builder._solver_steps[0]._strategy, expected_init)
 
 
-# =================================================================================================
+# ==================================================================================================
 #  MaxDivSolverBuilder - initial selection
-# =================================================================================================
+# ==================================================================================================
 _INITIAL_SELECTION = [9, 4, 0]
 
 
@@ -426,9 +426,9 @@ def test_a_solve_starts_from_the_initial_selection(dummy_problem):
     assert sorted(init_checkpoint.i_selected.tolist()) == sorted(_INITIAL_SELECTION)
 
 
-# =================================================================================================
+# ==================================================================================================
 #  MaxDivSolverBuilder - end-to-end budget
-# =================================================================================================
+# ==================================================================================================
 def test_an_end_to_end_budget_requires_a_time_budget(dummy_problem):
     """An iteration count cannot bound the store build and initialization, so build() rejects the aggregation."""
     # --- arrange / act / assert -------

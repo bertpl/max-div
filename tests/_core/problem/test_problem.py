@@ -408,9 +408,9 @@ def test_problem_from_distances_condensed_negative_raises():
         _ = MaxDivProblem.from_distances(distances, k=3)
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Feasibility diagnostic
-# =================================================================================================
+# ==================================================================================================
 def _problem_with(constraints: list[Constraint], n: int = 20, k: int = 8) -> MaxDivProblem:
     """Build a problem over n random vectors with the given constraints."""
     vectors = np.random.default_rng(0).random((n, 3)).astype(np.float32)
@@ -590,9 +590,9 @@ def test_problem_new_makes_the_vectors_c_contiguous():
     np.testing.assert_array_equal(problem.vectors, vectors)
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Hybrid diversity metric
-# =================================================================================================
+# ==================================================================================================
 _HYBRID = HybridDiversityMetric.geomean_of(
     DiversityMetric.MIN_SEPARATION, DiversityMetric.MIN_SEPARATION.over(DistanceMetric.along_axis(1))
 )

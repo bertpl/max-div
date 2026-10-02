@@ -18,9 +18,9 @@ if TYPE_CHECKING:
     from ._diversity_contribution import DiversityObjectiveBindings
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Score
-# =================================================================================================
+# ==================================================================================================
 @dataclass(frozen=True, slots=True)
 class Score:  # noqa: PLW1641 — value-semantics-only hot-path object; deliberately unhashable
     """Object representing the multi-component score of a selection.
@@ -113,9 +113,9 @@ class Score:  # noqa: PLW1641 — value-semantics-only hot-path object; delibera
         return f"size={self.size:.4f} | constraints={self.constraints:.4f} | diversity={self.diversity:.4f}"
 
 
-# =================================================================================================
+# ==================================================================================================
 #  ScoreGenerator
-# =================================================================================================
+# ==================================================================================================
 class ScoreGenerator:
     """Utility class to generate Score objects from core metrics & data structures.
 
@@ -280,9 +280,9 @@ class ScoreGenerator:
         )
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Helpers
-# =================================================================================================
+# ==================================================================================================
 def _con_norm_constant(max_violations: Sequence[int], con_weights: NDArray[np.float32], quadratic: bool) -> float:
     """Return the constraint-score normalization constant `1 / (1 + worst-case total violation)`.
 

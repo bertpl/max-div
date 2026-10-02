@@ -55,9 +55,9 @@ class DiversityTrackerSpec(NamedTuple):
     contribution_family: DiversityContributionFamily
 
 
-# =================================================================================================
+# ==================================================================================================
 #  DiversityObjective
-# =================================================================================================
+# ==================================================================================================
 class DiversityObjective(ABC):
     """A diversity objective the solver maximizes, or a tie-breaker it ranks ties by.
 
@@ -157,9 +157,9 @@ class DiversityObjective(ABC):
         return tuple(dict.fromkeys(spec.distance_metric for spec in self.tracker_specs))
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Concrete objectives
-# =================================================================================================
+# ==================================================================================================
 @dataclass(frozen=True)
 class DiversityObjectiveSimple(DiversityObjective):
     """One diversity metric over one distance metric; `distance_metric` is `None` for the problem's own distance."""

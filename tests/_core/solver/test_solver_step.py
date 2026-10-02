@@ -15,9 +15,9 @@ from max_div._core.solver._step_identity import SolverStepIdentity
 from max_div._core.solver._strategies import InitializationStrategy, OptimizationStrategy
 from tests._core.conftest import FakeClock
 
-# =================================================================================================
+# ==================================================================================================
 #  Helpers
-# =================================================================================================
+# ==================================================================================================
 
 # each step records its checkpoints under this identity when run on its own in these tests
 _STEP_IDENTITY = SolverStepIdentity(1, "test")
@@ -116,9 +116,9 @@ def assert_score_checkpoints_are_sane(score_checkpoints: list[ScoreCheckpoint]):
     assert t_values == sorted(t_values), "score_checkpoints elapsed times should be non-decreasing"
 
 
-# =================================================================================================
+# ==================================================================================================
 #  InitializationStep
-# =================================================================================================
+# ==================================================================================================
 def test_initialization_step_validation():
     # this should work just fine
     _ = InitializationStep(InitTest())
@@ -156,9 +156,9 @@ def test_initialization_step_run():
     assert_score_checkpoints_are_sane(result.score_checkpoints)
 
 
-# =================================================================================================
+# ==================================================================================================
 #  OptimizationStep
-# =================================================================================================
+# ==================================================================================================
 def test_optimization_step_validation():
     # this should work just fine
     _ = OptimizationStep(OptimTest(), duration=seconds(1))

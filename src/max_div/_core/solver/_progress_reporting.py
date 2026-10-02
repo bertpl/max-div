@@ -29,9 +29,9 @@ if TYPE_CHECKING:
     from ._step_identity import SolverStepIdentity
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Verbosity
-# =================================================================================================
+# ==================================================================================================
 class Verbosity(IntEnum):
     """Verbosity names the levels for `solve`; members are plain ints, so plain integers are accepted too.
 
@@ -60,9 +60,9 @@ TABULAR_C_SLOWDOWNS: dict[Verbosity, float] = {
 }
 
 
-# =================================================================================================
+# ==================================================================================================
 #  ProgressSnapshot
-# =================================================================================================
+# ==================================================================================================
 @dataclass(frozen=True, slots=True)
 class ProgressSnapshot:
     """A snapshot records what a reporter can show about one moment of a solve, detached from its live state.
@@ -98,9 +98,9 @@ class ProgressSnapshot:
     worker_finished: bool = False  # whether the result-fields worker has finished solving
 
 
-# =================================================================================================
+# ==================================================================================================
 #  ReportThrottle
-# =================================================================================================
+# ==================================================================================================
 class ReportThrottle:
     """A throttle decides which progress updates get shown, thinning them out as a run progresses.
 
@@ -133,9 +133,9 @@ class ReportThrottle:
         return True
 
 
-# =================================================================================================
+# ==================================================================================================
 #  SnapshotRequirements
-# =================================================================================================
+# ==================================================================================================
 @dataclass(frozen=True, slots=True)
 class SnapshotRequirements:
     """The requirements record what a reporter needs materialized in snapshots built in another process.
@@ -150,9 +150,9 @@ class SnapshotRequirements:
     selection_hash: bool  # hash the selection into `ProgressSnapshot.selection_hash`
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Base class
-# =================================================================================================
+# ==================================================================================================
 class ProgressReporter(ABC):
     """A progress reporter shows the progress of a running solve; subclasses render `ProgressSnapshot`s.
 
@@ -317,9 +317,9 @@ class ProgressReporter(ABC):
                 raise ValueError(f"Invalid verbosity level: {verbosity}")
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Silent
-# =================================================================================================
+# ==================================================================================================
 class SilentProgressReporter(ProgressReporter):
     """A progress reporter that is fully silent and doesn't output anything."""
 
@@ -337,9 +337,9 @@ class SilentProgressReporter(ProgressReporter):
     ) -> None: ...  # no-op
 
 
-# =================================================================================================
+# ==================================================================================================
 #  TQDM
-# =================================================================================================
+# ==================================================================================================
 class TqdmProgressReporter(ProgressReporter):
     """A progress reporter that shows one tqdm progress bar per solver step."""
 
@@ -384,9 +384,9 @@ class TqdmProgressReporter(ProgressReporter):
             self._current_pbar = None  # avoid updates after closing
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Tabular
-# =================================================================================================
+# ==================================================================================================
 class TabularProgressReporter(ProgressReporter):
     """A progress reporter that prints one table row per (throttled) update."""
 
@@ -541,9 +541,9 @@ class TabularProgressReporter(ProgressReporter):
         return _selection_hash_hex(selection, n)
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Helpers
-# =================================================================================================
+# ==================================================================================================
 def selection_hash_str(snapshot: ProgressSnapshot) -> str:
     """Return the hash string of a snapshot's selection, its length proportional to selection size."""
     if snapshot.selection is None:

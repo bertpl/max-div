@@ -32,9 +32,9 @@ from ._distance_metric import (
     METRIC_KIND_MINKOWSKI_POWERED,
 )
 
-# =================================================================================================
+# ==================================================================================================
 #  Pairwise distance functions
-# =================================================================================================
+# ==================================================================================================
 # These functions sum one term per dimension.  Adding those terms in a different order gives a
 # very slightly different answer in floating point, so by default the compiler must add them
 # strictly left to right — one at a time, each waiting for the previous.  `reassoc` lifts that

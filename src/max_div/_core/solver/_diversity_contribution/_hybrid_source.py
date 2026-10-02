@@ -17,9 +17,9 @@ if TYPE_CHECKING:
     from ._base import DiversityContributionTracker
 
 
-# =================================================================================================
+# ==================================================================================================
 #  HybridPerItemContributionSource
-# =================================================================================================
+# ==================================================================================================
 class HybridPerItemContributionSource(PerItemContributionSource):
     """A hybrid source provides a hybrid objective's per-item contribution from its term trackers, one per term.
 

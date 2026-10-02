@@ -13,9 +13,9 @@ from max_div._core.metrics import DiversityMetric
 from max_div._core.metrics._distance import compute_pdist
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Main functionality
-# =================================================================================================
+# ==================================================================================================
 def create_figures(target_folder: Path, show_plots: bool = True) -> None:
     """
     For all benchmark problems, create a figure showing the distribution of separations of the entire
@@ -176,9 +176,9 @@ def compute_kde(separations: np.ndarray, x_values: np.ndarray) -> np.ndarray:
     )
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Generate data
-# =================================================================================================
+# ==================================================================================================
 def compute_separations(problem_name: str, n: int) -> np.ndarray:
     """
     Compute the separations of the entire vector population for the given problem and size n.
@@ -196,9 +196,9 @@ def compute_separations(problem_name: str, n: int) -> np.ndarray:
     return square.min(axis=1)
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Main Entrypoint
-# =================================================================================================
+# ==================================================================================================
 if __name__ == "__main__":
     """
     Syntax: python fig_bm_problems_separations.py <target_folder> [--show-plots=true|false]

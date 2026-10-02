@@ -8,9 +8,9 @@ from max_div._core.problem import VectorMaxDivProblem
 from ._helpers import make_banded_vectors_and_bands
 
 
-# =================================================================================================
+# ==================================================================================================
 #  C2 - Soft band lower bounds - Constrained
-# =================================================================================================
+# ==================================================================================================
 class BenchmarkProblem_C2(BenchmarkProblem):
     """C2 uses C1's vectors and band partition, with the exact quotas relaxed to lower bounds."""
 

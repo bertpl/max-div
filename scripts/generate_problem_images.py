@@ -57,9 +57,9 @@ _LEGEND_LOC = {
 }
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Rendering helpers
-# =================================================================================================
+# ==================================================================================================
 def _titled_figure(title: str, subtitle: str) -> tuple[plt.Figure, plt.Axes]:
     """Return a square figure with the suite's bold-title + regular-subtitle header."""
     fig, ax = plt.subplots(figsize=(6.5, 6.5))
@@ -146,9 +146,9 @@ def _draw_band_constraints(ax: plt.Axes, name: str, n: int) -> None:
             ax.axhline(value, color=BLUE, linestyle=":", linewidth=0.8)
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Image builders
-# =================================================================================================
+# ==================================================================================================
 def render_geometry(name: str, with_solution: bool) -> None:
     """Render the GEOMETRY_N geometry scatter, optionally with a DEFAULT-preset example solution."""
     problem = BenchmarkProblemFactory.construct_problem(

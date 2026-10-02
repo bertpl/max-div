@@ -32,9 +32,9 @@ from numba.extending import typeof_impl
 _F = TypeVar("_F", bound=FunctionType)
 
 
-# =================================================================================================
+# ==================================================================================================
 #  LazilyCompiledFunction
-# =================================================================================================
+# ==================================================================================================
 class LazilyCompiledFunction(functools.partial):
     """A `LazilyCompiledFunction` stands in for `numba.njit(signature, **options)(py_function)`, compiled on first use.
 
@@ -168,9 +168,9 @@ class LazilyCompiledFunction(functools.partial):
         return lazily_compiled_function.compile()(*args, **kwargs)
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Decorator
-# =================================================================================================
+# ==================================================================================================
 def lazy_njit(signature: object, **options: object) -> Callable[[_F], _F]:
     """Decorate a function like `numba.njit(signature, **options)`, but compile it on first use.
 
@@ -194,9 +194,9 @@ def lazy_njit(signature: object, **options: object) -> Callable[[_F], _F]:
     return decorator
 
 
-# =================================================================================================
+# ==================================================================================================
 #  numba typing hook
-# =================================================================================================
+# ==================================================================================================
 @typeof_impl.register(LazilyCompiledFunction)
 def _typeof_lazily_compiled_function(
     lazily_compiled_function: LazilyCompiledFunction, context: object

@@ -12,9 +12,9 @@ if TYPE_CHECKING:
     from max_div._core.solver._strategies import InitializationStrategy
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Enum
-# =================================================================================================
+# ==================================================================================================
 class InitPreset(StrEnum):
     """StrEnum for all initialization presets we want to benchmark.
 
@@ -94,9 +94,9 @@ class InitPreset(StrEnum):
         return list(cls)
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Classes & Arguments
-# =================================================================================================
+# ==================================================================================================
 _INIT_CLASSES_AND_KWARGS: dict[InitPreset, tuple[type[InitializationStrategy], dict[str, Any]]] = {
     InitPreset.RSEL: (InitRandomSelection, {"ignore_constraints": False}),
     InitPreset.RSEL_UNCON: (InitRandomSelection, {"ignore_constraints": True}),

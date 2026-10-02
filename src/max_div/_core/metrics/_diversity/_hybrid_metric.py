@@ -27,9 +27,9 @@ if TYPE_CHECKING:
     from max_div._core.metrics._distance import DistanceMetric
 
 
-# =================================================================================================
+# ==================================================================================================
 #  DiversityTerm
-# =================================================================================================
+# ==================================================================================================
 @dataclass(frozen=True, slots=True)
 class DiversityTerm:
     """A diversity metric over one distance metric, one term of a `HybridDiversityMetric`.
@@ -50,9 +50,9 @@ class DiversityTerm:
         return f"DiversityMetric.{self.diversity_metric.name}.over({self.distance_metric!r})"
 
 
-# =================================================================================================
+# ==================================================================================================
 #  HybridDiversityMetric
-# =================================================================================================
+# ==================================================================================================
 class HybridDiversityMetric:
     """A hybrid diversity metric aggregates diversity terms by a weighted geometric mean, arithmetic mean or minimum.
 

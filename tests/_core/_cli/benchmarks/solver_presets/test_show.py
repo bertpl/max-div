@@ -9,9 +9,9 @@ from max_div._core._cli.benchmarks.solver_presets.show import show_solver_preset
 from max_div._core.solver import Score, SolverPreset, TargetTimeDuration
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Helpers
-# =================================================================================================
+# ==================================================================================================
 def _result(duration_sec: float, n_workers: int, diversity: float) -> SolverPresetBenchmarkResult:
     """Build a benchmark result for one (duration, worker-count) point on problem U1."""
     params = SolverPresetBenchmarkParams(
@@ -31,9 +31,9 @@ def _result(duration_sec: float, n_workers: int, diversity: float) -> SolverPres
     )
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Tests
-# =================================================================================================
+# ==================================================================================================
 def test_show_renders_ragged_parallel_series(tmp_path: Path) -> None:
     """A parallel series covering only the longer budgets renders a placeholder at the short rows.
 

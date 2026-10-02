@@ -14,9 +14,9 @@ from benchmarks.mdplib.loader import ArchiveDigest, MdplibFetchError, fetch_mmdp
 from max_div.problem import DistanceMaxDivProblem, VectorMaxDivProblem
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Helpers
-# =================================================================================================
+# ==================================================================================================
 def _stand_in_archive() -> bytes:
     """Build a minimal archive with the layout the loader extracts (an `instances/<family>/` tree)."""
     buffer = io.BytesIO()
@@ -57,9 +57,9 @@ def _fetch(tmp_path: Path, archive: bytes) -> Path:
     )
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Archive download & verification (no network)
-# =================================================================================================
+# ==================================================================================================
 @pytest.mark.parametrize(
     "first_attempt",
     [_stand_in_archive()[:-20], urllib.error.URLError("connection reset")],
@@ -126,9 +126,9 @@ def test_persistently_short_download_raises_naming_the_url(monkeypatch: pytest.M
     assert not (tmp_path / "mmdp_instances.zip").exists()
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Instance loading (network-dependent)
-# =================================================================================================
+# ==================================================================================================
 # Parallel test workers race on a cold cache: a worker that finds a half-written archive deletes it
 # and downloads again, over the file a worker already extracting is reading. A short wait lets the
 # downloads finish, after which the cached archive is intact.

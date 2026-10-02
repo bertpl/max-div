@@ -26,9 +26,9 @@ def _read_payload(segment: SharedMemory) -> np.ndarray:
     return np.ndarray(_PAYLOAD.shape, dtype=np.float32, buffer=segment.buf).copy()
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Create / attach / destroy
-# =================================================================================================
+# ==================================================================================================
 def test_attached_segment_reads_what_the_creator_wrote():
     """A segment attached by name exposes the bytes that its creator wrote."""
     # --- arrange ----------------------
@@ -86,9 +86,9 @@ def test_zero_bytes_still_creates_a_segment():
     assert size >= 1
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Resource tracker
-# =================================================================================================
+# ==================================================================================================
 def test_attaching_without_registering_reads_and_leaves_the_owner_tracked():
     """The pre-3.13 attach path maps the segment and leaves the creating process's tracker entry intact."""
     # --- arrange ----------------------

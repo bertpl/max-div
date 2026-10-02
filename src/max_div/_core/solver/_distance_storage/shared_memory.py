@@ -26,9 +26,9 @@ from max_div._core._utils import attach_shared_memory_segment
 from max_div._core.metrics._distance import KIND_FULL_MATRIX, DistanceMetric, DistanceStore
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Specification
-# =================================================================================================
+# ==================================================================================================
 class SharedStoreSpec(NamedTuple):
     """A spec says which shared-memory segment holds a distance store's array and how to rebuild the store over it.
 
@@ -68,9 +68,9 @@ class SharedStoreSpec(NamedTuple):
             return DistanceStore.lazy(buffer, self.distance_metric)
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Attaching
-# =================================================================================================
+# ==================================================================================================
 @contextmanager
 def attached_distance_store(spec: SharedStoreSpec) -> Iterator[DistanceStore]:
     """Yield a distance store that reads the segment named in the spec, for the duration of the block.

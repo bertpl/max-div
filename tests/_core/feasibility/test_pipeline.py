@@ -8,9 +8,9 @@ from max_div._core.constraints import Constraint, ConstraintList
 from max_div._core.feasibility import FeasibilityStatus, find_feasible
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Helpers
-# =================================================================================================
+# ==================================================================================================
 def _arrays(cons: list[Constraint]) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Convert constraints to (con_values, con_indices, weights) as the pipeline ingests them."""
     con_values, con_indices = ConstraintList(cons).to_numpy()
@@ -71,9 +71,9 @@ def _pigeonhole_instance() -> tuple[int, int, list[Constraint]]:
     return 4, 2, cons
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Verdicts and proofs
-# =================================================================================================
+# ==================================================================================================
 def test_pigeonhole_certified_infeasible():
     """The pigeonhole instance is proven infeasible with the exact violation floor of 2."""
     # --- act --------------------------
@@ -165,9 +165,9 @@ def test_fractional_weights_keep_an_unrounded_floor():
     assert result.violation_floor == pytest.approx(1.5, abs=1e-6)
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Never-wrong and cross-check properties
-# =================================================================================================
+# ==================================================================================================
 @pytest.mark.parametrize("seed", range(20))
 def test_never_wrong_property(seed: int):
     """Verdicts are proofs: FEASIBLE returns a satisfying selection, INFEASIBLE never contradicts brute force."""
@@ -239,9 +239,9 @@ def test_milp_cross_check(seed: int):
         assert not milp_feasible
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Determinism and seed variation
-# =================================================================================================
+# ==================================================================================================
 def test_determinism_same_inputs_same_outputs():
     """Equal seeds give bit-equal results; the relaxation solve underneath is deterministic."""
     # --- arrange ----------------------
@@ -306,9 +306,9 @@ def test_deterministic_fallback_can_beat_the_draws(monkeypatch):
     assert result.violation < 99.0  # the fallback's selection won
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Forced full selection (k == n)
-# =================================================================================================
+# ==================================================================================================
 def test_k_equals_n_feasible_when_the_full_selection_satisfies():
     """k == n short-circuits to the only possible selection; when it satisfies the constraints, FEASIBLE."""
     # --- arrange ----------------------
@@ -356,9 +356,9 @@ def test_k_equals_n_minus_one_still_runs_the_full_pipeline():
     assert len(set(result.selection.tolist())) == 5
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Violation-floor soundness and selection optimality against exhaustive enumeration
-# =================================================================================================
+# ==================================================================================================
 def _brute_force_min_violation(n: int, k: int, cons: list[Constraint]) -> float:
     """Exhaustively compute the minimum weighted violation over all k-selections (small n only)."""
 
@@ -395,9 +395,9 @@ def test_floor_never_exceeds_the_true_optimum_and_the_selection_attains_it(seed:
     assert result.violation == pytest.approx(optimum)
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Convergence surfacing and the contradiction guard
-# =================================================================================================
+# ==================================================================================================
 def test_an_unconverged_relaxation_is_surfaced_on_the_result(monkeypatch):
     """`converged=False` from the relaxation reaches the FeasibilityResult unchanged."""
     # --- arrange ----------------------

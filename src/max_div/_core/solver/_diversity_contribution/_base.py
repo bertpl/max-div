@@ -10,9 +10,9 @@ if TYPE_CHECKING:
     from max_div._core.metrics._distance import DistanceStore
 
 
-# =================================================================================================
+# ==================================================================================================
 #  PerItemContributionSource
-# =================================================================================================
+# ==================================================================================================
 class PerItemContributionSource(ABC):
     """A source provides every item's per-item diversity contribution, the value the strategies sample items by.
 
@@ -38,9 +38,9 @@ class PerItemContributionSource(ABC):
         raise NotImplementedError
 
 
-# =================================================================================================
+# ==================================================================================================
 #  DiversityContributionTracker
-# =================================================================================================
+# ==================================================================================================
 class DiversityContributionTracker(PerItemContributionSource):
     """Tracks each point's per-point diversity contribution wrt an incrementally changing selection.
 

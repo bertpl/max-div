@@ -8,9 +8,9 @@ from max_div._core.feasibility.indexing import build_item_constraint_csr
 from max_div._core.feasibility.ipm import RelaxationSolution, _adjust_marginals_to_sum_k, solve_relaxation
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Helpers
-# =================================================================================================
+# ==================================================================================================
 def _arrays(cons: list[Constraint]) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Convert constraints to (con_min, con_max, con_indices) as the solver ingests them."""
     con_values, con_indices = ConstraintList(cons).to_numpy()
@@ -68,9 +68,9 @@ def _bound(sol: RelaxationSolution, n: int, k: int, cons: list[Constraint], w_li
     return float(certified_bound(con_min, con_max, w_lin, w_quad, lam_min, lam_max, item_indptr, item_cons, k))
 
 
-# =================================================================================================
+# ==================================================================================================
 #  solve_relaxation
-# =================================================================================================
+# ==================================================================================================
 def test_pigeonhole_solved_exactly():
     """The two-disjoint-min-2-sets instance has relaxed optimum 2; the IPM must find it exactly."""
     # --- arrange ----------------------
@@ -223,9 +223,9 @@ def test_iteration_cap_reports_unconverged(monkeypatch):
     assert np.all(sol.marginals <= 1.0)
 
 
-# =================================================================================================
+# ==================================================================================================
 #  _adjust_marginals_to_sum_k
-# =================================================================================================
+# ==================================================================================================
 def test_adjust_marginals_to_sum_k_repairs_a_wrong_sum():
     """Marginals whose sum misses k are shifted onto the sum-k simplex, each entry staying in [0, 1]."""
     # --- arrange ----------------------

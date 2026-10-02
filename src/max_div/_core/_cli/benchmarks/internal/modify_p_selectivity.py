@@ -23,9 +23,9 @@ from .run_settings import N_BENCHMARK, N_WARMUP, TIME_PER_RUN_SEC
 MODIFY_P_METHODS = [np.int32(0), np.int32(10), np.int32(20), np.int32(100)]
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Main benchmark
-# =================================================================================================
+# ==================================================================================================
 def benchmark_modify_p_selectivity(speed: float = 0.0, markdown: bool = False, file: bool = False) -> None:
     """Benchmarks the modify_p_selectivity function from `max_div._core._math.modify_p_selectivity`.
 
@@ -139,9 +139,9 @@ def benchmark_modify_p_selectivity(speed: float = 0.0, markdown: bool = False, f
         report.print(markdown=markdown)
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Helpers
-# =================================================================================================
+# ==================================================================================================
 def get_methods_table() -> Table:
     table = Table(headers=["`name`", "`method(args)`", "Type", "Details"])
     table.add_row(

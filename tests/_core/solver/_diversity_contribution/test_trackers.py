@@ -20,9 +20,9 @@ from tests.helpers import hybrid_objective
 SEPARATION = DiversityContributionFamily.SEPARATION
 MEAN_DISTANCE = DiversityContributionFamily.MEAN_DISTANCE
 
-# =================================================================================================
+# ==================================================================================================
 #  Fixtures / helpers
-# =================================================================================================
+# ==================================================================================================
 N = 6
 _VECTORS = np.array([[0.0], [1.0], [3.0], [6.0], [10.0], [15.0]], dtype=np.float32)
 
@@ -32,9 +32,9 @@ def store() -> DistanceStore:
     return DistanceStore.full_matrix_from_vectors(_VECTORS, DistanceMetric.l1_manhattan())
 
 
-# =================================================================================================
+# ==================================================================================================
 #  for_specs
-# =================================================================================================
+# ==================================================================================================
 def test_for_specs_builds_one_tracker_per_spec_in_order(store: DistanceStore):
     """One tracker per spec, of that spec's family, in the given order."""
     # --- arrange ----------------------
@@ -48,9 +48,9 @@ def test_for_specs_builds_one_tracker_per_spec_in_order(store: DistanceStore):
     assert [type(tracker) for tracker in trackers._trackers] == [SeparationTracker, MeanDistanceTracker]
 
 
-# =================================================================================================
+# ==================================================================================================
 #  per_item_contribution_source_for
-# =================================================================================================
+# ==================================================================================================
 def test_source_for_one_spec_is_that_spec_tracker_itself(store: DistanceStore):
     """An objective over one spec gets the tracker of that spec as its source, with no wrapper."""
     # --- arrange ----------------------
@@ -84,9 +84,9 @@ def test_source_for_several_specs_combines_the_trackers_at_the_positions(store: 
     assert source.term_trackers == (trackers._trackers[1], trackers._trackers[0], trackers._trackers[0])
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Applying mutations
-# =================================================================================================
+# ==================================================================================================
 def test_mutations_reach_every_tracker(store: DistanceStore):
     # --- arrange ----------------------
     # hand-built two-family set, mirroring what a mixed-metric configuration would construct
@@ -125,9 +125,9 @@ def test_mutations_reach_every_tracker(store: DistanceStore):
     )
 
 
-# =================================================================================================
+# ==================================================================================================
 #  selected_contributions
-# =================================================================================================
+# ==================================================================================================
 def test_selected_contributions_one_array_per_spec(store: DistanceStore):
     """A single-family set returns one spec's array, the selected vectors' separation values."""
     # --- arrange ----------------------

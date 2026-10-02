@@ -19,9 +19,9 @@ if TYPE_CHECKING:
     from ._base import DiversityContributionTracker, PerItemContributionSource
 
 
-# =================================================================================================
+# ==================================================================================================
 #  DiversityContributionTrackers
-# =================================================================================================
+# ==================================================================================================
 class DiversityContributionTrackers:
     """The set of diversity-contribution trackers backing a solver state.
 

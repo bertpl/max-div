@@ -12,9 +12,9 @@ from max_div._core.solver._solver_state import SolverState
 from ._base import InitializationStrategy
 
 
-# =================================================================================================
+# ==================================================================================================
 #  InitFarthestPoint
-# =================================================================================================
+# ==================================================================================================
 class InitFarthestPoint(InitializationStrategy):
     """Initialize by farthest-point sampling: a seeded random start item, then greedy picks.
 
@@ -139,9 +139,9 @@ class InitFarthestPoint(InitializationStrategy):
         return len(specs) == 1 and specs[0].contribution_family == DiversityContributionFamily.SEPARATION
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Helpers
-# =================================================================================================
+# ==================================================================================================
 # The drawing loop is numba-compiled, and numba cannot compile methods, so it lives here beside the class.
 @lazy_njit(
     numba.int64(

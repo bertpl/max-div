@@ -6,9 +6,9 @@ from ._base import BenchmarkSolverConstructor
 from .presets import InitPreset
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Main class
-# =================================================================================================
+# ==================================================================================================
 class BenchmarkSolverConstructor_Initialization(BenchmarkSolverConstructor):
     def __init__(
         self, problem_name: str, diversity_metric: DiversityMetric = DiversityMetric.GEOMEAN_SEPARATION

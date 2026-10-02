@@ -41,9 +41,9 @@ METRIC_KIND_L2_AND_PROJECTIONS_FOR_K = 17
 NO_FLOAT_PARAM = 0.0
 
 
-# =================================================================================================
+# ==================================================================================================
 #  DistanceMetric
-# =================================================================================================
+# ==================================================================================================
 @dataclass(frozen=True, repr=False)
 class DistanceMetric:
     """A distance metric records which distance is meant and what its compiled pairwise distance function needs.
@@ -316,9 +316,9 @@ class DistanceMetric:
         return ()
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Minkowski family
-# =================================================================================================
+# ==================================================================================================
 @dataclass(frozen=True, repr=False)
 class L1ManhattanDistanceMetric(DistanceMetric):
     """This metric is the L1 (Manhattan) distance; see `DistanceMetric.l1_manhattan`."""
@@ -394,9 +394,9 @@ class MinkowskiDistanceMetric(DistanceMetric):
         return (f"p={self.p!r}",) if self.has_outer_root else (f"p={self.p!r}", "root=False")
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Angular
-# =================================================================================================
+# ==================================================================================================
 @dataclass(frozen=True, repr=False)
 class CosineDistanceMetric(DistanceMetric):
     """This metric is the cosine distance; see `DistanceMetric.cosine`.
@@ -423,9 +423,9 @@ class CosineDistanceMetric(DistanceMetric):
         return _normalize_rows(vectors)
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Coordinate-wise
-# =================================================================================================
+# ==================================================================================================
 @dataclass(frozen=True, repr=False)
 class GeometricMeanDistanceMetric(DistanceMetric):
     """This metric is the geometric-mean distance; see `DistanceMetric.geometric_mean`."""
@@ -486,9 +486,9 @@ class AlongAxisDistanceMetric(DistanceMetric):
         return (repr(self.axis),)
 
 
-# =================================================================================================
+# ==================================================================================================
 #  L2 and projections
-# =================================================================================================
+# ==================================================================================================
 @dataclass(frozen=True, repr=False)
 class L2AndProjectionsDistanceMetric(DistanceMetric):
     """This metric is the L2-and-projections distance; see `DistanceMetric.l2_and_projections`."""
@@ -576,9 +576,9 @@ class L2AndProjectionsForKDistanceMetric(L2AndProjectionsDistanceMetric):
         return (*super()._factory_arg_reprs(), f"k={self.k}")
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Helpers
-# =================================================================================================
+# ==================================================================================================
 # `_normalize_rows` serves only the cosine metric class, but stays module-level because numba compiles it.
 @lazy_njit(numba.float32[:, ::1](numba.types.Array(numba.float32, 2, "C", readonly=True)), cache=True)
 def _normalize_rows(vectors: NDArray[np.float32]) -> NDArray[np.float32]:

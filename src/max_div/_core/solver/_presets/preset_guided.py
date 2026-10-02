@@ -4,9 +4,9 @@ from max_div._core.solver._solver_step import OptimizationStep
 from max_div._core.solver._strategies import InitializationStrategy, OptimizationStrategy
 
 
-# =================================================================================================
+# ==================================================================================================
 #  GUIDED preset
-# =================================================================================================
+# ==================================================================================================
 def get_preset_strategies_guided(
     target_duration: TargetDuration,
 ) -> tuple[InitializationStrategy, list[OptimizationStep]]:

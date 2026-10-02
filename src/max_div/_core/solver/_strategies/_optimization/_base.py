@@ -28,9 +28,9 @@ if TYPE_CHECKING:
 ParamValueType = ParameterValueSource | float | int | np.float32 | np.int32 | bool
 
 
-# =================================================================================================
+# ==================================================================================================
 #  OptimizationStrategy
-# =================================================================================================
+# ==================================================================================================
 class OptimizationStrategy(StrategyBase, ABC):
     """Base class for strategies that iteratively improve a selection via swap operations.
 
@@ -283,9 +283,9 @@ class OptimizationStrategy(StrategyBase, ABC):
         )
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Swap-Based Optimization Strategy base class
-# =================================================================================================
+# ==================================================================================================
 class SwapBasedOptimizationStrategy(OptimizationStrategy, ABC):
     """Base class for swap-based optimization strategies.
 
@@ -472,9 +472,9 @@ class SwapBasedOptimizationStrategy(OptimizationStrategy, ABC):
         return f"scs={100 * success_rate:7.3f}%".ljust(100)
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Helper classes
-# =================================================================================================
+# ==================================================================================================
 @lazy_njit("void(int64[:], boolean)", fastmath=True, inline="always", cache=True)
 def _update_success_rate_state(success_rate_state: NDArray[np.int64], success: bool) -> None:
     """Update success rate state in-place, based on provided success flag.
