@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `DistanceMetric.l2_and_projections(k=...)` takes the number `k` of selected items and uses the L2 distance times a factor computed from `k`, not the L2 distance raised to the power of the dimension count, so that a solve under `MIN_SEPARATION` reaches the same fraction of the spacing of `k` evenly spread points along each axis and in the full space
 
 ### Changed
-- With `AUTO` distance storage, when not every distance fits as a full matrix, the distances that are most expensive to compute get full matrices and the rest are computed on demand; before, all of them were computed on demand
+- With `AUTO` distance storage, when not every distance fits as a full matrix, the distances that are most expensive to compute get full matrices and the rest are computed on demand; before, all distances were computed on demand
 - `DistanceMetric.marginals_and_joint(joint_scale)` is renamed to `DistanceMetric.l2_and_projections(l2_scale)`
 - `DistanceMetric` is no longer a tuple: each factory method returns a subclass that stores only its own arguments as named fields (`p` of a generic `minkowski` metric, `axis` of `along_axis`, `l2_scale` of `l2_and_projections`), the `param` field is gone, and constructing `DistanceMetric` directly raises `TypeError`
 

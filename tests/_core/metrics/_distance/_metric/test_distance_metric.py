@@ -289,7 +289,7 @@ def test_every_metric_estimates_a_positive_cost_that_never_falls_with_more_dimen
 
 
 def test_the_cost_estimate_ranks_along_axis_lowest_and_a_generic_minkowski_highest():
-    """At 2 dimensions, the per-axis distance is the cheapest to compute, a generic-p Minkowski the costliest."""
+    """At 2 dimensions, `along_axis` is the cheapest to compute, a Minkowski with a generic kind the costliest."""
     # --- arrange ----------------------
     along_axis, generic_minkowski = DistanceMetric.along_axis(0), DistanceMetric.minkowski(3)
     others = [m for m in _FACTORY_METRICS if m != along_axis] + [
@@ -305,12 +305,11 @@ def test_the_cost_estimate_ranks_along_axis_lowest_and_a_generic_minkowski_highe
     assert generic_minkowski.estimated_lazy_cost_ns(2) > max(costs)
 
 
-@pytest.mark.parametrize("root", [True, False])
-def test_a_generic_minkowski_is_estimated_costlier_than_a_specialized_one(root: bool):
-    """A generic-p Minkowski is estimated costlier than a specialized one, because it calls pow per coordinate."""
+def test_a_generic_minkowski_without_root_is_estimated_costlier_than_a_specialized_one():
+    """Without the outer root too, a Minkowski with a generic kind is estimated costlier than a specialized one."""
     # --- act / assert -----------------
-    assert DistanceMetric.minkowski(3, root=root).estimated_lazy_cost_ns(2) > DistanceMetric.minkowski(
-        0.5, root=root
+    assert DistanceMetric.minkowski(3, root=False).estimated_lazy_cost_ns(2) > DistanceMetric.minkowski(
+        0.5, root=False
     ).estimated_lazy_cost_ns(2)
 
 

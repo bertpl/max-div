@@ -44,7 +44,7 @@ def _factory(problem: MaxDivProblem, storage: DistanceStorageType, total_memory:
 
 
 def _stub_vector_problem(n: int, d: int = 0):
-    """Return a stand-in exposing only what the policy reads (isinstance, n, d, the metric), without an n x n matrix."""
+    """Return a stand-in exposing only what the AUTO storage decision reads (isinstance, n, d, the metric)."""
     from max_div._core.problem import VectorMaxDivProblem
 
     stub = object.__new__(VectorMaxDivProblem)
@@ -118,37 +118,32 @@ def test_auto_on_vectors_is_the_full_matrix_when_it_fits(
     assert _factory(problem, DistanceStorageType.AUTO, total_memory).determine_storage_types() == [expected]
 
 
+_MIXED_COST_DISTANCES = [DistanceMetric.along_axis(0), L2, DistanceMetric.geometric_mean()]
+
+
 @pytest.mark.parametrize(
-    "n_matrices_in_budget, expected",
+    "distances, n_matrices_in_budget, expected",
     [
-        (0, ["lazy", "lazy", "lazy"]),
-        (1, ["lazy", "lazy", "full_matrix"]),  # the geometric mean is the most expensive to compute
-        (2, ["lazy", "full_matrix", "full_matrix"]),
-        (3, ["full_matrix", "full_matrix", "full_matrix"]),
+        (_MIXED_COST_DISTANCES, 0, ["lazy", "lazy", "lazy"]),
+        # the geometric mean is the most expensive to compute
+        (_MIXED_COST_DISTANCES, 1, ["lazy", "lazy", "full_matrix"]),
+        (_MIXED_COST_DISTANCES, 2, ["lazy", "full_matrix", "full_matrix"]),
+        (_MIXED_COST_DISTANCES, 3, ["full_matrix", "full_matrix", "full_matrix"]),
+        # L1 and L2 have the same estimated cost, so the distance earlier in the list gets the full matrix
+        ([L1, L2], 1, ["full_matrix", "lazy"]),
     ],
 )
 def test_auto_gives_the_full_matrices_that_fit_to_the_distances_most_expensive_to_compute(
-    n_matrices_in_budget: int, expected: list[str]
+    distances: list[DistanceMetric], n_matrices_in_budget: int, expected: list[str]
 ):
     """When only some full matrices fit the memory budget, the costliest distances get them and the rest stay lazy."""
     # --- arrange ----------------------
     problem = _stub_vector_problem(50_000, d=2)
-    distances = [DistanceMetric.along_axis(0), L2, DistanceMetric.geometric_mean()]
     total_memory = 3 * n_matrices_in_budget * full_matrix_bytes(50_000) + GIB  # the budget is a third of RAM
     factory = DistanceStoreFactory(problem, distances, DistanceStorageType.AUTO, total_memory)
 
     # --- act / assert -----------------
     assert [storage.value for storage in factory.determine_storage_types()] == expected
-
-
-def test_auto_gives_a_full_matrix_to_the_first_of_equally_costly_distances():
-    """L1 and L2 have the same estimated cost, so with room for 1 matrix the earlier distance gets it."""
-    # --- arrange ----------------------
-    problem = _stub_vector_problem(50_000, d=2)
-    factory = DistanceStoreFactory(problem, [L1, L2], DistanceStorageType.AUTO, 3 * full_matrix_bytes(50_000) + GIB)
-
-    # --- act / assert -----------------
-    assert factory.determine_storage_types() == [DistanceStorageType.FULL_MATRIX, DistanceStorageType.LAZY]
 
 
 @pytest.mark.parametrize("form", ["condensed", "square"])

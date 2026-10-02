@@ -99,11 +99,11 @@ class DistanceStoreFactory:
         AUTO is decided differently for the two problem flavors, deliberately:
 
         - For a vector problem the distances are an internal artifact that the user never sees, so
-          AUTO gives full matrices to as many distances as fit in `AUTO_MEMORY_FRACTION` of the total
-          RAM, and computes the rest on demand.  A full matrix is faster to read than any distance is to
-          compute, so the matrices go to the distances that are most expensive to compute
-          (`DistanceMetric.estimated_lazy_cost_ns`); among equal estimates, the earlier distance gets
-          the full matrix.
+          AUTO gives full matrices to as many distances as there is room for in `AUTO_MEMORY_FRACTION`
+          of the total RAM, and computes the rest on demand.
+            - A full matrix is faster to read than any distance is to compute, so the matrices go to the
+              distances that are most expensive to compute (`DistanceMetric.estimated_lazy_cost_ns`).
+            - Among equal estimates, the distance earlier in the list gets the full matrix.
         - For a distance-input problem the distances exist already, so AUTO stores them as a full
           matrix.
 
@@ -118,16 +118,17 @@ class DistanceStoreFactory:
             return [DistanceStorageType.LAZY] * count
         else:
             budget_bytes = self._total_memory_bytes * AUTO_MEMORY_FRACTION
-            n_full = min(count, int(budget_bytes // full_matrix_bytes(self._problem.n)))
+            n_full_matrices = min(count, int(budget_bytes // full_matrix_bytes(self._problem.n)))
             costs = []
             for distance in self._resolved_distances():
                 assert distance is not None  # noqa: S101 -- a vector problem always resolves to a metric
                 costs.append(distance.estimated_lazy_cost_ns(self._problem.d))
-            # sorted() is stable, so among equal estimates the earlier distance comes first
+            # sorted() is stable, so among equal estimates the distance earlier in the list comes first
             indices_most_expensive_first = sorted(range(count), key=lambda i: -costs[i])
-            full_indices = set(indices_most_expensive_first[:n_full])
+            full_matrix_indices = set(indices_most_expensive_first[:n_full_matrices])
             return [
-                DistanceStorageType.FULL_MATRIX if i in full_indices else DistanceStorageType.LAZY for i in range(count)
+                DistanceStorageType.FULL_MATRIX if i in full_matrix_indices else DistanceStorageType.LAZY
+                for i in range(count)
             ]
 
     def resolved_storage(self) -> DistanceStorageTypes:

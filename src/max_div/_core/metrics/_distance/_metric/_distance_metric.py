@@ -60,8 +60,8 @@ class DistanceMetric:
     _kind: ClassVar[int]
     _label: ClassVar[str]
     _factory_name: ClassVar[str]
-    # Each kind's (c0, c1) is fitted on timings of the solver's separation updates over a lazy distance store,
-    # and rounded.
+    # Each kind's (c0, c1) estimate 1 distance as c0 + c1 * n_dims nanoseconds; both are fitted on timings
+    # of the solver's separation updates over a lazy distance store, and rounded.
     _lazy_cost_coefficients_ns: ClassVar[tuple[float, float]]
     needs_preprocessed_vectors: ClassVar[bool] = (
         False  # `preprocess` returns a new array when True, the input when False
@@ -310,9 +310,8 @@ class DistanceMetric:
     def estimated_lazy_cost_ns(self, n_dims: int) -> float:
         """Return the estimated time to compute 1 distance between vectors of `n_dims` dimensions, in nanoseconds.
 
-        The estimate is linear in `n_dims`.  It serves to rank distances by how much a full matrix saves
-        over computing them, so only the order of the estimates across kinds is meaningful, not their
-        absolute values.
+        The estimate serves to rank distances by how much a full matrix saves over computing them, so
+        only the order of the estimates across kinds is meaningful, not their absolute values.
         """
         c0, c1 = self._lazy_cost_coefficients()
         return c0 + c1 * n_dims
@@ -389,9 +388,9 @@ class MinkowskiDistanceMetric(DistanceMetric):
     has_outer_root: bool
 
     _factory_name = "minkowski"
-    # The coefficients when p selects a specialized kind, whose distance function has p built in.
+    # These coefficients apply when p selects a specialized kind, whose distance function has p built in.
     _lazy_cost_coefficients_ns = (1.1, 0.24)
-    # The coefficients when p selects a generic kind, which calls pow per coordinate.
+    # These coefficients apply when p selects a generic kind, which calls pow per coordinate.
     _GENERIC_LAZY_COST_COEFFICIENTS_NS: ClassVar[tuple[float, float]] = (17.0, 6.3)
 
     # A specialized Minkowski kind has p built in, so its pairwise distance function takes no parameter.
@@ -420,7 +419,7 @@ class MinkowskiDistanceMetric(DistanceMetric):
         return self.p if self._is_generic_kind else NO_FLOAT_PARAM
 
     def _lazy_cost_coefficients(self) -> tuple[float, float]:
-        """Return the coefficients of this metric's kind, generic or specialized: a generic kind costs far more."""
+        """Return the coefficients of this metric's kind, generic or specialized."""
         if self._is_generic_kind:
             return self._GENERIC_LAZY_COST_COEFFICIENTS_NS
         else:
