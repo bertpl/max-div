@@ -305,6 +305,16 @@ def test_the_cost_estimate_ranks_along_axis_lowest_and_a_generic_minkowski_highe
     assert generic_minkowski.estimated_lazy_cost_ns(2) > max(costs)
 
 
+def test_a_metric_kind_without_its_own_coefficients_gets_the_default_estimate(monkeypatch: pytest.MonkeyPatch):
+    """A kind that sets no coefficients of its own, as a new kind would, inherits the default (2.0, 0.2)."""
+    # --- arrange ----------------------
+    metric = DistanceMetric.l2_euclidean()
+    monkeypatch.delattr(type(metric), "_lazy_cost_coefficients_ns")
+
+    # --- act / assert -----------------
+    assert metric.estimated_lazy_cost_ns(10) == pytest.approx(2.0 + 0.2 * 10)
+
+
 def test_a_generic_minkowski_without_root_is_estimated_costlier_than_a_specialized_one():
     """Without the outer root too, a Minkowski with a generic kind is estimated costlier than a specialized one."""
     # --- act / assert -----------------

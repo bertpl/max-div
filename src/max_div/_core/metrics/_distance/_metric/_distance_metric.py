@@ -55,14 +55,16 @@ class DistanceMetric:
 
     # Each subclass sets:
     # - `_factory_name`, read by `__repr__`;
-    # - `_lazy_cost_coefficients_ns`, read by `estimated_lazy_cost_ns`;
+    # - `_lazy_cost_coefficients_ns`, read by `estimated_lazy_cost_ns`, once its kind has been measured;
     # - `_kind` and `_label`, unless it overrides `kind` or `label`.
     _kind: ClassVar[int]
     _label: ClassVar[str]
     _factory_name: ClassVar[str]
     # Each kind's (c0, c1) estimate 1 distance as c0 + c1 * n_dims nanoseconds; both are fitted on timings
-    # of the solver's separation updates over a lazy distance store, and rounded.
-    _lazy_cost_coefficients_ns: ClassVar[tuple[float, float]]
+    # of the solver's separation updates over a lazy distance store, and rounded.  This default is the
+    # estimate for a kind that has not been measured: a round value just above the cheapest measured kinds,
+    # so an unmeasured kind gets a full matrix slightly before them.
+    _lazy_cost_coefficients_ns: ClassVar[tuple[float, float]] = (2.0, 0.2)
     needs_preprocessed_vectors: ClassVar[bool] = (
         False  # `preprocess` returns a new array when True, the input when False
     )
