@@ -8,8 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
-- `InitializationStrategy.constraint_aware_diverse(batch_size, nc)` builds the starting selection of a constrained problem in batches, each the best-scoring of `nc` candidate batches that favor items far from the selection and move toward satisfying the constraints; a smaller `batch_size` or a larger `nc` gives a better starting selection at a higher cost
-- `DistanceMetric.l2_and_projections(k=...)` takes the number `k` of selected items and uses the L2 distance times a factor computed from `k`, not the L2 distance raised to the power of the dimension count, so that a solve under `MIN_SEPARATION` reaches the same fraction of the spacing of `k` evenly spread points along each axis and in the full space
+- `InitializationStrategy.constraint_aware_diverse(batch_size, nc)` builds the starting selection of a constrained problem in batches, each the best-scoring of `nc` candidate batches, so that the starting selection is spread out and moves toward satisfying the constraints
+- `DistanceMetric.l2_and_projections(k=...)` multiplies its L2 distance by a factor computed from the number `k` of selected items, so that a solve under `MIN_SEPARATION` reaches the same fraction of the spacing of `k` evenly spread points along each axis and in the full space
 
 ### Changed
 - With `AUTO` distance storage, when not every distance fits as a full matrix, the distances that are most expensive to compute get full matrices and the rest are computed on demand; before, all distances were computed on demand
