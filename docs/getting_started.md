@@ -155,7 +155,7 @@ problem = MaxDivProblem.new(
 | `geometric_mean()` | Geometric mean of the per-dimension differences -- spreads a selection in every coordinate projection as well as in the full space; a shared coordinate gives distance zero |
 | `l_minus_inf()` | L−∞ distance -- the smallest per-dimension difference; a shared coordinate gives distance zero |
 | `along_axis(axis)` | Distance along one coordinate axis -- the absolute difference of that coordinate, every other coordinate ignored |
-| `l2_and_projections(l2_scale=1.0, k=None)` | The smaller of the L−∞ distance and an L2 part: `l2_scale` times the L2 distance raised to the power of the number of dimensions, or, given `k`, `l2_scale` times the L2 distance times a factor set by `k` and the number of dimensions -- under `MIN_SEPARATION`, spreads a selection along every axis and in the full space at once; pass `k` to give spread along the axes and spread in the full space equal weight; assumes vectors in the unit cube |
+| `l2_and_projections(l2_scale=1.0, k=None)` | The smaller of the L−∞ distance and an L2 part: `l2_scale` times the L2 distance raised to the power of the number of dimensions, or, given `k`, `l2_scale` times the L2 distance times a factor set by `k` and the number of dimensions -- under `MIN_SEPARATION`, spreads a selection along every axis and in the full space at once; pass `k` to give the spread along the axes and the spread in the full space equal weight; assumes vectors in the unit cube |
 
 #### Precomputed distances
 

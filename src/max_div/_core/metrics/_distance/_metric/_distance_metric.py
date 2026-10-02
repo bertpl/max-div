@@ -150,23 +150,27 @@ class DistanceMetric:
 
         For 2 vectors a and b of dimension d, the L-∞ part is the `l_minus_inf()` distance: the
         smallest gap between their projections onto a single coordinate axis.  Under min-separation a
-        selection is then spread along every coordinate axis and in the full space at once.  A
-        min-separation solve ends with the 2 parts about equal for its closest selected pairs, so the
-        L2 part's formula sets how spread in the full space trades against spread along the axes.
+        selection is spread along every coordinate axis and in the full space at once.
+
+        A min-separation solve ends with the 2 parts about equal for its closest selected pairs, so
+        the L2 part's formula sets how the spread in the full space is balanced against the spread
+        along the axes.
 
         - **With `k`**: the L2 part is ``l2_scale * r * ||a - b||_2``, with ``r = (k^(1/d) - 1) / (k - 1)``.
             - requires the selection size; a problem rejects a `k` that differs from its own;
-            - uses k to weigh spread along the axes and spread in the full space equally, against k
-              items on a regular grid in the unit cube, whose spacing is 1 / (k - 1) along an axis
-              and 1 / (k^(1/d) - 1) in the full space.  The factor r makes the 2 parts equal at those
-              spacings, so the solve reaches the same fraction of the grid spacing along the axes and
-              in the full space, whatever that fraction is.
+            - uses k to weigh the spread along the axes and the spread in the full space equally,
+              measured against k items on a regular grid in the unit cube, whose spacing is
+              1 / (k - 1) along an axis and 1 / (k^(1/d) - 1) in the full space.  The factor r makes
+              the 2 parts equal at those spacings, so the solve reaches the same fraction of the grid
+              spacing along the axes and in the full space, whatever that fraction is.
         - **Without `k`**: the L2 part is ``l2_scale * ||a - b||_2^d``.
             - convenient: no selection size needs to be configured;
-            - weaker guarantees of an equal weighing once the selection cannot match the grid
-              spacing.  The power d turns the L2 distance into a volume-like measure, while the L-∞
-              part stays a distance, which grows linearly with the gap.  The further a selection
-              falls short of the grid spacing, the more the solve favors spread in the full space.
+            - weaker guarantees of an equal weighing: an `l2_scale` makes the 2 parts equal at one
+              separation only, so no single `l2_scale` weighs them equally for every final
+              separation.
+                - The power d turns the L2 distance into a volume-like measure, while the L-∞ part
+                  stays a distance, which grows linearly with the gap.  The further a selection falls
+                  short of the grid spacing, the more the solve favors the spread in the full space.
 
         `l2_scale` makes the solve favor one spread over the other:
 
@@ -180,8 +184,8 @@ class DistanceMetric:
               `HybridDiversityMetric.min_of` over min-separation terms on the L-∞ and L2 distances
               with weights (k - 1, k^(1/d) - 1), once that hybrid score is divided by k - 1; this
               distance computes that score from 1 distance store, where the hybrid needs 2.
-        - **Without `k`**: for k well-spread items in the unit cube, the axis gap between neighbors can
-          reach 1/k, while the L2 part is about c/k, where c grows with d:
+        - **Without `k`**: for a selection of k well-spread items in the unit cube, the axis gap between
+          neighbors can reach 1/k, while the L2 part is about c/k, where c grows with d:
 
             - c ≈ 1.15 for d = 2
             - c ≈ 1.4 for d = 3
