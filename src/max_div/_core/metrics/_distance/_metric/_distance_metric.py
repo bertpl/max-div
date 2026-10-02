@@ -150,22 +150,25 @@ class DistanceMetric:
 
         For 2 vectors a and b of dimension d, the L-∞ part is the `l_minus_inf()` distance: the
         smallest gap between their projections onto a single coordinate axis.  Under min-separation a
-        selection is then spread along every coordinate axis and in the full space at once.
+        selection is then spread along every coordinate axis and in the full space at once.  A
+        min-separation solve ends with the 2 parts about equal for its closest selected pairs, so the
+        L2 part's formula sets how spread in the full space trades against spread along the axes.
 
         - **With `k`**: the L2 part is ``l2_scale * r * ||a - b||_2``, with ``r = (k^(1/d) - 1) / (k - 1)``.
-            - It requires the selection size; a problem rejects a `k` that differs from its own.
-            - It uses k to weigh spread along the axes and spread in the full space equally, against
-              k items on a regular grid in the unit cube.  The solve reaches the same fraction of the
-              grid spacing in both, however close to the grid it gets.
+            - requires the selection size; a problem rejects a `k` that differs from its own;
+            - uses k to weigh spread along the axes and spread in the full space equally, against k
+              items on a regular grid in the unit cube, whose spacing is 1 / (k - 1) along an axis
+              and 1 / (k^(1/d) - 1) in the full space.  The factor r makes the 2 parts equal at those
+              spacings, so the solve reaches the same fraction of the grid spacing along the axes and
+              in the full space, whatever that fraction is.
         - **Without `k`**: the L2 part is ``l2_scale * ||a - b||_2^d``.
-            - It is convenient: no selection size needs to be configured.
-            - It gives weaker guarantees on that weighing once the grid is out of reach.  The power d
-              turns the L2 distance into a volume-like measure, while the L-∞ part stays a distance,
-              which grows linearly.  The further a selection falls short of the grid, the more the
-              solve favors spread in the full space.
+            - convenient: no selection size needs to be configured;
+            - weaker guarantees of an equal weighing once the selection cannot match the grid
+              spacing.  The power d turns the L2 distance into a volume-like measure, while the L-∞
+              part stays a distance, which grows linearly with the gap.  The further a selection
+              falls short of the grid spacing, the more the solve favors spread in the full space.
 
-        The grid's spacing is 1 / (k - 1) along an axis and 1 / (k^(1/d) - 1) in the full space; with
-        `k`, the factor r makes the 2 parts equal at those spacings.  `l2_scale` tilts the weighing:
+        `l2_scale` makes the solve favor one spread over the other:
 
         - **With `k`**:
             - An `l2_scale` above 1 makes the L2 part larger, so the solve spreads the selection more
@@ -175,13 +178,18 @@ class DistanceMetric:
               an `l2_scale` above 1 makes up for the smaller L2 part.
             - With `l2_scale` = 1, a min-separation score over this distance equals the score of a
               `HybridDiversityMetric.min_of` over min-separation terms on the L-∞ and L2 distances
-              with weights (k - 1, k^(1/d) - 1), divided by k - 1; this distance computes that score
-              from 1 distance store, where the hybrid needs 2.
+              with weights (k - 1, k^(1/d) - 1), once that hybrid score is divided by k - 1; this
+              distance computes that score from 1 distance store, where the hybrid needs 2.
         - **Without `k`**: for k well-spread items in the unit cube, the axis gap between neighbors can
-          reach 1/k, while the L2 part is about c/k, where c grows with d: c ≈ 1.15 for d = 2, 1.4 for
-          d = 3, 2.8 for d = 5 and 40 for d = 10.  In higher dimensions the L2 part therefore rarely
-          sets the minimum, and an `l2_scale` of about 1/c lets it set the minimum about as often as
-          the L-∞ part does.
+          reach 1/k, while the L2 part is about c/k, where c grows with d:
+
+            - c ≈ 1.15 for d = 2
+            - c ≈ 1.4 for d = 3
+            - c ≈ 2.8 for d = 5
+            - c ≈ 40 for d = 10
+
+          In higher dimensions the L2 part therefore rarely sets the minimum, and an `l2_scale` of
+          about 1/c lets the L2 part set the minimum about as often as the L-∞ part does.
 
         The 2 parts are comparable only for a population that fills the unit cube [0, 1]^d, so scale
         the vectors into it first.  The distance needs at least 2 dimensions: in 1 it only rescales
