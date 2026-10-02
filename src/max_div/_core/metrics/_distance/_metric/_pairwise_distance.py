@@ -104,7 +104,7 @@ def _l2_and_projections_distance(
     The distance is computed in float64; for a far pair in a high dimension the L2 part may overflow
     to +inf, and the minimum then returns the smallest gap.
     """
-    # --- smallest coordinate gap (L-∞) ---------
+    # --- smallest coordinate gap (L-∞) ----------
     smallest_gap = _lminusinf_distance(vectors, i, j)
 
     # --- L2 part (L2 to the power d) ------------

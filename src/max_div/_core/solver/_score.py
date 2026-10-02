@@ -195,10 +195,10 @@ class ScoreGenerator:
 
         Binding the positions here, once, keeps every lookup off the hot path.
         """
-        # --- prepare info ---------------------------
+        # --- prepare info -----------------------
         diversity_objective_compute = diversity_objective.compute
 
-        # --- construct score function ---------------
+        # --- construct score function -----------
         if positions == tuple(range(n_all_arrays)):
             # the objective needs every array, in the given order: no subselection of arrays needs to be
             # made at all, and no extra call

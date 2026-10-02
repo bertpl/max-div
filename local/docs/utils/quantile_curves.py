@@ -120,13 +120,13 @@ class QuantileCurves:
 
         """
 
-        # --- transform data ------------------------------
+        # --- transform data ---------------------
         x_transform = x_transform or NullTransform()
         y_transform = y_transform or NullTransform()
         x_trans = x_transform.to_axis(x_data)
         y_trans = y_transform.to_axis(y_data)
 
-        # --- fit quantile splines ------------------------
+        # --- fit quantile splines ---------------
 
         # prep
         y_min = min(y_trans)
@@ -204,5 +204,5 @@ class QuantileCurves:
             c=q50.c + q90_delta.c,
         )
 
-        # --- return curves -------------------------------
+        # --- return curves ----------------------
         return QuantileCurves(q10=q10, q50=q50, q90=q90, x_transform=x_transform, y_transform=y_transform)

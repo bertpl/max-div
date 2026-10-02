@@ -71,7 +71,7 @@ class LinearRegressor:
         :return: (LinearRegressor) A LinearRegressor instance with fitted parameters.
         """
 
-        # --- prep ----------------------------------------
+        # --- prep -------------------------------
         m, n = A.shape
         if b.shape != (m,):
             raise ValueError(f"b should have shape ({m},), but has shape {b.shape}")
@@ -95,7 +95,7 @@ class LinearRegressor:
         elif (A_l2reg is not None) or (b_l2reg is not None):
             raise ValueError("(A_l2reg, b_l2reg) should either be both None or both numpy arrays.")
 
-        # --- construct LP problem ------------------------
+        # --- construct LP problem ---------------
         c = cp.Variable(n)
         residuals = b - A @ c
         loss = cp.sum(cp.maximum(q * residuals, (q - 1) * residuals))  # pinball loss
@@ -111,14 +111,14 @@ class LinearRegressor:
             loss += l2_reg_term
             is_qp = True
 
-        # --- solve LP/QP problem -------------------------
+        # --- solve LP/QP problem ----------------
         problem = cp.Problem(cp.Minimize(loss), constraints)
         if is_qp:
             problem.solve(cp.OSQP, max_iter=1_000_000)
         else:
             problem.solve(cp.ECOS)
 
-        # --- check & extract solution --------------------
+        # --- check & extract solution -----------
         if not (problem.status == cp.OPTIMAL):
             print(f"WARNING: Quantile regression problem could not be solved to optimality. Status: {problem.status}.")
             print("         Will try to continue with sub-optimal solution...")

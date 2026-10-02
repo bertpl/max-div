@@ -13,16 +13,16 @@ def univariate_kde_adaptive(
     bw_q_clip: tuple = (0.1, 0.9),
 ) -> np.ndarray:
 
-    # --- cap data size -----------------------------------
+    # --- cap data size --------------------------
     if len(samples) > n_centers_max:
         samples = np.quantile(samples, np.linspace(0, 1, n_centers_max))
 
-    # --- pilot KDE ---------------------------------------
+    # --- pilot KDE ------------------------------
     # pilot non-adaptive KDE, evaluated at 'samples' instead of 'x_values', so we get an estimate
     # of the density at each sample point
     pilot_kde = univariate_kde(samples, samples, n_centers_max, smoothness)
 
-    # --- compute adapted bandwidths ----------------------
+    # --- compute adapted bandwidths -------------
     bw_median = smoothness * bw_silverman(samples)
     d_median = np.median(pilot_kde)  # median density corresponds to Silverman's rule-of-thumb bandwidth
     bw_adaptive = bw_median * np.sqrt(d_median / pilot_kde)  # ~Abramson's square-root law for adaptive bandwidths
@@ -30,7 +30,7 @@ def univariate_kde_adaptive(
     bw_clip_lb, wb_clip_ub = np.quantile(bw_adaptive, bw_q_clip)
     bw_adaptive = np.clip(bw_adaptive, bw_clip_lb, wb_clip_ub)  # clip bandwidths to avoid extreme values
 
-    # --- compute KDE with adaptive bandwidths ------------
+    # --- compute KDE with adaptive bandwidths ---
     return _univariate_kde(
         mu=samples,
         sigma=bw_adaptive,
@@ -45,14 +45,14 @@ def univariate_kde(
     samples: np.ndarray, x_values: np.ndarray, n_centers_max: int = 1000, smoothness: float = 1.0
 ) -> np.ndarray:
 
-    # --- cap data size -----------------------------------
+    # --- cap data size --------------------------
     if len(samples) > n_centers_max:
         samples = np.quantile(samples, np.linspace(0, 1, n_centers_max))
 
-    # --- compute bandwidth -------------------------------
+    # --- compute bandwidth ----------------------
     bw = smoothness * bw_silverman(samples)
 
-    # --- compute KDE values ------------------------------
+    # --- compute KDE values ---------------------
     return _univariate_kde(
         mu=samples,
         sigma=np.full_like(samples, bw),
@@ -78,11 +78,11 @@ def _univariate_kde(mu: np.ndarray, sigma: np.ndarray, x_values: np.ndarray) -> 
     Evaluates a given KDE (defined by identically sized mu, sigma arrays) at the given x_values.
     """
 
-    # --- prep ------------------------
+    # --- prep -----------------------------------
     kde_values = np.zeros_like(x_values)
     main_const = 1.0 / (np.sqrt(2.0 * np.pi) * len(mu))
 
-    # --- main loop -------------------
+    # --- main loop ------------------------------
     for i in range(len(mu)):
         # prep inner loop
         mu_i = mu[i]

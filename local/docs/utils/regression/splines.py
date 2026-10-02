@@ -41,13 +41,13 @@ class SplineRegressor(ABC):
         :param knots: (list[float]) List of knot locations, sorted in increasing order.
         """
 
-        # --- argument handling ---
+        # --- argument handling ------------------
         if list(knots) != sorted(set(knots)):
             raise ValueError("Knots should be unique and sorted in increasing order.")
         if len(knots) < 2:
             raise ValueError("There should be at least 2 knots.")
 
-        # --- store parameters ---
+        # --- store parameters -------------------
         self.knots = knots
         if c is not None:
             self.c = c
@@ -128,19 +128,19 @@ class SplineRegressor(ABC):
     @staticmethod
     def _knots_from_x_data(x_data: np.ndarray, n_knots: int) -> np.ndarray:
 
-        # --- prep --------------------
+        # --- prep -------------------------------
         n_unique = len(set(x_data))
         if n_unique < n_knots:
             raise ValueError(f"Cannot create {n_knots} knots from x_data with only {n_unique} unique values.")
 
-        # --- create knots ------------
+        # --- create knots -----------------------
         for n_quantiles in range(n_knots, n_unique + 1):
             quantiles = np.linspace(0, 1, n_quantiles)
             knots = np.sort(np.unique(np.quantile(x_data, quantiles)))
             if len(knots) == n_knots:
                 return knots
 
-        # --- fallback ----------------
+        # --- fallback ---------------------------
         unique_x = np.sort(np.unique(x_data))
         return np.quantile(unique_x, np.linspace(0, 1, n_knots))
 
@@ -164,7 +164,7 @@ class SplineQuantileRegressor(SplineRegressor, ABC):
         reg: float = 0.0,
     ):
 
-        # --- generate ineq. constraints ------------------
+        # --- generate ineq. constraints ---------
         if fx_bounds or dfx_bounds:
             # initialize Aineq and bineq as empty arrays, to be filled in the following steps
             Aineq = np.empty((0, self.n))
@@ -204,7 +204,7 @@ class SplineQuantileRegressor(SplineRegressor, ABC):
             Aineq = None
             bineq = None
 
-        # --- generate regularization term ----------------
+        # --- generate regularization term -------
         if reg > 0:
             nx = self.n + len(x_data) + 1  # number of x-values at which we evaluate
             x_reg = np.quantile(self.knots, np.linspace(0, 1, nx))
@@ -223,11 +223,11 @@ class SplineQuantileRegressor(SplineRegressor, ABC):
             A_l2reg = None
             b_l2reg = None
 
-        # --- actual regression ---------------------------
+        # --- actual regression ------------------
         basis_matrix = self._basis_matrix(x_data)
         linear_regressor = LinearRegressor.fit_quantile(basis_matrix, y_data, q, Aineq, bineq, A_l2reg, b_l2reg)
 
-        # --- extract result ------------------------------
+        # --- extract result ---------------------
         self.c = linear_regressor.c
 
     # --------------------------------------------------------------------------
