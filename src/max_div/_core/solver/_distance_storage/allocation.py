@@ -115,13 +115,13 @@ class SharedMemoryDistanceStoreAllocator(DistanceStoreAllocator):
         segment is returned, and a second spec that names that segment is recorded.  The allocator
         holds a reference to the array until the allocator closes.
         """
-        known = self._adopted_array_segments.get(id(array))
-        if known is None:
+        adopted_entry = self._adopted_array_segments.get(id(array))
+        if adopted_entry is None:
             segment, buffer = self._create_segment(array.shape)
             buffer[:] = array
             self._adopted_array_segments[id(array)] = (array, segment, buffer)
         else:
-            _, segment, buffer = known
+            _, segment, buffer = adopted_entry
         self._specs.append(SharedStoreSpec.over_segment(segment, buffer, kind, metric))
         return buffer
 

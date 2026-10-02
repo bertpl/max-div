@@ -83,10 +83,10 @@ def test_shared_adopt_copies_into_a_segment_and_reuses_it_for_the_same_array():
 
 
 def test_shared_adopt_does_not_mistake_a_new_array_for_a_freed_one():
-    """Arrays freed right after their adoption each get a segment of their own that holds their own values.
+    """Arrays that the caller drops right after adopting them each get their own segment, holding their own values.
 
-    Python may give a new array the id of one that was freed, so the allocator must keep each
-    adopted array alive to tell a new array apart from a freed one.
+    Python may give a new array the id of one that was freed, and the allocator recognizes an
+    array by its id.
     """
     # --- arrange ----------------------
     allocator = SharedMemoryDistanceStoreAllocator()
