@@ -86,7 +86,7 @@ def test_shared_adopt_does_not_mistake_a_new_array_for_a_freed_one():
     """Arrays freed right after their adoption each get a segment of their own that holds their own values.
 
     Python may give a new array the id of one that was freed, so the allocator must keep each
-    adopted array alive to tell the 2 apart.
+    adopted array alive to tell a new array apart from a freed one.
     """
     # --- arrange ----------------------
     allocator = SharedMemoryDistanceStoreAllocator()
