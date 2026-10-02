@@ -176,12 +176,12 @@ def test_problem_new_accepts_an_l2_and_projections_k_equal_to_its_own():
     )
 
     # --- act --------------------------
-    own = MaxDivProblem.new(vectors, k=3, distance_metric=DistanceMetric.l2_and_projections(k=3))
-    in_hybrid = MaxDivProblem.new(vectors, k=3, diversity_metric=hybrid)
+    problem_with_distance = MaxDivProblem.new(vectors, k=3, distance_metric=DistanceMetric.l2_and_projections(k=3))
+    problem_with_hybrid = MaxDivProblem.new(vectors, k=3, diversity_metric=hybrid)
 
     # --- assert -----------------------
-    assert own.distance_metric == DistanceMetric.l2_and_projections(k=3)
-    assert in_hybrid.diversity_metric is hybrid
+    assert problem_with_distance.distance_metric == DistanceMetric.l2_and_projections(k=3)
+    assert problem_with_hybrid.diversity_metric is hybrid
 
 
 @pytest.mark.parametrize("is_hybrid_term", [False, True])

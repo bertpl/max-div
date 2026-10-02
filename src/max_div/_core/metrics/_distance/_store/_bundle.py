@@ -78,7 +78,7 @@ class DistanceStore(NamedTuple):
             metric: (DistanceMetric) the distance metric the store computes.
         """
         validate_vector_array_layout(preprocessed_vectors)
-        metric_kind, metric_float_param = metric.pairwise_distance_args(preprocessed_vectors.shape[1])
+        metric_kind, metric_float_param = metric.pairwise_distance_args(preprocessed_vectors)
         return cls(
             kind=KIND_LAZY,
             n=np.int32(preprocessed_vectors.shape[0]),

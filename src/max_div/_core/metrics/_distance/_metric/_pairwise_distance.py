@@ -222,9 +222,11 @@ def _pairwise_distance(  # noqa: C901 -- flat dispatch, one arm per kind: comple
 ) -> np.float32:
     """Compute the distance between vectors i and j, per the given metric selector.
 
-    `metric_float_param` is the metric's `DistanceMetric.float_param`: the power `p` of a
-    generic Minkowski kind, the `l2_scale` of the L2-and-projections distance, or, weighted for k
-    items, the factor on its L2 distance.
+    `metric_float_param` is the metric's `DistanceMetric.float_param`:
+
+    - the power `p` of a generic Minkowski kind;
+    - the `l2_scale` of the L2-and-projections distance;
+    - the factor on the L2 distance of the L2-and-projections distance weighted for k items.
 
     The selector is loop-invariant in every calling loop, so the branch order is not
     performance-relevant.  The specialized Minkowski kinds apply the outer root as repeated

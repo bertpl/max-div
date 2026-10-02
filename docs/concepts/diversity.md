@@ -49,9 +49,12 @@ The distance metric determines how the distance between two vectors is measured.
 - **`root=False` skips the outer $1/p$ root**, exactly as `l2s_euclidean_squared()` does for `l2_euclidean()` -- see that row above.
 - **For $0 < p < 1$ the `root=True` form violates the triangle inequality** and is not a strict metric, while the `root=False` form is one -- the solver never relies on the triangle inequality, so both are usable.
 - **`l2_and_projections()` assumes vectors scaled into the unit cube $[0,1]^d$**, the only population for which its 2 parts are comparable, and at least 2 dimensions: in 1 it only rescales the one coordinate gap.
-- **`l2_and_projections(k=...)` weights its 2 parts for $k$ selected items.** A min-separation solve ends with the 2 parts about equal for its closest selected pairs.
-    - **Without $k$**, the L2 part is the L2 distance raised to the power $d$, so how close each spread gets to the spacing of $k$ evenly spread points depends on the final separation, and no single `l2_scale` makes the 2 fractions equal. In higher dimensions the L2 part rarely sets the minimum: an `l2_scale` of about 1/1.4 for $d = 3$ and about 1/40 for $d = 10$ lets the L2 part set the minimum about as often as the L−∞ part does.
-    - **With $k$**, $r$ makes the 2 parts equal at the spacing of $k$ evenly spread points, $1/(k-1)$ along an axis and $1/(k^{1/d}-1)$ in the full space (a grid of $k$ points), so both spreads reach the same fraction of that spacing, whatever the final separation; an `l2_scale` above 1 then spreads the selection more along the axes. Below $k = 2^d$, a grid of $k$ points overstates how far apart $k$ points can get in the full space, so the L2 part is too small and the solve spreads the selection more in the full space; an `l2_scale` above 1 makes up for the smaller L2 part.
+- **`l2_and_projections(k=...)` weights its 2 parts for $k$ selected items.** A solve under `MIN_SEPARATION` ends with the 2 parts about equal for its closest selected pairs.
+    - **Without $k$**, the L2 part is the L2 distance raised to the power $d$, so along the axes and in the full space the selection reaches different fractions of the spacing of $k$ evenly spread points: $1/(k-1)$ along an axis and $1/(k^{1/d}-1)$ in the full space (a grid of $k$ points). No single `l2_scale` makes the 2 fractions equal for every final separation.
+        - In higher dimensions the L2 part rarely sets the minimum: an `l2_scale` of about 1/1.4 for $d = 3$ and about 1/40 for $d = 10$ lets the L2 part set the minimum about as often as the L−∞ part does.
+    - **With $k$**, $r$ makes the 2 parts equal at that spacing, so the selection reaches the same fraction of it along the axes and in the full space, whatever the final separation.
+        - An `l2_scale` above 1 spreads the selection more along the axes.
+        - Below $k = 2^d$, a grid of $k$ points overstates how far apart $k$ points can get in the full space, so the L2 part is too small and the solve spreads the selection more in the full space; an `l2_scale` above 1 makes up for the smaller L2 part.
     - A problem rejects an `l2_and_projections(k=...)` whose $k$ differs from the problem's $k$.
 - **`geometric_mean()` is computed through logarithms**, one per dimension with a single exponential at the end, so the product cannot underflow or overflow at any dimension count.
 - **Distinct points can be at distance zero under `geometric_mean()`, `l_minus_inf()`, `along_axis(axis)` and `l2_and_projections()`**; the solver treats them as a coincident pair -- see the [scoring page](scoring.md#diversity-tie-breakers) for the tie-breaker that removes one of them.
@@ -195,7 +198,7 @@ A `min_of` hybrid whose terms all use min-separation scores a selection exactly 
 
 [`l2_and_projections()`](#distance-metrics) is such a distance: the minimum of the `l_minus_inf()` distance and `l2_scale` times the L2 distance raised to the power $d$, the number of dimensions. Under min-separation it spreads a selection along every axis and in the full space at once.
 
-`l2_and_projections(k=...)` with `l2_scale` = 1 is the weighted minimum of the `l_minus_inf()` and `l2_euclidean()` distances with weights $(k - 1,\; k^{1/d} - 1)$, divided by $k - 1$.
+`l2_and_projections(k=...)` with `l2_scale` = 1 is the minimum of $k - 1$ times the `l_minus_inf()` distance and $k^{1/d} - 1$ times the `l2_euclidean()` distance, divided by $k - 1$: a solve under `MIN_SEPARATION` scores a selection as a `min_of` hybrid with those weights would, divided by $k - 1$, from 1 distance store, where the hybrid needs 2.
 
 ### VI.D. Tie-breakers { #hybrid-tie-breakers }
 

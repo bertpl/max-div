@@ -68,7 +68,7 @@ def test_factory_metrics_without_a_float_parameter_have_no_float_param(factory_m
 def test_pairwise_distance_args_are_the_kind_and_float_param_as_numpy_scalars():
     """`pairwise_distance_args` returns the kind as np.int32 and the parameter as np.float64."""
     # --- act --------------------------
-    kind, float_param = DistanceMetric.minkowski(3).pairwise_distance_args(5)
+    kind, float_param = DistanceMetric.minkowski(3).pairwise_distance_args(np.zeros((4, 5), dtype=np.float32))
 
     # --- assert -----------------------
     assert (kind, float_param) == (DistanceMetric.minkowski(3).kind, 3.0)

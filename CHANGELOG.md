@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - `InitializationStrategy.constraint_aware_diverse(batch_size, nc)` builds the starting selection of a constrained problem in batches, each the best-scoring of `nc` candidate batches that favor items far from the selection and move toward satisfying the constraints; a smaller `batch_size` or a larger `nc` gives a better starting selection at a higher cost
-- `DistanceMetric.l2_and_projections(k=...)` weights the L2 part of the distance by the number `k` of selected items, so that a min-separation solve reaches the same fraction of the spacing of `k` evenly spread points along each axis and in the full space
+- `DistanceMetric.l2_and_projections(k=...)` takes the number `k` of selected items and multiplies the L2 distance by a factor computed from `k`, so that a solve under `MIN_SEPARATION` gets equally close, along each axis and in the full space, to the spacing of `k` evenly spread points
 
 ### Changed
 - `DistanceMetric.marginals_and_joint(joint_scale)` is renamed to `DistanceMetric.l2_and_projections(l2_scale)`

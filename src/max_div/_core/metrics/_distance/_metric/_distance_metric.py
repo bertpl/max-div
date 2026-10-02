@@ -161,9 +161,11 @@ class DistanceMetric:
         A min-separation solve ends with the 2 parts about equal, so the L2 part's formula sets how the
         final spread in the full space relates to the final spread along the axes:
 
-        - Without `k`, the L2 separation scales as the d-th root of the axis separation, so the 2
-          spreads reach different fractions of the spacing of k evenly spread points, and no single
-          `l2_scale` makes the 2 fractions equal for every final separation.  For k well-spread
+        - Without `k`, the final separation in the full space scales as the d-th root of the final
+          separation along the axes, so the selection reaches different fractions of the spacing of
+          k evenly spread points along the axes and in the full space: 1 / (k - 1) along an axis
+          and 1 / (k^(1/d) - 1) in the full space (a grid of k points).  No single `l2_scale` makes
+          the 2 fractions equal for every final separation.  For k well-spread
           points in the unit cube, the axis gap between neighbors can reach 1/k, while the L2 part is
           about c/k, where c grows with d:
 
@@ -174,14 +176,13 @@ class DistanceMetric:
 
           In higher dimensions the L2 part therefore rarely sets the minimum, and an `l2_scale` of
           about 1/c lets the L2 part set the minimum about as often as the L-∞ part does.
-        - With `k`, the 2 parts are equal at the separations of k evenly spread points, 1 / (k - 1)
-          along an axis and 1 / (k^(1/d) - 1) in the full space (a grid of k points), so the solve
-          reaches the same fraction of those separations along each axis and in the full space,
-          whatever the final separation.
+        - With `k`, the 2 parts are equal at that spacing, so the solve reaches the same fraction of
+          it along each axis and in the full space, whatever the final separation.
 
-          - With `l2_scale` = 1, the score is that of `HybridDiversityMetric.min_of` over the L-∞
-            and L2 distances with weights (k - 1, k^(1/d) - 1), divided by k - 1, and the
-            L2-and-projections distance needs only 1 distance store.
+          - With `l2_scale` = 1, a min-separation score over this distance equals the score of a
+            `HybridDiversityMetric.min_of` over min-separation terms on the L-∞ and L2 distances,
+            with weights (k - 1, k^(1/d) - 1), divided by k - 1; the L2-and-projections distance
+            computes it from 1 distance store, where that hybrid needs 2.
           - An `l2_scale` above 1 makes the L2 part larger, so the solve spreads the selection more
             along the axes.
           - Below k = 2^d, a grid of k points overstates how far apart k points can get in the full
@@ -254,22 +255,22 @@ class DistanceMetric:
     def float_param(self, n_dims: int) -> float:
         """Return the compiled pairwise distance function's float parameter; `NO_FLOAT_PARAM` for a kind without one.
 
-        The parameter may depend on `n_dims`, the dimension count of the vectors that the function reads,
-        which a metric only learns when its distances are computed.
+        The parameter may depend on `n_dims`, the dimension count of the preprocessed vectors; a metric
+        learns that count only when its distances are computed.
         """
         return NO_FLOAT_PARAM
 
-    def pairwise_distance_args(self, n_dims: int) -> tuple[np.int32, np.float64]:
-        """Return `kind` and `float_param(n_dims)` typed as the compiled pairwise distance functions take them."""
-        return np.int32(self.kind), np.float64(self.float_param(n_dims))
+    def pairwise_distance_args(self, preprocessed_vectors: NDArray[np.float32]) -> tuple[np.int32, np.float64]:
+        """Return `kind` and `float_param` for `preprocessed_vectors`, typed as the compiled functions take them."""
+        return np.int32(self.kind), np.float64(self.float_param(preprocessed_vectors.shape[1]))
 
-    def validate(self, vectors: NDArray[np.float32], k: int | None = None) -> None:
-        """Raise ValueError if this metric cannot be computed on `vectors`, or does not fit a selection of `k` items.
+    def validate(self, vectors: NDArray[np.float32], problem_k: int | None = None) -> None:
+        """Raise ValueError if this metric cannot compute on `vectors` or does not fit a problem selecting `problem_k`.
 
         `validate` is a no-op for a kind that computes on any vectors, so a caller can call it on every
         metric.  `vectors` must already be a 2D array; `preprocess` checks the layout, this method does not.
-        `k` is the problem's selection size; `preprocess` passes none, because a distance store does not
-        know it, and a metric then skips the check against it.
+        `problem_k` is the problem's selection size.  `preprocess` passes none, because a distance store
+        does not know the problem's selection size, and a metric then skips the check against `problem_k`.
         """
 
     def preprocess(self, vectors: NDArray[np.float32]) -> NDArray[np.float32]:
@@ -403,7 +404,7 @@ class CosineDistanceMetric(DistanceMetric):
     _factory_name = "cosine"
     needs_preprocessed_vectors = True
 
-    def validate(self, vectors: NDArray[np.float32], k: int | None = None) -> None:
+    def validate(self, vectors: NDArray[np.float32], problem_k: int | None = None) -> None:
         """Raise ValueError if any vector is all-zero: cosine distance is undefined for zero vectors."""
         zero_rows = np.flatnonzero(~vectors.any(axis=1))
         if zero_rows.size > 0:
@@ -464,7 +465,7 @@ class AlongAxisDistanceMetric(DistanceMetric):
         """Return `axis <i>`."""
         return f"axis {self.axis}"
 
-    def validate(self, vectors: NDArray[np.float32], k: int | None = None) -> None:
+    def validate(self, vectors: NDArray[np.float32], problem_k: int | None = None) -> None:
         """Raise ValueError if the axis is not a coordinate of `vectors`."""
         n_dims = vectors.shape[1]
         if self.axis >= n_dims:
@@ -509,7 +510,7 @@ class L2AndProjectionsDistanceMetric(DistanceMetric):
         details = self._label_details()
         return f"L2+projections ({', '.join(details)})" if details else "L2+projections"
 
-    def validate(self, vectors: NDArray[np.float32], k: int | None = None) -> None:
+    def validate(self, vectors: NDArray[np.float32], problem_k: int | None = None) -> None:
         """Raise ValueError for 1-dimensional vectors, where the distance is only a rescaled L1 distance."""
         if vectors.shape[1] < 2:
             raise ValueError(
@@ -540,7 +541,7 @@ class L2AndProjectionsForKDistanceMetric(L2AndProjectionsDistanceMetric):
     _kind = METRIC_KIND_L2_AND_PROJECTIONS_FOR_K
 
     def __post_init__(self) -> None:
-        """Check the L2 scale as the unweighted form does, and reject a `k` that is not an integer of at least 2."""
+        """Check the L2 scale as `L2AndProjectionsDistanceMetric` does, and reject a `k` that is not an integer >= 2."""
         super().__post_init__()
         if isinstance(self.k, bool) or not isinstance(self.k, (int, np.integer)) or self.k < 2:
             raise ValueError(f"l2_and_projections requires an integer k >= 2; here: {self.k!r}.")
@@ -551,21 +552,21 @@ class L2AndProjectionsForKDistanceMetric(L2AndProjectionsDistanceMetric):
         """Return the factor on the L2 distance, ``l2_scale * (k^(1/d) - 1) / (k - 1)`` with d = `n_dims`."""
         return self.l2_scale * (self.k ** (1.0 / n_dims) - 1.0) / (self.k - 1.0)
 
-    def validate(self, vectors: NDArray[np.float32], k: int | None = None) -> None:
-        """Check the dimension count as the unweighted form does, and reject a problem that selects another `k`."""
-        super().validate(vectors, k)
-        if k is not None and k != self.k:
+    def validate(self, vectors: NDArray[np.float32], problem_k: int | None = None) -> None:
+        """Check the dimensions as `L2AndProjectionsDistanceMetric` does, and reject a problem selecting another k."""
+        super().validate(vectors, problem_k)
+        if problem_k is not None and problem_k != self.k:
             raise ValueError(
-                f"{self!r} is weighted for k={self.k} selected items, but the problem selects k={k}; "
+                f"{self!r} is weighted for k={self.k} selected items, but the problem selects k={problem_k}; "
                 "create the distance with the problem's k."
             )
 
     def _label_details(self) -> tuple[str, ...]:
-        """Return the unweighted form's details, followed by `k=<k>`."""
+        """Return the details of `L2AndProjectionsDistanceMetric`, followed by `k=<k>`."""
         return (*super()._label_details(), f"k={self.k}")
 
     def _factory_arg_reprs(self) -> tuple[str, ...]:
-        """Return the unweighted form's arguments, followed by `k`."""
+        """Return the arguments of `L2AndProjectionsDistanceMetric`, followed by `k`."""
         return (*super()._factory_arg_reprs(), f"k={self.k}")
 
 
