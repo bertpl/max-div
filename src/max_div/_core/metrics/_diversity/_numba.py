@@ -1,7 +1,7 @@
 """The reducers here turn a selection's per-item contribution values into one diversity value.
 
-Every reducer here takes the same fastmath subset as the pair-distance functions in
-`_distance/_metric/_pair.py`, for the same reason: `sep` carries +inf for "no selected neighbor yet".
+Every reducer here takes the same fastmath subset as the pairwise distance functions in
+`_distance/_metric/_pairwise_distance.py`, for the same reason: `sep` carries +inf for "no selected neighbor yet".
 
 ## Why the minimum is taken over integers
 
@@ -24,11 +24,11 @@ finite one.
 The integer minimum picks the same element as the float minimum would.  Two inputs would break
 that order, and neither reaches the reducer:
 
-- a negative separation: every pair function returns a magnitude (an absolute difference, a square
+- a negative separation: every pairwise distance function returns a magnitude (an absolute difference, a square
   root, a squared sum, `0.5 · |x - y|²` over normalized rows, an exponential), never a negative value;
   a -0.0 would sort below +0.0 and read back as -0.0, which equals 0.0, so even that would be harmless;
 - a NaN: its pattern lies above +inf, so the integer minimum would skip it where the float minimum
-  would propagate it; no pair function produces one from finite float32 vectors.
+  would propagate it; no pairwise distance function produces one from finite float32 vectors.
 """
 
 import numpy as np

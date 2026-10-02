@@ -8,7 +8,7 @@ Each layer depends only on the ones before it:
 """
 
 from ._build import compute_full_matrix, expand_condensed
-from ._metric import NO_PARAM, DistanceMetric
+from ._metric import NO_FLOAT_PARAM, DistanceMetric
 from ._store import (
     DISTANCE_STORE_TYPE,
     KIND_FULL_MATRIX,

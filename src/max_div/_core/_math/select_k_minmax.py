@@ -10,7 +10,7 @@ from max_div._core.jit import lazy_njit
 # =================================================================================================
 #  select_k_min
 # =================================================================================================
-# Same fastmath subset as `_distance/_metric/_pair.py`, on all three selectors: callers pass +inf sentinels.
+# Same fastmath subset as `_distance/_metric/_pairwise_distance.py`, on all 3 selectors: callers pass +inf sentinels.
 @lazy_njit(
     ["int32[:](float32[:], int32)", "int32[:](float64[:], int32)"],
     fastmath={"reassoc", "contract"},

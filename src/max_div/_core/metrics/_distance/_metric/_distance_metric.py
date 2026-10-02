@@ -1,7 +1,7 @@
 """`DistanceMetric` says which distance is meant; each kind of distance is a subclass of it.
 
-The compiled pair functions in `_pair` branch on an int selector, the metric's `kind`, so the metric
-object and the pair functions use one numbering of the distances.
+The compiled pairwise distance functions in `_pairwise_distance` branch on an int selector, the
+metric's `kind`, so the metric object and those functions use one numbering of the distances.
 """
 
 import math
@@ -35,9 +35,9 @@ METRIC_KIND_ALONG_AXIS = 14
 METRIC_KIND_LMINUSINF = 15
 METRIC_KIND_MARGINALS_AND_JOINT = 16
 
-# NO_PARAM is the float passed to a compiled pair function of a kind that takes no parameter (every kind that
-# takes one requires it to be > 0, so 0.0 is free to mean "none").
-NO_PARAM = 0.0
+# NO_FLOAT_PARAM is the float passed to the compiled pairwise distance function for a kind that takes no float
+# parameter (every kind that takes one requires it to be > 0, so 0.0 is free to mean "none").
+NO_FLOAT_PARAM = 0.0
 
 
 # =================================================================================================
@@ -45,7 +45,7 @@ NO_PARAM = 0.0
 # =================================================================================================
 @dataclass(frozen=True, repr=False)
 class DistanceMetric:
-    """A distance metric records which distance is meant and what its compiled pair function needs.
+    """A distance metric records which distance is meant and what its compiled pairwise distance function needs.
 
     Create instances via the factory methods only; they canonicalize their arguments, so metrics
     that compute the same distance compare equal.  Each kind of distance is a subclass that stores
@@ -215,22 +215,22 @@ class DistanceMetric:
             return MinkowskiDistanceMetric(p=p, has_outer_root=root)
 
     # --------------------------------------------------------------------------
-    #  What the compiled pair function needs
+    #  What the compiled pairwise distance function needs
     # --------------------------------------------------------------------------
     @property
     def kind(self) -> int:
-        """Return the compiled pair functions' kind selector."""
+        """Return the compiled pairwise distance functions' kind selector."""
         return self._kind
 
     @property
-    def pair_function_param(self) -> float:
-        """Return the compiled pair function's float parameter; `NO_PARAM` for a kind that takes none."""
-        return NO_PARAM
+    def float_param(self) -> float:
+        """Return the compiled pairwise distance function's float parameter; `NO_FLOAT_PARAM` for a kind without one."""
+        return NO_FLOAT_PARAM
 
     @property
-    def pair_function_args(self) -> tuple[np.int32, np.float64]:
-        """Return `kind` and `pair_function_param` typed as the compiled pair functions take them."""
-        return np.int32(self.kind), np.float64(self.pair_function_param)
+    def pairwise_distance_args(self) -> tuple[np.int32, np.float64]:
+        """Return `kind` and `float_param` typed as the compiled pairwise distance functions take them."""
+        return np.int32(self.kind), np.float64(self.float_param)
 
     def validate(self, vectors: NDArray[np.float32]) -> None:
         """Raise ValueError if this metric cannot be computed on `vectors`.
@@ -240,9 +240,9 @@ class DistanceMetric:
         """
 
     def preprocess(self, vectors: NDArray[np.float32]) -> NDArray[np.float32]:
-        """Return the vectors in the form that this metric's pair function reads: the input itself, or a new array.
+        """Return the vectors in the form that this metric's pairwise distance function reads.
 
-        `needs_preprocessed_vectors` says which of the 2 this method returns.  The input is never written.
+        `needs_preprocessed_vectors` says whether this is a new array or the input itself.  The input is never written.
 
         Raises:
             ValueError: If `vectors` is not a 2D float32 C-contiguous array, or `validate` rejects it.
@@ -252,7 +252,7 @@ class DistanceMetric:
         return self._preprocess_unchecked(vectors)
 
     def _preprocess_unchecked(self, vectors: NDArray[np.float32]) -> NDArray[np.float32]:
-        """Return the array that the pair function reads, from checked vectors; by default `vectors` itself."""
+        """Return the array that the pairwise distance function reads, from checked vectors; by default `vectors`."""
         return vectors
 
     # --------------------------------------------------------------------------
@@ -320,7 +320,7 @@ class MinkowskiDistanceMetric(DistanceMetric):
 
     _factory_name = "minkowski"
 
-    # A specialized Minkowski kind has p built in, so its pair function takes no parameter.
+    # A specialized Minkowski kind has p built in, so its pairwise distance function takes no parameter.
     _SPECIALIZED_KINDS: ClassVar[dict[tuple[float, bool], int]] = {
         (0.5, True): METRIC_KIND_MINKOWSKI_P05,
         (0.5, False): METRIC_KIND_MINKOWSKI_P05_POWERED,
@@ -337,9 +337,9 @@ class MinkowskiDistanceMetric(DistanceMetric):
         return self._SPECIALIZED_KINDS.get((self.p, self.has_outer_root), generic_kind)
 
     @property
-    def pair_function_param(self) -> float:
+    def float_param(self) -> float:
         """Return p for the generic kinds; a specialized kind has p built in and takes none."""
-        return self.p if self.kind in (METRIC_KIND_MINKOWSKI, METRIC_KIND_MINKOWSKI_POWERED) else NO_PARAM
+        return self.p if self.kind in (METRIC_KIND_MINKOWSKI, METRIC_KIND_MINKOWSKI_POWERED) else NO_FLOAT_PARAM
 
     @property
     def label(self) -> str:
@@ -358,7 +358,7 @@ class MinkowskiDistanceMetric(DistanceMetric):
 class CosineDistanceMetric(DistanceMetric):
     """This metric is the cosine distance; see `DistanceMetric.cosine`.
 
-    Its pair function reads rows scaled to unit L2 norm, so the distance is half the squared L2
+    Its pairwise distance function reads rows scaled to unit L2 norm, so the distance is half the squared L2
     distance of the scaled rows; `preprocess` does the scaling.
     """
 
@@ -405,8 +405,8 @@ class LMinusInfDistanceMetric(DistanceMetric):
 class AlongAxisDistanceMetric(DistanceMetric):
     """This metric is the distance along one coordinate axis; see `DistanceMetric.along_axis`.
 
-    Its pair function reads column 0 of its input array, so `preprocess` slices the axis out into
-    an (n, 1) array and the compiled pair function never receives the axis itself.
+    Its pairwise distance function reads column 0 of its input array, so `preprocess` slices the axis out into
+    an (n, 1) array and the compiled pairwise distance function never receives the axis itself.
     """
 
     axis: int
@@ -433,7 +433,7 @@ class AlongAxisDistanceMetric(DistanceMetric):
             raise ValueError(f"{self!r} reads a coordinate that {n_dims}-dimensional vectors do not have.")
 
     def _preprocess_unchecked(self, vectors: NDArray[np.float32]) -> NDArray[np.float32]:
-        """Return a fresh (n, 1) float32 array holding the single coordinate that the pair function reads."""
+        """Return a fresh (n, 1) float32 array holding the coordinate along `axis`."""
         return vectors[:, self.axis : self.axis + 1].copy()
 
     def _factory_arg_reprs(self) -> tuple[str, ...]:
@@ -461,7 +461,7 @@ class MarginalsAndJointDistanceMetric(DistanceMetric):
         object.__setattr__(self, "joint_scale", joint_scale)
 
     @property
-    def pair_function_param(self) -> float:
+    def float_param(self) -> float:
         """Return the joint scale, the factor on the joint term."""
         return self.joint_scale
 
@@ -493,7 +493,7 @@ def _normalize_rows(vectors: NDArray[np.float32]) -> NDArray[np.float32]:
     """Scale each row to unit L2 norm into a fresh float32 array.
 
     Norms accumulate in float64 and each element narrows to float32 on store, so the result is the
-    exact normalization the cosine pair functions operate on.  Rows must not be all-zero.
+    exact normalization the cosine pairwise distance functions operate on.  Rows must not be all-zero.
     """
     n = vectors.shape[0]
     d = vectors.shape[1]

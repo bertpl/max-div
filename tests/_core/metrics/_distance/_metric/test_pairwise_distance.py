@@ -19,7 +19,7 @@ _SCIPY_METRIC = {
 # ==================================================================================================
 #  Compute
 # ==================================================================================================
-def test_pair_metrics(metric: DistanceMetric):
+def test_pairwise_distance_metrics(metric: DistanceMetric):
     """Every metric computes through the full-matrix build."""
 
     # --- arrange ----------------------
@@ -47,8 +47,8 @@ def test_pair_metrics(metric: DistanceMetric):
         (DistanceMetric.marginals_and_joint(), 3.0),
     ],
 )
-def test_pair_values(metric: DistanceMetric, expected_value: float):
-    """The pair functions produce the expected values."""
+def test_pairwise_distance_values(metric: DistanceMetric, expected_value: float):
+    """The pairwise distance functions produce the expected values."""
 
     # --- arrange ----------------------
     vectors = np.array([[0, 0], [3, 4]], dtype=np.float32)
@@ -61,7 +61,7 @@ def test_pair_values(metric: DistanceMetric, expected_value: float):
 
 
 @pytest.mark.parametrize("metric", list(_SCIPY_METRIC), ids=repr)
-def test_pair_matches_scipy(metric: DistanceMetric):
+def test_pairwise_distance_matches_scipy(metric: DistanceMetric):
     """The hand-rolled float32 kernel matches scipy's float64→float32 result within float32 tolerance."""
 
     # --- arrange ----------------------
@@ -79,7 +79,7 @@ def test_pair_matches_scipy(metric: DistanceMetric):
 
 @pytest.mark.parametrize("p", [0.125, 0.25, 0.5, 1.5, 3.0])
 @pytest.mark.parametrize("root", [True, False])
-def test_pair_minkowski_matches_reference(p: float, root: bool):
+def test_pairwise_distance_minkowski_matches_reference(p: float, root: bool):
     """Minkowski distances match a float64 numpy reference, for specialized and generic p."""
     # --- arrange ----------------------
     rng = np.random.default_rng(20260829)
@@ -105,7 +105,7 @@ def test_pair_minkowski_matches_reference(p: float, root: bool):
         ([1, 0], [100, 0], 0.0),  # parallel: magnitude-invariant
     ],
 )
-def test_pair_cosine_values(x: list[float], y: list[float], expected_value: float):
+def test_pairwise_distance_cosine_values(x: list[float], y: list[float], expected_value: float):
     """Cosine distance produces the expected angular values."""
 
     # --- arrange ----------------------
@@ -118,7 +118,7 @@ def test_pair_cosine_values(x: list[float], y: list[float], expected_value: floa
     assert d[0] == pytest.approx(expected_value, abs=1e-6)
 
 
-def test_pair_cosine_zero_vector_raises():
+def test_pairwise_distance_cosine_zero_vector_raises():
     """Cosine distance rejects all-zero vectors with a clear error naming the row."""
 
     # --- arrange ----------------------
@@ -129,7 +129,7 @@ def test_pair_cosine_zero_vector_raises():
         condensed_distances(vectors, metric=DistanceMetric.cosine())
 
 
-def test_pair_zero_for_identical_vectors(metric: DistanceMetric):
+def test_pairwise_distance_zero_for_identical_vectors(metric: DistanceMetric):
     """Identical vectors have exactly-zero distance under every metric."""
 
     # --- arrange ----------------------
@@ -159,7 +159,7 @@ def test_pair_zero_for_identical_vectors(metric: DistanceMetric):
         ([1.0, 1e-30], [0.0, 0.0], 1e-15),  # one tiny gap pulls the mean down, without underflow
     ],
 )
-def test_pair_geometric_mean_values(x: list[float], y: list[float], expected_value: float):
+def test_pairwise_distance_geometric_mean_values(x: list[float], y: list[float], expected_value: float):
     """The geometric-mean distance handles zero, tiny, huge and negative gaps exactly or to float32 precision."""
     # --- arrange ----------------------
     vectors = np.array([x, y], dtype=np.float32)
@@ -185,7 +185,7 @@ def test_pair_geometric_mean_values(x: list[float], y: list[float], expected_val
         (2, 0.0),  # a shared coordinate is at distance zero, however far apart the vectors are elsewhere
     ],
 )
-def test_pair_along_axis_values(axis: int, expected_value: float):
+def test_pairwise_distance_along_axis_values(axis: int, expected_value: float):
     """The along-axis distance is the absolute difference of that one coordinate and ignores every other."""
     # --- arrange ----------------------
     vectors = np.array([[0.0, 0.0, 5.0], [-3.0, 4.0, 5.0]], dtype=np.float32)
@@ -210,7 +210,7 @@ def test_pair_along_axis_values(axis: int, expected_value: float):
         ([0.0, 0.0, 0.0], [4.0, 1.0, 2.0], 1.0),  # the minimum sits in the middle
     ],
 )
-def test_pair_lminusinf_values(x: list[float], y: list[float], expected_value: float):
+def test_pairwise_distance_lminusinf_values(x: list[float], y: list[float], expected_value: float):
     """The L-∞ distance is the smallest absolute coordinate difference, zero on a shared coordinate."""
     # --- arrange ----------------------
     vectors = np.array([x, y], dtype=np.float32)
@@ -227,7 +227,7 @@ def test_pair_lminusinf_values(x: list[float], y: list[float], expected_value: f
 # ==================================================================================================
 @pytest.mark.parametrize("n_dims", [2, 3, 4, 5, 10])
 @pytest.mark.parametrize("joint_scale", [1.0, 0.25])
-def test_pair_marginals_and_joint_matches_reference(n_dims: int, joint_scale: float):
+def test_pairwise_distance_marginals_and_joint_matches_reference(n_dims: int, joint_scale: float):
     """Every pair's distance is the smaller of the smallest coordinate gap and the scaled L2 distance to the power d."""
     # --- arrange ----------------------
     vectors = np.random.default_rng(20260928).random((40, n_dims)).astype(np.float32)
@@ -253,7 +253,7 @@ def test_pair_marginals_and_joint_matches_reference(n_dims: int, joint_scale: fl
         ([0.2, 0.7], [0.2, 0.1], 0.0),  # a shared coordinate gives distance zero
     ],
 )
-def test_pair_marginals_and_joint_values(a: list[float], b: list[float], expected_value: float):
+def test_pairwise_distance_marginals_and_joint_values(a: list[float], b: list[float], expected_value: float):
     """In 2 dimensions the distance is the smaller of the 2 gaps and the squared L2 distance."""
     # --- arrange ----------------------
     vectors = np.array([a, b], dtype=np.float32)
@@ -265,7 +265,7 @@ def test_pair_marginals_and_joint_values(a: list[float], b: list[float], expecte
     assert d[0] == pytest.approx(expected_value, rel=1e-6)
 
 
-def test_pair_marginals_and_joint_ignores_an_overflowing_joint_term():
+def test_pairwise_distance_marginals_and_joint_ignores_an_overflowing_joint_term():
     """A far pair in a high dimension, whose joint term overflows, still gets its smallest gap as the distance."""
     # --- arrange ----------------------
     vectors = np.array([np.zeros(400), np.full(400, 1e3)], dtype=np.float32)

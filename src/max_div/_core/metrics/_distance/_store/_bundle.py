@@ -16,7 +16,7 @@ from numpy.typing import NDArray
 
 from max_div._core.metrics._distance._build import compute_full_matrix, expand_condensed
 from max_div._core.metrics._distance._metric import (
-    NO_PARAM,
+    NO_FLOAT_PARAM,
     DistanceMetric,
     validate_vector_array_layout,
 )
@@ -58,8 +58,8 @@ class DistanceStore(NamedTuple):
     n: np.int32
     matrix: NDArray[np.float32]  # (n, n) full distance matrix (exactly symmetric), KIND_FULL_MATRIX
     preprocessed_vectors: NDArray[np.float32]  # (n, d) the vectors as preprocessed for the metric, KIND_LAZY
-    metric_kind: np.int32  # pair-function selector, KIND_LAZY only
-    metric_pair_function_param: np.float64  # `DistanceMetric.pair_function_param`, KIND_LAZY only
+    metric_kind: np.int32  # pairwise distance function selector, KIND_LAZY only
+    metric_float_param: np.float64  # `DistanceMetric.float_param`, KIND_LAZY only
 
     # --------------------------------------------------------------------------
     #  Factory methods
@@ -78,14 +78,14 @@ class DistanceStore(NamedTuple):
             metric: (DistanceMetric) the distance metric the store computes.
         """
         validate_vector_array_layout(preprocessed_vectors)
-        metric_kind, metric_pair_function_param = metric.pair_function_args
+        metric_kind, metric_float_param = metric.pairwise_distance_args
         return cls(
             kind=KIND_LAZY,
             n=np.int32(preprocessed_vectors.shape[0]),
             matrix=_EMPTY_2D,
             preprocessed_vectors=_readonly(preprocessed_vectors),
             metric_kind=metric_kind,
-            metric_pair_function_param=metric_pair_function_param,
+            metric_float_param=metric_float_param,
         )
 
     @classmethod
@@ -111,7 +111,7 @@ class DistanceStore(NamedTuple):
             matrix=_readonly(matrix),
             preprocessed_vectors=_EMPTY_2D,
             metric_kind=np.int32(0),
-            metric_pair_function_param=np.float64(NO_PARAM),
+            metric_float_param=np.float64(NO_FLOAT_PARAM),
         )
 
     @classmethod

@@ -8,12 +8,13 @@ change (see below) so the drift is explicit.
 
 What it guards is the *search*: the RNG, the scoring, the swap sequence, the tie-breaks. It
 deliberately does not guard distance computation, and is built so it cannot. Each case is
-solved from a precomputed distance matrix, so no pair kernel runs during the solve, and that
-matrix is built here with plain numpy rather than through the library's own kernels. Distance
-computation is guarded separately, by the cross-backend agreement tests.
+solved from a precomputed distance matrix, so no pairwise distance function runs during the
+solve, and that matrix is built here with plain numpy, not through the library's own pairwise
+distance functions. Distance computation is guarded separately, by the cross-backend agreement
+tests.
 
 That separation is what keeps this guard meaningful. A compiler is free to reassociate the
-sums inside a distance kernel, and reassociation is target- and toolchain-dependent — so a
+sums inside a pairwise distance function, and reassociation is target- and toolchain-dependent — so a
 bit-exact pin over computed distances would go red on a new numba release or a different CPU
 for reasons that are not regressions, and the habit of regenerating it to restore a green
 build would leave it guarding nothing.
@@ -87,10 +88,10 @@ def _data_file(regime: str) -> Path:
 
 
 def _distances_from(vectors: NDArray[np.float32], metric: DistanceMetric) -> NDArray[np.float32]:
-    """Build a distance matrix with plain numpy, independent of the library's own kernels.
+    """Build a distance matrix with plain numpy, independent of the library's own pairwise distance functions.
 
     Computing it here rather than through the library is what makes this guard indifferent to
-    changes in distance kernels: it pins the search given fixed distances. The result is
+    changes in the pairwise distance functions: it pins the search given fixed distances. The result is
     quantized and symmetrized so the matrix is bit-identical on every machine — the same
     reasoning that quantizes the vectors below, applied one step later.
     """

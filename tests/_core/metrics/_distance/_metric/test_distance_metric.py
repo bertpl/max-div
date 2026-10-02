@@ -5,7 +5,7 @@ import numpy as np
 import pytest
 
 from max_div._core.metrics import DistanceMetric
-from max_div._core.metrics._distance._metric import NO_PARAM, validate_vector_array_layout
+from max_div._core.metrics._distance._metric import NO_FLOAT_PARAM, validate_vector_array_layout
 
 # Every metric with a dedicated factory method of its own.
 _FACTORY_METRICS = (
@@ -53,21 +53,21 @@ def test_a_bare_distance_metric_cannot_be_created():
     [metric for metric in _FACTORY_METRICS if metric != DistanceMetric.marginals_and_joint()],
     ids=repr,
 )
-def test_factory_metrics_without_a_float_parameter_take_no_compiled_param(factory_metric: DistanceMetric):
-    """Every dedicated factory but `marginals_and_joint` has no float parameter, so its pair function takes NO_PARAM."""
+def test_factory_metrics_without_a_float_parameter_have_no_float_param(factory_metric: DistanceMetric):
+    """Every dedicated factory but `marginals_and_joint` returns a metric whose float parameter is `NO_FLOAT_PARAM`."""
     # --- act / assert -----------------
-    assert factory_metric.pair_function_param == NO_PARAM
+    assert factory_metric.float_param == NO_FLOAT_PARAM
 
 
-def test_pair_function_args_are_the_kind_and_param_as_numpy_scalars():
-    """`pair_function_args` returns the kind as np.int32 and the parameter as np.float64."""
+def test_pairwise_distance_args_are_the_kind_and_float_param_as_numpy_scalars():
+    """`pairwise_distance_args` returns the kind as np.int32 and the parameter as np.float64."""
     # --- act --------------------------
-    kind, pair_function_param = DistanceMetric.minkowski(3).pair_function_args
+    kind, float_param = DistanceMetric.minkowski(3).pairwise_distance_args
 
     # --- assert -----------------------
-    assert (kind, pair_function_param) == (DistanceMetric.minkowski(3).kind, 3.0)
+    assert (kind, float_param) == (DistanceMetric.minkowski(3).kind, 3.0)
     assert isinstance(kind, np.int32)
-    assert isinstance(pair_function_param, np.float64)
+    assert isinstance(float_param, np.float64)
 
 
 def test_equal_factories_compare_equal():
@@ -157,26 +157,26 @@ def test_minkowski_canonicalizes_onto_named_metrics(p: float, root: bool, expect
 @pytest.mark.parametrize("p", [0.5, 0.25, 0.125])
 @pytest.mark.parametrize("root", [True, False])
 def test_minkowski_canonicalizes_specializable_p(p: float, root: bool):
-    """A p of 0.5, 0.25 or 0.125 gets its own specialized kind, whose pair function takes no parameter."""
+    """A p of 0.5, 0.25 or 0.125 gets its own specialized kind, whose pairwise distance function takes no parameter."""
     # --- act --------------------------
     metric = DistanceMetric.minkowski(p, root=root)
 
     # --- assert -----------------------
-    assert metric.pair_function_param == NO_PARAM
+    assert metric.float_param == NO_FLOAT_PARAM
     assert metric.kind not in {m.kind for m in _FACTORY_METRICS}
     assert metric.kind != DistanceMetric.minkowski(3, root=root).kind
     assert metric.p == p
 
 
 def test_minkowski_generic_carries_p():
-    """A non-specializable p stays on the generic kinds, and its pair function takes p."""
+    """A non-specializable p stays on the generic kinds, and its pairwise distance function takes p."""
     # --- act --------------------------
     rooted = DistanceMetric.minkowski(3)
     powered = DistanceMetric.minkowski(3, root=False)
 
     # --- assert -----------------------
-    assert rooted.pair_function_param == 3.0
-    assert powered.pair_function_param == 3.0
+    assert rooted.float_param == 3.0
+    assert powered.float_param == 3.0
     assert rooted.kind != powered.kind
     assert rooted != powered
 
@@ -213,10 +213,10 @@ def test_along_axis_rejects_anything_but_a_non_negative_integer(axis):
 #  Marginals and joint
 # ==================================================================================================
 def test_marginals_and_joint_carries_its_joint_scale():
-    """The marginals-and-joint metric stores its joint scale, 1 by default, and hands it to its pair function."""
+    """The marginals-and-joint metric stores its joint scale, 1 by default, as its float parameter."""
     # --- act / assert -----------------
     assert DistanceMetric.marginals_and_joint().joint_scale == 1.0
-    assert DistanceMetric.marginals_and_joint(joint_scale=2).pair_function_param == 2.0
+    assert DistanceMetric.marginals_and_joint(joint_scale=2).float_param == 2.0
     assert DistanceMetric.marginals_and_joint(joint_scale=0.5) != DistanceMetric.marginals_and_joint()
 
 

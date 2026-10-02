@@ -19,8 +19,8 @@ from max_div._core.jit import lazy_njit
 from .fast_log_exp import fast_exp2_f32, fast_log2_f32
 
 
-# Every function here uses the same fastmath subset as the pair-distance functions in
-# `_distance/_metric/_pair.py`. The subset omits the `ninf` flag, which would let the compiler assume
+# Every function here uses the same fastmath subset as the pairwise distance functions in
+# `_distance/_metric/_pairwise_distance.py`. The subset omits the `ninf` flag, which would let the compiler assume
 # no infinities, so in `geomean_f32` and `weighted_geomean_per_row_f32` a +inf entry stays +inf through the sum
 # (`fast_geomean_f32` does not preserve it: its log and exp are approximations).
 @lazy_njit("float32(float32[::1])", fastmath={"reassoc", "contract"}, inline="always", cache=True)
