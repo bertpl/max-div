@@ -70,10 +70,11 @@ def compute_full_matrix(
     """
     preprocessed = metric.preprocess(vectors)
     out = _allocate_if_needed(out, preprocessed.shape[0])
+    pairwise_distance_args = metric.pairwise_distance_args(preprocessed)
     if parallel_build_enabled():
-        _fill_matrix_parallel(preprocessed, *metric.pairwise_distance_args, np.int64(BUILD_BLOCK_WIDTH), out)
+        _fill_matrix_parallel(preprocessed, *pairwise_distance_args, np.int64(BUILD_BLOCK_WIDTH), out)
     else:
-        _fill_matrix(preprocessed, *metric.pairwise_distance_args, out)
+        _fill_matrix(preprocessed, *pairwise_distance_args, out)
     return out
 
 

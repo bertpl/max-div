@@ -45,6 +45,7 @@ def test_pairwise_distance_metrics(metric: DistanceMetric):
         (DistanceMetric.l_minus_inf(), 3.0),
         (DistanceMetric.along_axis(1), 4.0),
         (DistanceMetric.l2_and_projections(), 3.0),
+        (DistanceMetric.l2_and_projections(k=100), 5.0 * 9 / 99),
     ],
 )
 def test_pairwise_distance_values(metric: DistanceMetric, expected_value: float):
@@ -263,6 +264,42 @@ def test_pairwise_distance_l2_and_projections_values(a: list[float], b: list[flo
 
     # --- assert -----------------------
     assert d[0] == pytest.approx(expected_value, rel=1e-6)
+
+
+@pytest.mark.parametrize("n_dims", [2, 3, 5, 10])
+@pytest.mark.parametrize("k", [2, 100])
+def test_pairwise_distance_l2_and_projections_with_k_matches_reference(n_dims: int, k: int):
+    """With `k`, every pair's distance is the smaller of the smallest coordinate gap and the scaled L2 distance."""
+    # --- arrange ----------------------
+    vectors = np.random.default_rng(20261001).random((40, n_dims)).astype(np.float32)
+    metric = DistanceMetric.l2_and_projections(l2_scale=0.5, k=k)
+    expected = [
+        l2_and_projections_reference(vectors[i], vectors[j], 0.5, k=k)
+        for i in range(len(vectors))
+        for j in range(i + 1, len(vectors))
+    ]
+
+    # --- act --------------------------
+    d = condensed_distances(vectors, metric=metric)
+
+    # --- assert -----------------------
+    np.testing.assert_allclose(d, np.array(expected, dtype=np.float32), rtol=1e-5)
+
+
+def test_pairwise_distance_l2_and_projections_with_k_is_the_weighted_minimum_of_its_parts():
+    """With `k` the distance is the minimum of L-∞ and L2 weighted (k - 1, k^(1/d) - 1), divided by k - 1."""
+    # --- arrange ----------------------
+    k = 100
+    vectors = np.random.default_rng(20261001).random((30, 2)).astype(np.float32)
+    lminusinf = condensed_distances(vectors, metric=DistanceMetric.l_minus_inf()).astype(np.float64)
+    l2 = condensed_distances(vectors, metric=DistanceMetric.l2_euclidean()).astype(np.float64)
+    expected = np.minimum((k - 1) * lminusinf, (k**0.5 - 1) * l2) / (k - 1)
+
+    # --- act --------------------------
+    d = condensed_distances(vectors, metric=DistanceMetric.l2_and_projections(k=k))
+
+    # --- assert -----------------------
+    np.testing.assert_allclose(d, expected, rtol=1e-5)
 
 
 def test_pairwise_distance_l2_and_projections_ignores_an_overflowing_l2_part():

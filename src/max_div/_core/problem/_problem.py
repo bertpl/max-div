@@ -151,10 +151,10 @@ class MaxDivProblem(ABC):
         if vectors.shape[1] == 0:
             raise ValueError("Vectors must have at least one dimension.")
         vectors = np.ascontiguousarray(vectors, dtype=np.float32)  # the form every distance function expects
-        for metric in cls._distance_metrics_read(distance_metric, diversity_metric):
-            metric.validate(vectors)  # fail fast, before any distance store is built
-
+        # Validate k before the metrics, so a k out of range is reported as such, not as a mismatch with a metric's k
         cls._validate_k(k, vectors.shape[0])
+        for metric in cls._distance_metrics_read(distance_metric, diversity_metric):
+            metric.validate(vectors, k)  # fail fast, before any distance store is built
 
         if constraints is None:
             constraints = []

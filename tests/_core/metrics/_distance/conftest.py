@@ -25,6 +25,7 @@ NAMED_METRICS = (
     DistanceMetric.along_axis(1),
     DistanceMetric.l2_and_projections(),
     DistanceMetric.l2_and_projections(l2_scale=0.25),
+    DistanceMetric.l2_and_projections(k=100),
 )
 
 # MINKOWSKI_METRICS covers each Minkowski kind once: generic and specialized, rooted and not.

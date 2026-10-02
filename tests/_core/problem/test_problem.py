@@ -155,14 +155,53 @@ def test_problem_new_along_axis_beyond_the_dimension_count_raises():
         _ = MaxDivProblem.new(vectors, k=3, distance_metric=DistanceMetric.along_axis(3))
 
 
-def test_problem_new_l2_and_projections_over_1_dimension_raises():
-    """The L2-and-projections distance needs at least 2 dimensions and is rejected at construction over 1."""
+@pytest.mark.parametrize("k", [None, 3])
+def test_problem_new_l2_and_projections_over_1_dimension_raises(k: int | None):
+    """The L2-and-projections distance, with or without `k`, needs 2 dimensions and is rejected over 1."""
     # --- arrange ----------------------
     vectors = np.random.default_rng(0).random((5, 1)).astype(np.float32)
 
     # --- act / assert -----------------
     with pytest.raises(ValueError, match="needs at least 2 dimensions"):
-        _ = MaxDivProblem.new(vectors, k=3, distance_metric=DistanceMetric.l2_and_projections())
+        _ = MaxDivProblem.new(vectors, k=3, distance_metric=DistanceMetric.l2_and_projections(k=k))
+
+
+def test_problem_new_accepts_an_l2_and_projections_k_equal_to_its_own():
+    """An L2-and-projections distance for the problem's k is accepted, as its own distance or as a hybrid term."""
+    # --- arrange ----------------------
+    vectors = np.random.default_rng(0).random((5, 2)).astype(np.float32)
+    hybrid = HybridDiversityMetric.geomean_of(
+        DiversityMetric.MIN_SEPARATION.over(DistanceMetric.l2_and_projections(k=3)),
+        DiversityMetric.MIN_SEPARATION.over(DistanceMetric.l2_euclidean()),
+    )
+
+    # --- act --------------------------
+    problem_with_distance = MaxDivProblem.new(vectors, k=3, distance_metric=DistanceMetric.l2_and_projections(k=3))
+    problem_with_hybrid = MaxDivProblem.new(vectors, k=3, diversity_metric=hybrid)
+
+    # --- assert -----------------------
+    assert problem_with_distance.distance_metric == DistanceMetric.l2_and_projections(k=3)
+    assert problem_with_hybrid.diversity_metric is hybrid
+
+
+@pytest.mark.parametrize("is_hybrid_term", [False, True])
+def test_problem_new_rejects_an_l2_and_projections_k_that_differs_from_its_own(is_hybrid_term: bool):
+    """An L2-and-projections distance for another k is rejected, as the problem's own distance or as a hybrid term."""
+    # --- arrange ----------------------
+    vectors = np.random.default_rng(0).random((5, 2)).astype(np.float32)
+    metric = DistanceMetric.l2_and_projections(k=4)
+    if is_hybrid_term:
+        hybrid = HybridDiversityMetric.geomean_of(
+            DiversityMetric.MIN_SEPARATION.over(metric),
+            DiversityMetric.MIN_SEPARATION.over(DistanceMetric.l2_euclidean()),
+        )
+        kwargs = {"diversity_metric": hybrid}
+    else:
+        kwargs = {"distance_metric": metric}
+
+    # --- act / assert -----------------
+    with pytest.raises(ValueError, match="selects k=3"):
+        _ = MaxDivProblem.new(vectors, k=3, **kwargs)
 
 
 def test_problem_new_along_axis_within_the_dimension_count_ok():
