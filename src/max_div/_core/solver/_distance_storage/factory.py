@@ -99,8 +99,10 @@ class DistanceStoreFactory:
         AUTO is decided differently for the two problem flavors, deliberately:
 
         - For a vector problem the distances are an internal artifact that the user never sees, so
-          AUTO picks the full matrix when all the matrices together fit the memory fraction, and
-          computes distances on demand otherwise.  This is one decision for all the distances.
+          AUTO gives full matrices to as many distances as the memory fraction holds, and computes
+          the rest on demand.  A full matrix is faster to read than any distance is to compute, so
+          the matrices go to the distances that are most expensive to compute
+          (`DistanceMetric.estimated_lazy_cost_ns`); equal estimates keep the distances' order.
         - For a distance-input problem the distances exist already, so AUTO stores them as a full
           matrix.
 
@@ -109,13 +111,23 @@ class DistanceStoreFactory:
         count = len(self._distances)
         if self._storage_type != DistanceStorageType.AUTO:
             return [self._storage_type] * count
-        if not isinstance(self._problem, VectorMaxDivProblem):
+        elif not isinstance(self._problem, VectorMaxDivProblem):
             return [DistanceStorageType.FULL_MATRIX] * count
-        if self._total_memory_bytes is None:
+        elif self._total_memory_bytes is None:
             return [DistanceStorageType.LAZY] * count
-        if count * full_matrix_bytes(self._problem.n) <= self._total_memory_bytes * AUTO_MEMORY_FRACTION:
-            return [DistanceStorageType.FULL_MATRIX] * count
-        return [DistanceStorageType.LAZY] * count
+        else:
+            budget_bytes = self._total_memory_bytes * AUTO_MEMORY_FRACTION
+            n_full = min(count, int(budget_bytes // full_matrix_bytes(self._problem.n)))
+            costs = []
+            for distance in self._resolved_distances():
+                assert distance is not None  # noqa: S101 -- a vector problem always resolves to a metric
+                costs.append(distance.estimated_lazy_cost_ns(self._problem.d))
+            # sorted() is stable, so equal estimates keep the distances' order
+            most_expensive_first = sorted(range(count), key=lambda i: -costs[i])
+            full_indices = set(most_expensive_first[:n_full])
+            return [
+                DistanceStorageType.FULL_MATRIX if i in full_indices else DistanceStorageType.LAZY for i in range(count)
+            ]
 
     def resolved_storage(self) -> DistanceStorageTypes:
         """Return each store's distance paired with its resolved storage type, in store order.
