@@ -194,11 +194,17 @@ class HybridDiversityMetric:
         """
         return self._to_objective().label
 
-    def _to_objective(self) -> DiversityObjectiveHybrid:
-        """Return the objective the solver maximizes for this hybrid."""
+    def _to_objective(self, bare_term_distance_metric: DistanceMetric | None = None) -> DiversityObjectiveHybrid:
+        """Return the objective the solver maximizes for this hybrid.
+
+        Args:
+            bare_term_distance_metric: the distance metric that each bare term reads: a vector
+                problem passes its own.  None leaves the bare terms without a distance metric, as
+                the given distances of a distance-input problem have none.
+        """
         return DiversityObjectiveHybrid(
             tuple(
-                DiversityObjectiveSimple(term)
+                DiversityObjectiveSimple(term, bare_term_distance_metric)
                 if isinstance(term, DiversityMetric)
                 else DiversityObjectiveSimple(term.diversity_metric, term.distance_metric)
                 for term in self._terms

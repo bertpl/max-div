@@ -53,7 +53,7 @@ class DiversityContributionTrackers:
         """Build one tracker per spec, in the given order, each over the store of its distance.
 
         `tracker_specs` is the bindings' spec order (see `DiversityObjectiveBindings`).
-        `stores_by_distance` maps a spec's distance metric (`None` for the problem's own) to the store
+        `stores_by_distance` maps a spec's distance metric (`None` for given distances) to the store
         the spec's tracker reads.
         """
         return cls(

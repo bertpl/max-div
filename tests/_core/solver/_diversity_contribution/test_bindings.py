@@ -72,3 +72,22 @@ def test_for_objectives(diversity_objectives, expected_distance_metrics, expecte
     assert bindings.distance_metrics == expected_distance_metrics
     assert bindings.tracker_specs == expected_tracker_specs
     assert bindings.objective_spec_positions == expected_positions
+
+
+def test_stores_by_distance_pairs_each_distance_metric_with_its_store():
+    """The stores are paired with the distance metrics by position; a different number of stores is an error."""
+    # --- arrange ----------------------
+    bindings = DiversityObjectiveBindings.for_objectives(
+        [
+            hybrid_objective(
+                DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L2),
+                DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L1),
+            )
+        ]
+    )
+    l2_store, l1_store = object(), object()  # the pairing does not read the stores
+
+    # --- act / assert -----------------
+    assert bindings.stores_by_distance([l2_store, l1_store]) == {L2: l2_store, L1: l1_store}
+    with pytest.raises(ValueError, match="zip"):
+        bindings.stores_by_distance([l2_store])

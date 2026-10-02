@@ -9,6 +9,7 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
 
     from max_div._core.metrics import DistanceMetric, DiversityObjective, DiversityTrackerSpec
+    from max_div._core.metrics._distance import DistanceStore
 
 
 # ==================================================================================================
@@ -30,7 +31,7 @@ class DiversityObjectiveBindings:
     """
 
     # one entry per distance store: the distinct distance metrics that the objectives use, in
-    # first-seen order (`None` is the problem's own distance metric)
+    # first-seen order (`None` stands for given distances, which have no metric)
     distance_metrics: tuple[DistanceMetric | None, ...]
     # one entry per contribution tracker: the distinct specs (distance metric, contribution family)
     # that the objectives' contributions are tracked under, in first-seen order; this is also the
@@ -52,3 +53,11 @@ class DiversityObjectiveBindings:
             tuple(position_of_spec[spec] for spec in objective.tracker_specs) for objective in diversity_objectives
         )
         return cls(distance_metrics, tracker_specs, objective_spec_positions)
+
+    def stores_by_distance(self, stores: Sequence[DistanceStore]) -> dict[DistanceMetric | None, DistanceStore]:
+        """Pair each entry of `distance_metrics` with its store; `stores` is in store order.
+
+        The process that builds the stores and a worker that attaches them both call this, so a
+        worker rebuilds the same mapping from its attached stores.
+        """
+        return dict(zip(self.distance_metrics, stores, strict=True))

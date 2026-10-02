@@ -1,11 +1,18 @@
 import warnings
 from abc import ABC, abstractmethod
+from collections.abc import Sequence
 from dataclasses import dataclass
 
 import numpy as np
 from numpy.typing import NDArray
 
 from max_div._core.constraints import Constraint, ConstraintList
+from max_div._core.distance_storage import (
+    DistanceProblemDistanceStoreFactory,
+    DistanceStorageType,
+    DistanceStoreFactory,
+    VectorProblemDistanceStoreFactory,
+)
 from max_div._core.feasibility import (
     FeasibilityResult,
     find_feasible,
@@ -60,8 +67,12 @@ class MaxDivProblem(ABC):
 
     @property
     @abstractmethod
-    def default_distance_metric(self) -> DistanceMetric | None:
-        """The problem's default distance, if the flavor defines one; None otherwise."""
+    def diversity_objective(self) -> DiversityObjective:
+        """Return the objective the solver maximizes: the diversity metric resolved to its internal form.
+
+        A `DiversityMetric` becomes a simple objective, a `HybridDiversityMetric` a hybrid objective
+        over its terms.  Each flavor decides which distance a term reads when the term names none.
+        """
 
     @abstractmethod
     def full_matrix(self) -> NDArray[np.float32]:
@@ -72,16 +83,25 @@ class MaxDivProblem(ABC):
         without copying.  The solver does not read this matrix; it builds its own stores.
         """
 
-    # --- computed fields ------------------------
-    @property
-    def diversity_objective(self) -> DiversityObjective:
-        """Return the objective the solver maximizes: the diversity metric resolved to its internal form.
+    @abstractmethod
+    def _distance_store_factory(
+        self,
+        distance_metrics: Sequence[DistanceMetric | None],
+        storage_type: DistanceStorageType,
+        total_memory_bytes: int | None,
+    ) -> DistanceStoreFactory:
+        """Return the factory that builds this problem's distance stores, one per entry of `distance_metrics`.
 
-        A `DiversityMetric` becomes a simple objective over the problem's own distance (the objective's
-        `distance_metric` is `None`); a `HybridDiversityMetric` becomes a hybrid objective over its terms.
+        The method is internal: the solver builders call it, and each flavor returns its own factory class.
+
+        Args:
+            distance_metrics: the distance metric of each store, as the diversity objectives name them;
+                None stands for the problem's own distances.
+            storage_type: the user's choice of storage type, possibly AUTO.
+            total_memory_bytes: the total physical RAM of the machine, or None when it is unknown.
         """
-        return self._diversity_objective_of(self.diversity_metric)
 
+    # --- computed fields ------------------------
     @property
     def m(self) -> int:
         return len(self.constraints)
@@ -228,15 +248,22 @@ class MaxDivProblem(ABC):
     #  Helpers
     # --------------------------------------------------------------------------
     @staticmethod
-    def _diversity_objective_of(diversity_metric: DiversityMetric | HybridDiversityMetric) -> DiversityObjective:
+    def _diversity_objective_of(
+        diversity_metric: DiversityMetric | HybridDiversityMetric, bare_term_distance_metric: DistanceMetric | None
+    ) -> DiversityObjective:
         """Return the objective the solver maximizes for the user's diversity metric.
 
         This function is the one place that tells a bare metric from a hybrid.
+
+        Args:
+            diversity_metric: the user's diversity metric.
+            bare_term_distance_metric: the distance metric of every term that names none: a bare
+                `DiversityMetric`, alone or as a term of a hybrid.  None when the flavor has no metric.
         """
         if isinstance(diversity_metric, DiversityMetric):
-            return DiversityObjectiveSimple(diversity_metric)
+            return DiversityObjectiveSimple(diversity_metric, bare_term_distance_metric)
         else:
-            return diversity_metric._to_objective()  # noqa: SLF001 -- kept off the public API; the problem is its intended caller
+            return diversity_metric._to_objective(bare_term_distance_metric)  # noqa: SLF001 -- kept off the public API; the problem is its intended caller
 
     @staticmethod
     def _distance_metrics_read(
@@ -300,8 +327,9 @@ class VectorMaxDivProblem(MaxDivProblem):
         return self.vectors.shape[1]
 
     @property
-    def default_distance_metric(self) -> DistanceMetric | None:
-        return self.distance_metric
+    def diversity_objective(self) -> DiversityObjective:
+        """Return the objective the solver maximizes; a term that names no distance metric gets the problem's own."""
+        return self._diversity_objective_of(self.diversity_metric, self.distance_metric)
 
     @property
     def has_full_matrix(self) -> bool:
@@ -309,6 +337,20 @@ class VectorMaxDivProblem(MaxDivProblem):
 
     def full_matrix(self) -> NDArray[np.float32]:
         return compute_full_matrix(self.vectors, self.distance_metric)
+
+    def _distance_store_factory(
+        self,
+        distance_metrics: Sequence[DistanceMetric | None],
+        storage_type: DistanceStorageType,
+        total_memory_bytes: int | None,
+    ) -> VectorProblemDistanceStoreFactory:
+        """Return the factory that computes each store's distances from the vectors; None is the own distance metric."""
+        return VectorProblemDistanceStoreFactory(
+            self.vectors,
+            [self.distance_metric if metric is None else metric for metric in distance_metrics],
+            storage_type,
+            total_memory_bytes,
+        )
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
@@ -329,8 +371,9 @@ class DistanceMaxDivProblem(MaxDivProblem):
         return _n_from_condensed_size(self.distances.size)
 
     @property
-    def default_distance_metric(self) -> DistanceMetric | None:
-        return None
+    def diversity_objective(self) -> DiversityObjective:
+        """Return the objective the solver maximizes; no term carries a distance metric, as the distances are given."""
+        return self._diversity_objective_of(self.diversity_metric, None)
 
     @property
     def has_full_matrix(self) -> bool:
@@ -340,3 +383,22 @@ class DistanceMaxDivProblem(MaxDivProblem):
         if self.has_full_matrix:
             return self.distances
         return expand_condensed(self.distances, self.n)
+
+    def _distance_store_factory(
+        self,
+        distance_metrics: Sequence[DistanceMetric | None],
+        storage_type: DistanceStorageType,
+        total_memory_bytes: int | None,
+    ) -> DistanceProblemDistanceStoreFactory:
+        """Return the factory that stores the given distances; the machine's RAM plays no role in its storage type.
+
+        Raises:
+            ValueError: Unless `distance_metrics` is the single entry None: the given distances are
+                the only distance of the problem, and they have no metric.
+        """
+        if list(distance_metrics) != [None]:
+            raise ValueError(
+                "A distance-input problem has one distance, its given distances, which have no metric; "
+                f"expected the single entry None, got {list(distance_metrics)}."
+            )
+        return DistanceProblemDistanceStoreFactory(self.distances, self.n, storage_type)

@@ -1,7 +1,7 @@
 import pytest
 
+from max_div._core.distance_storage import DistanceStorageType, DistanceStorageTypes
 from max_div._core.metrics import DistanceMetric
-from max_div._core.solver._distance_storage import DistanceStorageType, DistanceStorageTypes
 
 
 def test_storage_values_are_the_labels_users_see():

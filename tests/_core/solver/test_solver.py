@@ -643,11 +643,21 @@ def test_checkpoints_carry_the_selection_only_when_asked(records_selections: boo
         assert all(selection is None for selection in selections)
 
 
-def test_a_solution_records_the_labels_of_its_diversity_objectives():
-    """The solution names the primary objective first, then the builder's tie-breakers."""
+@pytest.mark.parametrize(
+    "flavor, expected_label", [("vectors", "MIN_SEPARATION over L2"), ("distances", "MIN_SEPARATION")]
+)
+def test_a_solution_records_the_labels_of_its_diversity_objectives(flavor: str, expected_label: str):
+    """The solution names the primary objective first, then the builder's tie-breakers.
+
+    A vector problem's labels name the distance metric; the given distances of a distance-input problem have none.
+    """
     # --- arrange ----------------------
     vectors = np.random.default_rng(0).random((60, 2)).astype(np.float32)
     problem = MaxDivProblem.new(vectors=vectors, k=6, diversity_metric=DiversityMetric.MIN_SEPARATION)
+    if flavor == "distances":
+        problem = MaxDivProblem.from_distances(
+            problem.full_matrix(), k=6, diversity_metric=DiversityMetric.MIN_SEPARATION
+        )
 
     # --- act --------------------------
     solution = (
@@ -655,5 +665,5 @@ def test_a_solution_records_the_labels_of_its_diversity_objectives():
     )
 
     # --- assert -----------------------
-    assert solution.diversity_objective_labels[0] == "MIN_SEPARATION"
+    assert solution.diversity_objective_labels[0] == expected_label
     assert len(solution.diversity_objective_labels) == len(solution.score.diversities) > 1

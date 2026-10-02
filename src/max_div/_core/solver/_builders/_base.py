@@ -18,6 +18,12 @@ from typing import TYPE_CHECKING, Self
 
 from numpy.typing import ArrayLike
 
+from max_div._core.distance_storage import (
+    DistanceStorageType,
+    DistanceStorageTypes,
+    DistanceStoreFactory,
+    total_physical_memory_bytes,
+)
 from max_div._core.metrics import (
     DiversityMetric,
     DiversityObjective,
@@ -25,12 +31,6 @@ from max_div._core.metrics import (
 )
 from max_div._core.problem import MaxDivProblem
 from max_div._core.solver._constraint_penalty import ConstraintPenalty
-from max_div._core.solver._distance_storage import (
-    DistanceStorageType,
-    DistanceStorageTypes,
-    DistanceStoreFactory,
-    total_physical_memory_bytes,
-)
 from max_div._core.solver._diversity_contribution import DiversityObjectiveBindings
 from max_div._core.solver._duration import E2eBudget, TargetDuration, TargetTimeDuration
 from max_div._core.solver._strategies import InitializationStrategy
@@ -204,10 +204,9 @@ class SolverBuilderBase:
             return hot_start_strategy
 
     def _store_factory(self) -> tuple[DistanceStoreFactory, DistanceStorageTypes]:
-        """Return the store factory and each store's resolved (distance, storage type)."""
+        """Return the problem's store factory and each store's resolved (distance, storage type)."""
         bindings = DiversityObjectiveBindings.for_objectives(self._determine_diversity_objectives())
-        factory = DistanceStoreFactory(
-            self._problem,
+        factory = self._problem._distance_store_factory(  # noqa: SLF001 -- kept off the public API; the builder is its intended caller
             bindings.distance_metrics,
             self._distance_storage_type,
             total_physical_memory_bytes(),

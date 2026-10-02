@@ -1,6 +1,6 @@
 import pytest
 
-from max_div._core.solver._distance_storage.memory_budget import (
+from max_div._core.distance_storage.memory_budget import (
     check_fits_physical_memory,
     full_matrix_bytes,
     total_physical_memory_bytes,

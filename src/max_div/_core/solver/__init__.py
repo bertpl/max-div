@@ -7,9 +7,10 @@ k: number of items to be selected
 m: number of (group) constraints imposed on the problem.
 """
 
+from max_div._core.distance_storage import DistanceStorageType
+
 from ._builders import MaxDivSolverBuilder, ParallelMaxDivSolverBuilder
 from ._constraint_penalty import ConstraintPenalty
-from ._distance_storage import DistanceStorageType
 from ._duration import TargetDuration, TargetIterationCount, TargetTimeDuration, hours, iterations, minutes, seconds
 from ._parallel import ParallelMaxDivSolution, ParallelMaxDivSolver, WorkerConfig, WorkerGroupChange, WorkerSummary
 from ._presets import SolverPreset

@@ -51,7 +51,7 @@ class DiversityTrackerSpec(NamedTuple):
     The solver builds one contribution tracker for each distinct spec.
     """
 
-    distance_metric: DistanceMetric | None  # None → the problem's own distance
+    distance_metric: DistanceMetric | None  # None → given distances, which have no metric
     contribution_family: DiversityContributionFamily
 
 
@@ -162,14 +162,18 @@ class DiversityObjective(ABC):
 # ==================================================================================================
 @dataclass(frozen=True)
 class DiversityObjectiveSimple(DiversityObjective):
-    """One diversity metric over one distance metric; `distance_metric` is `None` for the problem's own distance."""
+    """One diversity metric over one distance metric; `distance_metric` is `None` over given distances.
+
+    A vector problem's objectives name their distance metric; the given distances of a
+    distance-input problem have none.
+    """
 
     diversity_metric: DiversityMetric
     distance_metric: DistanceMetric | None = None
 
     @property
     def label(self) -> str:
-        """Return e.g. `MIN_SEPARATION over L2`, or just the metric name over the problem's own distance."""
+        """Return e.g. `MIN_SEPARATION over L2`, or just the metric name over given distances."""
         if self.distance_metric is None:
             return self.diversity_metric.value
         else:

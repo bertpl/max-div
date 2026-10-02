@@ -5,9 +5,9 @@ from multiprocessing.shared_memory import SharedMemory
 import numpy as np
 import pytest
 
+from max_div._core.distance_storage import SharedStoreSpec, attached_distance_store
+from max_div._core.distance_storage.allocation import SharedMemoryDistanceStoreAllocator
 from max_div._core.metrics._distance import KIND_FULL_MATRIX, KIND_LAZY, DistanceMetric, DistanceStore, get_distance
-from max_div._core.solver._distance_storage import SharedStoreSpec, attached_distance_store
-from max_div._core.solver._distance_storage.allocation import SharedMemoryDistanceStoreAllocator
 
 # how long a spawned child may take to boot an interpreter, import max_div and answer
 _CHILD_TIMEOUT_S = 120

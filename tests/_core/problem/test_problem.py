@@ -7,6 +7,11 @@ from scipy.spatial.distance import squareform
 
 from max_div._core._warnings import DistanceInputWarning
 from max_div._core.constraints import Constraint
+from max_div._core.distance_storage import (
+    DistanceProblemDistanceStoreFactory,
+    DistanceStorageType,
+    VectorProblemDistanceStoreFactory,
+)
 from max_div._core.feasibility import FeasibilityStatus
 from max_div._core.metrics import (
     DistanceMetric,
@@ -214,19 +219,6 @@ def test_problem_new_along_axis_within_the_dimension_count_ok():
 
     # --- assert -----------------------
     assert problem.distance_metric == DistanceMetric.along_axis(2)
-
-
-def test_default_distance_metric_is_the_vector_metric_or_none():
-    """A vector problem's default distance is its own metric; a distance-input problem has none."""
-    # --- arrange ----------------------
-    vectors = np.random.default_rng(0).random((5, 3)).astype(np.float32)
-    matrix = compute_full_matrix(vectors, DistanceMetric.l2_euclidean())
-
-    # --- act / assert -----------------
-    vector_problem = MaxDivProblem.new(vectors, k=3, distance_metric=DistanceMetric.l1_manhattan())
-    distance_problem = MaxDivProblem.from_distances(squareform(matrix), k=3)
-    assert vector_problem.default_distance_metric == DistanceMetric.l1_manhattan()
-    assert distance_problem.default_distance_metric is None
 
 
 # -------------------------------------------------------------------------
@@ -598,27 +590,92 @@ _HYBRID = HybridDiversityMetric.geomean_of(
 )
 
 
-def test_problem_diversity_objective_is_simple_for_a_bare_metric():
+_L1 = DistanceMetric.l1_manhattan()
+
+
+def _problem(flavor: str, diversity_metric: DiversityMetric | HybridDiversityMetric) -> MaxDivProblem:
+    """Return a 5-item problem of the given flavor; the vector problem's own distance metric is L1."""
+    if flavor == "vectors":
+        vectors = np.random.default_rng(0).random((5, 3)).astype(np.float32)
+        return MaxDivProblem.new(vectors, k=2, distance_metric=_L1, diversity_metric=diversity_metric)
+    else:
+        return MaxDivProblem.from_distances(np.ones((5, 5)) - np.eye(5), k=2, diversity_metric=diversity_metric)
+
+
+@pytest.mark.parametrize("flavor, expected_distance_metric", [("vectors", _L1), ("distances", None)])
+def test_problem_diversity_objective_is_simple_for_a_bare_metric(flavor: str, expected_distance_metric):
+    """A bare metric reads the vector problem's own distance metric; over given distances it has no metric."""
     # --- arrange ----------------------
-    problem = MaxDivProblem.new(np.ones((5, 3), dtype=np.float32), k=2, diversity_metric=DiversityMetric.MIN_SEPARATION)
+    problem = _problem(flavor, DiversityMetric.MIN_SEPARATION)
 
     # --- assert -----------------------
-    assert problem.diversity_objective == DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION)
+    assert problem.diversity_objective == DiversityObjectiveSimple(
+        DiversityMetric.MIN_SEPARATION, expected_distance_metric
+    )
 
 
-@pytest.mark.parametrize("flavor", ["vectors", "distances"])
-def test_problem_diversity_objective_is_a_hybrid_for_a_hybrid_metric(flavor: str):
+@pytest.mark.parametrize("flavor, expected_distance_metric", [("vectors", _L1), ("distances", None)])
+def test_problem_diversity_objective_is_a_hybrid_for_a_hybrid_metric(flavor: str, expected_distance_metric):
+    """Each bare term of a hybrid reads the vector problem's own distance metric; over given distances it has none."""
     # --- arrange ----------------------
     hybrid = HybridDiversityMetric.mean_of(DiversityMetric.MIN_SEPARATION, DiversityMetric.GEOMEAN_SEPARATION)
-    if flavor == "vectors":
-        problem = MaxDivProblem.new(np.ones((5, 3), dtype=np.float32), k=2, diversity_metric=hybrid)
-    else:
-        problem = MaxDivProblem.from_distances(np.ones((5, 5)) - np.eye(5), k=2, diversity_metric=hybrid)
+    problem = _problem(flavor, hybrid)
 
     # --- assert -----------------------
     assert problem.diversity_metric is hybrid
     assert isinstance(problem.diversity_objective, DiversityObjectiveHybrid)
-    assert problem.diversity_objective == hybrid._to_objective()
+    assert problem.diversity_objective == hybrid._to_objective(expected_distance_metric)
+    assert [term.distance_metric for term in problem.diversity_objective.terms] == [expected_distance_metric] * 2
+
+
+def test_vector_problem_diversity_objective_keeps_the_distance_metric_that_a_term_names():
+    """A term built with `over` keeps its own distance metric next to a bare term that gets the problem's."""
+    # --- arrange ----------------------
+    problem = _problem("vectors", _HYBRID)
+
+    # --- act / assert -----------------
+    assert isinstance(problem.diversity_objective, DiversityObjectiveHybrid)
+    assert [term.distance_metric for term in problem.diversity_objective.terms] == [_L1, DistanceMetric.along_axis(1)]
+
+
+def test_vector_problem_returns_a_factory_over_real_metrics():
+    """A vector problem returns its own factory class, with each None entry replaced by its own distance metric."""
+    # --- arrange ----------------------
+    problem = _problem("vectors", DiversityMetric.MIN_SEPARATION)
+    l2 = DistanceMetric.l2_euclidean()
+
+    # --- act --------------------------
+    factory = problem._distance_store_factory([None, l2], DistanceStorageType.LAZY, None)
+
+    # --- assert -----------------------
+    assert isinstance(factory, VectorProblemDistanceStoreFactory)
+    assert factory.distance_metrics == (_L1, l2)
+    assert len(factory.create_stores()) == 2
+
+
+def test_distance_problem_returns_a_factory_over_its_given_distances():
+    """A distance-input problem returns its own factory class, which builds the one store over the given distances."""
+    # --- arrange ----------------------
+    problem = _problem("distances", DiversityMetric.MIN_SEPARATION)
+
+    # --- act --------------------------
+    factory = problem._distance_store_factory([None], DistanceStorageType.AUTO, None)
+    (store,) = factory.create_stores()
+
+    # --- assert -----------------------
+    assert isinstance(factory, DistanceProblemDistanceStoreFactory)
+    assert np.shares_memory(store.matrix, problem.distances)  # ty: ignore[unresolved-attribute]
+
+
+@pytest.mark.parametrize("distance_metrics", [[_L1], [None, None], []], ids=["a-metric", "two-entries", "no-entry"])
+def test_distance_problem_accepts_only_its_given_distances(distance_metrics: list):
+    """A distance-input problem has one distance without a metric, so any list but the single None is rejected."""
+    # --- arrange ----------------------
+    problem = _problem("distances", DiversityMetric.MIN_SEPARATION)
+
+    # --- act / assert -----------------
+    with pytest.raises(ValueError, match="expected the single entry None"):
+        problem._distance_store_factory(distance_metrics, DistanceStorageType.AUTO, None)
 
 
 def test_problem_new_hybrid_term_along_axis_beyond_the_dimension_count_raises():

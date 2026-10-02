@@ -14,10 +14,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - `DistanceMetric.marginals_and_joint(joint_scale)` is renamed to `DistanceMetric.l2_and_projections(l2_scale)`
 - `DistanceMetric` is no longer a tuple: each factory method returns a subclass that stores only its own arguments as named fields (`p` of a generic `minkowski` metric, `axis` of `along_axis`, `l2_scale` of `l2_and_projections`), the `param` field is gone, and constructing `DistanceMetric` directly raises `TypeError`
+- The labels of a vector problem's diversity objectives name their distance metric (`MIN_SEPARATION over L2`, where it was `MIN_SEPARATION`), in a solution's `diversity_objective_labels` and in the tie-breaker panels of `plot_timeline`
 
 ### Deprecated
 
 ### Removed
+- `MaxDivProblem.default_distance_metric`; a vector problem's distance metric is its `distance_metric` field
 
 ### Fixed
 - A parallel solve with lazy distance storage over 2 or more `cosine` or `along_axis` distances could compute one of those distances from the vectors prepared for another one
