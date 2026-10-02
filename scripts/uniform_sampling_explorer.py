@@ -73,6 +73,14 @@ class Distance:
     pairwise: Callable[[NDArray[np.float64], NDArray[np.float64]], NDArray[np.float64]]
 
 
+def _l2_factor_for_k(k: int) -> float:
+    """Return r = (sqrt(k) - 1) / (k - 1), the factor that `l2_and_projections(k=k)` puts on the L2 distance in 2D.
+
+    `uniform_sampling_explorer.js` computes the same factor from the fragment's `data-k`.
+    """
+    return (math.sqrt(k) - 1.0) / (k - 1.0)
+
+
 DISTANCES = {
     distance.key: distance
     for distance in (
@@ -87,6 +95,14 @@ DISTANCES = {
             "l2_and_projections",
             "L2-and-projections distance",
             lambda dx, dy: np.minimum(np.minimum(dx, dy), dx * dx + dy * dy),
+        ),
+        # The entry below is `DistanceMetric.l2_and_projections(k=k)` with its default `l2_scale` of 1; in 2
+        # dimensions its L2 part is r times the L2 distance, r = (sqrt(k) - 1) / (k - 1). The gap matrices are
+        # those of the k selected items, so their size is k.
+        Distance(
+            "l2_and_projections_k",
+            "L2-and-projections distance with k",
+            lambda dx, dy: np.minimum(np.minimum(dx, dy), _l2_factor_for_k(len(dx)) * np.sqrt(dx * dx + dy * dy)),
         ),
     )
 }
@@ -311,7 +327,8 @@ def explorer_fragment(
         '<div class="usx-figure">',
         f'<svg class="usx" viewBox="0 0 {VIEW_WIDTH} {VIEW_HEIGHT}" xmlns="http://www.w3.org/2000/svg" role="img"'
         f" data-objective=\"{' '.join(objective_keys)}\" data-labels='{json.dumps(labels, separators=(',', ':'))}'"
-        f' data-ring="{RING_RADIUS_FACTOR}" data-reach="{GLYPH_REACH_FACTOR}" data-center="{CENTER_DOT_FACTOR}">',
+        f' data-ring="{RING_RADIUS_FACTOR}" data-reach="{GLYPH_REACH_FACTOR}" data-center="{CENTER_DOT_FACTOR}"'
+        f' data-k="{k}">',
         f"<title>Selection maximizing diversity under the {', '.join(labels[key] for key in objective_keys)}</title>",
         f"<desc>{description}</desc>",
         '<defs><clipPath id="usx-square" clipPathUnits="userSpaceOnUse">'

@@ -9,7 +9,7 @@
 
     A hybrid that takes the minimum over weighted terms, not their geometric mean, spreads the selection further over the square without spreading it less along either axis.
 
-    Min separation under the L2-and-projections distance, a single distance that is the minimum of an L−∞ part and an L2 part, gives the lowest of the 3 goals the highest value of any 60 s experiment.
+    Min separation under the L2-and-projections distance, a single distance that is the minimum of an L−∞ part and an L2 part, spreads the selection over the square and along each axis at once. Given the selection size $k$, it reaches the same fraction of a grid's spacing on all 3 goals and gives the lowest of the 3 goals the highest value of any 60 s experiment.
 
 ## I. Problem statement
 
@@ -121,6 +121,7 @@ Each objective below combines a part for the L2 goal with parts for the marginal
 - **V.A to V.C** use a [hybrid objective](../concepts/diversity.md#hybrid-diversity-metrics) with one term per goal, each the min separation under that goal's distance, combined by their geometric mean so that no term dominates by its scale.
 - **V.D** takes the minimum of 2 weighted terms, so the lowest weighted term sets the score.
 - **V.E** uses a single distance, the L2-and-projections distance, that is the minimum of an L−∞ part and an L2 part, with no weights.
+- **V.F** uses the same distance given the selection size $k$, which weighs its L2 part so that the solve reaches the same fraction of a grid's spacing along each axis and in the square.
 
 ### V.A. Unconstrained
 
@@ -251,6 +252,11 @@ objective = HybridDiversityMetric.min_of(
 
 Against the geometric-mean hybrid of V.A, the L2 goal rises from 56 % to 63 % of its reference, and the 2 marginal goals stay at 72 % and 71 %. On each goal, this 60 s solve comes within 2 percentage points of V.C.1, which solved V.A's geometric-mean objective for 4 h.
 
+The L2 goal stays below the 2 marginal goals because of the weights:
+
+- **The weights make the 2 terms equal at an L2 distance of $\sqrt{k} = 10$ times the L−∞ distance**, while the L2 reference is $0.1146 / (1/99) \approx 11.3$ times the axis reference.
+- **A solve that ends with the 2 weighted terms equal** therefore reaches $10 / 11.3 \approx 0.88$ times the axis fraction on the L2 goal; V.D reaches 63 % against 71.5 %, also 0.88.
+
 With 2 terms instead of 3, each iteration is also faster, as the convergence table in VI shows.
 
 ### V.E. L2-and-projections distance { #ve-marginals-and-joint-distance }
@@ -266,7 +272,7 @@ d(a, b) = \min\Big( \min\big(\lvert a_x - b_x \rvert, \lvert a_y - b_y \rvert\bi
 $$
 
 - **The first part is the L−∞ distance** of IV.A, the smallest gap between the 2 points' projections onto a single axis, which covers both marginal goals.
-- **The second part is the L2 distance raised to the power of the dimension**, here squared. Among $k$ well-spread points in the square, both parts of a nearest-neighbor pair are about $1/k$, so neither part needs a weight that depends on $k$.
+- **The second part is the L2 distance raised to the power of the dimension**, here squared. Among $k$ well-spread points in the square, both parts of a nearest-neighbor pair are about $1/k$, so neither part needs a weight that depends on $k$ to be on the scale of the other. How the 2 parts balance still depends on where the solve ends, as the end of this section shows.
 
 ```python
 from max_div.metrics import DistanceMetric, DiversityMetric
@@ -299,6 +305,41 @@ A solve that maximizes a minimum of 2 parts ends with the 2 parts about equal, s
 
 Both match the L2 separations that the solves reached. `l2_and_projections(l2_scale=...)` multiplies the second part by `l2_scale`: a value above 1 favors the 2 marginal goals, and one below 1 favors the L2 goal; this guide keeps the default of 1.
 
+With the L2 part squared, the L2 separation that a solve reaches is the square root of its L−∞ separation, so the L2 fraction is not a fixed multiple of the axis fraction: the lower the axis fraction that a solve ends at, the further the L2 fraction ends above it. V.F weighs the L2 part for $k$ to remove that dependence.
+
+### V.F. L2-and-projections distance with $k$ { #vf-l2-and-projections-distance-with-k }
+
+Given the selection size, `l2_and_projections(k=100)` replaces V.E's squared L2 part with the L2 distance times a factor $r$ computed from $k$. In 2D it is
+
+$$
+d(a, b) = \min\Big( \min\big(\lvert a_x - b_x \rvert, \lvert a_y - b_y \rvert\big),\; r \, \lVert a - b \rVert_2 \Big), \qquad r = \frac{\sqrt{k} - 1}{k - 1} = \frac{1}{11}
+$$
+
+- **$r$ is set by $k$ points on a regular grid.** The $10 \times 10$ grid of section II places the points $1/(k-1) = 1/99$ apart along an axis and $1/(\sqrt{k} - 1) = 1/9$ apart in the square, and $r$ makes the 2 parts equal at those 2 spacings.
+- **Both parts grow linearly with distance**, so a solve that ends with the 2 parts equal reaches the same fraction of the grid spacing along each axis and in the square, wherever it ends.
+
+```python
+problem = MaxDivProblem.new(
+    vectors=vectors,
+    k=100,
+    distance_metric=DistanceMetric.l2_and_projections(k=100),
+    diversity_metric=DiversityMetric.MIN_SEPARATION,
+)
+```
+
+Hover over a dot to see the level curve of this distance: as in V.E, the L−∞ curve with the corner of each quadrant cut off by a circle, here of radius 11 times the L−∞ value.
+
+--8<-- "generated/uniform_sampling_l2_and_projections_k_figure.html"
+
+--8<-- "generated/uniform_sampling_l2_and_projections_k_separations.md"
+
+Against V.E, the L2 goal drops from 72 % to 67 % of its reference, and the 2 marginal goals rise from 66 % and 67 % to 69 %. The lowest of the 3 goals, at 67 %, is the highest of any 60 s experiment.
+
+The L2 goal shows 2 percentage points below the marginal goals only because of its reference:
+
+- **The table measures the L2 goal against the best known packing**, 0.1146, which is 3 % above the grid spacing $1/9 \approx 0.1111$ that $r$ balances against.
+- **Against the grid spacing**, the L2 separation reaches $0.0766 / 0.1111 = 69$ %, the same fraction as along each axis.
+
 ## VI. Summary
 
 Every experiment's achieved min separation under the three reference distances, each as a fraction of its free-placement reference from section II. A result <span class="usx-low">at or below 40 %</span> of its reference is marked red, one <span class="usx-high">at or above 60 %</span> green:
@@ -311,7 +352,8 @@ Every experiment's achieved min separation under the three reference distances, 
 - **Exact counts per band come at no cost in diversity**: under them the geometric-mean hybrid reaches the same 3 separations.
 - **A longer budget still improves the result**: with 32 workers for 4 h, both 4 h solves end above their 60 s counterparts on all 3 separations, and both were still improving in the last hour.
 - **A minimum of 2 weighted terms improves on the geometric mean of 3**: in 60 s it comes within 2 percentage points, on each goal, of what V.C.1 reaches on V.A's objective in 4 h.
-- **The L2-and-projections distance gives the lowest of the 3 goals the highest value of any 60 s experiment**, 66 % of its reference, with a single distance and no weights to choose.
+- **The L2-and-projections distance covers the 3 goals with a single distance**; without $k$ it favors the L2 goal, at 72 % of its reference against 66 % and 67 % for the marginal goals.
+- **Given $k$, the L2-and-projections distance reaches the same fraction of the grid spacing on all 3 goals**, 69 %, and gives the lowest of the 3 goals the highest value of any 60 s experiment, 67 % of its reference.
 
 The slower iterations are visible in the iteration counts. The table gives, per experiment, how many iterations the worker holding the final selection completed in the 60 s budget, and the best objective any worker held at three elapsed marks as a fraction of the final value:
 
