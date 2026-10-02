@@ -83,7 +83,10 @@ class SharedMemoryDistanceStoreAllocator(DistanceStoreAllocator):
     the order of the distance stores.
 
     Adopting the same array twice puts it in one segment, not two.  This is how every lazy distance
-    store whose metric reads the user's raw vectors shares a single copy of those vectors.
+    store whose metric reads the user's raw vectors shares a single copy of those vectors.  The
+    allocator recognizes an array by `id(array)`, and keeps every adopted array alive until it
+    closes: Python reuses the id of a freed object, so a new array could otherwise take the id of
+    a freed one and be given the freed array's segment.
 
     Closing the allocator destroys every segment that it created, which invalidates every distance
     store that reads one of them, in this process and in every worker process that attached.  Close
@@ -94,7 +97,8 @@ class SharedMemoryDistanceStoreAllocator(DistanceStoreAllocator):
         """Start without any segment; segments are created as the factory allocates and adopts arrays."""
         self._segments: list[SharedMemory] = []
         self._specs: list[SharedStoreSpec] = []
-        self._segment_of_adopted: dict[int, tuple[SharedMemory, NDArray[np.float32]]] = {}  # keyed by id(array)
+        # keyed by id(array); each entry holds the array itself, so that no other array can take its id
+        self._adopted: dict[int, tuple[NDArray[np.float32], SharedMemory, NDArray[np.float32]]] = {}
 
     def allocate(self, shape: tuple[int, ...], kind: np.int32) -> NDArray[np.float32]:
         """Create a segment sized for the given shape and return the writable array that views it."""
@@ -106,15 +110,16 @@ class SharedMemoryDistanceStoreAllocator(DistanceStoreAllocator):
         """Copy the array into a segment and return the array that views the segment.
 
         An array that was adopted before is not copied again: the array that views its existing
-        segment is returned, and a second spec that names that segment is recorded.
+        segment is returned, and a second spec that names that segment is recorded.  The allocator
+        holds a reference to the array until it closes.
         """
-        known = self._segment_of_adopted.get(id(array))
+        known = self._adopted.get(id(array))
         if known is None:
             segment, buffer = self._create_segment(array.shape)
             buffer[:] = array
-            self._segment_of_adopted[id(array)] = (segment, buffer)
+            self._adopted[id(array)] = (array, segment, buffer)
         else:
-            segment, buffer = known
+            _, segment, buffer = known
         self._specs.append(SharedStoreSpec.over_segment(segment, buffer, kind, metric))
         return buffer
 
@@ -132,7 +137,7 @@ class SharedMemoryDistanceStoreAllocator(DistanceStoreAllocator):
         for segment in self._segments:
             destroy_shared_memory_segment(segment)
         self._segments.clear()
-        self._segment_of_adopted.clear()
+        self._adopted.clear()
 
     def _create_segment(self, shape: tuple[int, ...]) -> tuple[SharedMemory, NDArray[np.float32]]:
         """Create a shared-memory segment for the given float32 shape and return it with the array that views it."""

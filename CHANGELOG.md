@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 ### Fixed
+- A parallel solve with lazy distance storage over 2 or more `cosine` or `along_axis` distances could compute one of those distances from another one's vectors
 
 ### Security
 
