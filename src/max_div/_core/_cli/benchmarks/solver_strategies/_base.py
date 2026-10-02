@@ -49,15 +49,15 @@ class StrategyPreset(Protocol):
 #  Benchmark Executor
 # ==================================================================================================
 class SolverBenchmarkExecutor:
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Constructor
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     def __init__(self, scope: SolverBenchmarkScope) -> None:
         self._scope = scope
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Main API
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     def execute(self, markdown: bool, file: bool = False) -> None:
         # --- run benchmarks ---------------------
         with self._scope as scope:
@@ -96,9 +96,9 @@ class SolverBenchmarkScope:
     iterates them and registers the results here.
     """
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Constructor / Configuration
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     def __init__(self, solver_constructor: BenchmarkSolverConstructor, speed: float, leave_pbar: bool) -> None:
         # arguments influencing scope
         self._solver_constructor = solver_constructor
@@ -123,9 +123,9 @@ class SolverBenchmarkScope:
     def problem_name(self) -> str:
         return self._solver_constructor.problem_name
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Context Manager
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     def __enter__(self) -> SolverBenchmarkScope:
         self._pbar = tqdm(
             total=len(self.params()),
@@ -148,9 +148,9 @@ class SolverBenchmarkScope:
             self._pbar.close()  # ty: ignore[unresolved-attribute]
         self._pbar = None
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  API
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     def params(self) -> list[tuple[int, str, int]]:
         """Return the list of (n, strat_name, seed)-tuples to benchmark."""
         # --- calibrate --------------------------
@@ -281,17 +281,17 @@ class BenchmarkSolverConstructor(ABC):
     SolverBenchmarkScope asks for.
     """
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Constructor
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     def __init__(self, benchmark_type: str, problem_name: str, diversity_metric: DiversityMetric) -> None:
         self._benchmark_type = benchmark_type
         self._problem_name = problem_name
         self._diversity_metric = diversity_metric
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  API
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     @property
     def problem_name(self) -> str:
         return self._problem_name
@@ -346,9 +346,9 @@ class BenchmarkSolverConstructor(ABC):
 
         return [intro, table]
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  API - ABSTRACT
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     @abstractmethod
     def construct_solver(self, n: int, strat_name: str, seed: int) -> MaxDivSolver:
         """Construct and return a Solver for the given (n, strat_name, seed)-tuple."""

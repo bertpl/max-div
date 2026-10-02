@@ -54,9 +54,9 @@ class TargetDuration(ABC):
             return NotImplemented
         return self.value() < other.value()
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Factory methods
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     @classmethod
     def seconds(cls, t_target_sec: float) -> TargetDuration:
         return TargetTimeDuration(t_target_sec)

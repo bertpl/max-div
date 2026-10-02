@@ -30,9 +30,9 @@ class DiversityContributionTrackers:
     read: that objective's one tracker, or a hybrid source over its term trackers.
     """
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Construction
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     def __init__(self, trackers_by_spec: dict[DiversityTrackerSpec, DiversityContributionTracker]) -> None:
         """Initialize from an explicit spec -> tracker mapping; prefer the for_specs() factory.
 
@@ -65,9 +65,9 @@ class DiversityContributionTrackers:
             }
         )
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Per-item contribution source
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     def per_item_contribution_source_for(
         self, objective: DiversityObjective, spec_positions: Sequence[int]
     ) -> PerItemContributionSource:
@@ -89,9 +89,9 @@ class DiversityContributionTrackers:
         else:
             return term_trackers[0]
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Mutation fan-out
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     def add(self, index: np.int32) -> None:
         """Update all trackers after adding point `index` to the selection."""
         for tracker in self._trackers:
@@ -122,9 +122,9 @@ class DiversityContributionTrackers:
         for tracker in self._trackers:
             tracker.reset()
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Snapshot
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     def push_snapshot(self) -> None:
         """Save the current contribution state of all trackers on top of their snapshot stacks."""
         for tracker in self._trackers:
@@ -135,9 +135,9 @@ class DiversityContributionTrackers:
         for tracker in self._trackers:
             tracker.pop_snapshot(restore)
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Scoring reads
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     @property
     def tracker_specs(self) -> tuple[DiversityTrackerSpec, ...]:
         """Return the specs of the trackers in this set, in the order `selected_contributions` returns their arrays."""

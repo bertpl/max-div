@@ -29,9 +29,9 @@ class HybridPerItemContributionSource(PerItemContributionSource):
     once per change, so a cache would never be read a second time.
     """
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Construction
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     def __init__(
         self, objective: DiversityObjectiveHybrid, term_trackers: Sequence[DiversityContributionTracker]
     ) -> None:
@@ -55,9 +55,9 @@ class HybridPerItemContributionSource(PerItemContributionSource):
         """Return the term trackers, one per spec of the objective."""
         return self._term_trackers
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Contribution reads
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     def contribution_wrt_selection(self, selected: NDArray[np.bool], n_selected: np.int32) -> NDArray[np.float32]:
         """Return the objective's combination of the term trackers' selection contributions (fresh array)."""
         return self._objective.compute_per_item_contributions(

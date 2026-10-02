@@ -177,9 +177,9 @@ class ProgressReporter(ABC):
         """
         return SnapshotRequirements(debug_info=False, selection_hash=False)
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Main API (called by the solver and its steps)
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     def set_step_count(self, step_count: int) -> None:
         """Record how many steps the solve reports, so their indices 0, ..., step_count-1 render as "step i/N".
 
@@ -218,9 +218,9 @@ class ProgressReporter(ABC):
         """Report that the current solver step has finished."""
         self.show_step_finished(self._build_snapshot(progress, state, ignore_infeasible_diversity), get_debug_info)
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Rendering interface (implemented by subclasses, consuming snapshots only)
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     @abstractmethod
     def show_step_started(self, step_display_name: str) -> None:
         """Render the start of a new solver step, given its display name (see `step_display_name`)."""
@@ -243,9 +243,9 @@ class ProgressReporter(ABC):
         way to set a row apart (the table) override this.
         """
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Internal
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     def _build_snapshot(
         self, progress: Progress | None, state: SolverState, ignore_infeasible_diversity: bool
     ) -> ProgressSnapshot:
@@ -264,9 +264,9 @@ class ProgressReporter(ABC):
             ignore_infeasible_diversity=ignore_infeasible_diversity,
         )
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Factory methods
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     @classmethod
     def silent(cls) -> SilentProgressReporter:
         """Create a silent progress reporter that doesn't output anything."""
@@ -348,9 +348,9 @@ class TqdmProgressReporter(ProgressReporter):
         self._current_step_display_name: str = ""
         self._current_pbar: tqdm | None = None
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Rendering interface
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     def show_step_started(self, step_display_name: str) -> None:
         if (step_display_name != self._current_step_display_name) or (not self._current_pbar):
             self._close_current_pbar()  # close previous pbar, if present
@@ -369,9 +369,9 @@ class TqdmProgressReporter(ProgressReporter):
     def show_step_finished(self, snapshot: ProgressSnapshot, get_debug_info: Callable[[], str] | None = None) -> None:
         self._close_current_pbar()
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Internal
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     def _close_current_pbar(self) -> None:
         if self._current_pbar is not None:
             # make sure pbar shows 100%
@@ -390,9 +390,9 @@ class TqdmProgressReporter(ProgressReporter):
 class TabularProgressReporter(ProgressReporter):
     """A progress reporter that prints one table row per (throttled) update."""
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Constructor
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     def __init__(self, c_slowdown: float = 1.05, debug_info: bool = False, worker_columns: bool = False) -> None:
         """Initializes a TabularProgressReporter.
 
@@ -418,9 +418,9 @@ class TabularProgressReporter(ProgressReporter):
         """Return the tabular needs: always the selection hash, plus debug info in debug mode."""
         return SnapshotRequirements(debug_info=self._debug_info, selection_hash=True)
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Rendering interface
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     def show_step_started(self, step_display_name: str) -> None:
         # make sure table is initialized
         if not self._progress_table:
@@ -445,9 +445,9 @@ class TabularProgressReporter(ProgressReporter):
         """Render the snapshot as an unthrottled row, set apart by a horizontal line."""
         self.show_step_finished(snapshot, get_debug_info)
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Internal
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     def _resolve_debug_info(self, snapshot: ProgressSnapshot, get_debug_info: Callable[[], str] | None) -> str:
         """Return the debug column text: pre-materialized when present, else pulled from the callable."""
         if not self._debug_info:

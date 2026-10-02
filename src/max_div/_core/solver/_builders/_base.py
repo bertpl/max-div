@@ -43,9 +43,9 @@ if TYPE_CHECKING:
 class SolverBuilderBase:
     """A builder base holds the settings that define the score, plus the problem facts every solver needs."""
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Constructor
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     def __init__(self, problem: MaxDivProblem) -> None:
         """Configure a builder over the given problem."""
         # --- problem ----------------------------
@@ -69,9 +69,9 @@ class SolverBuilderBase:
         # overwrite; build() applies it last, and raises on a conflicting explicit initialization
         self._hot_start_strategy: InitGivenSelection | None = None
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Shared builder API
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     def with_diversity_tie_breakers(self, diversity_tie_breaker_metrics: list[DiversityMetric]) -> Self:
         """Set custom diversity tie-breaker metrics, overriding the defaults.
 
@@ -157,9 +157,9 @@ class SolverBuilderBase:
         self._hot_start_strategy = init_strategy
         return self
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Resolution
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     def _resolve_e2e_budget(self) -> E2eBudget | None:
         """Return the end-to-end budget this configuration asks for, or None; called at build time.
 

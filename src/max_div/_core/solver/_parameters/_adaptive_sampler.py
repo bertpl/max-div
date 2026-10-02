@@ -32,9 +32,9 @@ from .base import Floatable, ParameterValueSource
 #  Core class
 # ==================================================================================================
 class AdaptiveSampler[S: Floatable](ParameterValueSource, ABC):
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Constructor / Configuration
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     def __init__(
         self,
         tau_learn: float,
@@ -74,9 +74,9 @@ class AdaptiveSampler[S: Floatable](ParameterValueSource, ABC):
                 self._c_forget = 1.0 - (0.5 ** (1 / tau_forget))  # adjust by 50% in 'tau_forget' # of steps
                 self._c_forget_f32 = np.float32(self._c_forget)
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Main API
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     @abstractmethod
     def new_sample(self) -> S:
         """Generate new sample from the sampler's distribution."""

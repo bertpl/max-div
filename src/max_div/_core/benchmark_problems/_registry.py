@@ -13,17 +13,17 @@ MIN_N = 20
 #  BenchmarkProblem base class
 # ==================================================================================================
 class BenchmarkProblem(ABC):
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Registration hook
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     def __init_subclass__(cls, **kwargs: Any) -> None:  # noqa: ANN401 -- forwarded to type.__init_subclass__
         """This method ensures each child class is registered in the BenchmarkProblemRegistry upon import."""
         super().__init_subclass__(**kwargs)
         BenchmarkProblemRegistry.register(cls)
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Meta-data
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     @classmethod
     @abstractmethod
     def name(cls) -> str:
@@ -51,9 +51,9 @@ class BenchmarkProblem(ABC):
     def _get_problem_dimensions(cls, n: int) -> tuple[int, int, int, int, int]:
         raise NotImplementedError
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Problem creation
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     @classmethod
     def create_problem_instance(cls, n: int, diversity_metric: DiversityMetric) -> VectorMaxDivProblem:
         """Create and return a MaxDivProblem instance of this benchmark problem with the given size n.

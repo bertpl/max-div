@@ -56,18 +56,18 @@ class DiversityContributionTracker(PerItemContributionSource):
     numba-compiled functions are only ever handed bare numpy arrays, never tracker objects.
     """
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Store
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     @property
     @abstractmethod
     def store(self) -> DistanceStore:
         """Return the distance store this tracker reads (shared, immutable)."""
         raise NotImplementedError
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Mutations
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     @abstractmethod
     def add(self, index: np.int32) -> None:
         """Update contributions after adding point `index` to the selection."""
@@ -125,9 +125,9 @@ class DiversityContributionTracker(PerItemContributionSource):
         """
         raise NotImplementedError
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Snapshot
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     @abstractmethod
     def push_snapshot(self) -> None:
         """Save the current contribution state on top of the snapshot stack."""

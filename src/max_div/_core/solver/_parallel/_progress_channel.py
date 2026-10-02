@@ -47,9 +47,9 @@ class ForwardingProgressReporter(ProgressReporter):
         self._requirements = requirements
         self._throttle = ReportThrottle(c_slowdown=_FORWARD_C_SLOWDOWN)
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Rendering interface (forwards instead of rendering)
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     def show_step_started(self, step_display_name: str) -> None:
         self._throttle.reset()
 
@@ -62,9 +62,9 @@ class ForwardingProgressReporter(ProgressReporter):
         # step ends are never throttled: they are rare, and the last one carries the worker's final state
         self._queue.put(self._materialize(snapshot, get_debug_info))
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Internal
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     def _materialize(self, snapshot: ProgressSnapshot, get_debug_info: Callable[[], str] | None) -> ProgressSnapshot:
         """Return a picklable copy: by-reference fields resolved or dropped, worker index stamped."""
         return replace(

@@ -12,9 +12,9 @@ class Table(ReportElement):
     GREEN = "#00aa00"
     RED = "#dd0000"
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Construction / Configuration
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     def __init__(self, headers: list[str]) -> None:
         self.headers: list[TableText] = [TableText(h) for h in headers]
         self.rows: list[list[TableElement]] = []
@@ -28,9 +28,9 @@ class Table(ReportElement):
         """# of table rows, excluding header."""
         return len(self.rows)
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Build
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     def add_row(self, row: list[str | TableElement]) -> None:
         if len(row) < self.n_cols():
             row += [""] * (self.n_cols() - len(row))
@@ -100,9 +100,9 @@ class Table(ReportElement):
         # add aggregation row
         self.add_row(agg_row)
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Modify
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     def layout(self, i_row: int, i_col: int) -> TextLayout:
         """Get the TextLayout object for the specified cell, allowing to modify its layout properties."""
         return self._text_layout[i_row, i_col]
@@ -163,9 +163,9 @@ class Table(ReportElement):
                         layout.italic |= make_italic
                         layout.color = clr_highest
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Render
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     def render(self, markdown: bool) -> list[str]:
         """Convert the table into a list of lines that can be shown in the terminal or written to a Markdown file.
 
@@ -200,9 +200,9 @@ class Table(ReportElement):
         # --- 4. Convert to final table lines ----
         return self._render_cell_contents_to_table_lines(final_headers, final_rows)
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Internal
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     @staticmethod
     def _render_single_elements_of_single_row(markdown: bool, row: Sequence[TableElement]) -> list[list[str]]:
         """Renders elements of a single row, possibly spanning multiple lines (if markdown==False).

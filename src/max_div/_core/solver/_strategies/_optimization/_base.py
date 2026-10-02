@@ -38,9 +38,9 @@ class OptimizationStrategy(StrategyBase, ABC):
     to create instances, or use solver presets which select appropriate strategies automatically.
     """
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Constructor / Configuration
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     def __init__(
         self,
         name: str | None = None,
@@ -137,9 +137,9 @@ class OptimizationStrategy(StrategyBase, ABC):
             # reset each sampler with its own seed, offset by a multiple of a large prime
             sampler.reset(seed + (1_234_577 * i_sampler))
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Main API
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     def perform_n_iterations(
         self, state: SolverState, n_iters: int, current_progress_frac: float, progress_frac_per_iter: float
     ) -> None:
@@ -201,9 +201,9 @@ class OptimizationStrategy(StrategyBase, ABC):
         """
         raise NotImplementedError
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Helpers
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     @staticmethod
     def initial_param_value(param: ParamValueType) -> float:
         """Helper method to get the initial value of a parameter that may be either dynamic or fixed.
@@ -220,9 +220,9 @@ class OptimizationStrategy(StrategyBase, ABC):
             return float(param.get_initial_value())  # float() since samplers may yield numpy scalars; cold path
         return float(param)
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Factory Methods
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     @classmethod
     def random_swaps(cls) -> OptimRandomSwaps:
         """Baseline strategy: randomly removes and adds items, keeping swaps that improve the score."""
@@ -303,9 +303,9 @@ class SwapBasedOptimizationStrategy(OptimizationStrategy, ABC):
       - n new items are selected for addition to the current selection
     """
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Constructor
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     def __init__(
         self,
         name: str | None = None,
@@ -337,9 +337,9 @@ class SwapBasedOptimizationStrategy(OptimizationStrategy, ABC):
         """
         return float(_estimate_success_rate(self._success_rate_state))
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Single Iteration
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     def _perform_single_iteration(self, state: SolverState, progress_frac: float) -> bool:
         """Perform one iteration of the swap-based optimization strategy.
 
@@ -395,9 +395,9 @@ class SwapBasedOptimizationStrategy(OptimizationStrategy, ABC):
         # --- return success flag ----------------
         return success
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Internal methods that can be overridden
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     def _remove_samples(self, state: SolverState, n_to_remove: np.int32) -> NDArray[np.int32]:
         """REMOVE n samples and return the indices of removed samples."""
         samples_to_remove = self._samples_to_be_removed(state, n_to_remove)
@@ -412,9 +412,9 @@ class SwapBasedOptimizationStrategy(OptimizationStrategy, ABC):
         state.add_many(samples_to_add)
         return samples_to_add
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Abstract methods
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     @abstractmethod
     def _determine_swap_size(self) -> np.int32:
         """Determine the swap size n for the current iteration.
@@ -464,9 +464,9 @@ class SwapBasedOptimizationStrategy(OptimizationStrategy, ABC):
         """
         raise NotImplementedError
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Debug info
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     def get_debug_info(self) -> str:
         success_rate = self.get_success_rate()
         return f"scs={100 * success_rate:7.3f}%".ljust(100)

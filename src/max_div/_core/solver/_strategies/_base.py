@@ -12,9 +12,9 @@ if TYPE_CHECKING:
 class StrategyBase:
     """Base class for OptimizationStrategy & InitializationStrategy, centralizing some overlapping functionality."""
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Constructor
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     def __init__(self, name: str | None = None) -> None:
         """Initialize the strategy.
 
@@ -25,9 +25,9 @@ class StrategyBase:
         self._seed: np.int64 = deterministic_hash_int64(self._name)
         self._rng_state: NDArray[np.uint64] = new_rng_state(self._seed)
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Properties
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     @property
     def name(self) -> str:
         return self._name
@@ -42,8 +42,8 @@ class StrategyBase:
         self._seed = int_to_int64(int(seed))  # int() since int_to_int64 accepts Python int only; cold path
         self._rng_state = new_rng_state(self._seed)
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Debug info
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     def get_debug_info(self) -> str:
         return "/"

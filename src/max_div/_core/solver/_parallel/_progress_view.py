@@ -41,9 +41,9 @@ class ParallelProgressView:
         self._finished: set[int] = set()
         self._dead: set[int] = set()
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Events (called by the executor's drain loop)
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     def start(self) -> None:
         """Start rendering and reset the wall clock the view stamps on every composite snapshot."""
         self._t_start = time.monotonic()
@@ -74,9 +74,9 @@ class ParallelProgressView:
         if self._best is not None:
             self._reporter.show_step_finished(self._composite(self._best))
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Internal
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     @staticmethod
     def _beats(challenger: ProgressSnapshot, incumbent: ProgressSnapshot) -> bool:
         """Return whether the challenger takes the result half: better score, ties to the lowest worker."""

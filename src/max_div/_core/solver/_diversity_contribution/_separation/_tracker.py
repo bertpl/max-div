@@ -26,9 +26,9 @@ class SeparationTracker(DiversityContributionTracker):
     the contribution is +inf.
     """
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Construction
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     def __init__(self, store: DistanceStore) -> None:
         """Initialize the SeparationTracker for an empty selection.
 
@@ -44,9 +44,9 @@ class SeparationTracker(DiversityContributionTracker):
         # snapshot stack, innermost last; entries are owned copies handed back on a restoring pop
         self._snapshot_sep_selected: list[NDArray[np.float32]] = []
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Contribution reads
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     @property
     def store(self) -> DistanceStore:
         """Return the shared distance store."""
@@ -56,9 +56,9 @@ class SeparationTracker(DiversityContributionTracker):
         """Return separation of all points wrt the current selection (reference; do not modify)."""
         return self._sep_selected
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Mutations
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     def add(self, index: np.int32) -> None:
         """Update separations after adding point `index` to the selection."""
         self._backend.add(self._sep_selected, self._store, index)
@@ -86,9 +86,9 @@ class SeparationTracker(DiversityContributionTracker):
         """Reset separations to the empty selection (all +inf)."""
         self._sep_selected.fill(np.inf)
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Snapshot
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     def push_snapshot(self) -> None:
         """Save a copy of the current separations on top of the snapshot stack."""
         self._snapshot_sep_selected.append(self._sep_selected.copy())

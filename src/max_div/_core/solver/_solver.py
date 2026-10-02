@@ -34,9 +34,9 @@ class MaxDivSolver:
     it provides convenient defaults, presets and validation.
     """
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Constructor
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     def __init__(
         self,
         n: int,
@@ -94,9 +94,9 @@ class MaxDivSolver:
         self._e2e_budget = e2e_budget
         self._intermediate_selections_enabled = intermediate_selections_enabled
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  API
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     def solve(
         self,
         verbosity: int | Verbosity = Verbosity.PROGRESS_BAR,
@@ -199,9 +199,9 @@ class MaxDivSolver:
         # --- Construct result -------------------
         return self._construct_final_solution(state, solve_timeline)
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Internal
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     def _construct_final_solution(self, state: SolverState, solve_timeline: SolveTimeline) -> MaxDivSolution:
         """Construct the final MaxDivSolution from the state and the solve timeline."""
         # --- constraint satisfaction ------------

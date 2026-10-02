@@ -84,9 +84,9 @@ class LazilyCompiledFunction(functools.partial):
         LazilyCompiledFunction._instances.append(self)
         return self
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Main API
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     @classmethod
     def instances(cls) -> tuple["LazilyCompiledFunction", ...]:
         """Return every `LazilyCompiledFunction` created so far, in creation order."""
@@ -112,9 +112,9 @@ class LazilyCompiledFunction(functools.partial):
                     self._point_partial_at(compiled_fun, (), {})
         return self._compiled_fun
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Function behavior
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     def __get__(self, instance: object, owner: type | None = None) -> Callable[..., Any]:
         """Bind as a method when stored on a class and read from an instance, as a compiled function does.
 
@@ -145,9 +145,9 @@ class LazilyCompiledFunction(functools.partial):
         name = f"{self._py_function.__module__}.{self._py_function.__qualname__}"
         return f"<LazilyCompiledFunction {name} (compiled: {self.is_compiled})>"
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Helpers
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     def _point_partial_at(
         self, func: Callable[..., Any], args: tuple[object, ...], keywords: dict[str, object]
     ) -> None:

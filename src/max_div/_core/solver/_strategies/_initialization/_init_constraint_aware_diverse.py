@@ -84,9 +84,9 @@ class InitConstraintAwareDiverse(InitializationStrategy):
                     best_batch = batch
             return best_batch
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Helpers
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     @staticmethod
     def _score_tuple_after_adding(state: SolverState, batch: NDArray[np.int32]) -> tuple[float, ...]:
         """Return the state's score tuple with `batch` added; the state is left unchanged."""
