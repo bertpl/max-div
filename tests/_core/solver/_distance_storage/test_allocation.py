@@ -16,9 +16,9 @@ def _vectors() -> np.ndarray:
     return np.ascontiguousarray(np.random.default_rng(3).random((5, 2), dtype=np.float32))
 
 
-# =================================================================================================
+# ==================================================================================================
 #  InProcessDistanceStoreAllocator
-# =================================================================================================
+# ==================================================================================================
 def test_in_process_allocate_returns_a_fresh_writable_buffer():
     """In this process, a buffer is a plain float32 numpy array that the factory can fill."""
     # --- act --------------------------
@@ -39,9 +39,9 @@ def test_in_process_adopt_returns_the_array_itself():
     assert InProcessDistanceStoreAllocator().adopt(vectors, KIND_LAZY, L2) is vectors
 
 
-# =================================================================================================
+# ==================================================================================================
 #  SharedMemoryDistanceStoreAllocator
-# =================================================================================================
+# ==================================================================================================
 def test_shared_allocate_creates_one_segment_per_call_and_records_a_spec_for_each():
     """Each allocated buffer lives in a segment of its own, described by a spec in call order."""
     # --- arrange ----------------------

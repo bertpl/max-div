@@ -56,9 +56,9 @@ def _checkpoint_rows(checkpoints: list[ScoreCheckpoint]) -> list[tuple[float, fl
     return [(c.elapsed.t_elapsed_sec, c.score.diversity, c.worker_index) for c in checkpoints]
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Aligning onto the shared axis
-# =================================================================================================
+# ==================================================================================================
 def test_start_offsets_are_measured_from_the_earliest_worker():
     """Each offset is a worker's start minus the earliest start, and zero for the earliest worker."""
     # --- arrange / act ----------------
@@ -70,9 +70,9 @@ def test_start_offsets_are_measured_from_the_earliest_worker():
     assert timeline.start_offsets == {0: 4.5, 1: 0.0, 2: 6.0}
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Best-known checkpoints
-# =================================================================================================
+# ==================================================================================================
 def test_the_trace_keeps_only_improvements_and_names_their_holder():
     """A checkpoint enters the trace only when it beats the best score so far, tagged with the worker that held it."""
     # --- arrange ----------------------
@@ -148,9 +148,9 @@ def test_group_tags_survive_the_placement():
     assert (trace[0].worker_index, trace[0].group_index) == (0, 3)
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Group history
-# =================================================================================================
+# ==================================================================================================
 def test_changes_are_placed_on_the_shared_axis_and_ordered_by_the_group_count():
     """A later-starting worker's change shifts by its start offset; the order follows the falling group count."""
     # --- arrange ----------------------

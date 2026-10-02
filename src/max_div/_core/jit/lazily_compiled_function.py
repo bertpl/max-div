@@ -32,9 +32,9 @@ from numba.extending import typeof_impl
 _F = TypeVar("_F", bound=FunctionType)
 
 
-# =================================================================================================
+# ==================================================================================================
 #  LazilyCompiledFunction
-# =================================================================================================
+# ==================================================================================================
 class LazilyCompiledFunction(functools.partial):
     """A `LazilyCompiledFunction` stands in for `numba.njit(signature, **options)(py_function)`, compiled on first use.
 
@@ -84,9 +84,9 @@ class LazilyCompiledFunction(functools.partial):
         LazilyCompiledFunction._instances.append(self)
         return self
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Main API
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     @classmethod
     def instances(cls) -> tuple["LazilyCompiledFunction", ...]:
         """Return every `LazilyCompiledFunction` created so far, in creation order."""
@@ -112,9 +112,9 @@ class LazilyCompiledFunction(functools.partial):
                     self._point_partial_at(compiled_fun, (), {})
         return self._compiled_fun
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Function behavior
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     def __get__(self, instance: object, owner: type | None = None) -> Callable[..., Any]:
         """Bind as a method when stored on a class and read from an instance, as a compiled function does.
 
@@ -145,9 +145,9 @@ class LazilyCompiledFunction(functools.partial):
         name = f"{self._py_function.__module__}.{self._py_function.__qualname__}"
         return f"<LazilyCompiledFunction {name} (compiled: {self.is_compiled})>"
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Helpers
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     def _point_partial_at(
         self, func: Callable[..., Any], args: tuple[object, ...], keywords: dict[str, object]
     ) -> None:
@@ -168,9 +168,9 @@ class LazilyCompiledFunction(functools.partial):
         return lazily_compiled_function.compile()(*args, **kwargs)
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Decorator
-# =================================================================================================
+# ==================================================================================================
 def lazy_njit(signature: object, **options: object) -> Callable[[_F], _F]:
     """Decorate a function like `numba.njit(signature, **options)`, but compile it on first use.
 
@@ -194,9 +194,9 @@ def lazy_njit(signature: object, **options: object) -> Callable[[_F], _F]:
     return decorator
 
 
-# =================================================================================================
+# ==================================================================================================
 #  numba typing hook
-# =================================================================================================
+# ==================================================================================================
 @typeof_impl.register(LazilyCompiledFunction)
 def _typeof_lazily_compiled_function(
     lazily_compiled_function: LazilyCompiledFunction, context: object

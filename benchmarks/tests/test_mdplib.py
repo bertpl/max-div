@@ -14,9 +14,9 @@ from benchmarks.mdplib.loader import ArchiveDigest, MdplibFetchError, fetch_mmdp
 from max_div.problem import DistanceMaxDivProblem, VectorMaxDivProblem
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Helpers
-# =================================================================================================
+# ==================================================================================================
 def _stand_in_archive() -> bytes:
     """Build a minimal archive with the layout the loader extracts (an `instances/<family>/` tree)."""
     buffer = io.BytesIO()
@@ -57,9 +57,9 @@ def _fetch(tmp_path: Path, archive: bytes) -> Path:
     )
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Archive download & verification (no network)
-# =================================================================================================
+# ==================================================================================================
 @pytest.mark.parametrize(
     "first_attempt",
     [_stand_in_archive()[:-20], urllib.error.URLError("connection reset")],
@@ -126,9 +126,9 @@ def test_persistently_short_download_raises_naming_the_url(monkeypatch: pytest.M
     assert not (tmp_path / "mmdp_instances.zip").exists()
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Instance loading (network-dependent)
-# =================================================================================================
+# ==================================================================================================
 # Parallel test workers race on a cold cache: a worker that finds a half-written archive deletes it
 # and downloads again, over the file a worker already extracting is reading. A short wait lets the
 # downloads finish, after which the cached archive is intact.
@@ -152,27 +152,27 @@ def mdplib_available() -> None:
 
 
 def test_families_have_expected_instance_counts(mdplib_available):
-    # --- act / assert ------------------------------------
+    # --- act / assert -----------------
     assert len(list_instances("Glover")) == 15
     assert len(list_instances("Geo")) == 60
     assert len(list_instances("Ran")) == 60
 
 
 def test_coordinate_instance_loads_as_vector_problem(mdplib_available):
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     problem = load_instance("Geo", "Geo 100 1.txt", k=10)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert isinstance(problem, VectorMaxDivProblem)
     assert problem.n == 100
     assert problem.k == 10
 
 
 def test_edge_list_instance_loads_as_distance_problem(mdplib_available):
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     problem = load_instance("Ran", "Ran 100 1.txt", k=10)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert isinstance(problem, DistanceMaxDivProblem)
     assert problem.n == 100
     matrix = problem.full_matrix()
@@ -181,6 +181,6 @@ def test_edge_list_instance_loads_as_distance_problem(mdplib_available):
 
 
 def test_unknown_family_is_rejected():
-    # --- act / assert ------------------------------------
+    # --- act / assert -----------------
     with pytest.raises(ValueError, match="Unknown MMDP family"):
         list_instances("Nope")

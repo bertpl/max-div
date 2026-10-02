@@ -7,9 +7,9 @@ from dataclasses import asdict, dataclass
 from max_div._core.solver import Score, SolverPreset, TargetTimeDuration
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Models
-# =================================================================================================
+# ==================================================================================================
 @dataclass(frozen=True)
 class SolverPresetBenchmarkParams:
     """A SolverPresetBenchmarkParams identifies one benchmark run.
@@ -105,9 +105,9 @@ class SolverPresetBenchmarkResult:
         return cls(**data)
 
 
-# =================================================================================================
+# ==================================================================================================
 #  (De)serialization
-# =================================================================================================
+# ==================================================================================================
 def results_to_json(results: list[SolverPresetBenchmarkResult]) -> str:
     return json.dumps([result.to_dict() for result in results], indent=4)
 

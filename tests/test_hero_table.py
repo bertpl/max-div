@@ -100,9 +100,9 @@ def synthetic():
     return axes, registry, records
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Drift
-# =================================================================================================
+# ==================================================================================================
 @pytest.mark.parametrize("theme", ["light", "dark"])
 def test_committed_svg_matches_fresh_render(builder, table, theme):
     # --- arrange ----------------------
@@ -150,9 +150,9 @@ def test_computed_geometry_is_integral(builder, table):
     assert not offenders, f"non-integer geometry would break reproducibility: {offenders}"
 
 
-# =================================================================================================
+# ==================================================================================================
 #  What the hero takes from the capability data
-# =================================================================================================
+# ==================================================================================================
 def test_columns_are_the_hero_visible_axes(builder, synthetic):
     """An axis the comparison page shows and the hero does not is a column here and not there."""
     # --- arrange ----------------------
@@ -239,9 +239,9 @@ def test_a_mark_with_no_hero_glyph_leaves_its_cell_empty(builder, synthetic):
     assert "not available" not in svg, "a mark the hero never draws has nothing to explain"
 
 
-# =================================================================================================
+# ==================================================================================================
 #  The scaling columns
-# =================================================================================================
+# ==================================================================================================
 def test_each_columns_highest_measured_value_is_the_leader(builder, synthetic):
     """Bold-and-green marks the per-column leader; a pending cell never leads."""
     # --- arrange ----------------------

@@ -5,9 +5,9 @@ from max_div._core.benchmark_problems import BenchmarkProblemFactory
 from ._cmd_benchmark_solver import solver
 
 
-# =================================================================================================
+# ==================================================================================================
 #  benchmark solver - list problems
-# =================================================================================================
+# ==================================================================================================
 @solver.command(name="list_problems")
 def list_problems() -> None:
     """List available test problems."""

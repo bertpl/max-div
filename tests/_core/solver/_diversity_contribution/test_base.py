@@ -5,9 +5,9 @@ from numpy.typing import NDArray
 from max_div._core.solver._diversity_contribution import DiversityContributionTracker
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Stub tracker
-# =================================================================================================
+# ==================================================================================================
 class _CallRecordingTracker(DiversityContributionTracker):
     """Minimal concrete tracker that records mutation calls, for testing the base-class defaults."""
 
@@ -41,9 +41,9 @@ class _CallRecordingTracker(DiversityContributionTracker):
         return self  # not exercised by these tests
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Tests
-# =================================================================================================
+# ==================================================================================================
 def test_tracker_abc_cannot_be_instantiated():
     # --- act / assert -----------------
     with pytest.raises(TypeError):

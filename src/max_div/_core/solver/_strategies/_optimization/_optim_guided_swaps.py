@@ -19,9 +19,9 @@ class OptimGuidedSwaps(SwapBasedOptimizationStrategy):
     - allows choosing samples to be added in constraint-aware or un-aware manner, with configurable probabilities.
     """
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Constructor
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     def __init__(
         self,
         min_swap_size: int = 1,
@@ -50,9 +50,9 @@ class OptimGuidedSwaps(SwapBasedOptimizationStrategy):
         self.remove_selectivity_modifier: float = self.initial_param_value(remove_selectivity_modifier)
         self.add_selectivity_modifier: float = self.initial_param_value(add_selectivity_modifier)
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Implementation
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     def _determine_swap_size(self) -> np.int32:
         return sample_truncated_poisson(
             self.min_swap_size,
@@ -86,9 +86,9 @@ class OptimGuidedSwaps(SwapBasedOptimizationStrategy):
             ignore_constraints=ignore_constraints,
         )
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Debug info
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     def get_debug_info(self) -> str:
         debug_info = super().get_debug_info().strip()
         debug_info += (

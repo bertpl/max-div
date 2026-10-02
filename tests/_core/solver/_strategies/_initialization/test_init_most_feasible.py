@@ -11,9 +11,9 @@ from max_div._core.solver._strategies._initialization._init_most_feasible import
 from tests._core.solver.objectives import simple_objective
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Helpers
-# =================================================================================================
+# ==================================================================================================
 def _state(constraints: list[Constraint], n: int = 20, k: int = 8) -> SolverState:
     """Build a solver state over n random 3-d vectors with the given constraints."""
     vectors = np.random.default_rng(42).random((n, 3)).astype(np.float32)
@@ -51,9 +51,9 @@ UNKNOWN_CONS = [
 ]
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Verdict dispatch
-# =================================================================================================
+# ==================================================================================================
 def test_most_feasible_starts_from_a_witness():
     """A satisfiable constrained problem is initialized with a selection meeting every constraint."""
     # --- arrange ----------------------
@@ -110,9 +110,9 @@ def test_most_feasible_rejects_an_unconstrained_problem():
         strategy.get_next_samples(_state([]), 8)
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Configuration & contract
-# =================================================================================================
+# ==================================================================================================
 def test_most_feasible_max_iter_is_deprecated_and_ignored():
     """Passing the former iteration budget warns; the strategy still works."""
     # --- act & assert -----------------

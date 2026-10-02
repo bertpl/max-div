@@ -7,9 +7,9 @@ import numpy as np
 from numpy.typing import NDArray
 
 
-# =================================================================================================
+# ==================================================================================================
 #  FeasibilityStatus / FeasibilityResult
-# =================================================================================================
+# ==================================================================================================
 class FeasibilityStatus(IntEnum):
     """`FeasibilityStatus` is the three-valued outcome of a feasibility analysis; the definite verdicts are proofs."""
 

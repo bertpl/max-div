@@ -19,9 +19,9 @@ from max_div._core.solver import SolverPreset
 _DATA_FOLDER = Path("./local/docs/data")
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Main functionality
-# =================================================================================================
+# ==================================================================================================
 def create_figures(target_fig_folder: Path, target_md_folder: Path, show_plots: bool = True):
     """
     For each (problem, n)-combination for which we have data we create the following figures:
@@ -36,7 +36,7 @@ def create_figures(target_fig_folder: Path, target_md_folder: Path, show_plots: 
 
     plt.close("all")
 
-    # --- scope -------------------------------------------
+    # --- scope ----------------------------------
     # The data folder is globbed rather than matched against a fixed list of `n` values, so the
     # figures reflect whatever the latest benchmark run produced.
     problem_ns: list[tuple[str, int]] = []
@@ -44,17 +44,17 @@ def create_figures(target_fig_folder: Path, target_md_folder: Path, show_plots: 
         for data_file in sorted(_DATA_FOLDER.glob(f"preset_results_{problem_name}_*.json")):
             problem_ns.append((problem_name, int(data_file.stem.rsplit("_", 1)[1])))
 
-    # --- create all figures ------------------------------
+    # --- create all figures ---------------------
     for problem, n in tqdm(problem_ns, desc="Creating figures for benchmark problems"):
-        # --- check problem props -----
+        # --- check problem props ----------------
         _d, _n, _k, m, _ = BenchmarkProblemFactory.get_problem_dimensions(problem, n=n)
         has_constraints = m > 0
 
-        # --- load data ---------------
+        # --- load data --------------------------
         json_str = _get_data_file_name(problem, n).read_text()
         result: list[SolverPresetBenchmarkResult] = results_from_json(json_str)
 
-        # --- create figure -----------
+        # --- create figure ----------------------
         create_single_figure(
             target_fig_folder=target_fig_folder,
             target_md_folder=target_md_folder,
@@ -77,7 +77,7 @@ def create_single_figure(
     show_constraints: bool,
 ):
 
-    # --- prep ---------------------------------------------
+    # --- prep -----------------------------------
     all_diversity_scores = [result.score.diversity for result in results]
     all_constraint_scores = [result.score.constraints for result in results]
     all_presets = SolverPreset.all_sorted()
@@ -86,14 +86,14 @@ def create_single_figure(
     # --- create PresetQuantilesTable for markdown tables -
     quantiles_table = PresetQuantilesTable(problem_name, n, target_md_folder)
 
-    # --- axis configurations -----------------------------
+    # --- axis configurations --------------------
     x_axes = ["iteration", "elapsed_sec"]
     y_axes = ["constraint_score", "diversity_score"] if show_constraints else ["diversity_score"]
 
     n_rows = len(y_axes)
     n_cols = len(x_axes)
 
-    # --- create 2x2 grid figure --------------------------
+    # --- create 2x2 grid figure -----------------
     # rows share y-axis, columns share x-axis
     fig, axes = plt.subplots(
         n_rows,
@@ -108,7 +108,7 @@ def create_single_figure(
         for col_idx, x_axis in enumerate(x_axes):
             ax = axes[row_idx, col_idx]
 
-            # --- x/y-axis settings ---------------------------
+            # --- x/y-axis settings --------------
             if x_axis == "iteration":
                 x_result_field = "n_iterations"
                 x_label = "# of iterations"
@@ -131,9 +131,9 @@ def create_single_figure(
                 y_transform = UpperLogTransform.from_values(all_diversity_scores)
                 use_y_transform = max(all_constraint_scores) == 1
 
-            # --- plot data per preset ------------------------
+            # --- plot data per preset -----------
             for preset in all_presets:
-                # --- collect data ---
+                # --- collect data ---------------
                 # single-worker runs only; the parallel runs are a separate series (see the
                 # "plot the parallel series" block), so their records must not fold into the preset's
                 # own scatter or quantile band
@@ -149,7 +149,7 @@ def create_single_figure(
                     continue
                 preset_label = f"{preset.value.upper()} (1 worker)"
 
-                # --- plot data ---
+                # --- plot data ------------------
                 if use_y_transform:
                     y_trans = y_transform.to_axis(y)
                     h = ax.plot(x, y_trans, label=preset_label, linestyle="None", marker="o")
@@ -189,7 +189,7 @@ def create_single_figure(
                     ax.plot(x_q, q10, color=color, linestyle="-", lw=0.5, alpha=0.5, label="q10, q90")
                     ax.plot(x_q, q90, color=color, linestyle="-", lw=0.5, alpha=0.5)
 
-            # --- plot the parallel series --------------------
+            # --- plot the parallel series -------
             # The default parallel invocation (one preset, several cooperative workers) is shown as
             # black-circle scatter with black quantile lines instead of a colored band, so it reads
             # as the reference series next to the preset sweeps.
@@ -240,7 +240,7 @@ def create_single_figure(
                     ax.plot(x_q, q10, color="black", linestyle="--", lw=0.5, alpha=0.5, label="q10, q90")
                     ax.plot(x_q, q90, color="black", linestyle="--", lw=0.5, alpha=0.5)
 
-            # --- decorations ---------------------------------
+            # --- decorations --------------------
 
             # x-axis (only set label on bottom row)
             ax.set_xscale("log")
@@ -284,7 +284,7 @@ def create_single_figure(
             # grid
             ax.grid()
 
-    # --- figure-level decorations ------------------------
+    # --- figure-level decorations ---------------
 
     # suptitle (left-aligned, with subtitle on second line)
     fig.suptitle(
@@ -337,23 +337,23 @@ def create_single_figure(
     fig.tight_layout(rect=(0, 0.05, 1, 0.96))
     fig.subplots_adjust(wspace=0.075, hspace=0.15)
 
-    # --- save figure ---------------------------------
+    # --- save figure ----------------------------
     save_fig(fig, target_fig_folder / f"preset_results_{problem_name}_{n}.webp")
 
-    # --- save markdown report ------------------------
+    # --- save markdown report -------------------
     quantiles_table.generate_tables()
 
 
-# =================================================================================================
+# ==================================================================================================
 #  File handling
-# =================================================================================================
+# ==================================================================================================
 def _get_data_file_name(problem_name: str, n: int) -> Path:
     return _DATA_FOLDER / f"preset_results_{problem_name}_{n}.json"
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Main Entrypoint
-# =================================================================================================
+# ==================================================================================================
 if __name__ == "__main__":
     """
     Syntax: python fig_bm_problems_preset_results.py <target_fig_folder> <target_md_folder> [--show-plots=true|false]

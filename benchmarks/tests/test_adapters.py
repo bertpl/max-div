@@ -32,10 +32,10 @@ UNCONSTRAINED_ADAPTERS = [
 
 @pytest.mark.parametrize("adapter", UNCONSTRAINED_ADAPTERS, ids=lambda a: a.name)
 def test_adapter_returns_valid_selection(small_problem, adapter):
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     indices, measured_sec = adapter.timed_select(small_problem, seed=0)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert len(indices) == small_problem.k
     assert len(np.unique(indices)) == small_problem.k
     assert indices.min() >= 0
@@ -45,11 +45,11 @@ def test_adapter_returns_valid_selection(small_problem, adapter):
 
 @pytest.mark.parametrize("adapter", UNCONSTRAINED_ADAPTERS, ids=lambda a: a.name)
 def test_adapter_is_deterministic_given_seed(small_problem, adapter):
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     first = adapter.select(small_problem, seed=3)
     second = adapter.select(small_problem, seed=3)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert np.array_equal(first, second)
 
 
@@ -70,13 +70,13 @@ def test_adapter_label_is_the_registry_name_and_the_configuration(adapter, label
 
 def test_code_fdm_adapter_satisfies_constraints(small_constrained_problem):
     # fetched research code: robustness over blocking — network trouble skips, never fails
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     try:
         indices, _ = CodeFdmFairFlow().timed_select(small_constrained_problem, seed=0)
     except (urllib.error.URLError, OSError) as e:  # pragma: no cover -- network-dependent
         pytest.skip(f"code-FDM fetch failed: {e}")
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     from benchmarks.common import n_constraints_satisfied
 
     assert len(np.unique(indices)) == small_constrained_problem.k
@@ -85,7 +85,7 @@ def test_code_fdm_adapter_satisfies_constraints(small_constrained_problem):
 
 def test_code_fdm_rejects_overlapping_constraints():
     # pure mapping logic, no fetch involved
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     rng = np.random.default_rng(0)
     problem = MaxDivProblem.new(
         vectors=rng.random((20, 2)).astype(np.float32),
@@ -96,6 +96,6 @@ def test_code_fdm_rejects_overlapping_constraints():
         ],
     )
 
-    # --- act / assert ------------------------------------
+    # --- act / assert -----------------
     with pytest.raises(ValueError, match="overlap"):
         _constraints_to_colors(problem)

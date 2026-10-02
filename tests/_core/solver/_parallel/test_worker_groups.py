@@ -51,9 +51,9 @@ def _state_with(indices: list[int]) -> SolverState:
     return state
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Schedule
-# =================================================================================================
+# ==================================================================================================
 def test_the_scheduled_count_is_the_schedule_s_count():
     """The state asks its schedule for the count at the given fraction, without a schedule of its own."""
     # --- arrange ----------------------
@@ -63,9 +63,9 @@ def test_the_scheduled_count_is_the_schedule_s_count():
     assert group_state._scheduled_count(0.5) == PowerLawGroupMerge(12, rate=1.0).group_count(0.5) == 6
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Dissolution and reassignment
-# =================================================================================================
+# ==================================================================================================
 def test_the_worst_slot_group_is_dissolved_and_its_worker_joins_the_best():
     """The lowest-scoring group dissolves; with all groups the same size, its worker joins the top scorer."""
     # --- arrange ----------------------
@@ -159,9 +159,9 @@ def test_dead_groups_drop_out_of_later_change_scores():
     assert sorted(second.slot_scores) == [0, 1]  # group 2 dissolved first, so it no longer appears
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Coordinator
-# =================================================================================================
+# ==================================================================================================
 def test_the_coordinator_exchanges_with_whichever_slot_the_assignment_names():
     """After a reassignment, a worker's next boundary reaches the new slot and adopts its better stored selection."""
     # --- arrange ----------------------
@@ -232,9 +232,9 @@ def test_a_coordinator_keeps_only_the_changes_it_executed():
     assert idle.worker_group_changes == []
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Fixed grouping
-# =================================================================================================
+# ==================================================================================================
 def test_a_fixed_grouping_starts_from_its_configured_assignment():
     """Group sizes translate into consecutive worker runs, one slot per group."""
     # --- arrange / act ----------------

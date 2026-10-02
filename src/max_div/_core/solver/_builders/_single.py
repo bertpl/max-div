@@ -22,9 +22,9 @@ class MaxDivSolverBuilder(SolverBuilderBase):
     to call `with_preset` with a time budget, then `build`.
     """
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Constructor
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     def __init__(self, problem: MaxDivProblem) -> None:
         """Initialize the builder for `problem` with a default initialization strategy."""
         super().__init__(problem)
@@ -35,9 +35,9 @@ class MaxDivSolverBuilder(SolverBuilderBase):
         # the user's initialization from a preset's
         self._user_init_strategy: InitializationStrategy | None = None
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Builder API
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     def set_initialization_strategy(self, init_strategy: InitializationStrategy) -> Self:
         """Set the initialization strategy for the first solver step."""
         self._solver_steps[0] = InitializationStep(init_strategy)
@@ -57,9 +57,9 @@ class MaxDivSolverBuilder(SolverBuilderBase):
             self.add_solver_step(solver_step)
         return self
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Builder API - PRESETS
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     def with_preset(
         self,
         target_duration: TargetDuration,
@@ -103,9 +103,9 @@ class MaxDivSolverBuilder(SolverBuilderBase):
         # --- we're done -------------------------
         return self
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Build
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     def build(self) -> MaxDivSolver:
         """Return a solver that builds its distance store when it solves.
 

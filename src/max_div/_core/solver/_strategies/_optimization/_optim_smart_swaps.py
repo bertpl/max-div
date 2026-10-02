@@ -117,9 +117,9 @@ class OptimSmartSwaps(SwapBasedOptimizationStrategy):
         self.selectivity_modifier_remove = self.initial_param_value(_selectivity_modifier_remove)
         self.selectivity_modifier_add = self.initial_param_value(_selectivity_modifier_add)
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Implementation
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     def _determine_swap_size(self) -> np.int32:
         return np.int32(self.swap_size)
 
@@ -144,9 +144,9 @@ class OptimSmartSwaps(SwapBasedOptimizationStrategy):
         #       already actually adds the samples.
         return self._samples_to_be_added(state, n_to_add, candidate_samples)
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Samples to be removed
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     def _samples_to_be_removed(self, state: SolverState, n_to_remove: np.int32) -> NDArray[np.int32]:
         removed_samples = np.empty(n_to_remove, dtype=np.int32)
 
@@ -188,9 +188,9 @@ class OptimSmartSwaps(SwapBasedOptimizationStrategy):
 
         return removed_samples
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Samples to be added
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     def _samples_to_be_added(
         self,
         state: SolverState,
@@ -249,9 +249,9 @@ class OptimSmartSwaps(SwapBasedOptimizationStrategy):
         # return best samples
         return best_samples
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Debug info
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     def get_debug_info(self) -> str:
         # --- collect info -----------------------
         swap_size = self.get_expected_param_value("swap_size")

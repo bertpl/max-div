@@ -169,9 +169,9 @@ def test_init_farthest_point_top_k_draws_from_the_top_set():
     assert len(set(picks)) > 1  # the uniform draw varies across seeds
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Drawing in rounds
-# =================================================================================================
+# ==================================================================================================
 @pytest.mark.parametrize("top_k", [1, 8])
 def test_rounds_completes_selection(top_k: int):
     """Drawing in rounds selects exactly k distinct items and reaches full size."""

@@ -36,9 +36,9 @@ from .shared_memory import SharedStoreSpec, attached_distance_store
 from .storage import DistanceStorageType, DistanceStorageTypes
 
 
-# =================================================================================================
+# ==================================================================================================
 #  DistanceStoreFactory
-# =================================================================================================
+# ==================================================================================================
 class DistanceStoreFactory:
     """The distance store factory builds the distance stores that one solve reads.
 

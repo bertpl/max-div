@@ -10,9 +10,9 @@ from max_div._core._cli.benchmarks.solver_presets._utils import (
 from max_div._core.solver import SolverPreset, TargetTimeDuration
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Helpers
-# =================================================================================================
+# ==================================================================================================
 def _params(duration_sec: float, n_workers: int = 1) -> SolverPresetBenchmarkParams:
     """Build benchmark params with only the fields under test varying."""
     return SolverPresetBenchmarkParams(
@@ -25,9 +25,9 @@ def _params(duration_sec: float, n_workers: int = 1) -> SolverPresetBenchmarkPar
     )
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Tests
-# =================================================================================================
+# ==================================================================================================
 def test_estimate_execution_time_sec_single():
     """The estimate equals the budget when setup fits inside it, and equals setup when setup exceeds the budget."""
     # --- act --------------------------

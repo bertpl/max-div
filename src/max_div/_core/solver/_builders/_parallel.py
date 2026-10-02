@@ -34,9 +34,9 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
     different ones.
     """
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Constructor
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     def __init__(self, problem: MaxDivProblem) -> None:
         """Configure a parallel solve over the given problem.
 
@@ -50,9 +50,9 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
         self._dynamic_groups: bool = False
         self._group_merge_rate: float = DEFAULT_GROUP_MERGE_RATE
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Builder API
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     def with_workers(
         self,
         target_duration: TargetDuration,
@@ -144,9 +144,9 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
             self._group_sizes = [len(group) for group in groups]
         return self
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Build
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     def build(self) -> ParallelMaxDivSolver:
         """Build the parallel solver: one solver configuration per worker over a store they will share.
 

@@ -27,9 +27,9 @@ class ParallelMaxDivSolver:
     settings are configured.
     """
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Constructor
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     def __init__(
         self,
         store_factory: DistanceStoreFactory,
@@ -56,9 +56,9 @@ class ParallelMaxDivSolver:
         self._group_sizes = group_sizes
         self._merge_schedule = merge_schedule
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  API
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     def solve(self, verbosity: int | Verbosity = Verbosity.TABULAR) -> ParallelMaxDivSolution:
         """Run every worker over one shared store and return the best result, with every worker summarized.
 

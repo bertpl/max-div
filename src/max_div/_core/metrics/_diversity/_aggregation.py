@@ -33,9 +33,9 @@ if TYPE_CHECKING:
     from numpy.typing import NDArray
 
 
-# =================================================================================================
+# ==================================================================================================
 #  HybridAggregationBase
-# =================================================================================================
+# ==================================================================================================
 @dataclass(frozen=True)
 class HybridAggregationBase(ABC):
     """A hybrid aggregation combines a hybrid objective's term values into one value, with one weight per term."""
@@ -152,9 +152,9 @@ class HybridAggregationBase(ABC):
         return None
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Concrete aggregations
-# =================================================================================================
+# ==================================================================================================
 @dataclass(frozen=True)
 class HybridAggregationGeometricMean(HybridAggregationBase):
     """The weighted geometric mean uses each weight as its term's exponent, normalized by the weight sum.

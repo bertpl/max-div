@@ -14,9 +14,9 @@ from tests.helpers import hybrid_objective
 
 from .objectives import simple_objective, tie_breaker_objectives
 
-# =================================================================================================
+# ==================================================================================================
 #  Fixtures
-# =================================================================================================
+# ==================================================================================================
 _VECTORS = np.array([[0.0], [1.0], [2.0], [3.0], [4.0], [5.0]], dtype=np.float32)
 _CONSTRAINTS = [
     Constraint(int_set={0, 1, 2, 3}, min_count=1, max_count=2),
@@ -48,9 +48,9 @@ def new_solver_state_unconstrained() -> SolverState:
     return _new_solver_state([])
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Tests
-# =================================================================================================
+# ==================================================================================================
 def test_solver_state_properties(new_solver_state, new_solver_state_unconstrained):
     # with constraints
     assert new_solver_state.has_constraints
@@ -464,9 +464,9 @@ def test_unconstrained_state_skips_con_membership(new_solver_state_unconstrained
     assert state.score.constraints == 1.0
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Consistency invariant
-# =================================================================================================
+# ==================================================================================================
 def _make_reference_state() -> SolverState:
     """Build a fresh, empty-selection state on a fixed random problem with overlapping constraints."""
     rng = random.default_rng(seed=123)
@@ -594,9 +594,9 @@ def test_solver_state_score_lazy_recompute(new_solver_state):
     assert not state._score_dirty  # flag cleared by the recompute
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Selected-index list
-# =================================================================================================
+# ==================================================================================================
 def _assert_index_list_matches_mask(state: SolverState) -> None:
     """The maintained index list must always equal what deriving it from the mask would give."""
     expected = np.flatnonzero(state._selected).astype(np.int32)
@@ -669,9 +669,9 @@ def test_selected_index_array_is_ascending(new_solver_state_unconstrained):
     assert indices.tolist() == [0, 4, 5]
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Adoption
-# =================================================================================================
+# ==================================================================================================
 def _make_adoption_state(
     diversity_metric: DiversityMetric, diversity_tie_breakers: list[DiversityMetric]
 ) -> SolverState:
@@ -834,9 +834,9 @@ def test_distance_store_property_exposes_the_trackers_store(new_solver_state_unc
     assert new_solver_state_unconstrained.distance_store.n == new_solver_state_unconstrained.n
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Trial removal
-# =================================================================================================
+# ==================================================================================================
 def _state_over(vectors: np.ndarray, layout: str, diversity_metric: DiversityMetric, k: int) -> SolverState:
     """Build an unconstrained state over `vectors` with the given store layout and diversity metric."""
     n = vectors.shape[0]
@@ -914,9 +914,9 @@ def test_score_after_removal_rejects_an_unselected_item(new_solver_state_unconst
     assert state.selected_index_array.tolist() == [0, 2]
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Savepoint release
-# =================================================================================================
+# ==================================================================================================
 def _make_standalone_state() -> SolverState:
     """Build a state held by nothing but the caller, so its lifetime can be observed."""
     vectors = np.array([[0.0], [1.0], [2.0], [3.0], [4.0], [5.0]], dtype=np.float32)

@@ -14,9 +14,9 @@ from max_div._core._math.fast_pow import fast_pow_f32
 from max_div._core.jit import lazy_njit
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Boundary methods
-# =================================================================================================
+# ==================================================================================================
 @lazy_njit("void(float32[::1])", fastmath=True, inline="always", cache=True)
 def _uniform(p: NDArray[np.float32]) -> None:
     """Transform p in [0,1] in-place to uniform distribution (all values equal to 1.0)."""
@@ -33,9 +33,9 @@ def _max_selective(p: NDArray[np.float32]) -> None:
         p[i] = np.float32(1.0) if (p[i] >= np.float32(1.0)) else np.float32(0.0)
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Regular methods - POWER-based
-# =================================================================================================
+# ==================================================================================================
 @lazy_njit("float32[::1](float32[::1], float32)", fastmath=True, inline="always", cache=True)
 def _power_exact(p: NDArray[np.float32], modifier: np.float32) -> NDArray[np.float32]:
     """Modify p in [0,1] in-place using exact p[i] <-- p[i] ** t.
@@ -75,9 +75,9 @@ def _power_fast_pow(p: NDArray[np.float32], modifier: np.float32) -> NDArray[np.
     return p
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Regular methods - PWL-based
-# =================================================================================================
+# ==================================================================================================
 @lazy_njit("float32[::1](float32[::1], float32)", fastmath=True, inline="always", cache=True)
 def _pwl_2_segment(p: NDArray[np.float32], modifier: np.float32) -> NDArray[np.float32]:
     r"""Modify p in [0,1] in-place using 2-segment piecewise linear approximation of p[i] = p[i] ** t.

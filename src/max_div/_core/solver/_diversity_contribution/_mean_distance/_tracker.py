@@ -16,9 +16,9 @@ if TYPE_CHECKING:
     from max_div._core.metrics._distance import DistanceStore
 
 
-# =================================================================================================
+# ==================================================================================================
 #  MeanDistanceTracker
-# =================================================================================================
+# ==================================================================================================
 class MeanDistanceTracker(DiversityContributionTracker):
     """Diversity-contribution tracker of the mean-distance family: contribution = mean distance to selected points.
 
@@ -32,9 +32,9 @@ class MeanDistanceTracker(DiversityContributionTracker):
     neighbor the contribution is 0.
     """
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Construction
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     def __init__(self, store: DistanceStore) -> None:
         """Initialize the MeanDistanceTracker for an empty selection.
 
@@ -50,9 +50,9 @@ class MeanDistanceTracker(DiversityContributionTracker):
         # snapshot stack, innermost last; entries are owned copies handed back on a restoring pop
         self._snapshot_dist_sums: list[NDArray[np.float64]] = []
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Contribution reads
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     @property
     def store(self) -> DistanceStore:
         """Return the shared distance store."""
@@ -64,9 +64,9 @@ class MeanDistanceTracker(DiversityContributionTracker):
         divisor = np.maximum(n_selected - selected, 1)  # bool subtraction; clip avoids 0/0 for empty neighborhoods
         return (self._dist_sums / divisor).astype(np.float32)
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Mutations
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     def add(self, index: np.int32) -> None:
         """Update distance sums after adding point `index` to the selection."""
         self._backend.add(self._dist_sums, self._store, index)
@@ -86,9 +86,9 @@ class MeanDistanceTracker(DiversityContributionTracker):
         """Reset distance sums to the empty selection (all zero)."""
         self._dist_sums.fill(0.0)
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Snapshot
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     def push_snapshot(self) -> None:
         """Save a copy of the current distance sums on top of the snapshot stack."""
         self._snapshot_dist_sums.append(self._dist_sums.copy())

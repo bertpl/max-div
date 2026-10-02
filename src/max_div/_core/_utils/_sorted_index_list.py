@@ -53,9 +53,9 @@ from numpy.typing import NDArray
 from max_div._core.jit import lazy_njit
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Overlap-safe move
-# =================================================================================================
+# ==================================================================================================
 @intrinsic
 def _llvm_memmove(typingctx, dest_address, src_address, n_bytes):  # noqa: ANN001, ANN202
     """Emit a call to `llvm.memmove` that moves `n_bytes` bytes from `src_address` to `dest_address`.
@@ -124,9 +124,9 @@ def _move_within_compiled(buffer, dest_offset, src_offset, count):  # noqa: ANN0
     return implementation
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Sorted index list
-# =================================================================================================
+# ==================================================================================================
 @lazy_njit("void(int32[::1], int32, int32)", cache=True)
 def insert_sorted(index_list: NDArray[np.int32], n_live: np.int32, value: np.int32) -> None:
     """Insert `value` into the ascending `index_list` of length `n_live`, growing it by one.

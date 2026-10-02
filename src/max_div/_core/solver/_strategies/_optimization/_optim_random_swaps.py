@@ -16,16 +16,16 @@ class OptimRandomSwaps(SwapBasedOptimizationStrategy):
     This strategy is not intended for actual use, but rather as a baseline to compare more advanced strategies against.
     """
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Constructor
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     def __init__(self) -> None:
         # don't expose any parameters; this strategy is not intended for actual use.
         super().__init__()
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Implementation
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     def _determine_swap_size(self) -> np.int32:
         return np.int32(1)
 

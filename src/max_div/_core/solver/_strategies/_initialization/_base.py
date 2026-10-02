@@ -18,9 +18,9 @@ if TYPE_CHECKING:
     from ._init_random_selection import InitRandomSelection
 
 
-# =================================================================================================
+# ==================================================================================================
 #  InitializationStrategy
-# =================================================================================================
+# ==================================================================================================
 class InitializationStrategy(StrategyBase, ABC):
     """Base class for strategies that produce an initial selection of ``k`` items.
 
@@ -66,9 +66,9 @@ class InitializationStrategy(StrategyBase, ABC):
         """
         return self._parallel_batch_add
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Factory Methods
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     @classmethod
     def farthest_point(cls, top_k: int = 8, candidate_pool_size: int | None = 256) -> InitFarthestPoint:
         """Create a farthest-point-sampling initialization: a seeded random start item, then greedy picks.

@@ -12,9 +12,9 @@ from ._helpers import new_solver_state, new_solver_state_unconstrained
 _STEP_IDENTITY = SolverStepIdentity(1, "test")
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Helpers
-# =================================================================================================
+# ==================================================================================================
 def _final_diversity(batch_size: int, nc: int, seed: int) -> float:
     """Return the diversity of a full initialization on the unconstrained helper state."""
     state = new_solver_state_unconstrained()
@@ -24,9 +24,9 @@ def _final_diversity(batch_size: int, nc: int, seed: int) -> float:
     return float(state.score.diversity)
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Selection
-# =================================================================================================
+# ==================================================================================================
 @pytest.mark.parametrize("has_constraints", [True, False])
 @pytest.mark.parametrize("batch_size, nc", [(16, 1), (1, 1), (1, 16), (50, 4), (7, 2)])
 def test_init_constraint_aware_diverse_completes_selection(has_constraints: bool, batch_size: int, nc: int):
@@ -103,9 +103,9 @@ def test_init_constraint_aware_diverse_is_deterministic_per_seed():
     assert not np.array_equal(selections[0], selections[2])
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Construction
-# =================================================================================================
+# ==================================================================================================
 def test_init_constraint_aware_diverse_name():
     """The name records both parameters."""
     # --- arrange / act ----------------

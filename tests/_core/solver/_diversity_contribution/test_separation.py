@@ -11,9 +11,9 @@ from tests._core.metrics._distance.helpers import condensed_distances
 from .helpers import selection_args
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Fixtures / helpers
-# =================================================================================================
+# ==================================================================================================
 @pytest.fixture
 def tracker() -> SeparationTracker:
     vectors = np.array([[0.0], [1.0], [3.0], [6.0], [10.0]], dtype=np.float32)
@@ -21,9 +21,9 @@ def tracker() -> SeparationTracker:
     return SeparationTracker(store)
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Tests
-# =================================================================================================
+# ==================================================================================================
 def test_construction_fresh(tracker: SeparationTracker):
     """Each item's contribution to the empty selection of a fresh tracker is +inf."""
     # --- arrange ----------------------
@@ -100,9 +100,9 @@ def test_snapshot_stack(tracker: SeparationTracker):
     )
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Kernels
-# =================================================================================================
+# ==================================================================================================
 def test_update_separation_add():
     """Check if update_separation_add correctly updates separation after adding a vector."""
 
@@ -185,9 +185,9 @@ def test_update_separation_remove():
     np.testing.assert_allclose(separation, expected_separation)
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Backend equivalence
-# =================================================================================================
+# ==================================================================================================
 # One backend module per storage layout means the same logic exists once per layout, so a fix
 # applied to only some of them would pass review looking complete.  These are the guard against that: every
 # backend is driven through the same operations and checked against a brute-force recompute,

@@ -15,9 +15,9 @@ class QuantileCurves:
     in transformed y-space, but end results (quantiles, core curves) are returned in original y-space.
     """
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Constructor
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     def __init__(
         self,
         q10: SplineRegressor,
@@ -70,9 +70,9 @@ class QuantileCurves:
             ]
         )
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Evaluation methods
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     def get_full_curves(self, n: int = 1000) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """Return (x, q10, q50, q90) curves as 4 numpy arrays, spanning entire supported x-range."""
         x_min_trans = self._x_transform.to_axis(self.x_min)
@@ -93,9 +93,9 @@ class QuantileCurves:
         q90 = self._y_transform.from_axis(self._q90.predict(x_trans))
         return q10, q50, q90
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Factory Methods
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     @classmethod
     def from_data(
         cls,
@@ -120,13 +120,13 @@ class QuantileCurves:
 
         """
 
-        # --- transform data ------------------------------
+        # --- transform data ---------------------
         x_transform = x_transform or NullTransform()
         y_transform = y_transform or NullTransform()
         x_trans = x_transform.to_axis(x_data)
         y_trans = y_transform.to_axis(y_data)
 
-        # --- fit quantile splines ------------------------
+        # --- fit quantile splines ---------------
 
         # prep
         y_min = min(y_trans)
@@ -204,5 +204,5 @@ class QuantileCurves:
             c=q50.c + q90_delta.c,
         )
 
-        # --- return curves -------------------------------
+        # --- return curves ----------------------
         return QuantileCurves(q10=q10, q50=q50, q90=q90, x_transform=x_transform, y_transform=y_transform)

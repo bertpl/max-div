@@ -22,9 +22,9 @@ def _repair_arrays(cons: list[Constraint], n: int):
     return con_indices, item_indptr, item_cons, con_min, con_max, weights
 
 
-# =================================================================================================
+# ==================================================================================================
 #  systematic_sample
-# =================================================================================================
+# ==================================================================================================
 @pytest.mark.parametrize("seed", range(5))
 def test_systematic_sample_returns_exactly_k_unique_items(seed: int):
     """Every draw selects exactly k distinct items."""
@@ -84,9 +84,9 @@ def test_systematic_sample_tops_up_when_marginals_under_sum():
         assert np.unique(selection).shape[0] == 2
 
 
-# =================================================================================================
+# ==================================================================================================
 #  sample_and_repair / deterministic_round
-# =================================================================================================
+# ==================================================================================================
 def test_sample_and_repair_reaches_feasibility_from_valid_marginals():
     """Rounding relaxed-feasible marginals plus repair lands a feasible selection."""
     # --- arrange ----------------------

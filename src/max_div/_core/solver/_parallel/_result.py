@@ -57,9 +57,9 @@ class WorkerResult:
         """Return the time and iterations this worker spent."""
         return self.solution.duration
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Over every worker's result
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     @staticmethod
     def earliest_start_time(results: list["WorkerResult"]) -> float:
         """Return the earliest worker start time: the zero of the axis that a parallel solution's checkpoints share."""

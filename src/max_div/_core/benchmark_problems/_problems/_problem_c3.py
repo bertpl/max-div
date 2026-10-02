@@ -10,9 +10,9 @@ from max_div._core.problem import VectorMaxDivProblem
 from ._helpers import sort_vectors
 
 
-# =================================================================================================
+# ==================================================================================================
 #  C3 - Gaussian - Overlapping constraints
-# =================================================================================================
+# ==================================================================================================
 class BenchmarkProblem_C3(BenchmarkProblem):
     """C3 places overlapping sign constraints per dimension on a shifted gaussian cloud."""
 

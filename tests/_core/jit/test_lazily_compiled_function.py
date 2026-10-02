@@ -30,9 +30,9 @@ def _halve(x: float) -> float:
 _halve = LazilyCompiledFunction(_halve, "float64(float64)", {"cache": False})
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Decorator
-# =================================================================================================
+# ==================================================================================================
 @pytest.mark.parametrize("is_jit_disabled", [False, True])
 def test_lazy_njit_wraps_the_function_unless_the_jit_is_disabled(
     monkeypatch: pytest.MonkeyPatch, is_jit_disabled: bool
@@ -55,9 +55,9 @@ def test_lazy_njit_wraps_the_function_unless_the_jit_is_disabled(
         assert LazilyCompiledFunction.instances() == (decorated,)
 
 
-# =================================================================================================
+# ==================================================================================================
 #  LazilyCompiledFunction
-# =================================================================================================
+# ==================================================================================================
 def test_a_python_call_compiles_the_function_once() -> None:
     """The first call compiles the function and returns its result; later uses get the same compiled function."""
     # --- arrange ----------------------

@@ -10,9 +10,9 @@ from max_div._core.solver._solver_state import SolverState
 from max_div._core.solver._strategies import OptimizationStrategy
 
 
-# =================================================================================================
+# ==================================================================================================
 #  TEST - Basic functionality
-# =================================================================================================
+# ==================================================================================================
 @pytest.mark.parametrize(
     "factory_method",
     [
@@ -62,9 +62,9 @@ def test_optimization_strategy_initial_param_value(param: ParameterSchedule | fl
     assert initial_value == expected_initial_value
 
 
-# =================================================================================================
+# ==================================================================================================
 #  TEST - Dynamic parameters
-# =================================================================================================
+# ==================================================================================================
 class StrategyWithDynamicParameters(OptimizationStrategy):
     def __init__(self, param_a: float | ParameterValueSource, param_b: float | ParameterValueSource):
         self.param_a = param_a

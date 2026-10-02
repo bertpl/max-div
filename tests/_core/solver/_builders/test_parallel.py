@@ -44,9 +44,9 @@ def _solve_custom(workers, seed: int = 5, n_groups: int | None = None) -> Parall
     return builder.with_custom_worker_groups(_BUDGET, workers, n_groups=n_groups).build().solve()
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Solving
-# =================================================================================================
+# ==================================================================================================
 def test_a_parallel_solve_returns_an_ordinary_solution():
     """The winner is a MaxDivSolution, so code written for a single solve keeps working."""
     # --- arrange / act ----------------
@@ -123,9 +123,9 @@ def test_workers_at_the_best_score_are_counted():
     assert 1 <= counted <= len(solution.workers)
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Seeds
-# =================================================================================================
+# ==================================================================================================
 def test_one_seed_reproduces_an_independent_set_of_workers():
     """An independent set of workers repeated from one seed selects the same items and seeds each worker alike."""
     # --- arrange / act ----------------
@@ -168,9 +168,9 @@ def test_a_worker_can_be_replayed_on_its_own():
     np.testing.assert_array_equal(np.sort(replayed.i_selected), np.sort(solution.i_selected))
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Guardrails
-# =================================================================================================
+# ==================================================================================================
 def test_a_single_worker_warns():
     """One worker cannot beat a single solve, so configuring one worker warns."""
     # --- arrange / act / assert -------
@@ -195,9 +195,9 @@ def test_building_without_workers_is_rejected():
         ParallelMaxDivSolverBuilder(_problem()).build()
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Default worker count
-# =================================================================================================
+# ==================================================================================================
 def test_omitting_the_count_uses_the_default(monkeypatch: pytest.MonkeyPatch):
     """With no worker count given, the parallel solver runs 3/4 of the logical cores (here 8 * 3/4 = 6)."""
     # --- arrange ----------------------
@@ -225,9 +225,9 @@ def test_default_worker_count_is_three_quarters_of_the_cores_at_least_two(
     assert default_worker_count() == expected
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Groups
-# =================================================================================================
+# ==================================================================================================
 @pytest.mark.parametrize(
     "total,expected",
     [(1, 1), (2, 1), (5, 1), (6, 2), (8, 2), (9, 2), (10, 3), (11, 3), (12, 3), (16, 4), (48, 12)],
@@ -335,9 +335,9 @@ def test_cooperative_workers_batch_at_the_cooperative_interval():
     ]
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Dynamic grouping
-# =================================================================================================
+# ==================================================================================================
 @pytest.mark.parametrize("budget", [seconds(10.0), iterations(200)])
 def test_with_workers_uses_dynamic_grouping_for_any_budget_kind(budget):
     """with_workers is the dynamic path: workers start in groups of one and cooperate, whatever the budget kind."""
@@ -439,9 +439,9 @@ def test_a_budget_spent_during_setup_leaves_the_grouping_untouched():
     assert solution.worker_group_changes == []
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Initial selection
-# =================================================================================================
+# ==================================================================================================
 _INITIAL_SELECTION = [70, 3, 41, 12, 58, 0, 27, 66]  # the selection holds k=8 of the n=80 items in _problem()
 
 
@@ -494,9 +494,9 @@ def test_an_initial_selection_and_a_worker_initialization_conflict():
         builder.build()
 
 
-# =================================================================================================
+# ==================================================================================================
 #  End-to-end budget
-# =================================================================================================
+# ==================================================================================================
 def test_an_end_to_end_budget_requires_a_time_budget():
     """An iteration count cannot bound the store build and worker setup, so build() rejects the aggregation."""
     # --- arrange / act / assert -------

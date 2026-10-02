@@ -13,9 +13,9 @@ from ._models import SolverPresetBenchmarkExecutionInfo, SolverPresetBenchmarkPa
 from ._utils import get_pbar_units
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Execute MULTIPLE runs
-# =================================================================================================
+# ==================================================================================================
 def executor_multi_parallel(
     scope: list[SolverPresetBenchmarkParams], n_processes: int
 ) -> list[SolverPresetBenchmarkResult]:
@@ -61,9 +61,9 @@ def executor_multi_parallel(
     return results
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Execute SINGLE run
-# =================================================================================================
+# ==================================================================================================
 def _execute_single_run(params: SolverPresetBenchmarkParams) -> SolverPresetBenchmarkResult:
     # --- init -----------------------------------
     t_start = datetime.datetime.now().timestamp()

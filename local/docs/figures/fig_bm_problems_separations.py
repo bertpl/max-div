@@ -13,9 +13,9 @@ from max_div._core.metrics import DiversityMetric
 from max_div._core.metrics._distance import compute_pdist
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Main functionality
-# =================================================================================================
+# ==================================================================================================
 def create_figures(target_folder: Path, show_plots: bool = True) -> None:
     """
     For all benchmark problems, create a figure showing the distribution of separations of the entire
@@ -26,11 +26,11 @@ def create_figures(target_folder: Path, show_plots: bool = True) -> None:
 
     problem_names = BenchmarkProblemFactory.get_all_benchmark_problems()
     for problem_name in tqdm(problem_names, desc="Creating benchmark problem figures"):
-        # --- generate data ---------------------
+        # --- generate data ----------------------
         ns = [200, 800, 3200, 12800]
         sep_dict = {n: compute_separations(problem_name, n) for n in ns}
 
-        # --- create figure ---------------------
+        # --- create figure ----------------------
         create_figure_for_problem(target_folder, problem_name, sep_dict)
 
     if show_plots:
@@ -39,10 +39,10 @@ def create_figures(target_folder: Path, show_plots: bool = True) -> None:
 
 def create_figure_for_problem(target_folder: Path, problem_name: str, sep_dict: dict[int, np.ndarray]):
 
-    # --- fig, ax -----------------------------------------
+    # --- fig, ax --------------------------------
     fig, ax = plt.subplots(figsize=(9, 5))
 
-    # --- compute KDEs ------------------------------------
+    # --- compute KDEs ---------------------------
     x_min, x_max = determine_x_range(sep_dict)
     x_values = np.logspace(np.log10(x_min), np.log10(x_max), 1000)
     kde_dict = {n: compute_kde(separations, x_values) for n, separations in sep_dict.items()}
@@ -52,7 +52,7 @@ def create_figure_for_problem(target_folder: Path, problem_name: str, sep_dict: 
     h_rug_rel = 0.05
     y_unit = h_rug_rel * y_max  # we will use this e.g. to determine vertical spacing of rug plots at the bottom
 
-    # --- plot KDEs ---------------------------------------
+    # --- plot KDEs ------------------------------
     n_sizes = len(kde_dict)
     for i_size, n in enumerate(sorted(kde_dict.keys()), start=1):
         h = ax.plot(
@@ -91,7 +91,7 @@ def create_figure_for_problem(target_folder: Path, problem_name: str, sep_dict: 
             va="bottom",
         )
 
-    # --- decorations -------------------------------------
+    # --- decorations ----------------------------
 
     # axes
     ax.set_xscale("log")
@@ -124,7 +124,7 @@ def create_figure_for_problem(target_folder: Path, problem_name: str, sep_dict: 
         va="bottom",
     )
 
-    # --- save --------------------------------------------
+    # --- save -----------------------------------
     save_fig(fig, target_folder / f"problem_{problem_name}_separations.webp")
 
 
@@ -176,9 +176,9 @@ def compute_kde(separations: np.ndarray, x_values: np.ndarray) -> np.ndarray:
     )
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Generate data
-# =================================================================================================
+# ==================================================================================================
 def compute_separations(problem_name: str, n: int) -> np.ndarray:
     """
     Compute the separations of the entire vector population for the given problem and size n.
@@ -196,9 +196,9 @@ def compute_separations(problem_name: str, n: int) -> np.ndarray:
     return square.min(axis=1)
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Main Entrypoint
-# =================================================================================================
+# ==================================================================================================
 if __name__ == "__main__":
     """
     Syntax: python fig_bm_problems_separations.py <target_folder> [--show-plots=true|false]

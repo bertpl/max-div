@@ -10,9 +10,9 @@ def _problem() -> MaxDivProblem:
     return MaxDivProblem.new(np.random.default_rng(20260926).random((20, 3)).astype(np.float32), k=5)
 
 
-# =================================================================================================
+# ==================================================================================================
 #  with_initial_selection
-# =================================================================================================
+# ==================================================================================================
 @pytest.mark.parametrize("builder_class", [MaxDivSolverBuilder, ParallelMaxDivSolverBuilder])
 @pytest.mark.parametrize(
     "indices, message",

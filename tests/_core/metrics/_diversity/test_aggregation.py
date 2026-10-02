@@ -15,9 +15,9 @@ def _random_rows(n_rows: int, n_terms: int) -> np.ndarray:
     return np.random.default_rng(42).uniform(0.001, 10.0, size=(n_rows, n_terms)).astype(np.float32)
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Weights
-# =================================================================================================
+# ==================================================================================================
 @pytest.mark.parametrize("aggregation_type", HybridAggregationBase.__subclasses__())
 def test_with_unit_weights_weights_every_term_1(aggregation_type) -> None:
     """An aggregation built with unit weights holds a weight of 1 per term and has `has_non_unit_weights` False."""
@@ -80,9 +80,9 @@ def test_format_label_names_the_aggregation_and_the_weights_unless_all_1(aggrega
     assert aggregation.format_label(["A", "B"]) == expected
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Combination at equal weights: bit for bit `geomean_f32` and numpy's float32 mean
-# =================================================================================================
+# ==================================================================================================
 @pytest.mark.parametrize(
     "aggregation_type, row_mean",
     [
@@ -106,9 +106,9 @@ def test_an_aggregation_at_equal_weights_is_bit_for_bit_the_unweighted_mean(aggr
     assert score == float(row_mean(rows[0, :]))
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Combination with weights
-# =================================================================================================
+# ==================================================================================================
 @pytest.mark.parametrize(
     "aggregation, expected",
     [

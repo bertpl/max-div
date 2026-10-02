@@ -21,9 +21,9 @@ def _two_term_hybrid(factory, **kwargs) -> HybridDiversityMetric:
     return factory(DiversityMetric.MIN_SEPARATION, DiversityMetric.GEOMEAN_SEPARATION.over(_AXIS_0), **kwargs)
 
 
-# =================================================================================================
+# ==================================================================================================
 #  DiversityTerm
-# =================================================================================================
+# ==================================================================================================
 def test_over_pairs_the_diversity_metric_with_the_distance_metric() -> None:
     # --- act --------------------------
     term = DiversityMetric.MIN_SEPARATION.over(_AXIS_0)
@@ -58,9 +58,9 @@ def test_a_terms_label_and_repr_name_both_metrics() -> None:
     assert repr(term) == "DiversityMetric.MIN_SEPARATION.over(DistanceMetric.along_axis(0))"
 
 
-# =================================================================================================
+# ==================================================================================================
 #  HybridDiversityMetric
-# =================================================================================================
+# ==================================================================================================
 @pytest.mark.parametrize(
     "factory, weights, aggregation",
     [

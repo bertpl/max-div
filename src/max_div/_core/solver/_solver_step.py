@@ -25,9 +25,9 @@ REPORTING_BATCH_SECONDS = 0.5
 COOPERATIVE_BATCH_SECONDS = 0.05
 
 
-# =================================================================================================
+# ==================================================================================================
 #  SolverStepResult
-# =================================================================================================
+# ==================================================================================================
 @dataclass
 class SolverStepResult:
     """The checkpoints of how the score evolved during one step; the last one is the state after its final iteration.
@@ -42,9 +42,9 @@ class SolverStepResult:
         return self.score_checkpoints[-1].elapsed
 
 
-# =================================================================================================
+# ==================================================================================================
 #  SolverStep
-# =================================================================================================
+# ==================================================================================================
 class SolverStep[S: StrategyBase](ABC):
     def __init__(self, strategy: S) -> None:
         self._strategy: S = strategy
@@ -95,9 +95,9 @@ class SolverStep[S: StrategyBase](ABC):
         return self._strategy.get_debug_info()
 
 
-# =================================================================================================
+# ==================================================================================================
 #  InitializationStep
-# =================================================================================================
+# ==================================================================================================
 class InitializationStep(SolverStep[InitializationStrategy]):
     def __init__(self, init_strategy: InitializationStrategy) -> None:
         if not isinstance(init_strategy, InitializationStrategy):
@@ -160,9 +160,9 @@ class InitializationStep(SolverStep[InitializationStrategy]):
         )
 
 
-# =================================================================================================
+# ==================================================================================================
 #  OptimizationStep
-# =================================================================================================
+# ==================================================================================================
 class OptimizationStep(SolverStep[OptimizationStrategy]):
     def __init__(self, optim_strategy: OptimizationStrategy, duration: TargetDuration) -> None:
         if not isinstance(optim_strategy, OptimizationStrategy):

@@ -9,9 +9,9 @@ from max_div._core.problem import VectorMaxDivProblem
 from ._helpers import sort_vectors
 
 
-# =================================================================================================
+# ==================================================================================================
 #  U3 - Gaussian - Unconstrained
-# =================================================================================================
+# ==================================================================================================
 class BenchmarkProblem_U3(BenchmarkProblem):
     """U3 draws vector components from a standard normal distribution."""
 

@@ -12,9 +12,9 @@ from max_div._core._random._randint._randint_constrained import (
 from max_div._core.constraints import Constraint, ConstraintList
 
 
-# =================================================================================================
+# ==================================================================================================
 #  randint_constrained
-# =================================================================================================
+# ==================================================================================================
 @pytest.mark.parametrize("seed", list(range(1, 50)))
 @pytest.mark.parametrize("eager", [False, True])
 @pytest.mark.parametrize("p_mode", ["random", "empty", "zero"])

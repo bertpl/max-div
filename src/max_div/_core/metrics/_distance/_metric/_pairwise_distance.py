@@ -32,9 +32,9 @@ from ._distance_metric import (
     METRIC_KIND_MINKOWSKI_POWERED,
 )
 
-# =================================================================================================
+# ==================================================================================================
 #  Pairwise distance functions
-# =================================================================================================
+# ==================================================================================================
 # These functions sum one term per dimension.  Adding those terms in a different order gives a
 # very slightly different answer in floating point, so by default the compiler must add them
 # strictly left to right — one at a time, each waiting for the previous.  `reassoc` lifts that
@@ -104,7 +104,7 @@ def _l2_and_projections_distance(
     The distance is computed in float64; for a far pair in a high dimension the L2 part may overflow
     to +inf, and the minimum then returns the smallest gap.
     """
-    # --- smallest coordinate gap (L-∞) ---------
+    # --- smallest coordinate gap (L-∞) ----------
     smallest_gap = _lminusinf_distance(vectors, i, j)
 
     # --- L2 part (L2 to the power d) ------------

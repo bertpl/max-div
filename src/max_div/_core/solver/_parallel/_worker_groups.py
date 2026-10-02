@@ -107,9 +107,9 @@ class WorkerGroupState:
         """Return the given worker's coordinator, bound to this shared state."""
         return WorkerGroupCoordinator(self, worker_index)
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Worker-side operations
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     def maybe_dissolve(self, worker_index: int, progress_fraction: float, elapsed: Elapsed) -> list[WorkerGroupChange]:
         """Dissolve groups until the alive count matches the schedule, and return the changes made.
 

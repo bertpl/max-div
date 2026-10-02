@@ -55,9 +55,9 @@ from numpy.typing import NDArray
 from max_div._core.jit import lazy_njit
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Constraint class
-# =================================================================================================
+# ==================================================================================================
 @dataclass
 class Constraint:
     """Constraint indicating we want to sample at least `min_count` and at most `max_count` integers from `int_set`.
@@ -104,9 +104,9 @@ class ConstraintList:
         return _build_array_repr(self._cons)
 
 
-# =================================================================================================
+# ==================================================================================================
 #  CONSTRUCTORS for numpy-based constraint representation
-# =================================================================================================
+# ==================================================================================================
 def _build_array_repr(
     cons: list[Constraint],
 ) -> tuple[NDArray[np.int32], NDArray[np.int32]]:
@@ -189,9 +189,9 @@ def to_numpy_membership(con_indices: NDArray[np.int32], m: int, n: int) -> NDArr
     return con_membership
 
 
-# =================================================================================================
+# ==================================================================================================
 #  LOW-LEVEL HANDLING of numpy-based constraint representation
-# =================================================================================================
+# ==================================================================================================
 @lazy_njit("int32(int32[:,:],int32)", inline="always", fastmath=True, cache=True)
 def _np_con_min_value(con_values: NDArray[np.int32], i_con: np.int32) -> np.int32:
     """Return min_value of i-th constraint from con_values array."""

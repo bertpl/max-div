@@ -9,9 +9,9 @@ from max_div._core.problem import VectorMaxDivProblem
 from ._helpers import sort_vectors
 
 
-# =================================================================================================
+# ==================================================================================================
 #  U1 - Clustered 2D cross-tool reference - Unconstrained
-# =================================================================================================
+# ==================================================================================================
 class BenchmarkProblem_U1(BenchmarkProblem):
     """U1 is the fixed-d=2 reference problem for cross-tool comparisons.
 

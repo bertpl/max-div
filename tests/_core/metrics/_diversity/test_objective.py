@@ -24,9 +24,9 @@ def _f32(values: list[float]) -> np.ndarray:
     return np.array(values, dtype=np.float32)
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Construction
-# =================================================================================================
+# ==================================================================================================
 def test_a_simple_objective_defaults_its_distance_to_the_problems_own() -> None:
     """A simple objective built without a distance reads the problem's own distance (`None`)."""
     # --- act / assert -----------------
@@ -64,9 +64,9 @@ def test_a_hybrid_needs_one_weight_per_term() -> None:
         DiversityObjectiveHybrid(terms, HybridAggregationGeometricMean.with_unit_weights(3))
 
 
-# =================================================================================================
+# ==================================================================================================
 #  tracker_specs (and the facts derived from it)
-# =================================================================================================
+# ==================================================================================================
 @pytest.mark.parametrize(
     "objective, expected_specs, expected_distinct_specs",
     [
@@ -127,9 +127,9 @@ def test_distinct_distance_metrics(objective, expected) -> None:
     assert objective.distinct_distance_metrics() == expected
 
 
-# =================================================================================================
+# ==================================================================================================
 #  compute
-# =================================================================================================
+# ==================================================================================================
 def test_simple_computes_its_metric_over_its_one_spec() -> None:
     """A simple objective reduces its one spec's contribution array with its diversity metric."""
     # --- arrange ----------------------
@@ -225,9 +225,9 @@ def test_hybrid_computes_the_aggregation_of_its_terms(terms, aggregation, contri
     assert objective.compute(contributions) == pytest.approx(expected, rel=1e-5)  # float32 arithmetic
 
 
-# =================================================================================================
+# ==================================================================================================
 #  default_tie_breakers
-# =================================================================================================
+# ==================================================================================================
 @pytest.mark.parametrize(
     "diversity_metric, expected_tie_breaker_metrics",
     [
@@ -372,9 +372,9 @@ def test_a_hybrid_over_one_distance_gets_simple_tie_breakers() -> None:
     ]
 
 
-# =================================================================================================
+# ==================================================================================================
 #  compute_per_item_contributions
-# =================================================================================================
+# ==================================================================================================
 def test_a_simple_objectives_per_item_contribution_is_its_one_array() -> None:
     """A simple objective returns its one spec's array itself."""
     # --- arrange ----------------------

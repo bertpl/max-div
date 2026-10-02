@@ -44,9 +44,9 @@ def test_top_k_items_is_exact():
     assert sorted(top_all.tolist()) == [0, 1, 2, 3, 4]
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Dual value and the certificate
-# =================================================================================================
+# ==================================================================================================
 def test_dual_value_pigeonhole_toy():
     """All-ones prices on the pigeonhole instance give g = 2."""
     # --- arrange ----------------------
@@ -98,9 +98,9 @@ def test_exact_topk_guard():
     assert g_corrupted > 0.0
 
 
-# =================================================================================================
+# ==================================================================================================
 #  clamp_admissible / certified_bound
-# =================================================================================================
+# ==================================================================================================
 def test_clamp_repairs_negative_and_overpriced_multipliers():
     """Negatives clamp to zero; purely linear constraints cap at their weight; quadratic ones do not."""
     # --- arrange ----------------------
@@ -135,9 +135,9 @@ def test_certified_bound_reduces_to_linear_dual_value():
     assert g == pytest.approx(2.0)  # lam.con_min - top-2 of scores = 4 - 2
 
 
-# =================================================================================================
+# ==================================================================================================
 #  The two violation definitions agree
-# =================================================================================================
+# ==================================================================================================
 @pytest.mark.parametrize("seed", range(6))
 def test_weighted_violation_matches_the_constraints_package_aggregate(seed: int):
     """`_weighted_violation` and `_np_con_total_weighted_violation` agree (rationale in the former's docstring)."""

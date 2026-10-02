@@ -18,9 +18,9 @@ if TYPE_CHECKING:
     from ._diversity_contribution import DiversityObjectiveBindings
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Score
-# =================================================================================================
+# ==================================================================================================
 @dataclass(frozen=True, slots=True)
 class Score:  # noqa: PLW1641 — value-semantics-only hot-path object; deliberately unhashable
     """Object representing the multi-component score of a selection.
@@ -113,18 +113,18 @@ class Score:  # noqa: PLW1641 — value-semantics-only hot-path object; delibera
         return f"size={self.size:.4f} | constraints={self.constraints:.4f} | diversity={self.diversity:.4f}"
 
 
-# =================================================================================================
+# ==================================================================================================
 #  ScoreGenerator
-# =================================================================================================
+# ==================================================================================================
 class ScoreGenerator:
     """Utility class to generate Score objects from core metrics & data structures.
 
     This allows repetitive, duplicate computations to be performed & cached at object instantiation.
     """
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Constructor
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     def __init__(
         self,
         n: int | np.int32,
@@ -195,10 +195,10 @@ class ScoreGenerator:
 
         Binding the positions here, once, keeps every lookup off the hot path.
         """
-        # --- prepare info ---------------------------
+        # --- prepare info -----------------------
         diversity_objective_compute = diversity_objective.compute
 
-        # --- construct score function ---------------
+        # --- construct score function -----------
         if positions == tuple(range(n_all_arrays)):
             # the objective needs every array, in the given order: no subselection of arrays needs to be
             # made at all, and no extra call
@@ -210,9 +210,9 @@ class ScoreGenerator:
 
             return score_fun
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Violation-to-score conversion
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     def constraints_score_for_violation(self, violation: float) -> float:
         """Return the constraints score a selection with the given total weighted violation receives.
 
@@ -237,9 +237,9 @@ class ScoreGenerator:
             )
         return 1.0 - self._con_c * violation
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Score computation
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     def compute_score(
         self,
         n_selected: int | np.int32,
@@ -280,9 +280,9 @@ class ScoreGenerator:
         )
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Helpers
-# =================================================================================================
+# ==================================================================================================
 def _con_norm_constant(max_violations: Sequence[int], con_weights: NDArray[np.float32], quadratic: bool) -> float:
     """Return the constraint-score normalization constant `1 / (1 + worst-case total violation)`.
 

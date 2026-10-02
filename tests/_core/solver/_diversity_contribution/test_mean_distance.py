@@ -13,9 +13,9 @@ from tests._core.metrics._distance.helpers import condensed_distances
 
 from .helpers import selection_args
 
-# =================================================================================================
+# ==================================================================================================
 #  Fixtures / helpers
-# =================================================================================================
+# ==================================================================================================
 N = 20
 
 
@@ -41,9 +41,9 @@ def _brute_force_contribution(pdist: np.ndarray, indices: list[int]) -> np.ndarr
     return (sums / divisor).astype(np.float32)
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Tests
-# =================================================================================================
+# ==================================================================================================
 def test_construction_fresh(tracker: MeanDistanceTracker):
     """A fresh tracker covers every item of its store, and each item's contribution to the empty selection is 0."""
     # --- arrange ----------------------
@@ -140,9 +140,9 @@ def test_invariant_random_operations_match_recompute(tracker: MeanDistanceTracke
         )
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Kernels
-# =================================================================================================
+# ==================================================================================================
 def test_update_distance_sums_add_remove():
     """Incremental add/remove updates match brute-force sums over the selection at every step."""
 
@@ -196,9 +196,9 @@ def test_update_distance_sums_own_entry_untouched():
     assert dist_sums[2] == pytest.approx(squareform(d)[2, 1])
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Backend equivalence
-# =================================================================================================
+# ==================================================================================================
 # One backend module per storage layout means the same logic exists once per layout, so a fix
 # applied to only some of them would pass review looking complete.  Driving every backend through the same
 # operations against a brute-force recompute is the guard against that.

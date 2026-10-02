@@ -3,9 +3,9 @@ from max_div._core.solver._solver_step import OptimizationStep
 from max_div._core.solver._strategies import InitializationStrategy, OptimizationStrategy
 
 
-# =================================================================================================
+# ==================================================================================================
 #  SMART / THOROUGH preset
-# =================================================================================================
+# ==================================================================================================
 def get_preset_strategies_smart(
     target_duration: TargetDuration,
     thorough: bool = False,

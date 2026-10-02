@@ -56,9 +56,9 @@ def _read_in_child(specs: dict[str, SharedStoreSpec], queue: multiprocessing.Que
     queue.put(results)
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Round trip
-# =================================================================================================
+# ==================================================================================================
 def test_spawned_process_reads_the_published_values():
     """A spawned process that attaches to a published distance store reads exactly what the unshared store holds."""
     # --- arrange ----------------------
@@ -143,9 +143,9 @@ def test_attached_minkowski_store_reads_the_published_values():
     assert read_attached == _read_pairs(reference)
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Read-only enforcement
-# =================================================================================================
+# ==================================================================================================
 @pytest.mark.parametrize("kind", ["full_matrix", "lazy"])
 def test_attached_store_cannot_be_written_through(kind: str):
     """Nothing that is reachable from an attached distance store can write into the shared segment."""
@@ -163,9 +163,9 @@ def test_attached_store_cannot_be_written_through(kind: str):
     assert not vectors_writeable
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Segment lifetime
-# =================================================================================================
+# ==================================================================================================
 def test_attaching_leaves_the_segment_usable():
     """Closing an attachment releases only that mapping, so the segment survives for later readers."""
     # --- arrange ----------------------

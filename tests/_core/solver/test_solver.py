@@ -22,9 +22,9 @@ from max_div._core.solver._strategies import InitializationStrategy, Optimizatio
 from tests._core.metrics._distance.helpers import condensed_distances, l2_and_projections_reference
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Helpers
-# =================================================================================================
+# ==================================================================================================
 def assert_score_checkpoints_are_sane(score_checkpoints: list[ScoreCheckpoint]):
     # --- non-empty ------------------------------
     assert len(score_checkpoints) >= 1, "score_checkpoints must contain at least one entry"
@@ -56,9 +56,9 @@ def assert_score_checkpoints_are_sane(score_checkpoints: list[ScoreCheckpoint]):
     assert t_values == sorted(t_values), "score_checkpoints elapsed times should be non-decreasing"
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Tests
-# =================================================================================================
+# ==================================================================================================
 def test_solver_minimal(example_solver):
     # --- act --------------------------
     solution = example_solver.solve()
@@ -218,9 +218,9 @@ def test_solver_lazy_backend_bit_identical_selection(distance_metric: DistanceMe
     assert solution_lazy.score == solution_full_matrix.score
 
 
-# =================================================================================================
+# ==================================================================================================
 #  MEAN_PAIRWISE_DISTANCE metric
-# =================================================================================================
+# ==================================================================================================
 def _mean_pairwise_distance_of(vectors: np.ndarray, indices: np.ndarray) -> float:
     """Brute-force mean pairwise L2 distance among the vectors at 'indices'."""
     selected = vectors[indices].astype(np.float64)
@@ -345,9 +345,9 @@ def test_solver_selection_is_valid_at_every_k_boundary(k: int):
     assert selected.max() < n
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Savepoint release
-# =================================================================================================
+# ==================================================================================================
 def test_a_solve_frees_its_state_without_the_cyclic_collector(monkeypatch: pytest.MonkeyPatch):
     """A finished solve leaves no state behind, without the cyclic garbage collector.
 
@@ -392,9 +392,9 @@ def test_a_solve_frees_its_state_without_the_cyclic_collector(monkeypatch: pytes
     assert still_alive == []
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Hybrid diversity metric
-# =================================================================================================
+# ==================================================================================================
 def _min_pairwise(values: np.ndarray) -> float:
     """Brute-force smallest pairwise Euclidean distance among the rows of `values` (float64)."""
     rows = values.astype(np.float64)
