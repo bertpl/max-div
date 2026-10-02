@@ -14,7 +14,7 @@ from max_div._core.metrics._distance import (
 from max_div._core.problem import MaxDivProblem
 from max_div._core.solver import MaxDivSolverBuilder, SolverPreset, Verbosity
 from max_div._core.solver._distance_storage import DistanceStorageType, DistanceStoreFactory, attached_distance_store
-from max_div._core.solver._distance_storage.memory_budget import full_matrix_bytes
+from max_div._core.solver._distance_storage.memory_budget import AUTO_MEMORY_FRACTION, full_matrix_bytes
 from max_div._core.solver._duration import iterations
 
 # ==================================================================================================
@@ -103,14 +103,14 @@ def test_explicit_choice_passes_through(storage: DistanceStorageType):
     [
         (10, 64 * GIB, DistanceStorageType.FULL_MATRIX),  # tiny problem: matrix always fits
         (10, None, DistanceStorageType.LAZY),  # probe failed: the one storage type that cannot page
-        (50_000, 32 * GIB, DistanceStorageType.FULL_MATRIX),  # 10.0 GiB matrix <= 1/3 of 32 GiB
+        (50_000, 32 * GIB, DistanceStorageType.FULL_MATRIX),  # 9.3 GiB matrix <= half of 32 GiB
         (50_000, 16 * GIB, DistanceStorageType.LAZY),  # matrix over budget
     ],
 )
 def test_auto_on_vectors_is_the_full_matrix_when_it_fits(
     n: int, total_memory: int | None, expected: DistanceStorageType
 ):
-    """AUTO on vector problems: the full matrix when its bytes fit within a third of total RAM, else lazy."""
+    """AUTO on vector problems: the full matrix when its bytes fit within the memory budget, else lazy."""
     # --- arrange ----------------------
     problem = _vector_problem() if n == 10 else _stub_vector_problem(n)
 
@@ -139,7 +139,7 @@ def test_auto_gives_the_full_matrices_that_fit_to_the_distances_most_expensive_t
     """When only some full matrices fit the memory budget, the costliest distances get them and the rest stay lazy."""
     # --- arrange ----------------------
     problem = _stub_vector_problem(50_000, d=2)
-    total_memory = 3 * n_matrices_in_budget * full_matrix_bytes(50_000) + GIB  # the budget is a third of RAM
+    total_memory = int(n_matrices_in_budget * full_matrix_bytes(50_000) / AUTO_MEMORY_FRACTION) + GIB
     factory = DistanceStoreFactory(problem, distances, DistanceStorageType.AUTO, total_memory)
 
     # --- act / assert -----------------
