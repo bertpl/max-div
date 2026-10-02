@@ -423,6 +423,8 @@ class AlongAxisDistanceMetric(DistanceMetric):
         """Reject an axis that is not a non-negative integer, and store it as a plain int."""
         if isinstance(self.axis, bool) or not isinstance(self.axis, (int, np.integer)) or self.axis < 0:
             raise ValueError(f"along_axis requires a non-negative integer axis; here: {self.axis!r}.")
+        # A frozen dataclass rejects `self.axis = ...`; `object.__setattr__` is the documented way to set a field in
+        # `__post_init__`.  Storing a plain int makes `along_axis(np.int64(2))` equal to `along_axis(2)`.
         object.__setattr__(self, "axis", int(self.axis))
 
     @property
@@ -462,6 +464,7 @@ class MarginalsAndJointDistanceMetric(DistanceMetric):
         joint_scale = float(self.joint_scale)
         if not (math.isfinite(joint_scale) and joint_scale > 0):
             raise ValueError(f"marginals_and_joint requires a positive, finite joint_scale; here: {joint_scale}.")
+        # A frozen dataclass rejects `self.joint_scale = ...`, so the float is stored with `object.__setattr__`.
         object.__setattr__(self, "joint_scale", joint_scale)
 
     @property
