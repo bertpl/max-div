@@ -33,7 +33,7 @@ METRIC_KIND_MINKOWSKI_P0125_POWERED = 12
 METRIC_KIND_GEOMEAN = 13
 METRIC_KIND_ALONG_AXIS = 14
 METRIC_KIND_LMINUSINF = 15
-METRIC_KIND_MARGINALS_AND_JOINT = 16
+METRIC_KIND_L2_AND_PROJECTIONS = 16
 
 # NO_FLOAT_PARAM is the float passed to the compiled pairwise distance function for a kind that takes no float
 # parameter (every kind that takes one requires it to be > 0, so 0.0 is free to mean "none").
@@ -144,17 +144,17 @@ class DistanceMetric:
         return AlongAxisDistanceMetric(axis=axis)
 
     @classmethod
-    def marginals_and_joint(cls, joint_scale: float = 1.0) -> "DistanceMetric":
-        """Return the marginals-and-joint distance: ``min( min_i |a_i - b_i|, joint_scale * ||a - b||_2^d )``.
+    def l2_and_projections(cls, l2_scale: float = 1.0) -> "DistanceMetric":
+        """Return the L2-and-projections distance: ``min( min_i |a_i - b_i|, l2_scale * ||a - b||_2^d )``.
 
-        For 2 vectors a and b of dimension d, the first term is the `l_minus_inf()` distance, the gap in
-        the coordinate where they are closest, and the second term, the joint term, is their L2 distance
-        raised to the power d.
+        For 2 vectors a and b of dimension d, the first part, the L-∞ part, is the `l_minus_inf()`
+        distance: the smallest gap between their projections onto a single coordinate axis.  The second
+        part, the L2 part, is their L2 distance raised to the power d.
 
-        Under min-separation a selection is then spread along every coordinate axis (its marginals) and
-        in the full space (its joint distribution) at once.
+        Under min-separation a selection is then spread in its projection onto every coordinate axis and
+        in the full space at once.
 
-        The 2 terms are comparable only for a population that fills the unit cube [0, 1]^d, so scale
+        The 2 parts are comparable only for a population that fills the unit cube [0, 1]^d, so scale
         the vectors into it first.  It needs at least 2 dimensions: in 1 it only rescales the one
         coordinate gap, and a problem over 1-dimensional vectors rejects it.
 
@@ -167,19 +167,19 @@ class DistanceMetric:
         - c ≈ 2.8 for d = 5
         - c ≈ 40 for d = 10
 
-        In higher dimensions the joint term is therefore larger than the gap and rarely sets the
-        minimum; a `joint_scale` of about 1/c gives the 2 terms equal weight.
+        In higher dimensions the L2 part is therefore larger than the gap and rarely sets the
+        minimum; an `l2_scale` of about 1/c gives the 2 parts equal weight.
 
-        The marginals-and-joint distance is not a metric in the mathematical sense (points that share any one
+        The L2-and-projections distance is not a metric in the mathematical sense (points that share any one
         coordinate are at distance zero, and the triangle inequality fails); the solver relies on neither.
 
         Args:
-            joint_scale: The positive, finite factor on the joint term.
+            l2_scale: The positive, finite factor on the L2 part.
 
         Raises:
-            ValueError: If `joint_scale` is not a positive, finite number.
+            ValueError: If `l2_scale` is not a positive, finite number.
         """
-        return MarginalsAndJointDistanceMetric(joint_scale=joint_scale)
+        return L2AndProjectionsDistanceMetric(l2_scale=l2_scale)
 
     @classmethod
     def minkowski(cls, p: float, root: bool = True) -> "DistanceMetric":
@@ -448,35 +448,35 @@ class AlongAxisDistanceMetric(DistanceMetric):
 
 
 # =================================================================================================
-#  Marginals and joint
+#  L2 and projections
 # =================================================================================================
 @dataclass(frozen=True, repr=False)
-class MarginalsAndJointDistanceMetric(DistanceMetric):
-    """This metric is the marginals-and-joint distance; see `DistanceMetric.marginals_and_joint`."""
+class L2AndProjectionsDistanceMetric(DistanceMetric):
+    """This metric is the L2-and-projections distance; see `DistanceMetric.l2_and_projections`."""
 
-    joint_scale: float
+    l2_scale: float
 
-    _kind = METRIC_KIND_MARGINALS_AND_JOINT
-    _factory_name = "marginals_and_joint"
+    _kind = METRIC_KIND_L2_AND_PROJECTIONS
+    _factory_name = "l2_and_projections"
 
     def __post_init__(self) -> None:
-        """Reject a joint scale that is not a positive, finite number, and store it as a float."""
-        joint_scale = float(self.joint_scale)
-        if not (math.isfinite(joint_scale) and joint_scale > 0):
-            raise ValueError(f"marginals_and_joint requires a positive, finite joint_scale; here: {joint_scale}.")
-        # A frozen dataclass rejects `self.joint_scale = ...`, so the float is stored with `object.__setattr__`.
-        object.__setattr__(self, "joint_scale", joint_scale)
+        """Reject a L2 scale that is not a positive, finite number, and store it as a float."""
+        l2_scale = float(self.l2_scale)
+        if not (math.isfinite(l2_scale) and l2_scale > 0):
+            raise ValueError(f"l2_and_projections requires a positive, finite l2_scale; here: {l2_scale}.")
+        # A frozen dataclass rejects `self.l2_scale = ...`, so the float is stored with `object.__setattr__`.
+        object.__setattr__(self, "l2_scale", l2_scale)
 
     @property
     def float_param(self) -> float:
-        """Return the joint scale, the factor on the joint term."""
-        return self.joint_scale
+        """Return the L2 scale, the factor on the L2 part."""
+        return self.l2_scale
 
     @property
     def label(self) -> str:
-        """Return `marginals+joint`, with the joint scale appended when it is not 1."""
-        scale_suffix = f" (joint scale {self.joint_scale:g})" if self.joint_scale != 1.0 else ""
-        return f"marginals+joint{scale_suffix}"
+        """Return `L2+projections`, with the L2 scale appended when it is not 1."""
+        scale_suffix = f" (L2 scale {self.l2_scale:g})" if self.l2_scale != 1.0 else ""
+        return f"L2+projections{scale_suffix}"
 
     def validate(self, vectors: NDArray[np.float32]) -> None:
         """Raise ValueError for 1-dimensional vectors, where the distance is only a rescaled L1 distance."""
@@ -487,8 +487,8 @@ class MarginalsAndJointDistanceMetric(DistanceMetric):
             )
 
     def _factory_arg_reprs(self) -> tuple[str, ...]:
-        """Return `joint_scale` when it is not 1, else nothing."""
-        return (f"joint_scale={self.joint_scale!r}",) if self.joint_scale != 1.0 else ()
+        """Return `l2_scale` when it is not 1, else nothing."""
+        return (f"l2_scale={self.l2_scale!r}",) if self.l2_scale != 1.0 else ()
 
 
 # =================================================================================================

@@ -81,11 +81,11 @@ DISTANCES = {
         Distance("y", "y distance", lambda dx, dy: dy),
         Distance("linf", "L\u2212\u221e distance", np.minimum),
         Distance("geomean", "geometric-mean distance", lambda dx, dy: np.sqrt(dx * dy)),
-        # This is `DistanceMetric.marginals_and_joint()` at its default joint scale of 1; in 2 dimensions its joint term
-        # is the squared L2 distance
+        # The entry below is `DistanceMetric.l2_and_projections()` with its default `l2_scale` of 1; in 2 dimensions
+        # its L2 part is the squared L2 distance
         Distance(
-            "marginals_and_joint",
-            "marginals-and-joint distance",
+            "l2_and_projections",
+            "L2-and-projections distance",
             lambda dx, dy: np.minimum(np.minimum(dx, dy), dx * dx + dy * dy),
         ),
     )

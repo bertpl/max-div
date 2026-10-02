@@ -242,7 +242,7 @@ DISTANCE_METRICS = {
     "y": DistanceMetric.along_axis(1),
     "linf": DistanceMetric.l_minus_inf(),
     "geomean": DistanceMetric.geometric_mean(),
-    "marginals_and_joint": DistanceMetric.marginals_and_joint(),
+    "l2_and_projections": DistanceMetric.l2_and_projections(),
 }
 REFERENCE_LABELS = {"l2": "L2", "x": "$x$", "y": "$y$"}
 # One row label per experiment, shared by the summary and the convergence tables; the section
@@ -258,7 +258,7 @@ EXPERIMENT_LABELS = {
     "hybrid_geomean_long": "**V.C.1** geometric-mean hybrid, 4 h, 32 workers",
     "hybrid_geomean_banded_long": "**V.C.2** geometric-mean hybrid, 20 items per band, 4 h, 32 workers",
     "hybrid_weighted_min": "**V.D** minimum hybrid: L\u2212\u221e and L2 terms, weighted $k$ and $\\sqrt{k}$",
-    "marginals_and_joint": "**V.E** marginals-and-joint distance",
+    "l2_and_projections": "**V.E** L2-and-projections distance",
 }
 # The replay figures of section V.C re-solve the experiments that `EXPERIMENT_NAME_BY_LONG_RUN` names, with this
 # budget and worker count.
@@ -368,7 +368,7 @@ EXPERIMENTS = (
         hybrid_factory=HybridDiversityMetric.min_of,
         k_weight_exponents=(1.0, 0.5),
     ),
-    Experiment("marginals_and_joint", ("marginals_and_joint",)),
+    Experiment("l2_and_projections", ("l2_and_projections",)),
 )
 
 

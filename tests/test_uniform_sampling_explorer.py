@@ -20,9 +20,9 @@ def explorer():
 
 # The four items are chosen so that the distances disagree:
 # - item 0 shares its y with item 1 and its x with item 2, so those pairs sit at distance 0 under the
-#   x or y distance, and hence under the L-inf, geometric-mean and marginals-and-joint distances;
+#   x or y distance, and hence under the L-inf, geometric-mean and L2-and-projections distances;
 # - item 3 is nearest to item 2 under the geometric-mean distance (gaps 0.3 and 0.3) and under L2 alike;
-# - under the marginals-and-joint distance, item 3 is nearest to item 2 by the joint term, 0.3^2 + 0.3^2 = 0.18,
+# - under the L2-and-projections distance, item 3 is nearest to item 2 by the L2 part, 0.3^2 + 0.3^2 = 0.18,
 #   below the smallest coordinate gap to any item;
 # - items 0 to 2 are L2-nearest to item 3;
 # - along x, items 0 and 2 share a value and item 3 ties between them at 0.3, so `argmin` picks the lower index, item 0.
@@ -36,7 +36,7 @@ Y = np.array([0.1, 0.1, 0.9, 0.6], dtype=np.float32)
 def test_nearest_neighbors_under_each_distance(explorer):
     """A shared coordinate gives distance 0 under the product-like distances; the L2 neighbors are other items."""
     # --- act --------------------------
-    neighbors = explorer.nearest_neighbors(X, Y, ("geomean", "linf", "marginals_and_joint", "l2", "x", "y"))
+    neighbors = explorer.nearest_neighbors(X, Y, ("geomean", "linf", "l2_and_projections", "l2", "x", "y"))
 
     # --- assert -----------------------
     assert neighbors["geomean"][0].tolist() == [1, 0, 0, 2]
@@ -44,8 +44,8 @@ def test_nearest_neighbors_under_each_distance(explorer):
     assert neighbors["geomean"][1][3] == pytest.approx(0.3)
     assert neighbors["linf"][0].tolist() == [1, 0, 0, 2]
     assert neighbors["linf"][1][3] == pytest.approx(0.3)
-    assert neighbors["marginals_and_joint"][0].tolist() == [1, 0, 0, 2]
-    assert neighbors["marginals_and_joint"][1][3] == pytest.approx(0.18)
+    assert neighbors["l2_and_projections"][0].tolist() == [1, 0, 0, 2]
+    assert neighbors["l2_and_projections"][1][3] == pytest.approx(0.18)
     assert neighbors["l2"][0].tolist() == [3, 3, 3, 2]
     assert neighbors["l2"][1][3] == pytest.approx(0.3 * np.sqrt(2))
     assert neighbors["x"][0].tolist() == [2, 3, 0, 0]
@@ -144,9 +144,9 @@ def test_legend_widens_a_column_to_fit_its_longest_label(explorer):
                 r'<rect class="usx-legend" [^>]*width="([\d.]+)"', "".join(explorer.legend_svg(4, 4, (key,)))
             ).group(1)
         )
-        for key in ("l2", "marginals_and_joint")
+        for key in ("l2", "l2_and_projections")
     }
 
     # --- assert -----------------------
     assert widths["l2"] == 250 + 190 + 8
-    assert widths["marginals_and_joint"] > widths["l2"]
+    assert widths["l2_and_projections"] > widths["l2"]
