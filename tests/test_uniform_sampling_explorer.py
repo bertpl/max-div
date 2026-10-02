@@ -119,10 +119,13 @@ def test_every_dot_names_its_neighbors_under_the_objective_and_reference_distanc
     assert records[3]["l2"] == [2, pytest.approx(0.3 * np.sqrt(2), abs=1e-5)]
 
 
-def test_fragment_carries_the_selection_size(fragment):
-    """The SVG carries the selection size in `data-k`, from which the JavaScript draws the form with k's level curve."""
+def test_fragment_carries_the_l2_factor_of_the_distance_with_k(fragment):
+    """The SVG carries the L2 factor of the L2-and-projections distance with k = 4, (sqrt(4) - 1) / (4 - 1) = 1/3."""
+    # --- act --------------------------
+    l2_factor = float(re.search(r'<svg class="usx"[^>]* data-l2-factor="([^"]+)"', fragment).group(1))
+
     # --- assert -----------------------
-    assert re.search(r'<svg class="usx"[^>]* data-k="4"', fragment)
+    assert l2_factor == pytest.approx(1 / 3)
 
 
 def test_legend_names_the_blue_neighbor_only_for_a_simple_objective(fragment, objective_keys):

@@ -92,7 +92,7 @@ DISTANCES = {
         ),
         # The entry below is `DistanceMetric.l2_and_projections(k=k)` with its default `l2_scale` of 1; in 2
         # dimensions its L2 part is the metric's `float_param(2)` times the L2 distance. The gap matrices are
-        # those of the k selected items, so their size is k.
+        # k x k, over the k selected items, so `len(dx)` is k.
         Distance(
             "l2_and_projections_k",
             "L2-and-projections distance with k",
@@ -312,8 +312,8 @@ def explorer_fragment(
     Args:
         x, y: Coordinates of the k selected items, in the solver's input coordinates.
         n: Population size, for the legend.
-        k: Selection size, for the legend and for the SVG's `data-k`, from which the JavaScript draws the
-            level curve of the L2-and-projections form with k.
+        k: Selection size, for the legend and for the L2 factor of the L2-and-projections distance with k,
+            which the SVG carries in `data-l2-factor`.
         objective_keys: Keys into `DISTANCES` of the distances the experiment's objective uses; one for a
             simple objective, one per term for a hybrid. The interaction draws one level curve per key.
         population_image_url: URL of the population raster, relative to the page that includes the fragment.
@@ -329,7 +329,7 @@ def explorer_fragment(
         f'<svg class="usx" viewBox="0 0 {VIEW_WIDTH} {VIEW_HEIGHT}" xmlns="http://www.w3.org/2000/svg" role="img"'
         f" data-objective=\"{' '.join(objective_keys)}\" data-labels='{json.dumps(labels, separators=(',', ':'))}'"
         f' data-ring="{RING_RADIUS_FACTOR}" data-reach="{GLYPH_REACH_FACTOR}" data-center="{CENTER_DOT_FACTOR}"'
-        f' data-k="{k}">',
+        f' data-l2-factor="{DistanceMetric.l2_and_projections(k=k).float_param(2)!r}">',
         f"<title>Selection maximizing diversity under the {', '.join(labels[key] for key in objective_keys)}</title>",
         f"<desc>{description}</desc>",
         '<defs><clipPath id="usx-square" clipPathUnits="userSpaceOnUse">'

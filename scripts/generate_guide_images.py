@@ -236,7 +236,7 @@ def layout_constrained_group(alpha: float) -> NDArray[np.float64]:
 #  Uniform sampling: solved experiments
 # ==================================================================================================
 # The keys name the distances of `uniform_sampling_explorer.DISTANCES`; each value maps the selection size k
-# to the distance metric, and only the L2-and-projections form with k uses k.
+# to the distance metric.
 DISTANCE_METRIC_FACTORIES: dict[str, Callable[[int], DistanceMetric]] = {
     "l2": lambda k: DistanceMetric.l2_euclidean(),
     "x": lambda k: DistanceMetric.along_axis(0),

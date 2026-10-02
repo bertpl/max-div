@@ -9,7 +9,9 @@
 
     A hybrid that takes the minimum over weighted terms, not their geometric mean, spreads the selection further over the square without spreading it less along either axis.
 
-    Min separation under the L2-and-projections distance, a single distance that is the minimum of an L−∞ part and an L2 part, spreads the selection over the square and along each axis at once. When the distance is also given the selection size $k$, a solve under it reaches the same fraction of the spacing of $k$ points on a regular grid on all 3 goals, and gives the lowest of the 3 goals the highest value of any 60 s experiment.
+    Min separation under the L2-and-projections distance, a single distance that is the minimum of an L−∞ part and an L2 part, spreads the selection over the square and along each axis at once.
+
+    When the distance is also given the selection size $k$, a solve under it reaches, on all 3 goals, the same fraction of the spacing of $k$ points on a regular grid, and gives the lowest of the 3 goals the highest value of any 60 s experiment.
 
 ## I. Problem statement
 
@@ -121,7 +123,7 @@ Each objective below combines a part for the L2 goal with parts for the marginal
 - **V.A to V.C** use a [hybrid objective](../concepts/diversity.md#hybrid-diversity-metrics) with one term per goal, each the min separation under that goal's distance, combined by their geometric mean so that no term dominates by its scale.
 - **V.D** takes the minimum of 2 weighted terms, so the lowest weighted term sets the score.
 - **V.E** uses a single distance, the L2-and-projections distance, that is the minimum of an L−∞ part and an L2 part, with no weights.
-- **V.F** uses the same distance given the selection size $k$; the distance then weights its L2 part so that the solve reaches the same fraction of a grid's spacing along each axis and in the square.
+- **V.F** uses the same distance given the selection size $k$; the distance then weights its L2 part so that the solve reaches the same fraction of the spacing of section II's $10 \times 10$ grid along each axis and in the square.
 
 ### V.A. Unconstrained
 
@@ -254,8 +256,8 @@ Against the geometric-mean hybrid of V.A, the L2 goal rises from 56 % to 63 % of
 
 The L2 goal stays below the 2 marginal goals because of the weights:
 
-- **The weights make the 2 terms equal at an L2 distance of $\sqrt{k} = 10$ times the L−∞ distance**, while the L2 reference is $0.1146 / (1/99) \approx 11.3$ times the axis reference.
-- **A solve that maximizes the minimum of the 2 weighted terms ends with them about equal**, so on the L2 goal it reaches $10 / 11.3 \approx 0.88$ times the fraction of its reference that each marginal goal reaches; V.D reaches 63 % against 71.5 %, also 0.88.
+- **The weights make the 2 terms equal at an L2 distance of $\sqrt{k} = 10$ times the L−∞ distance**, while the L2 reference is $0.1146 / (1/99) \approx 11.3$ times the reference of each marginal goal.
+- **A solve that maximizes the minimum of the 2 weighted terms ends with them about equal**, so on the L2 goal it reaches $10 / 11.3 \approx 0.88$ times the fraction of its reference that each marginal goal reaches; V.D reaches 63 % on the L2 goal against 71.5 %, the mean of its 2 marginal goals, a ratio of 0.88 as well.
 
 With 2 terms instead of 3, each iteration is also faster, as the convergence table in VI shows.
 
@@ -272,7 +274,7 @@ d(a, b) = \min\Big( \min\big(\lvert a_x - b_x \rvert, \lvert a_y - b_y \rvert\bi
 $$
 
 - **The first part is the L−∞ distance** of IV.A, the smallest gap between the 2 points' projections onto a single axis, which covers both marginal goals.
-- **The second part is the L2 distance raised to the power of the dimension**, here squared. Among $k$ well-spread points in the square, both parts of a nearest-neighbor pair are about $1/k$, so neither part needs a weight that depends on $k$ to be on the scale of the other. How the 2 parts balance still depends on the separation that the solve reaches, as the comparison with V.F shows.
+- **The second part is the L2 distance raised to the power of the dimension**, here squared. Among $k$ well-spread points in the square, both parts of a nearest-neighbor pair are about $1/k$, so neither part needs a weight that depends on $k$ to be on the scale of the other. The squared L2 part still favors the L2 goal, by an amount that depends on the solve's separation, as derived below.
 
 ```python
 from max_div.metrics import DistanceMetric, DiversityMetric
@@ -305,11 +307,13 @@ A solve that maximizes a minimum of 2 parts ends with the 2 parts about equal, s
 
 Both match the L2 separations that the solves reached. `l2_and_projections(l2_scale=...)` multiplies the second part by `l2_scale`: a value above 1 favors the 2 marginal goals, and one below 1 favors the L2 goal; this guide keeps the default of 1.
 
-With the L2 part squared, a solve's L2 separation is the square root of its L−∞ separation. The lower the fraction of their reference that the marginal goals reach, the further the L2 goal's fraction ends above it. V.F weights the L2 part using $k$, so that the L2 goal and the marginal goals reach the same fraction of the grid spacing whatever separation the solve reaches.
+With the L2 part squared, a solve's L2 separation is the square root of its L−∞ separation. The lower the fraction of their reference that the marginal goals reach, the further the L2 goal's fraction ends above that of the marginal goals.
+
+V.F weights the L2 part using $k$, so that the L2 goal and the marginal goals reach the same fraction of the grid spacing whatever separation the solve reaches.
 
 ### V.F. L2-and-projections distance with $k$ { #vf-l2-and-projections-distance-with-k }
 
-Given the selection size, `l2_and_projections(k=100)` replaces V.E's squared L2 part with the L2 distance times a factor $r$ computed from $k$. In 2D it is
+Given the selection size, `l2_and_projections(k=100)` replaces V.E's squared L2 part with the L2 distance times a factor $r$ computed from $k$. In 2D the distance is
 
 $$
 d(a, b) = \min\Big( \min\big(\lvert a_x - b_x \rvert, \lvert a_y - b_y \rvert\big),\; r \, \lVert a - b \rVert_2 \Big), \qquad r = \frac{\sqrt{k} - 1}{k - 1} = \frac{1}{11}
@@ -327,7 +331,7 @@ problem = MaxDivProblem.new(
 )
 ```
 
-Hover over a dot to see the level curve of this distance: as in V.E, the L−∞ curve with the corner of each quadrant cut off by a circle, here of radius 11 times the L−∞ value.
+Hover over a dot to see the level curve of this distance: as in V.E, the L−∞ curve with the corner of each quadrant cut off by a circle, here of radius 11 times the level curve's value $d$.
 
 --8<-- "generated/uniform_sampling_l2_and_projections_k_figure.html"
 
@@ -335,7 +339,7 @@ Hover over a dot to see the level curve of this distance: as in V.E, the L−∞
 
 Against V.E, the L2 goal drops from 72 % to 67 % of its reference, and the 2 marginal goals rise from 66 % and 67 % to 69 %. The lowest of the 3 goals, at 67 %, is the highest of any 60 s experiment.
 
-The L2 goal is 2 percentage points below the marginal goals only because the table measures it against a different reference:
+The L2 goal is 2 percentage points below the marginal goals only because the table measures it against a different reference than the grid spacing that $r$ balances against:
 
 - **The table measures the L2 goal against the best known packing**, 0.1146, which is 3 % above the grid spacing $1/9 \approx 0.1111$ that $r$ balances against.
 - **Against the grid spacing**, the L2 separation reaches $0.0766 / 0.1111 = 69$ %, the same fraction as along each axis.
