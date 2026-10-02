@@ -3,6 +3,7 @@ from __future__ import annotations
 from enum import StrEnum
 from typing import TYPE_CHECKING, Any
 
+from max_div._core.solver._strategies._initialization._init_constraint_aware_diverse import InitConstraintAwareDiverse
 from max_div._core.solver._strategies._initialization._init_farthest_point import InitFarthestPoint
 from max_div._core.solver._strategies._initialization._init_most_feasible import InitMostFeasible
 from max_div._core.solver._strategies._initialization._init_random_selection import InitRandomSelection
@@ -33,6 +34,12 @@ class InitPreset(StrEnum):
 
     # --- most feasible --------------------------
     MF = "mf"
+
+    # --- constraint-aware diverse ---------------
+    # The 3 settings below follow InitConstraintAwareDiverse's docstring, from fast to thorough.
+    CAD_16_1 = "cad(16,1)"
+    CAD_1_1 = "cad(1,1)"
+    CAD_1_16 = "cad(1,16)"
 
     # -------------------------------------------------------------------------
     #  Factory
@@ -99,6 +106,9 @@ _INIT_CLASSES_AND_KWARGS: dict[InitPreset, tuple[type[InitializationStrategy], d
     InitPreset.FPS_8: (InitFarthestPoint, {"top_k": 8, "candidate_pool_size": 256}),
     InitPreset.FPS_8_ONE_AT_A_TIME: (InitFarthestPoint, {"top_k": 8, "candidate_pool_size": None}),
     InitPreset.MF: (InitMostFeasible, {}),
+    InitPreset.CAD_16_1: (InitConstraintAwareDiverse, {"batch_size": 16, "nc": 1}),
+    InitPreset.CAD_1_1: (InitConstraintAwareDiverse, {"batch_size": 1, "nc": 1}),
+    InitPreset.CAD_1_16: (InitConstraintAwareDiverse, {"batch_size": 1, "nc": 16}),
 }
 
 _PRESET_NOTES: dict[InitPreset, str] = {
