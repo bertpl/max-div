@@ -23,7 +23,6 @@ from max_div._core.metrics._distance import (
     DistanceStore,
     compute_full_matrix,
     expand_condensed,
-    preprocess_vectors,
 )
 from max_div._core.problem import DistanceMaxDivProblem, MaxDivProblem, VectorMaxDivProblem
 
@@ -208,9 +207,9 @@ class DistanceStoreFactory:
                 compute_full_matrix(problem.vectors, distance, out=matrix)
                 stores.append(DistanceStore.full_matrix(matrix))
             else:
-                # preprocess_vectors returns problem.vectors itself for a metric that does not preprocess,
+                # `DistanceMetric.preprocess` returns problem.vectors itself for a metric that does not preprocess,
                 # so the shared-memory allocator sees one array and puts it in one segment
-                adopted = allocator.adopt(preprocess_vectors(problem.vectors, distance), KIND_LAZY, distance)
+                adopted = allocator.adopt(distance.preprocess(problem.vectors), KIND_LAZY, distance)
                 stores.append(DistanceStore.lazy(adopted, distance))
         return stores
 

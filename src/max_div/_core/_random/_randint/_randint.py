@@ -27,7 +27,7 @@ P_UNIFORM = np.zeros(0, dtype=np.float32)
 # =================================================================================================
 #  randint
 # =================================================================================================
-# Same fastmath subset as `_distance/_metric/_pair.py`: zero-probability items get +inf keys.
+# Same fastmath subset as `_distance/_metric/_pairwise_distance.py`: zero-probability items get +inf keys.
 @lazy_njit("int32[:](int32, int32, bool, float32[:], uint64[:])", fastmath={"reassoc", "contract"}, cache=True)
 def randint(  # noqa: C901 — case-dispatch structure is clearer un-split
     n: np.int32,
