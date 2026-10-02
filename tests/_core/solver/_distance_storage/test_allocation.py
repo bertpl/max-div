@@ -82,6 +82,28 @@ def test_shared_adopt_copies_into_a_segment_and_reuses_it_for_the_same_array():
     np.testing.assert_array_equal(copied, vectors)
 
 
+def test_shared_adopt_does_not_mistake_a_new_array_for_a_freed_one():
+    """Arrays that the caller drops right after adopting them each get their own segment, holding their own values.
+
+    Python may give a new array the id of one that was freed, and the allocator recognizes an
+    array by its id.
+    """
+    # --- arrange ----------------------
+    allocator = SharedMemoryDistanceStoreAllocator()
+    n_arrays = 8
+
+    # --- act --------------------------
+    buffers = [allocator.adopt(_vectors() + i, KIND_LAZY, L2) for i in range(n_arrays)]
+    copies = [np.array(buffer) for buffer in buffers]
+    segment_names = {spec.segment_name for spec in allocator.specs}
+    allocator.close()
+
+    # --- assert -----------------------
+    assert len(segment_names) == n_arrays
+    for i, copied in enumerate(copies):
+        np.testing.assert_array_equal(copied, _vectors() + i)
+
+
 def test_shared_specs_carry_the_metric_of_a_lazy_store():
     """A spec for an adopted lazy array carries the metric's kind and exponent, so a worker rebuilds the same store."""
     # --- arrange ----------------------
