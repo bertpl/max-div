@@ -79,7 +79,7 @@ def test_a_config_builds_a_solver_that_defers_its_store():
     ],
 )
 def test_build_solver_requires_exactly_one_store_source(kwargs):
-    """Neither or both of stores / its provider is a caller error, not a silent fallback."""
+    """Passing neither or both of `stores` and `stores_provider` is a caller error, not a silent fallback."""
     # --- arrange ----------------------
     _, config = _builder().prepare_storage_and_config()
 

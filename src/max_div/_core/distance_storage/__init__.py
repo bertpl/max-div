@@ -1,6 +1,6 @@
 """Distance storage decides how a solve stores its pairwise distances, and builds the distance stores.
 
-- `storage` holds the user's choice of storage type and the per-store types that a solve resolves to.
+- `storage` holds the user's choice of storage type and each store's resolved storage type.
 - `memory_budget` sizes a full matrix in bytes, probes the machine's RAM, and refuses a matrix that cannot fit.
 - `allocation` decides where the arrays of a distance store are placed in memory.
 - `shared_memory` lets a worker process read a distance store that another process built in shared memory.

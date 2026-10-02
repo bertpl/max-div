@@ -52,7 +52,7 @@ def test_the_one_store_is_reported_without_a_distance_metric():
 
     # --- act / assert -----------------
     assert factory.distance_metrics == (None,)
-    assert factory.resolved_storage().per_store == ((None, DistanceStorageType.FULL_MATRIX),)
+    assert factory.resolved_storage_types().per_store == ((None, DistanceStorageType.FULL_MATRIX),)
 
 
 # ==================================================================================================

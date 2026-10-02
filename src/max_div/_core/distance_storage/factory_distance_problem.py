@@ -17,8 +17,8 @@ from .storage import DistanceStorageType
 class DistanceProblemDistanceStoreFactory(DistanceStoreFactory):
     """This factory builds the one distance store of a distance-input problem, over its given distances.
 
-    The given distances come without a metric, so the store is always a full matrix: a square input
-    is read as given, and a condensed input is expanded.
+    The problem has no vectors to compute distances from on demand, so the store is always a full
+    matrix: a square input is read as given, and a condensed input is expanded.
     """
 
     # --------------------------------------------------------------------------
@@ -45,7 +45,10 @@ class DistanceProblemDistanceStoreFactory(DistanceStoreFactory):
     #  Policy
     # --------------------------------------------------------------------------
     def _determine_auto_storage_types(self) -> list[DistanceStorageType]:
-        """Return the full matrix: the distances exist already, so AUTO stores them as they are."""
+        """Return `FULL_MATRIX` for the single store.
+
+        The distances are given, so there is nothing to compute on demand.
+        """
         return [DistanceStorageType.FULL_MATRIX]
 
     # --------------------------------------------------------------------------

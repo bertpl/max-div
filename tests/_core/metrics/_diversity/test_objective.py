@@ -27,8 +27,8 @@ def _f32(values: list[float]) -> np.ndarray:
 # ==================================================================================================
 #  Construction
 # ==================================================================================================
-def test_a_simple_objective_defaults_its_distance_to_the_problems_own() -> None:
-    """A simple objective built without a distance reads the problem's own distance (`None`)."""
+def test_a_simple_objective_defaults_its_distance_metric_to_none() -> None:
+    """A simple objective built without a distance metric has `None`, as over given distances."""
     # --- act / assert -----------------
     assert DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION).distance_metric is None
 

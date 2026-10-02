@@ -42,6 +42,7 @@ class _TwoStoreFactory(DistanceStoreFactory):
     "storage_type, expected",
     [
         (DistanceStorageType.LAZY, DistanceStorageType.LAZY),  # an explicit choice passes through
+        (DistanceStorageType.FULL_MATRIX, DistanceStorageType.FULL_MATRIX),  # an explicit choice passes through
         (DistanceStorageType.AUTO, DistanceStorageType.FULL_MATRIX),  # AUTO is the subclass's decision
     ],
 )
@@ -54,7 +55,7 @@ def test_storage_types_are_the_explicit_choice_or_the_subclass_decision(
 
     # --- act / assert -----------------
     assert factory.determine_storage_types() == [expected, expected]
-    assert factory.resolved_storage().per_store == ((L1, expected), (L2, expected))
+    assert factory.resolved_storage_types().per_store == ((L1, expected), (L2, expected))
 
 
 # ==================================================================================================

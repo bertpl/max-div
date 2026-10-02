@@ -199,8 +199,8 @@ class HybridDiversityMetric:
 
         Args:
             bare_term_distance_metric: the distance metric that each bare term reads, a bare term
-                being a plain `DiversityMetric` given without `over`.  None leaves the bare terms
-                without a distance metric, as over the given distances of a distance-input problem.
+                being a plain `DiversityMetric` given without `over`.  Pass None for a distance-input
+                problem, whose given distances have no metric.
         """
         return DiversityObjectiveHybrid(
             tuple(

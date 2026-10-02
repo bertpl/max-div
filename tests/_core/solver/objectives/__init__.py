@@ -4,12 +4,12 @@ from max_div._core.metrics import DiversityMetric, DiversityObjective, Diversity
 
 
 def simple_objective(diversity_metric: DiversityMetric) -> DiversityObjectiveSimple:
-    """Return a simple objective of `diversity_metric` over the problem's own distance (distance `None`)."""
+    """Return a simple objective of `diversity_metric` over given distances (distance metric `None`)."""
     return DiversityObjectiveSimple(diversity_metric)
 
 
 def tie_breaker_objectives(tie_breaker_metrics: list[DiversityMetric]) -> list[DiversityObjective]:
-    """Return each metric as a simple tie-breaker objective over the problem's own distance.
+    """Return each metric as a simple tie-breaker objective over given distances.
 
     A single-metric problem's tie-breakers are simple objectives, as the solver builder constructs them.
     """

@@ -40,7 +40,10 @@ class DistanceStoreFactory(ABC):
     @property
     @abstractmethod
     def distance_metrics(self) -> tuple[DistanceMetric | None, ...]:
-        """Return the distance metric of each store, in store order; None for a store over given distances."""
+        """Return the distance metric of each store; None marks a store over given distances.
+
+        The order of the entries is the store order, which every other method follows.
+        """
 
     # --------------------------------------------------------------------------
     #  Policy
@@ -57,9 +60,9 @@ class DistanceStoreFactory(ABC):
 
     @abstractmethod
     def _determine_auto_storage_types(self) -> list[DistanceStorageType]:
-        """Return the storage type that AUTO resolves to for each store, in store order."""
+        """Return each store's storage type under AUTO, in store order."""
 
-    def resolved_storage(self) -> DistanceStorageTypes:
+    def resolved_storage_types(self) -> DistanceStorageTypes:
         """Return each store's distance metric paired with its resolved storage type, in store order."""
         return DistanceStorageTypes(tuple(zip(self.distance_metrics, self.determine_storage_types(), strict=True)))
 
@@ -95,7 +98,9 @@ class DistanceStoreFactory(ABC):
     @classmethod
     @contextmanager
     def attach_distance_stores(cls, specs: Sequence[SharedStoreSpec]) -> Iterator[list[DistanceStore]]:
-        """Yield the distance stores that the specs describe, read from their segments, for the duration of the block.
+        """Attach to the shared-memory segments that the specs describe and yield their distance stores.
+
+        The stores are valid for the duration of the block.
 
         This is the worker-side counterpart of `publish_distance_stores`.  On exit every mapping is
         closed; no segment is destroyed, because the segments belong to the process that published
@@ -106,4 +111,7 @@ class DistanceStoreFactory(ABC):
 
     @abstractmethod
     def _build(self, allocator: DistanceStoreAllocator) -> list[DistanceStore]:
-        """Build every distance store through the given allocator, after checking that its matrices fit in memory."""
+        """Build every distance store through the given allocator.
+
+        A subclass first checks that the full matrices fit in physical memory.
+        """

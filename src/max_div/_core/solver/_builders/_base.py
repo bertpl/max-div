@@ -204,9 +204,9 @@ class SolverBuilderBase:
             return hot_start_strategy
 
     def _store_factory(self) -> tuple[DistanceStoreFactory, DistanceStorageTypes]:
-        """Return the problem's distance store factory and its resolved storage.
+        """Return the problem's distance store factory and its resolved storage types.
 
-        The resolved storage pairs each store's distance metric with its resolved storage type.
+        The resolved storage types pair each store's distance metric with its resolved storage type.
         """
         bindings = DiversityObjectiveBindings.for_objectives(self._determine_diversity_objectives())
         factory = self._problem._distance_store_factory(  # noqa: SLF001 -- kept off the public API; the builder is its intended caller
@@ -214,7 +214,7 @@ class SolverBuilderBase:
             self._distance_storage_type,
             total_physical_memory_bytes(),
         )
-        return factory, factory.resolved_storage()
+        return factory, factory.resolved_storage_types()
 
     def _determine_diversity_objectives(self) -> list[DiversityObjective]:
         """Return the diversity objectives, the primary objective first and then its tie-breakers."""

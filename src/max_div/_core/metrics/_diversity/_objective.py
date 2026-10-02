@@ -162,11 +162,7 @@ class DiversityObjective(ABC):
 # ==================================================================================================
 @dataclass(frozen=True)
 class DiversityObjectiveSimple(DiversityObjective):
-    """One diversity metric over one distance metric; `distance_metric` is `None` over given distances.
-
-    A vector problem's objectives name their distance metric; the given distances of a
-    distance-input problem have none.
-    """
+    """One diversity metric over one distance metric; `distance_metric` is `None` over given distances."""
 
     diversity_metric: DiversityMetric
     distance_metric: DistanceMetric | None = None

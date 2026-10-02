@@ -37,7 +37,7 @@ class VectorProblemDistanceStoreFactory(DistanceStoreFactory):
     array of its own.
 
     The machine's total RAM is passed in as `total_memory_bytes`, so that the storage-type policy
-    depends only on its arguments and can be tested without probing the machine's RAM.
+    depends only on the constructor arguments and can be tested without probing the machine's RAM.
     """
 
     # --------------------------------------------------------------------------
@@ -50,7 +50,7 @@ class VectorProblemDistanceStoreFactory(DistanceStoreFactory):
         storage_type: DistanceStorageType,
         total_memory_bytes: int | None,
     ) -> None:
-        """Bind the factory to the vectors and the distance metrics that it builds distance stores for.
+        """Bind the factory to the vectors and to one distance metric per distance store.
 
         Args:
             vectors: the problem's vectors, one row per item.
@@ -77,20 +77,23 @@ class VectorProblemDistanceStoreFactory(DistanceStoreFactory):
     #  Policy
     # --------------------------------------------------------------------------
     def _determine_auto_storage_types(self) -> list[DistanceStorageType]:
-        """Return full matrices when all of them fit in `AUTO_MEMORY_FRACTION` of the total RAM, else lazy stores.
+        """Return `FULL_MATRIX` for all stores when their full matrices fit in the memory budget, else `LAZY`.
+
+        The memory budget is `AUTO_MEMORY_FRACTION` of the total RAM.
 
         The distances of a vector problem are an internal artifact that the user never sees, so AUTO
-        is free to compute them on demand.  AUTO makes one decision for all the stores.  When the
-        total RAM is unknown, AUTO picks lazy, because a lazy store holds only the vectors and so
-        cannot force the machine to page to disk.
+        is free to compute them on demand.  AUTO makes one decision for all the stores.
+
+        When the total RAM is unknown, AUTO picks lazy, because a lazy store holds only the vectors
+        and so cannot force the machine to page to disk.
         """
-        count = len(self._distance_metrics)
+        n_stores = len(self._distance_metrics)
         if self._total_memory_bytes is None:
-            return [DistanceStorageType.LAZY] * count
-        elif count * full_matrix_bytes(self._n) <= self._total_memory_bytes * AUTO_MEMORY_FRACTION:
-            return [DistanceStorageType.FULL_MATRIX] * count
+            return [DistanceStorageType.LAZY] * n_stores
+        elif n_stores * full_matrix_bytes(self._n) <= self._total_memory_bytes * AUTO_MEMORY_FRACTION:
+            return [DistanceStorageType.FULL_MATRIX] * n_stores
         else:
-            return [DistanceStorageType.LAZY] * count
+            return [DistanceStorageType.LAZY] * n_stores
 
     # --------------------------------------------------------------------------
     #  Construction of the stores
@@ -115,8 +118,10 @@ class VectorProblemDistanceStoreFactory(DistanceStoreFactory):
             else:
                 # `DistanceMetric.preprocess` returns the vectors themselves for a metric that does not preprocess,
                 # so the shared-memory allocator sees one array and puts it in one segment
-                adopted = allocator.adopt(distance_metric.preprocess(self._vectors), KIND_LAZY, distance_metric)
-                stores.append(DistanceStore.lazy(adopted, distance_metric))
+                preprocessed_vectors = allocator.adopt(
+                    distance_metric.preprocess(self._vectors), KIND_LAZY, distance_metric
+                )
+                stores.append(DistanceStore.lazy(preprocessed_vectors, distance_metric))
         return stores
 
     # --------------------------------------------------------------------------

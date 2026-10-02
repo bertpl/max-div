@@ -49,26 +49,27 @@ class SolverConfig:
         stores: Sequence[DistanceStore] | None = None,
         stores_provider: Callable[[], Sequence[DistanceStore]] | None = None,
     ) -> MaxDivSolver:
-        """Return a solver configured as this record describes, given the distance stores it will read.
+        """Return a solver configured as this record describes, given its distance stores.
 
         The stores come in the store order of `DiversityObjectiveBindings` over this config's
-        `diversity_objectives`; this method pairs each one with its distance metric.
+        `diversity_objectives`; this method pairs each one with its distance metric, so a worker that
+        attaches the published stores rebuilds the same mapping as the process that built them.
 
         Pass exactly one of:
 
         Args:
             stores: already-built distance stores — the parallel solver's workers attach to the
                 shared stores and hand them in.
-            stores_provider: a callable that yields the stores when the solve starts, so `build`
-                stays lean and the stores are built inside `solve`.
+            stores_provider: a callable that returns the stores when the solve starts, so that the
+                builder's `build` returns quickly and the stores are built inside `solve`.
 
         Raises:
             ValueError: if neither or both are given.
         """
         bindings = DiversityObjectiveBindings.for_objectives(self.diversity_objectives)
         if stores is not None and stores_provider is None:
-            mapping = bindings.stores_by_distance(stores)
-            provider: Callable[[], Mapping[DistanceMetric | None, DistanceStore]] = lambda: mapping
+            stores_by_distance = bindings.stores_by_distance(stores)
+            provider: Callable[[], Mapping[DistanceMetric | None, DistanceStore]] = lambda: stores_by_distance
         elif stores is None and stores_provider is not None:
             provider = lambda: bindings.stores_by_distance(stores_provider())
         else:

@@ -53,7 +53,7 @@ def _all_pairs(store: DistanceStore, n: int) -> list[float]:
 #  Construction
 # ==================================================================================================
 def test_a_factory_without_distance_metrics_is_rejected():
-    """A factory needs a distance metric for each store it builds, so an empty list is rejected."""
+    """A factory needs a distance metric for each store that it builds, so an empty list is rejected."""
     # --- act / assert -----------------
     with pytest.raises(ValueError, match="at least one distance metric"):
         _factory(DistanceStorageType.AUTO, metrics=())
@@ -66,19 +66,15 @@ def test_distance_metrics_are_reported_in_store_order():
 
     # --- act / assert -----------------
     assert factory.distance_metrics == (L1, L2)
-    assert factory.resolved_storage().per_store == ((L1, DistanceStorageType.LAZY), (L2, DistanceStorageType.LAZY))
+    assert factory.resolved_storage_types().per_store == (
+        (L1, DistanceStorageType.LAZY),
+        (L2, DistanceStorageType.LAZY),
+    )
 
 
 # ==================================================================================================
 #  Policy
 # ==================================================================================================
-@pytest.mark.parametrize("storage_type", [DistanceStorageType.FULL_MATRIX, DistanceStorageType.LAZY])
-def test_explicit_choice_passes_through(storage_type: DistanceStorageType):
-    """A pinned storage type is the resolved one, whatever the memory."""
-    # --- act / assert -----------------
-    assert _factory(storage_type).determine_storage_types() == [storage_type]
-
-
 @pytest.mark.parametrize(
     "n, total_memory, expected",
     [
@@ -98,7 +94,7 @@ def test_auto_is_the_full_matrix_when_it_fits(n: int, total_memory: int | None, 
 
 
 def test_auto_decides_on_the_bytes_of_every_matrix_together():
-    """Two distances over a problem whose one matrix fits, but whose two do not, both go lazy."""
+    """With 2 distances, AUTO picks lazy for both stores when 1 full matrix fits in the memory budget but 2 do not."""
     # --- arrange ----------------------
     factory = _factory(
         DistanceStorageType.AUTO,
@@ -171,7 +167,7 @@ def test_metrics_that_do_not_preprocess_share_one_lazy_array_and_a_preprocessing
 
 @pytest.mark.parametrize("metric", [L2, DistanceMetric.cosine()], ids=["non-preprocessing", "preprocessing"])
 def test_full_matrix_and_lazy_stores_agree(metric: DistanceMetric):
-    """The two kinds read bit-identical distances, preprocessing metric included."""
+    """Both kinds read bit-identical distances, preprocessing metric included."""
     # --- act --------------------------
     (full,) = _factory(DistanceStorageType.FULL_MATRIX, metrics=(metric,)).create_stores()
     (lazy,) = _factory(DistanceStorageType.LAZY, metrics=(metric,)).create_stores()

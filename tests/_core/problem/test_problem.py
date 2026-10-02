@@ -639,7 +639,7 @@ def test_vector_problem_diversity_objective_keeps_the_distance_metric_that_a_ter
 
 
 def test_vector_problem_returns_a_factory_over_real_metrics():
-    """A vector problem returns its own factory class, with each None entry replaced by its own distance metric."""
+    """A vector problem returns its own factory class, with each None entry replaced by the problem's metric."""
     # --- arrange ----------------------
     problem = _problem("vectors", DiversityMetric.MIN_SEPARATION)
     l2 = DistanceMetric.l2_euclidean()

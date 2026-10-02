@@ -90,15 +90,17 @@ class MaxDivProblem(ABC):
         storage_type: DistanceStorageType,
         total_memory_bytes: int | None,
     ) -> DistanceStoreFactory:
-        """Return the factory that builds this problem's distance stores, one per entry of `distance_metrics`.
-
-        Each flavor returns its own factory class.
+        """Return the distance store factory for this problem, with one store per entry of `distance_metrics`.
 
         Args:
             distance_metrics: the distance metric of each store, as the diversity objectives name them;
                 None stands for the problem's own distances.
             storage_type: the user's choice of storage type, possibly AUTO.
             total_memory_bytes: the total physical RAM of the machine, or None when it is unknown.
+
+        Raises:
+            ValueError: When an entry does not fit the flavor: a distance-input problem accepts
+                only the single entry None.
         """
 
     # --- computed fields ------------------------
@@ -344,9 +346,11 @@ class VectorMaxDivProblem(MaxDivProblem):
         storage_type: DistanceStorageType,
         total_memory_bytes: int | None,
     ) -> VectorProblemDistanceStoreFactory:
-        """Return the factory that computes each store's distances from the vectors.
+        """Return the distance store factory that computes each store's distances from the vectors.
 
-        A None entry stands for the problem's own distance metric.
+        A None entry stands for the problem's own distance metric.  The solver builders pass none,
+        because `diversity_objective` names the metric of every term; replacing the entry here is
+        what lets the factory take distance metrics typed without None.
         """
         return VectorProblemDistanceStoreFactory(
             self.vectors,
@@ -393,7 +397,9 @@ class DistanceMaxDivProblem(MaxDivProblem):
         storage_type: DistanceStorageType,
         total_memory_bytes: int | None,
     ) -> DistanceProblemDistanceStoreFactory:
-        """Return the factory that stores the given distances; the machine's RAM plays no role in its storage type.
+        """Return the distance store factory that stores the given distances.
+
+        The machine's RAM plays no role in its storage type, so `total_memory_bytes` is not used.
 
         Raises:
             ValueError: Unless `distance_metrics` is the single entry None: the given distances are

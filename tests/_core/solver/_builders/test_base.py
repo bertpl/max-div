@@ -56,7 +56,7 @@ def test_a_distance_named_twice_gets_one_store(builder_class: type[SolverBuilder
     # --- assert -----------------------
     assert isinstance(factory, VectorProblemDistanceStoreFactory)
     assert factory.distance_metrics == (l2, axis_0)
-    assert [distance for distance, _ in distance_storage.per_store] == [l2, axis_0]
+    assert [distance_metric for distance_metric, _ in distance_storage.per_store] == [l2, axis_0]
     assert len(factory.create_stores()) == 2
 
 
@@ -71,4 +71,4 @@ def test_a_distance_problem_gets_the_factory_of_its_flavor(builder_class: type[S
 
     # --- assert -----------------------
     assert isinstance(factory, DistanceProblemDistanceStoreFactory)
-    assert [distance for distance, _ in distance_storage.per_store] == [None]
+    assert [distance_metric for distance_metric, _ in distance_storage.per_store] == [None]

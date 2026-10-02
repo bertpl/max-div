@@ -55,9 +55,5 @@ class DiversityObjectiveBindings:
         return cls(distance_metrics, tracker_specs, objective_spec_positions)
 
     def stores_by_distance(self, stores: Sequence[DistanceStore]) -> dict[DistanceMetric | None, DistanceStore]:
-        """Pair each entry of `distance_metrics` with its store; `stores` is in store order.
-
-        The process that builds the stores and a worker that attaches them both call this, so a
-        worker rebuilds the same mapping from its attached stores.
-        """
+        """Pair each entry of `distance_metrics` with its store; `stores` is in store order."""
         return dict(zip(self.distance_metrics, stores, strict=True))
