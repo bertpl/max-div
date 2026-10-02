@@ -287,7 +287,7 @@ def test_pairwise_distance_l2_and_projections_with_k_matches_reference(n_dims: i
 
 
 def test_pairwise_distance_l2_and_projections_with_k_is_the_weighted_minimum_of_its_parts():
-    """With `k` the distance is the minimum of the L-∞ and L2 distances weighted (k - 1, k^(1/d) - 1), over k - 1."""
+    """With `k` the distance is the minimum of L-∞ and L2 weighted (k - 1, k^(1/d) - 1), divided by k - 1."""
     # --- arrange ----------------------
     k = 100
     vectors = np.random.default_rng(20261001).random((30, 2)).astype(np.float32)

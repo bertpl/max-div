@@ -163,11 +163,12 @@ class DistanceMetric:
 
         - Without `k`, the final separation in the full space scales as the d-th root of the final
           separation along the axes, so the selection reaches different fractions of the spacing of
-          k evenly spread points along the axes and in the full space: 1 / (k - 1) along an axis
-          and 1 / (k^(1/d) - 1) in the full space (a grid of k points).  No single `l2_scale` makes
-          the 2 fractions equal for every final separation.  For k well-spread
-          points in the unit cube, the axis gap between neighbors can reach 1/k, while the L2 part is
-          about c/k, where c grows with d:
+          k evenly spread points, a spacing that is 1 / (k - 1) along an axis and 1 / (k^(1/d) - 1)
+          in the full space (a grid of k points).  No single `l2_scale` makes the 2 fractions equal
+          for every final separation.
+
+          For k well-spread points in the unit cube, the axis gap between neighbors can reach 1/k,
+          while the L2 part is about c/k, where c grows with d:
 
           - c ≈ 1.15 for d = 2
           - c ≈ 1.4 for d = 3
@@ -176,13 +177,15 @@ class DistanceMetric:
 
           In higher dimensions the L2 part therefore rarely sets the minimum, and an `l2_scale` of
           about 1/c lets the L2 part set the minimum about as often as the L-∞ part does.
-        - With `k`, the 2 parts are equal at that spacing, so the solve reaches the same fraction of
-          it along each axis and in the full space, whatever the final separation.
+        - With `k`, the 2 parts are equal when the gap along an axis is 1 / (k - 1) and the L2
+          distance is 1 / (k^(1/d) - 1), so the solve reaches the same fraction of these spacings
+          along each axis and in the full space, whatever the final separation.
 
           - With `l2_scale` = 1, a min-separation score over this distance equals the score of a
-            `HybridDiversityMetric.min_of` over min-separation terms on the L-∞ and L2 distances,
-            with weights (k - 1, k^(1/d) - 1), divided by k - 1; the L2-and-projections distance
-            computes it from 1 distance store, where that hybrid needs 2.
+            `HybridDiversityMetric.min_of` over min-separation terms on the L-∞ and L2 distances
+            with weights (k - 1, k^(1/d) - 1), with that score divided by k - 1; the
+            L2-and-projections distance computes this score from 1 distance store, where that
+            hybrid needs 2.
           - An `l2_scale` above 1 makes the L2 part larger, so the solve spreads the selection more
             along the axes.
           - Below k = 2^d, a grid of k points overstates how far apart k points can get in the full
@@ -269,8 +272,9 @@ class DistanceMetric:
 
         `validate` is a no-op for a kind that computes on any vectors, so a caller can call it on every
         metric.  `vectors` must already be a 2D array; `preprocess` checks the layout, this method does not.
-        `problem_k` is the problem's selection size.  `preprocess` passes none, because a distance store
-        does not know the problem's selection size, and a metric then skips the check against `problem_k`.
+        `problem_k` is the problem's selection size.  `preprocess` calls `validate` without `problem_k`,
+        because a distance store does not know the problem's selection size; the check against
+        `problem_k` is then skipped.
         """
 
     def preprocess(self, vectors: NDArray[np.float32]) -> NDArray[np.float32]:

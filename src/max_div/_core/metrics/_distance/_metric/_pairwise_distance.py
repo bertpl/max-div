@@ -226,7 +226,7 @@ def _pairwise_distance(  # noqa: C901 -- flat dispatch, one arm per kind: comple
 
     - the power `p` of a generic Minkowski kind;
     - the `l2_scale` of the L2-and-projections distance;
-    - the factor on the L2 distance of the L2-and-projections distance weighted for k items.
+    - for the L2-and-projections distance weighted for k items: the factor on the L2 distance.
 
     The selector is loop-invariant in every calling loop, so the branch order is not
     performance-relevant.  The specialized Minkowski kinds apply the outer root as repeated

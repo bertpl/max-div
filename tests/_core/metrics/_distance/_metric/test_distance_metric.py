@@ -37,7 +37,7 @@ def test_factory_metrics_have_distinct_kinds():
 
 
 def test_factory_metrics_cover_every_subclass_once():
-    """Each factory returns its own subclass; with the Minkowski and k-weighted forms, they cover every subclass."""
+    """Each factory returns its own subclass; with the Minkowski and the k-items subclass, they cover every subclass."""
     # --- act --------------------------
     classes = [type(metric) for metric in _FACTORY_METRICS]
     other_forms = {type(DistanceMetric.minkowski(3)), type(DistanceMetric.l2_and_projections(k=3))}
@@ -251,7 +251,7 @@ def test_l2_and_projections_with_k_is_a_kind_of_its_own_that_stores_k():
 
 @pytest.mark.parametrize("k", [1, 0, -5, 1.5, "100", True])
 def test_l2_and_projections_rejects_a_k_that_is_not_an_integer_of_at_least_2(k):
-    """`k` must be an integer of at least 2, where the factor on the L2 distance is defined."""
+    """`k` must be an integer of at least 2, because the factor on the L2 distance divides by k - 1."""
     # --- act / assert -----------------
     with pytest.raises(ValueError, match="integer k >= 2"):
         DistanceMetric.l2_and_projections(k=k)

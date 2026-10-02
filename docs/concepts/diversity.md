@@ -43,16 +43,17 @@ The distance metric determines how the distance between two vectors is measured.
 | `minkowski(p, root=True)` | $d = \Big( \sum_i \lvert x_i - y_i \rvert^p \Big)^{1/p}$ | The general family behind `l1_manhattan()` ($p=1$), `l2_euclidean()` ($p=2$) and `linf_chebyshev()` ($p=\infty$); any $p > 0$ is accepted, and those special values resolve to the dedicated metrics. |
 | `geometric_mean()` | $d = \Big( \prod_i \lvert x_i - y_i \rvert \Big)^{1/d}$ | The geometric mean of the per-dimension gaps, the $p \to 0$ limit of the power-mean family. A shared coordinate makes the distance zero, so a selection that keeps every pair apart under this metric is spread in every coordinate projection as well as in the full space -- the pair distance behind *maximum projection designs* (Joseph, Gul & Ba, 2015). |
 | `along_axis(axis)` | $d = \lvert x_{\text{axis}} - y_{\text{axis}} \rvert$ | The distance along one coordinate axis, every other coordinate ignored. A selection kept apart under it is spread along that single coordinate. |
-| `l2_and_projections(l2_scale=1.0, k=None)` | $d = \min\Big( \min_i \lvert a_i - b_i \rvert,\; s \, \lVert a - b \rVert_2^{\,d} \Big)$, or with $k$: $d = \min\Big( \min_i \lvert a_i - b_i \rvert,\; s \, r \, \lVert a - b \rVert_2 \Big)$ with $r = (k^{1/d} - 1) / (k - 1)$ | For vectors $a$ and $b$ of dimension $d$, with $s$ = `l2_scale`: the smaller of the `l_minus_inf()` distance and the L2 part, $s$ times the L2 distance raised to the power $d$, or, given $k$ selected items, $s \, r$ times the L2 distance. Under `MIN_SEPARATION` a selection is spread in its projection onto every coordinate axis and in the full space at once. |
+| `l2_and_projections(l2_scale=1.0, k=None)` | $d = \min\Big( \min_i \lvert a_i - b_i \rvert,\; s \, \lVert a - b \rVert_2^{\,d} \Big)$, or with $k$: $d = \min\Big( \min_i \lvert a_i - b_i \rvert,\; s \, r \, \lVert a - b \rVert_2 \Big)$ with $r = (k^{1/d} - 1) / (k - 1)$ | For vectors $a$ and $b$ of dimension $d$, with $s$ = `l2_scale`: the smaller of the `l_minus_inf()` distance and the L2 part. The L2 part is $s$ times the L2 distance raised to the power $d$, or, given $k$ selected items, $s \, r$ times the L2 distance. Under `MIN_SEPARATION` a selection is spread in its projection onto every coordinate axis and in the full space at once. |
 
 - **Speed depends on `p`.** The values $p \in \{1, 2, \infty, 0.5, 0.25, 0.125\}$ compute with hardware arithmetic; every other $p$ pays a `pow` call per dimension, well over an order of magnitude more per term.
 - **`root=False` skips the outer $1/p$ root**, exactly as `l2s_euclidean_squared()` does for `l2_euclidean()` -- see that row above.
 - **For $0 < p < 1$ the `root=True` form violates the triangle inequality** and is not a strict metric, while the `root=False` form is one -- the solver never relies on the triangle inequality, so both are usable.
 - **`l2_and_projections()` assumes vectors scaled into the unit cube $[0,1]^d$**, the only population for which its 2 parts are comparable, and at least 2 dimensions: in 1 it only rescales the one coordinate gap.
 - **`l2_and_projections(k=...)` weights its 2 parts for $k$ selected items.** A solve under `MIN_SEPARATION` ends with the 2 parts about equal for its closest selected pairs.
-    - **Without $k$**, the L2 part is the L2 distance raised to the power $d$, so along the axes and in the full space the selection reaches different fractions of the spacing of $k$ evenly spread points: $1/(k-1)$ along an axis and $1/(k^{1/d}-1)$ in the full space (a grid of $k$ points). No single `l2_scale` makes the 2 fractions equal for every final separation.
+    - **Without $k$**, the L2 part is the L2 distance raised to the power $d$, so along the axes and in the full space the selection reaches different fractions of the spacing of $k$ evenly spread points, a spacing that is $1/(k-1)$ along an axis and $1/(k^{1/d}-1)$ in the full space (a grid of $k$ points).
+        - No single `l2_scale` makes the 2 fractions equal for every final separation.
         - In higher dimensions the L2 part rarely sets the minimum: an `l2_scale` of about 1/1.4 for $d = 3$ and about 1/40 for $d = 10$ lets the L2 part set the minimum about as often as the L−∞ part does.
-    - **With $k$**, $r$ makes the 2 parts equal at that spacing, so the selection reaches the same fraction of it along the axes and in the full space, whatever the final separation.
+    - **With $k$**, $r$ makes the 2 parts equal when the gap along an axis is $1/(k-1)$ and the L2 distance is $1/(k^{1/d}-1)$, so the selection reaches the same fraction of these spacings along the axes and in the full space, whatever the final separation.
         - An `l2_scale` above 1 spreads the selection more along the axes.
         - Below $k = 2^d$, a grid of $k$ points overstates how far apart $k$ points can get in the full space, so the L2 part is too small and the solve spreads the selection more in the full space; an `l2_scale` above 1 makes up for the smaller L2 part.
     - A problem rejects an `l2_and_projections(k=...)` whose $k$ differs from the problem's $k$.
@@ -198,7 +199,9 @@ A `min_of` hybrid whose terms all use min-separation scores a selection exactly 
 
 [`l2_and_projections()`](#distance-metrics) is such a distance: the minimum of the `l_minus_inf()` distance and `l2_scale` times the L2 distance raised to the power $d$, the number of dimensions. Under min-separation it spreads a selection along every axis and in the full space at once.
 
-`l2_and_projections(k=...)` with `l2_scale` = 1 is the minimum of $k - 1$ times the `l_minus_inf()` distance and $k^{1/d} - 1$ times the `l2_euclidean()` distance, divided by $k - 1$: a solve under `MIN_SEPARATION` scores a selection as a `min_of` hybrid with those weights would, divided by $k - 1$, from 1 distance store, where the hybrid needs 2.
+`l2_and_projections(k=...)` with `l2_scale` = 1 is the minimum of $k - 1$ times the `l_minus_inf()` distance and $k^{1/d} - 1$ times the `l2_euclidean()` distance, divided by $k - 1$.
+
+A solve under `MIN_SEPARATION` over it therefore gives a selection the score of a `min_of` hybrid with those weights, divided by $k - 1$, but computes that score from 1 set of pairwise distances, where the hybrid needs 2 sets.
 
 ### VI.D. Tie-breakers { #hybrid-tie-breakers }
 

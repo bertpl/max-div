@@ -506,7 +506,10 @@ def test_solver_hybrid_metric_solves_in_parallel(factory, expected_score):
 
 
 def _smallest_l2_and_projections_pair_distance(vectors: np.ndarray, i_selected: np.ndarray, k: int | None) -> float:
-    """Return the smallest L2-and-projections distance with `k`, at L2 scale 1, between 2 selected vectors."""
+    """Return the smallest L2-and-projections distance at L2 scale 1 between 2 selected vectors.
+
+    A `k` of None gives the form without `k`.
+    """
     selected = vectors[i_selected].astype(np.float64)
     return min(
         l2_and_projections_reference(a, b, l2_scale=1.0, k=k)
@@ -537,11 +540,11 @@ def test_min_separation_over_l2_and_projections_is_the_smallest_pair_distance_of
     assert solution.score.diversity == pytest.approx(expected, rel=1e-5)
 
 
-def test_min_separation_over_l2_and_projections_with_k_solves_in_parallel_from_lazy_stores():
-    """A 2-worker solve from lazy stores over `l2_and_projections(k=...)` scores the closest selected pair.
+def test_min_separation_over_l2_and_projections_with_k_solves_in_parallel_from_lazy_distance_stores():
+    """A 2-worker solve from lazy distance stores over `l2_and_projections(k=...)` scores the closest selected pair.
 
-    A lazy store passes the factor on the L2 distance to the compiled pairwise distance function itself, a path
-    that a full distance matrix does not take.
+    A lazy distance store passes the factor on the L2 distance to the compiled pairwise distance function itself;
+    a full distance matrix does not.
     """
     # --- arrange ----------------------
     k = 10
