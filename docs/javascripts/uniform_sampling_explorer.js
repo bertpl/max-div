@@ -4,7 +4,8 @@
 // carry `data-i`, and whose dots carry `data-nn`: a JSON object mapping a distance key to the
 // precomputed `[nearest neighbor index, distance]` under that distance. The SVG names the objective's
 // distance keys in `data-objective` (one for a simple objective, one per term for a hybrid) and every
-// key's label in `data-labels`.
+// key's label in `data-labels`, and the L2 factor of the L2-and-projections distance with k in
+// `data-l2-factor`.
 //
 // Invariants:
 // - one delegated listener set per figure, installed once: the `document$` observable fires on
@@ -69,14 +70,14 @@ function lInfPaths(cx, cy, d) {
   ];
 }
 
-// Return the L2-and-projections level curve at value d around (cx, cy), with `l2_scale` = 1 and in 2
-// dimensions: min(min(|dx|, |dy|), dx^2 + dy^2) = d. It is the L-inf curve with the corner of each
-// quadrant cut by the circle of radius sqrt(d): the circle crosses the line |dx| = d at
-// |dy| = q = sqrt(d - d^2), and it cuts the corner only while q > d, which holds for every d < 1/2.
-function l2AndProjectionsPaths(cx, cy, d, samples = 24) {
-  const q = Math.sqrt(Math.max(d - d * d, 0));
+// Return the L2-and-projections level curve at value d around (cx, cy), in 2 dimensions: the L-inf
+// curve with the corner of each quadrant cut by the circle on which the L2 part equals d. `radius` is
+// that circle's radius, which depends on whether the distance was given k; `levelPaths` computes it.
+// The circle crosses the line |dx| = d at |dy| = q = sqrt(radius^2 - d^2), and it cuts the corner
+// only while q > d.
+function l2AndProjectionsPaths(cx, cy, d, radius, samples = 24) {
+  const q = Math.sqrt(Math.max(radius * radius - d * d, 0));
   if (q <= d) return lInfPaths(cx, cy, d);
-  const radius = Math.sqrt(d);
   const paths = [];
   for (const sx of [-1, 1]) {
     for (const sy of [-1, 1]) {
@@ -100,9 +101,15 @@ function l2AndProjectionsPaths(cx, cy, d, samples = 24) {
 // Return the level curve of a distance at value d around (cx, cy) as SVG path strings in data units:
 // - L2: a circle;
 // - x or y: the two lines at that coordinate offset;
-// - L-inf and L2-and-projections: see `lInfPaths` and `l2AndProjectionsPaths`;
+// - L-inf and both L2-and-projections distances, without and with k: see `lInfPaths` and
+//   `l2AndProjectionsPaths`;
 // - geometric mean: the hyperbolas.
-function levelPaths(key, cx, cy, d) {
+// l2Factor is the factor on the L2 distance of the L2-and-projections distance with k, from the SVG's
+// `data-l2-factor`; only that distance reads it. The L2-and-projections radius depends on whether the
+// distance was given k, with `l2_scale` = 1:
+// - without k, the L2 part is dx^2 + dy^2, so the radius is sqrt(d);
+// - with k, the L2 part is l2Factor * sqrt(dx^2 + dy^2), so the radius is d / l2Factor.
+function levelPaths(key, cx, cy, d, l2Factor) {
   switch (key) {
     case "l2":
       return [`M${cx - d},${cy}A${d},${d} 0 1 0 ${cx + d},${cy}A${d},${d} 0 1 0 ${cx - d},${cy}`];
@@ -113,15 +120,17 @@ function levelPaths(key, cx, cy, d) {
     case "linf":
       return lInfPaths(cx, cy, d);
     case "l2_and_projections":
-      return l2AndProjectionsPaths(cx, cy, d);
+      return l2AndProjectionsPaths(cx, cy, d, Math.sqrt(d));
+    case "l2_and_projections_k":
+      return l2AndProjectionsPaths(cx, cy, d, d / l2Factor);
     default:
       return geomeanPaths(cx, cy, d);
   }
 }
 
 // Append the level curve of one objective distance through the neighbor under it.
-function drawLevel(layer, key, cx, cy, d) {
-  for (const path of levelPaths(key, cx, cy, d)) {
+function drawLevel(layer, key, cx, cy, d, l2Factor) {
+  for (const path of levelPaths(key, cx, cy, d, l2Factor)) {
     appendElement(layer, "path", { d: path, class: `usx-level usx-level-${key}` });
   }
 }
@@ -199,7 +208,7 @@ function pickItem(figure, i) {
   const clauses = [];
   for (const key of objectiveKeys) {
     const [nn, d] = neighbors[key];
-    drawLevel(svg.querySelector(".usx-hover"), key, cx, cy, d);
+    drawLevel(svg.querySelector(".usx-hover"), key, cx, cy, d, parseFloat(svg.dataset.l2Factor));
     clauses.push(`${labels[key]}: item ${nn} at d = ${d.toFixed(3)}`);
   }
   figure.querySelector(".usx-caption").textContent = `item ${i} → nearest under the ${clauses.join("; ")}`;

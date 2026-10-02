@@ -22,6 +22,8 @@ from dataclasses import dataclass
 import numpy as np
 from numpy.typing import NDArray
 
+from max_div.metrics import DistanceMetric
+
 # The axes extend past the unit square: room for the rug ticks below and left of it, and for the
 # legend above it.
 X_MIN, X_MAX = -0.06, 1.02
@@ -88,6 +90,17 @@ DISTANCES = {
             "L2-and-projections distance",
             lambda dx, dy: np.minimum(np.minimum(dx, dy), dx * dx + dy * dy),
         ),
+        # The entry below is `DistanceMetric.l2_and_projections(k=k)` with its default `l2_scale` of 1; in 2
+        # dimensions its L2 part is the metric's `float_param(2)` times the L2 distance. The gap matrices are
+        # k x k, over the k selected items, so `len(dx)` is k.
+        Distance(
+            "l2_and_projections_k",
+            "L2-and-projections distance with k",
+            lambda dx, dy: np.minimum(
+                np.minimum(dx, dy),
+                DistanceMetric.l2_and_projections(k=len(dx)).float_param(2) * np.sqrt(dx * dx + dy * dy),
+            ),
+        ),
     )
 }
 REFERENCE_KEYS = ("l2", "x", "y")  # the neighbors marked whatever the objective
@@ -102,6 +115,9 @@ def nearest_neighbors(
     A pair of items that share a coordinate is at distance 0 under every distance of `DISTANCES` except L2 and the
     distance along the axis where the 2 items differ; that pair is then each other's nearest neighbor, and the
     JavaScript draws the degenerate level curve.
+
+    `x` and `y` must hold exactly the k selected items: the `l2_and_projections_k` distance computes its L2 factor
+    from their count.
     """
     x64 = np.asarray(x, dtype=np.float64)
     y64 = np.asarray(y, dtype=np.float64)
@@ -296,7 +312,8 @@ def explorer_fragment(
     Args:
         x, y: Coordinates of the k selected items, in the solver's input coordinates.
         n: Population size, for the legend.
-        k: Selection size, for the legend.
+        k: Selection size, for the legend and for the L2 factor of the L2-and-projections distance with k,
+            which the SVG carries in `data-l2-factor`.
         objective_keys: Keys into `DISTANCES` of the distances the experiment's objective uses; one for a
             simple objective, one per term for a hybrid. The interaction draws one level curve per key.
         population_image_url: URL of the population raster, relative to the page that includes the fragment.
@@ -311,7 +328,8 @@ def explorer_fragment(
         '<div class="usx-figure">',
         f'<svg class="usx" viewBox="0 0 {VIEW_WIDTH} {VIEW_HEIGHT}" xmlns="http://www.w3.org/2000/svg" role="img"'
         f" data-objective=\"{' '.join(objective_keys)}\" data-labels='{json.dumps(labels, separators=(',', ':'))}'"
-        f' data-ring="{RING_RADIUS_FACTOR}" data-reach="{GLYPH_REACH_FACTOR}" data-center="{CENTER_DOT_FACTOR}">',
+        f' data-ring="{RING_RADIUS_FACTOR}" data-reach="{GLYPH_REACH_FACTOR}" data-center="{CENTER_DOT_FACTOR}"'
+        f' data-l2-factor="{DistanceMetric.l2_and_projections(k=k).float_param(2)!r}">',
         f"<title>Selection maximizing diversity under the {', '.join(labels[key] for key in objective_keys)}</title>",
         f"<desc>{description}</desc>",
         '<defs><clipPath id="usx-square" clipPathUnits="userSpaceOnUse">'

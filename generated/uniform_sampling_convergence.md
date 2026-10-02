@@ -9,3 +9,4 @@
 | **V.B** geometric-mean hybrid, 20 items per band | 33,078 | 96.8% | 97.1% | 98.5% |
 | **V.D** minimum hybrid: L−∞ and L2 terms, weighted $k$ and $\sqrt{k}$ | 57,892 | 95.7% | 96.7% | 98.6% |
 | **V.E** L2-and-projections distance | 126,449 | 94.9% | 98.2% | 98.8% |
+| **V.F** L2-and-projections distance with $k$ | 116,849 | 99.2% | 99.2% | 100.0% |

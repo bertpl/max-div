@@ -235,14 +235,16 @@ def layout_constrained_group(alpha: float) -> NDArray[np.float64]:
 # ==================================================================================================
 #  Uniform sampling: solved experiments
 # ==================================================================================================
-# The keys name the distances of `uniform_sampling_explorer.DISTANCES`.
-DISTANCE_METRICS = {
-    "l2": DistanceMetric.l2_euclidean(),
-    "x": DistanceMetric.along_axis(0),
-    "y": DistanceMetric.along_axis(1),
-    "linf": DistanceMetric.l_minus_inf(),
-    "geomean": DistanceMetric.geometric_mean(),
-    "l2_and_projections": DistanceMetric.l2_and_projections(),
+# The keys name the distances of `uniform_sampling_explorer.DISTANCES`; each value maps the selection size k
+# to the distance metric.
+DISTANCE_METRIC_FACTORIES: dict[str, Callable[[int], DistanceMetric]] = {
+    "l2": lambda k: DistanceMetric.l2_euclidean(),
+    "x": lambda k: DistanceMetric.along_axis(0),
+    "y": lambda k: DistanceMetric.along_axis(1),
+    "linf": lambda k: DistanceMetric.l_minus_inf(),
+    "geomean": lambda k: DistanceMetric.geometric_mean(),
+    "l2_and_projections": lambda k: DistanceMetric.l2_and_projections(),
+    "l2_and_projections_k": lambda k: DistanceMetric.l2_and_projections(k=k),
 }
 REFERENCE_LABELS = {"l2": "L2", "x": "$x$", "y": "$y$"}
 # One row label per experiment, shared by the summary and the convergence tables; the section
@@ -259,6 +261,7 @@ EXPERIMENT_LABELS = {
     "hybrid_geomean_banded_long": "**V.C.2** geometric-mean hybrid, 20 items per band, 4 h, 32 workers",
     "hybrid_weighted_min": "**V.D** minimum hybrid: L\u2212\u221e and L2 terms, weighted $k$ and $\\sqrt{k}$",
     "l2_and_projections": "**V.E** L2-and-projections distance",
+    "l2_and_projections_k": "**V.F** L2-and-projections distance with $k$",
 }
 # The replay figures of section V.C re-solve the experiments that `EXPERIMENT_NAME_BY_LONG_RUN` names, with this
 # budget and worker count.
@@ -343,13 +346,13 @@ class Experiment:
         else:
             weights = None if self.k_weight_exponents is None else tuple(k**e for e in self.k_weight_exponents)
             return self.hybrid_factory(
-                *(DiversityMetric.MIN_SEPARATION.over(DISTANCE_METRICS[key]) for key in self.distance_keys),
+                *(DiversityMetric.MIN_SEPARATION.over(DISTANCE_METRIC_FACTORIES[key](k)) for key in self.distance_keys),
                 weights=weights,
             )
 
-    def distance_metric(self) -> DistanceMetric:
-        """Return the problem's distance metric; a hybrid carries its distances in its terms."""
-        return DISTANCE_METRICS[self.distance_keys[0]]
+    def distance_metric(self, k: int) -> DistanceMetric:
+        """Return the problem's distance metric for k selected items; a hybrid carries its distances in its terms."""
+        return DISTANCE_METRIC_FACTORIES[self.distance_keys[0]](k)
 
 
 EXPERIMENTS = (
@@ -369,6 +372,7 @@ EXPERIMENTS = (
         k_weight_exponents=(1.0, 0.5),
     ),
     Experiment("l2_and_projections", ("l2_and_projections",)),
+    Experiment("l2_and_projections_k", ("l2_and_projections_k",)),
 )
 
 
@@ -396,7 +400,7 @@ def build_experiment_problem(vectors: NDArray[np.float32], experiment: Experimen
     return MaxDivProblem.new(
         vectors=vectors,
         k=k,
-        distance_metric=experiment.distance_metric(),
+        distance_metric=experiment.distance_metric(k),
         diversity_metric=experiment.diversity_metric(k),
         constraints=experiment.constraints(vectors, k),
     )
