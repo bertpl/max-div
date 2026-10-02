@@ -249,10 +249,14 @@ class DistanceMetric:
         """
         validate_vector_array_layout(vectors)
         self.validate(vectors)
-        return self._preprocess_unchecked(vectors)
+        return self._transform_checked_vectors(vectors)
 
-    def _preprocess_unchecked(self, vectors: NDArray[np.float32]) -> NDArray[np.float32]:
-        """Return the array that the pairwise distance function reads, from checked vectors; by default `vectors`."""
+    def _transform_checked_vectors(self, vectors: NDArray[np.float32]) -> NDArray[np.float32]:
+        """Return the array that the pairwise distance function reads; by default `vectors` itself.
+
+        `preprocess` checks `vectors` and then calls this method, so a subclass overrides it to transform
+        the vectors without repeating the checks.
+        """
         return vectors
 
     # --------------------------------------------------------------------------
@@ -375,7 +379,7 @@ class CosineDistanceMetric(DistanceMetric):
                 f"Cosine distance is undefined for zero vectors; found an all-zero vector at row {zero_rows[0]}."
             )
 
-    def _preprocess_unchecked(self, vectors: NDArray[np.float32]) -> NDArray[np.float32]:
+    def _transform_checked_vectors(self, vectors: NDArray[np.float32]) -> NDArray[np.float32]:
         """Return a fresh float32 array with each row scaled to unit L2 norm."""
         return _normalize_rows(vectors)
 
@@ -432,7 +436,7 @@ class AlongAxisDistanceMetric(DistanceMetric):
         if self.axis >= n_dims:
             raise ValueError(f"{self!r} reads a coordinate that {n_dims}-dimensional vectors do not have.")
 
-    def _preprocess_unchecked(self, vectors: NDArray[np.float32]) -> NDArray[np.float32]:
+    def _transform_checked_vectors(self, vectors: NDArray[np.float32]) -> NDArray[np.float32]:
         """Return a fresh (n, 1) float32 array holding the coordinate along `axis`."""
         return vectors[:, self.axis : self.axis + 1].copy()
 
