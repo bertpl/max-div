@@ -53,12 +53,16 @@ class DistanceMetric:
     only its own arguments and overrides the members whose behavior differs for that kind.
     """
 
-    # Each subclass sets `_factory_name`, read by `__repr__`, `_lazy_cost_ns`, read by `estimated_lazy_cost_ns`,
-    # and sets `_kind` and `_label` unless it overrides `kind` or `label`.
+    # Each subclass sets:
+    # - `_factory_name`, read by `__repr__`;
+    # - `_lazy_cost_coefficients_ns`, read by `estimated_lazy_cost_ns`;
+    # - `_kind` and `_label`, unless it overrides `kind` or `label`.
     _kind: ClassVar[int]
     _label: ClassVar[str]
     _factory_name: ClassVar[str]
-    _lazy_cost_ns: ClassVar[tuple[float, float]]  # (c0, c1) of the estimate c0 + c1 * n_dims
+    # Each kind's (c0, c1) is fitted on timings of the solver's separation updates over a lazy distance store,
+    # and rounded.
+    _lazy_cost_coefficients_ns: ClassVar[tuple[float, float]]
     needs_preprocessed_vectors: ClassVar[bool] = (
         False  # `preprocess` returns a new array when True, the input when False
     )
@@ -306,16 +310,16 @@ class DistanceMetric:
     def estimated_lazy_cost_ns(self, n_dims: int) -> float:
         """Return the estimated time to compute 1 distance between vectors of `n_dims` dimensions, in nanoseconds.
 
-        The estimate is c0 + c1 * n_dims, with constants per kind fitted on timings of the solver's
-        separation updates over a lazy distance store, and rounded.  It serves to rank distances by how
-        much a full matrix saves over computing them, so only its order across kinds is meant to hold.
+        The estimate is linear in `n_dims`.  It serves to rank distances by how much a full matrix saves
+        over computing them, so only the order of the estimates across kinds is meaningful, not their
+        absolute values.
         """
         c0, c1 = self._lazy_cost_coefficients()
         return c0 + c1 * n_dims
 
     def _lazy_cost_coefficients(self) -> tuple[float, float]:
-        """Return (c0, c1) of `estimated_lazy_cost_ns`; by default the class's `_lazy_cost_ns`."""
-        return self._lazy_cost_ns
+        """Return (c0, c1) of `estimated_lazy_cost_ns`; by default the class's `_lazy_cost_coefficients_ns`."""
+        return self._lazy_cost_coefficients_ns
 
     # --------------------------------------------------------------------------
     #  Representation
@@ -344,7 +348,7 @@ class L1ManhattanDistanceMetric(DistanceMetric):
     _kind = METRIC_KIND_L1
     _label = "L1"
     _factory_name = "l1_manhattan"
-    _lazy_cost_ns = (1.6, 0.13)
+    _lazy_cost_coefficients_ns = (1.6, 0.13)
 
 
 @dataclass(frozen=True, repr=False)
@@ -354,7 +358,7 @@ class L2EuclideanDistanceMetric(DistanceMetric):
     _kind = METRIC_KIND_L2
     _label = "L2"
     _factory_name = "l2_euclidean"
-    _lazy_cost_ns = (1.6, 0.13)
+    _lazy_cost_coefficients_ns = (1.6, 0.13)
 
 
 @dataclass(frozen=True, repr=False)
@@ -364,7 +368,7 @@ class L2sEuclideanSquaredDistanceMetric(DistanceMetric):
     _kind = METRIC_KIND_L2S
     _label = "L2²"
     _factory_name = "l2s_euclidean_squared"
-    _lazy_cost_ns = (1.6, 0.13)
+    _lazy_cost_coefficients_ns = (1.6, 0.13)
 
 
 @dataclass(frozen=True, repr=False)
@@ -374,7 +378,7 @@ class LinfChebyshevDistanceMetric(DistanceMetric):
     _kind = METRIC_KIND_LINF
     _label = "L∞"
     _factory_name = "linf_chebyshev"
-    _lazy_cost_ns = (0.6, 0.44)
+    _lazy_cost_coefficients_ns = (0.6, 0.44)
 
 
 @dataclass(frozen=True, repr=False)
@@ -385,8 +389,10 @@ class MinkowskiDistanceMetric(DistanceMetric):
     has_outer_root: bool
 
     _factory_name = "minkowski"
-    _lazy_cost_ns = (1.1, 0.24)  # a specialized kind, with p built in
-    _GENERIC_LAZY_COST_NS: ClassVar[tuple[float, float]] = (17.0, 6.3)  # a generic kind, which calls pow per coordinate
+    # The coefficients when p selects a specialized kind, whose distance function has p built in.
+    _lazy_cost_coefficients_ns = (1.1, 0.24)
+    # The coefficients when p selects a generic kind, which calls pow per coordinate.
+    _GENERIC_LAZY_COST_COEFFICIENTS_NS: ClassVar[tuple[float, float]] = (17.0, 6.3)
 
     # A specialized Minkowski kind has p built in, so its pairwise distance function takes no parameter.
     _SPECIALIZED_KINDS: ClassVar[dict[tuple[float, bool], int]] = {
@@ -404,16 +410,21 @@ class MinkowskiDistanceMetric(DistanceMetric):
         generic_kind = METRIC_KIND_MINKOWSKI if self.has_outer_root else METRIC_KIND_MINKOWSKI_POWERED
         return self._SPECIALIZED_KINDS.get((self.p, self.has_outer_root), generic_kind)
 
+    @property
+    def _is_generic_kind(self) -> bool:
+        """Return whether no specialized kind exists for (p, has_outer_root), so p is passed at run time."""
+        return (self.p, self.has_outer_root) not in self._SPECIALIZED_KINDS
+
     def float_param(self, n_dims: int) -> float:
         """Return p for the generic kinds; a specialized kind has p built in and takes none."""
-        return self.p if self.kind in (METRIC_KIND_MINKOWSKI, METRIC_KIND_MINKOWSKI_POWERED) else NO_FLOAT_PARAM
+        return self.p if self._is_generic_kind else NO_FLOAT_PARAM
 
     def _lazy_cost_coefficients(self) -> tuple[float, float]:
-        """Return the coefficients of the kind that p selects: a generic kind costs far more than a specialized one."""
-        if self.kind in (METRIC_KIND_MINKOWSKI, METRIC_KIND_MINKOWSKI_POWERED):
-            return self._GENERIC_LAZY_COST_NS
+        """Return the coefficients of this metric's kind, generic or specialized: a generic kind costs far more."""
+        if self._is_generic_kind:
+            return self._GENERIC_LAZY_COST_COEFFICIENTS_NS
         else:
-            return self._lazy_cost_ns
+            return self._lazy_cost_coefficients_ns
 
     @property
     def label(self) -> str:
@@ -439,7 +450,7 @@ class CosineDistanceMetric(DistanceMetric):
     _kind = METRIC_KIND_COS
     _label = "cosine"
     _factory_name = "cosine"
-    _lazy_cost_ns = (1.6, 0.13)
+    _lazy_cost_coefficients_ns = (1.6, 0.13)
     needs_preprocessed_vectors = True
 
     def validate(self, vectors: NDArray[np.float32], problem_k: int | None = None) -> None:
@@ -465,7 +476,7 @@ class GeometricMeanDistanceMetric(DistanceMetric):
     _kind = METRIC_KIND_GEOMEAN
     _label = "geomean"
     _factory_name = "geometric_mean"
-    _lazy_cost_ns = (6.4, 2.8)
+    _lazy_cost_coefficients_ns = (6.4, 2.8)
 
 
 @dataclass(frozen=True, repr=False)
@@ -475,7 +486,7 @@ class LMinusInfDistanceMetric(DistanceMetric):
     _kind = METRIC_KIND_LMINUSINF
     _label = "L-∞"
     _factory_name = "l_minus_inf"
-    _lazy_cost_ns = (0.8, 0.36)
+    _lazy_cost_coefficients_ns = (0.8, 0.36)
 
 
 @dataclass(frozen=True, repr=False)
@@ -490,7 +501,7 @@ class AlongAxisDistanceMetric(DistanceMetric):
 
     _kind = METRIC_KIND_ALONG_AXIS
     _factory_name = "along_axis"
-    _lazy_cost_ns = (0.8, 0.0)
+    _lazy_cost_coefficients_ns = (0.8, 0.0)
     needs_preprocessed_vectors = True
 
     def __post_init__(self) -> None:
@@ -532,7 +543,7 @@ class L2AndProjectionsDistanceMetric(DistanceMetric):
 
     _kind = METRIC_KIND_L2_AND_PROJECTIONS
     _factory_name = "l2_and_projections"
-    _lazy_cost_ns = (1.1, 0.8)
+    _lazy_cost_coefficients_ns = (1.1, 0.8)
 
     def __post_init__(self) -> None:
         """Reject an L2 scale that is not a positive, finite number, and store it as a float."""
@@ -581,7 +592,7 @@ class L2AndProjectionsForKDistanceMetric(L2AndProjectionsDistanceMetric):
     k: int
 
     _kind = METRIC_KIND_L2_AND_PROJECTIONS_FOR_K
-    _lazy_cost_ns = (1.3, 0.51)
+    _lazy_cost_coefficients_ns = (1.3, 0.51)
 
     def __post_init__(self) -> None:
         """Check the L2 scale as `L2AndProjectionsDistanceMetric` does, and reject a `k` that is not an integer >= 2."""

@@ -20,13 +20,16 @@ solver = (
 - **`LAZY`** — no stored distances at all: each distance is computed on demand from the vectors.
   Slower per distance, but removes the O(n²) memory requirement entirely, so much larger problems
   become feasible. Available only when the problem is built from vectors.
-- **`AUTO`** (default) — for vector problems, a full matrix for every distance that fits comfortably
-  in memory, since reading a distance from a full matrix is faster than computing it under any metric.
-  When not every distance fits, the distances that are most expensive to compute get the full matrices
-  and the rest are lazy; a per-axis distance is the cheapest to compute and stays lazy first. For
-  problems built via `from_distances`, always the full matrix. The resolved storage type per distance
-  is reported in the solution summary, e.g. `storage=full_matrix (L2)` — pin a storage type explicitly
-  to override.
+- **`AUTO`** (default) — picks a storage type per distance:
+    - **Vector problems:** a full matrix for every distance that fits comfortably in memory, since
+      reading a distance from a full matrix is faster than computing it under any metric. When not
+      every distance fits, the distances that are most expensive to compute get the full matrices and
+      the rest are lazy; an `along_axis` distance is the cheapest to compute, so it is the first to
+      stay lazy.
+    - **Problems built via `from_distances`:** always the full matrix.
+
+    The resolved storage type per distance is reported in the solution summary, e.g.
+    `storage=full_matrix (L2)` — pin a storage type explicitly to override.
 
 ## I. Reproducibility { #reproducibility }
 

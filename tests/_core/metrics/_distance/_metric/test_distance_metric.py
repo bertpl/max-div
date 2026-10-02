@@ -307,7 +307,7 @@ def test_the_cost_estimate_ranks_along_axis_lowest_and_a_generic_minkowski_highe
 
 @pytest.mark.parametrize("root", [True, False])
 def test_a_generic_minkowski_is_estimated_costlier_than_a_specialized_one(root: bool):
-    """A generic p calls pow per coordinate, which a specialized p avoids."""
+    """A generic-p Minkowski is estimated costlier than a specialized one, because it calls pow per coordinate."""
     # --- act / assert -----------------
     assert DistanceMetric.minkowski(3, root=root).estimated_lazy_cost_ns(2) > DistanceMetric.minkowski(
         0.5, root=root

@@ -130,9 +130,9 @@ def test_auto_on_vectors_is_the_full_matrix_when_it_fits(
 def test_auto_gives_the_full_matrices_that_fit_to_the_distances_most_expensive_to_compute(
     n_matrices_in_budget: int, expected: list[str]
 ):
-    """When only some full matrices fit a third of RAM, the costliest distances get them and the rest stay lazy."""
+    """When only some full matrices fit the memory budget, the costliest distances get them and the rest stay lazy."""
     # --- arrange ----------------------
-    problem = _stub_vector_problem(50_000, d=2)  # one matrix is 9.3 GiB
+    problem = _stub_vector_problem(50_000, d=2)
     distances = [DistanceMetric.along_axis(0), L2, DistanceMetric.geometric_mean()]
     total_memory = 3 * n_matrices_in_budget * full_matrix_bytes(50_000) + GIB  # the budget is a third of RAM
     factory = DistanceStoreFactory(problem, distances, DistanceStorageType.AUTO, total_memory)
