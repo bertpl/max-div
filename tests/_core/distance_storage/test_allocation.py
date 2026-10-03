@@ -43,12 +43,15 @@ def test_shared_allocator_publishes_one_segment_per_matrix_id():
     # --- act --------------------------
     allocator.allocate(1, (3, 3))
     allocator.adopt(0, _vectors())
-    published = allocator.published
+    published_matrices = allocator.published_matrices
     allocator.close()
 
     # --- assert -----------------------
-    assert {matrix_id: matrix.shape for matrix_id, matrix in published.matrices.items()} == {1: (3, 3), 0: (5, 2)}
-    assert published.matrices[0].segment_name != published.matrices[1].segment_name
+    assert {matrix_id: matrix.shape for matrix_id, matrix in published_matrices.matrices.items()} == {
+        1: (3, 3),
+        0: (5, 2),
+    }
+    assert published_matrices.matrices[0].segment_name != published_matrices.matrices[1].segment_name
 
 
 def test_shared_adopt_copies_the_array_into_its_segment():
@@ -76,7 +79,7 @@ def test_shared_published_matrix_reads_back_what_was_written():
     allocator.allocate(4, (3, 3))[:] = matrix
 
     # --- act --------------------------
-    with AttachedDataMatrixRegistry(allocator.published) as reader:
+    with AttachedDataMatrixRegistry(allocator.published_matrices) as reader:
         seen = np.array(reader.array(4))
     allocator.close()
 
@@ -91,16 +94,16 @@ def test_shared_degenerate_shape_still_gets_a_segment():
 
     # --- act --------------------------
     buffer = allocator.allocate(1, (0, 0))
-    published = allocator.published
+    published_matrices = allocator.published_matrices
     allocator.close()
 
     # --- assert -----------------------
     assert buffer.size == 0
-    assert published.matrices[1].shape == (0, 0)
+    assert published_matrices.matrices[1].shape == (0, 0)
 
 
 def test_shared_close_forgets_its_segments():
-    """A second close is harmless, and the published records stay as a record of what was placed."""
+    """A second close is harmless, and the published records stay available."""
     # --- arrange ----------------------
     allocator = SharedMemoryDataMatrixAllocator()
     allocator.allocate(1, (2, 2))
@@ -110,4 +113,4 @@ def test_shared_close_forgets_its_segments():
     allocator.close()
 
     # --- assert -----------------------
-    assert list(allocator.published.matrices) == [1]
+    assert list(allocator.published_matrices.matrices) == [1]

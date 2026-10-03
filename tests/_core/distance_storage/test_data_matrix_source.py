@@ -29,7 +29,7 @@ def test_existing_source_is_copied_into_shared_memory_under_its_id():
 
     # --- act --------------------------
     copied = np.array(ExistingDataMatrixSource(vectors).produce(3, allocator))
-    published_ids = list(allocator.published.matrices)
+    published_ids = list(allocator.published_matrices.matrices)
     allocator.close()
 
     # --- assert -----------------------

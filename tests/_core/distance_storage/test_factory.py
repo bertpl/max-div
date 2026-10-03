@@ -340,7 +340,10 @@ def test_published_stores_match_the_in_process_build(storage: DistanceStorageTyp
     (expected,) = factory.create_stores()
 
     # --- act --------------------------
-    with factory.publish_distance_stores() as published, published.attached_distance_stores() as attached:
+    with (
+        factory.publish_distance_stores() as published_distance_stores,
+        published_distance_stores.attached_distance_stores() as attached,
+    ):
         read_attached = all_pair_distances(attached[0])
 
     # --- assert -----------------------
@@ -356,7 +359,10 @@ def test_published_stores_hold_distance_input(form: str):
     (expected,) = factory.create_stores()
 
     # --- act --------------------------
-    with factory.publish_distance_stores() as published, published.attached_distance_stores() as attached:
+    with (
+        factory.publish_distance_stores() as published_distance_stores,
+        published_distance_stores.attached_distance_stores() as attached,
+    ):
         read = all_pair_distances(attached[0])
 
     # --- assert -----------------------
@@ -366,11 +372,13 @@ def test_published_stores_hold_distance_input(form: str):
 def test_published_full_matrix_has_the_problem_size():
     """The data matrix of a published full matrix is an n by n array."""
     # --- arrange / act ----------------
-    with _factory(_vector_problem(), DistanceStorageType.FULL_MATRIX).publish_distance_stores() as published:
-        (spec,) = published.distance_specs
+    with _factory(
+        _vector_problem(), DistanceStorageType.FULL_MATRIX
+    ).publish_distance_stores() as published_distance_stores:
+        (spec,) = published_distance_stores.distance_specs
 
         # --- assert -------------------
-        assert published.data_matrices.matrices[spec.matrix_id].shape == (10, 10)
+        assert published_distance_stores.published_matrices.matrices[spec.matrix_id].shape == (10, 10)
 
 
 def test_published_full_matrices_leave_the_vectors_unpublished():
@@ -379,9 +387,9 @@ def test_published_full_matrices_leave_the_vectors_unpublished():
     factory = DistanceStoreFactory(_vector_problem(), [L2, L1], DistanceStorageType.FULL_MATRIX, 64 * GIB)
 
     # --- act --------------------------
-    with factory.publish_distance_stores() as published:
-        published_ids = sorted(published.data_matrices.matrices)
-        read_ids = sorted(spec.matrix_id for spec in published.distance_specs)
+    with factory.publish_distance_stores() as published_distance_stores:
+        published_ids = sorted(published_distance_stores.published_matrices.matrices)
+        read_ids = sorted(spec.matrix_id for spec in published_distance_stores.distance_specs)
 
     # --- assert -----------------------
     assert published_ids == read_ids == [1, 2]
@@ -395,9 +403,9 @@ def test_published_metrics_that_do_not_preprocess_share_one_data_matrix():
     factory = DistanceStoreFactory(problem, metrics, DistanceStorageType.LAZY, 64 * GIB)
 
     # --- act --------------------------
-    with factory.publish_distance_stores() as published:
-        matrix_ids = [spec.matrix_id for spec in published.distance_specs]
-        n_published = len(published.data_matrices.matrices)
+    with factory.publish_distance_stores() as published_distance_stores:
+        matrix_ids = [spec.matrix_id for spec in published_distance_stores.distance_specs]
+        n_published = len(published_distance_stores.published_matrices.matrices)
 
     # --- assert -----------------------
     assert matrix_ids[0] == matrix_ids[1] != matrix_ids[2]
@@ -417,8 +425,10 @@ def test_publishing_lazy_on_distance_problem_raises():
 def test_leaving_the_publish_block_destroys_the_segments():
     """After the block the segments are gone, so attaching with a stale record fails instead of reading freed memory."""
     # --- arrange ----------------------
-    with _factory(_vector_problem(), DistanceStorageType.FULL_MATRIX).publish_distance_stores() as published:
-        stale = published.data_matrices
+    with _factory(
+        _vector_problem(), DistanceStorageType.FULL_MATRIX
+    ).publish_distance_stores() as published_distance_stores:
+        stale = published_distance_stores.published_matrices
 
     # --- act / assert -----------------
     with pytest.raises(FileNotFoundError), AttachedDataMatrixRegistry(stale):

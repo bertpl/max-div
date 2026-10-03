@@ -1,8 +1,9 @@
-"""A data matrix source says how one data matrix of a solve comes into being: as an existing array, or computed into a buffer.
+"""A data matrix source says how a data matrix of a solve is produced: as an existing array, or computed into a buffer.
 
 The source decides the contents of the data matrix, and the allocator that it is given decides
-where the matrix lives; see `allocation`.  A source produces its matrix only when asked, so the
-cost of computing the matrix falls where the producer asks for it.
+where the matrix lives; see `allocation`.  A source produces its matrix only when the data matrix
+registry asks for it, so the factory can describe every data matrix, and check that the matrices
+fit in memory, before any of them is computed.
 """
 
 from abc import ABC, abstractmethod
@@ -45,7 +46,9 @@ class ComputedDataMatrixSource(DataMatrixSource):
     """The data matrix is computed straight into a buffer that the allocator allocates, so it is never copied."""
 
     shape: tuple[int, ...]
-    compute_into: Callable[[NDArray[np.float32]], object]  # writes the whole matrix into the buffer it is given
+    compute_into: Callable[
+        [NDArray[np.float32]], object
+    ]  # compute_into writes the whole matrix into its buffer argument
 
     def produce(self, matrix_id: int, allocator: DataMatrixAllocator) -> NDArray[np.float32]:
         """Allocate a buffer of this source's shape, compute the matrix into it, and return it."""

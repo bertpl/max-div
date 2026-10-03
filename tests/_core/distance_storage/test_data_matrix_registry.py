@@ -65,13 +65,14 @@ def test_published_registry_publishes_every_data_matrix_under_its_id():
     sources = {0: ExistingDataMatrixSource(vectors), 5: _counting_source([])}
 
     # --- act --------------------------
-    with DataMatrixRegistry.published_to_shared_memory(sources) as published, AttachedDataMatrixRegistry(
-        published
-    ) as reader:
+    with (
+        DataMatrixRegistry.publish_to_shared_memory(sources) as published_matrices,
+        AttachedDataMatrixRegistry(published_matrices) as reader,
+    ):
         read_vectors, read_ones = np.array(reader.array(0)), np.array(reader.array(5))
 
     # --- assert -----------------------
-    assert sorted(published.matrices) == [0, 5]
+    assert sorted(published_matrices.matrices) == [0, 5]
     np.testing.assert_array_equal(read_vectors, vectors)
     np.testing.assert_array_equal(read_ones, np.ones((2, 2), dtype=np.float32))
 
@@ -79,8 +80,8 @@ def test_published_registry_publishes_every_data_matrix_under_its_id():
 def test_leaving_the_published_block_destroys_the_segments():
     """After the block every segment is destroyed, so its name no longer resolves."""
     # --- arrange ----------------------
-    with DataMatrixRegistry.published_to_shared_memory({0: ExistingDataMatrixSource(_vectors())}) as published:
-        segment_name = published.matrices[0].segment_name
+    with DataMatrixRegistry.publish_to_shared_memory({0: ExistingDataMatrixSource(_vectors())}) as published_matrices:
+        segment_name = published_matrices.matrices[0].segment_name
 
     # --- act / assert -----------------
     with pytest.raises(FileNotFoundError):

@@ -46,7 +46,7 @@ _JOIN_SECONDS = 30.0
 
 def run_workers(
     configs: list[SolverConfig],
-    published: PublishedDistanceStores,
+    published_distance_stores: PublishedDistanceStores,
     coordinators: Sequence[WorkerCoordinator],
     progress_reporter: ProgressReporter | None = None,
 ) -> tuple[list[WorkerResult], list[WorkerFailure]]:
@@ -57,7 +57,8 @@ def run_workers(
 
     Args:
         configs: one solver configuration per worker, in worker order.
-        published: the distance stores that this process published; every worker builds its stores from them.
+        published_distance_stores: the distance stores that this process published; every worker
+            builds its stores from them.
         coordinators: one coordinator per worker, in worker order; `_coordinator` documents
             the topology this list wires up.
         progress_reporter: renders the workers' combined progress from this (parent) process; a
@@ -82,7 +83,7 @@ def run_workers(
     workers = [
         context.Process(
             target=solve_in_worker,
-            args=(index, config, published, coordinators[index], messages, requirements),
+            args=(index, config, published_distance_stores, coordinators[index], messages, requirements),
             daemon=True,
         )
         for index, config in enumerate(configs)
@@ -106,7 +107,7 @@ def run_workers(
 def solve_in_worker(
     worker_index: int,
     config: SolverConfig,
-    published: PublishedDistanceStores,
+    published_distance_stores: PublishedDistanceStores,
     coordinator: WorkerCoordinator,
     messages: Queue,
     requirements: SnapshotRequirements | None,
@@ -121,7 +122,7 @@ def solve_in_worker(
     else:
         reporter = ProgressReporter.silent()
     try:
-        with published.attached_distance_stores() as stores:
+        with published_distance_stores.attached_distance_stores() as stores:
             # the stores were published in the bindings' store order, which the worker derives from
             # the same objectives, so it rebuilds the same distance -> store mapping
             bindings = DiversityObjectiveBindings.for_objectives(config.diversity_objectives)
