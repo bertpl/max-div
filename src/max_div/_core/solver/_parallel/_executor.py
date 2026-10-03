@@ -58,7 +58,7 @@ def run_workers(
     Args:
         configs: one solver configuration per worker, in worker order.
         published_distance_stores: the distance stores that this process published; every worker
-            builds its stores from them.
+            builds its distance stores from them.
         coordinators: one coordinator per worker, in worker order; `_coordinator` documents
             the topology this list wires up.
         progress_reporter: renders the workers' combined progress from this (parent) process; a

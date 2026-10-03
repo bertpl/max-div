@@ -69,7 +69,7 @@ def _read_pairs(store: DistanceStore) -> list[float]:
 
 
 def _expected_pairs() -> list[list[float]]:
-    """Return the pairs read through the unshared stores, in the order that `_published` publishes them."""
+    """Return the pairs read through the unshared stores, in the order of `_published_distance_stores`."""
     references = _reference_stores()
     return [_read_pairs(references["full_matrix"]), _read_pairs(references["lazy"])]
 

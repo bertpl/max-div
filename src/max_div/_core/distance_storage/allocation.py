@@ -5,12 +5,12 @@ a lazy distance store.  Each data matrix of a solve has a matrix id.
 
 A `DataMatrixSource` decides what a data matrix contains; the allocator decides only where it
 lives: in this process, or in a shared-memory segment that worker processes can read.  There is
-one allocator class per case, and a source produces its data matrix the same way whichever
-allocator it is given.
+one allocator class per placement, and a data matrix source produces its data matrix the same way
+whichever allocator it is given.
 
-A source asks an allocator for one of 2 things:
+A data matrix source asks an allocator for one of 2 things:
 
-- `allocate` returns an empty, writable buffer that the source then fills, for example a full
+- `allocate` returns an empty, writable buffer that the data matrix source then fills, for example a full
   distance matrix that is computed straight into its final place.
 - `adopt` takes an array that already exists in its final form, for example the user's own vectors,
   and returns the array that a distance store will read from.
@@ -82,8 +82,10 @@ class SharedMemoryDataMatrixAllocator(DataMatrixAllocator):
     This process creates and owns every segment.  For each data matrix that it places, the
     allocator records, under the matrix id, a `PublishedDataMatrix` that says which segment holds the
     matrix; `published_matrices` returns these records, which a worker process needs to find the
-    segments.  Place each matrix id at most once: placing an id again creates a second segment and
-    replaces the record of the first, so a worker can no longer find the first.
+    segments.
+
+    Place each matrix id at most once: placing an id again creates a second segment and replaces the
+    record of the first, so a worker can no longer find the first segment.
 
     Closing the allocator destroys every segment that it created, which invalidates every distance
     store that reads one of them, in this process and in every worker process that attached.  Close
@@ -123,9 +125,12 @@ class SharedMemoryDataMatrixAllocator(DataMatrixAllocator):
             destroy_shared_memory_segment(segment)
         self._segments.clear()
 
+    # --------------------------------------------------------------------------
+    #  Helpers
+    # --------------------------------------------------------------------------
     def _create_segment(self, matrix_id: int, shape: tuple[int, ...]) -> NDArray[np.float32]:
         """Create a shared-memory segment for the shape, publish it under the matrix id, and return its array."""
-        segment = create_shared_memory_segment(int(np.prod(shape, dtype=np.int64)) * np.dtype(np.float32).itemsize)
+        segment = create_shared_memory_segment(PublishedDataMatrix.nbytes_for(shape))
         self._segments.append(segment)
         published_matrix = PublishedDataMatrix(segment_name=segment.name, shape=tuple(shape))
         self._published_matrices[matrix_id] = published_matrix

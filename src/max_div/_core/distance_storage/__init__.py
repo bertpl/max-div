@@ -2,7 +2,8 @@
 
 - `storage` holds the public choice.
 - `memory_budget` sizes a full matrix in bytes, probes the machine's RAM, and refuses a matrix that cannot fit.
-- `data_matrix_source` says how each data matrix of a solve, an array that a distance store reads, is produced.
+- `data_matrix_source` says how each data matrix of a solve is produced; a data matrix is an array that a
+  distance store reads.
 - `allocation` decides where each data matrix is placed in memory.
 - `data_matrix_registry` produces the data matrices of a solve and returns each by its matrix id.
 - `shared_memory` lets a worker process read the data matrices that another process published in shared memory.

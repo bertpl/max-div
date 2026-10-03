@@ -58,7 +58,7 @@ def test_registry_produces_each_data_matrix_once():
 # ==================================================================================================
 #  Shared memory
 # ==================================================================================================
-def test_published_registry_publishes_every_data_matrix_under_its_id():
+def test_publishing_to_shared_memory_records_every_data_matrix_under_its_id():
     """Publishing produces every data matrix in shared memory, and an attached reader returns it under its id."""
     # --- arrange ----------------------
     vectors = _vectors()

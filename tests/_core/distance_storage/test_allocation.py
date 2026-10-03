@@ -24,7 +24,7 @@ def test_in_process_allocate_returns_a_fresh_writable_buffer():
 
 
 def test_in_process_adopt_returns_the_array_itself():
-    """In this process, adopting copies nothing: the distance store reads the array that it was given."""
+    """In this process, adopting copies nothing: `adopt` returns the array that it was given."""
     # --- arrange ----------------------
     vectors = _vectors()
 

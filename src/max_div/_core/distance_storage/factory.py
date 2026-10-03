@@ -4,9 +4,9 @@ Its input is the problem and the list of distance metrics that the diversity met
 output is one distance store per distance metric, in that order.  The factory owns three things:
 
 - the policy that picks a storage type (full matrix or lazy) for each distance metric;
-- one distance spec per distance store, which names the data matrix that the store reads, and the
-  source of each data matrix; `DataMatrixRegistry` produces the data matrices in this process or in
-  shared memory;
+- one distance spec per distance store, which names the data matrix that the store reads, together
+  with one source per data matrix; `DataMatrixRegistry` produces the data matrices from those
+  sources, in this process or in shared memory;
 - the rule for which distance stores share one data matrix: every lazy distance store whose metric
   does not preprocess the vectors reads the data matrix of the user's vectors, so those stores share one
   array and one shared-memory segment; a metric that preprocesses gets a data matrix of its own.
@@ -189,13 +189,18 @@ class DistanceStoreFactory:
         with DataMatrixRegistry.publish_to_shared_memory(sources) as published_matrices:
             yield PublishedDistanceStores(published_matrices, distance_specs)
 
+    # --------------------------------------------------------------------------
+    #  Helpers
+    # --------------------------------------------------------------------------
     def _data_matrix_sources_and_distance_specs(self) -> tuple[dict[int, DataMatrixSource], tuple[DistanceSpec, ...]]:
         """Return the source of each data matrix that a store reads, by matrix id, and each store's distance spec.
 
-        Matrix id `_USER_MATRIX_ID` is the problem's own array.  Every other data matrix is derived from the vectors,
-        one per store that needs one, numbered in store order: a full distance matrix, or the vectors
-        preprocessed for a lazy store's metric.  Only a data matrix that some store reads has a source,
-        and the memory check runs here, before any data matrix is produced.
+        Matrix id `_USER_MATRIX_ID` is the problem's own array.  Every other data matrix is derived from
+        the vectors, one per store that needs one, numbered in store order: a full distance matrix, or
+        the vectors preprocessed for a lazy store's metric.
+
+        Only a data matrix that some store reads has a source, and the memory check runs here, before
+        any data matrix is produced.
 
         Raises:
             ValueError: as `create_stores`.
@@ -240,8 +245,8 @@ class DistanceStoreFactory:
                 else:
                     matrix_id = self._USER_MATRIX_ID
                     sources[matrix_id] = ExistingDataMatrixSource(problem.vectors)
-                # a metric that does not preprocess reads the user's vectors as they are, so they count as
-                # preprocessed for it
+                # every data matrix of a lazy store is already preprocessed for its metric: the factory
+                # preprocessed it above, or the metric does not preprocess and reads the user's vectors as they are
                 distance_specs.append(
                     VectorDistanceSpec(matrix_id=matrix_id, metric=distance, is_matrix_preprocessed=True)
                 )

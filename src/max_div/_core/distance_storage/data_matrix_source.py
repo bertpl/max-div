@@ -1,9 +1,11 @@
 """A data matrix source says how a data matrix of a solve is produced: as an existing array, or computed into a buffer.
 
-The source decides the contents of the data matrix, and the allocator that it is given decides
-where the matrix lives; see `allocation`.  A source produces its matrix only when the data matrix
-registry asks for it, so the factory can describe every data matrix, and check that the matrices
-fit in memory, before any of them is computed.
+The source decides the contents of the data matrix, and the data matrix allocator that it is
+given decides where the matrix lives; see `allocation`.
+
+A source produces its matrix only when the data matrix registry asks for it, so the distance store
+factory can describe every data matrix, and check that the matrices fit in memory, before any of
+them is computed.
 """
 
 from abc import ABC, abstractmethod
@@ -37,7 +39,7 @@ class ExistingDataMatrixSource(DataMatrixSource):
     array: NDArray[np.float32]
 
     def produce(self, matrix_id: int, allocator: DataMatrixAllocator) -> NDArray[np.float32]:
-        """Return the array as the allocator adopts it: the array itself in this process, a copy in shared memory."""
+        """Return the array as the allocator adopts it."""
         return allocator.adopt(matrix_id, self.array)
 
 

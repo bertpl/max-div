@@ -4,7 +4,8 @@ The process that publishes the data matrices owns their segments, and a worker p
 
 - `SharedMemoryDataMatrixAllocator` places each data matrix in a shared-memory segment of its own
   and records a `PublishedDataMatrix` per matrix id, which says which segment holds that matrix.
-- A worker process receives the `PublishedDataMatrices` as an ordinary pickled argument.
+- A worker process receives the `PublishedDataMatrices`, which hold the `PublishedDataMatrix` of
+  every data matrix of the solve, as an ordinary pickled argument.
 - The worker reads the data matrices through an `AttachedDataMatrixRegistry`.
 
 `PublishedDistanceStores` bundles the `PublishedDataMatrices` with the distance spec of each
@@ -46,6 +47,11 @@ class PublishedDataMatrix(NamedTuple):
         """Return the float32 array of this data matrix's shape over the segment's bytes."""
         return np.ndarray(self.shape, dtype=np.float32, buffer=segment.buf)
 
+    @staticmethod
+    def nbytes_for(shape: tuple[int, ...]) -> int:
+        """Return the size in bytes of a float32 array of the given shape, which its segment must hold."""
+        return int(np.prod(shape, dtype=np.int64)) * np.dtype(np.float32).itemsize
+
 
 @dataclass(frozen=True)
 class PublishedDataMatrices:
@@ -60,9 +66,9 @@ class PublishedDataMatrices:
 class AttachedDataMatrixRegistry(DataMatrixReader):
     """An attached data matrix registry reads the data matrices that another process published, by matrix id.
 
-    Entering the block attaches to every published segment; leaving closes this process's mapping of
-    each segment and never unlinks a segment, which belongs to the process that
-    published it.  Read the data matrices, and the distance stores over them, only inside the block.
+    Entering the `with` block attaches to every published segment; leaving closes this process's
+    mapping of each segment and never unlinks a segment, which belongs to the process that published
+    it.  Read the data matrices, and the distance stores over them, only inside the block.
     """
 
     def __init__(self, published_matrices: PublishedDataMatrices) -> None:
@@ -95,6 +101,9 @@ class AttachedDataMatrixRegistry(DataMatrixReader):
         """Return the data matrix with the given id, read from its segment."""
         return self._arrays[matrix_id]
 
+    # --------------------------------------------------------------------------
+    #  Helpers
+    # --------------------------------------------------------------------------
     def _close(self) -> None:
         """Close this process's mapping of every attached segment, and forget the arrays over them."""
         self._arrays.clear()
@@ -110,7 +119,8 @@ class AttachedDataMatrixRegistry(DataMatrixReader):
 class PublishedDistanceStores:
     """Published distance stores hold a solve's data matrices in shared memory and the distance spec of each store.
 
-    It is small enough to pass to a worker process as an ordinary pickled argument.
+    A `PublishedDistanceStores` record is small enough to pass to a worker process as an ordinary
+    pickled argument.
     """
 
     published_matrices: PublishedDataMatrices
