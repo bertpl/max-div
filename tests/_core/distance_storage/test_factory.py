@@ -3,8 +3,9 @@ import pytest
 from scipy.spatial.distance import squareform
 
 from max_div._core.constraints import Constraint
-from max_div._core.distance_storage import DistanceStorageType, DistanceStoreFactory, attached_distance_store
+from max_div._core.distance_storage import DistanceStorageType, DistanceStoreFactory
 from max_div._core.distance_storage.memory_budget import AUTO_MEMORY_FRACTION, full_matrix_bytes
+from max_div._core.distance_storage.shared_memory import AttachedDataMatrixRegistry
 from max_div._core.metrics import DistanceMetric, DiversityMetric
 from max_div._core.metrics._distance import (
     KIND_FULL_MATRIX,
@@ -339,7 +340,7 @@ def test_published_stores_match_the_in_process_build(storage: DistanceStorageTyp
     (expected,) = factory.create_stores()
 
     # --- act --------------------------
-    with factory.publish_distance_stores() as specs, DistanceStoreFactory.attach_distance_stores(specs) as attached:
+    with factory.publish_distance_stores() as published, published.attached_distance_stores() as attached:
         read_attached = all_pair_distances(attached[0])
 
     # --- assert -----------------------
@@ -355,7 +356,7 @@ def test_published_stores_hold_distance_input(form: str):
     (expected,) = factory.create_stores()
 
     # --- act --------------------------
-    with factory.publish_distance_stores() as specs, DistanceStoreFactory.attach_distance_stores(specs) as attached:
+    with factory.publish_distance_stores() as published, published.attached_distance_stores() as attached:
         read = all_pair_distances(attached[0])
 
     # --- assert -----------------------
@@ -363,27 +364,44 @@ def test_published_stores_hold_distance_input(form: str):
 
 
 def test_published_full_matrix_has_the_problem_size():
-    """The spec of a published full matrix describes an n by n array."""
+    """The data matrix of a published full matrix is an n by n array."""
     # --- arrange / act ----------------
-    with _factory(_vector_problem(), DistanceStorageType.FULL_MATRIX).publish_distance_stores() as specs:
+    with _factory(_vector_problem(), DistanceStorageType.FULL_MATRIX).publish_distance_stores() as published:
+        (spec,) = published.distance_specs
+
         # --- assert -------------------
-        assert len(specs) == 1
-        assert specs[0].shape == (10, 10)
+        assert published.data_matrices.matrices[spec.matrix_id].shape == (10, 10)
 
 
-def test_published_metrics_that_do_not_preprocess_share_one_segment():
-    """Lazy stores whose metric does not preprocess share one segment of raw vectors; cosine gets its own."""
+def test_published_full_matrices_leave_the_vectors_unpublished():
+    """When every store is a full matrix, no store reads the user's vectors, so they are not copied to shared memory."""
+    # --- arrange ----------------------
+    factory = DistanceStoreFactory(_vector_problem(), [L2, L1], DistanceStorageType.FULL_MATRIX, 64 * GIB)
+
+    # --- act --------------------------
+    with factory.publish_distance_stores() as published:
+        published_ids = sorted(published.data_matrices.matrices)
+        read_ids = sorted(spec.matrix_id for spec in published.distance_specs)
+
+    # --- assert -----------------------
+    assert published_ids == read_ids == [1, 2]
+
+
+def test_published_metrics_that_do_not_preprocess_share_one_data_matrix():
+    """Lazy stores whose metric does not preprocess share the user's vectors as one data matrix; cosine gets its own."""
     # --- arrange ----------------------
     problem = _vector_problem()
     metrics = [L2, DistanceMetric.l1_manhattan(), DistanceMetric.cosine()]
     factory = DistanceStoreFactory(problem, metrics, DistanceStorageType.LAZY, 64 * GIB)
 
     # --- act --------------------------
-    with factory.publish_distance_stores() as specs:
-        names = [spec.segment_name for spec in specs]
+    with factory.publish_distance_stores() as published:
+        matrix_ids = [spec.matrix_id for spec in published.distance_specs]
+        n_published = len(published.data_matrices.matrices)
 
     # --- assert -----------------------
-    assert names[0] == names[1] != names[2]
+    assert matrix_ids[0] == matrix_ids[1] != matrix_ids[2]
+    assert n_published == 2
 
 
 def test_publishing_lazy_on_distance_problem_raises():
@@ -397,11 +415,11 @@ def test_publishing_lazy_on_distance_problem_raises():
 
 
 def test_leaving_the_publish_block_destroys_the_segments():
-    """After the block the segments are gone, so an attach with a stale spec fails instead of reading freed memory."""
+    """After the block the segments are gone, so attaching with a stale record fails instead of reading freed memory."""
     # --- arrange ----------------------
-    with _factory(_vector_problem(), DistanceStorageType.FULL_MATRIX).publish_distance_stores() as specs:
-        stale = specs[0]
+    with _factory(_vector_problem(), DistanceStorageType.FULL_MATRIX).publish_distance_stores() as published:
+        stale = published.data_matrices
 
     # --- act / assert -----------------
-    with pytest.raises(FileNotFoundError), attached_distance_store(stale):
+    with pytest.raises(FileNotFoundError), AttachedDataMatrixRegistry(stale):
         pass
