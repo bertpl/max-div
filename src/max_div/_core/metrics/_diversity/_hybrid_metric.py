@@ -192,7 +192,9 @@ class HybridDiversityMetric:
 
         When any weight differs from 1, all weights follow the terms: `geomean(...; weights 2, 1)`.
         """
-        return self._to_objective().label
+        return self._aggregation.format_label(
+            [term.value if isinstance(term, DiversityMetric) else term.label for term in self._terms]
+        )
 
     def _to_objective(self) -> DiversityObjectiveHybrid:
         """Return the objective the solver maximizes for this hybrid."""
