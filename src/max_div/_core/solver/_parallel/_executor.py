@@ -22,7 +22,7 @@ from collections.abc import Sequence
 from multiprocessing.process import BaseProcess
 from multiprocessing.queues import Queue
 
-from max_div._core.solver._distance_storage import DistanceStoreFactory, SharedStoreSpec, stores_by_distance
+from max_div._core.distance_storage import DistanceStoreFactory, SharedStoreSpec, stores_by_distance
 from max_div._core.solver._diversity_contribution import DiversityObjectiveBindings
 from max_div._core.solver._progress_reporting import ProgressReporter, ProgressSnapshot, SnapshotRequirements
 from max_div._core.solver._solver_config import SolverConfig

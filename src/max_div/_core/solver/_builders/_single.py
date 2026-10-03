@@ -2,8 +2,8 @@
 
 from typing import Self
 
+from max_div._core.distance_storage import DistanceStoreFactory
 from max_div._core.problem import MaxDivProblem
-from max_div._core.solver._distance_storage import DistanceStoreFactory
 from max_div._core.solver._duration import TargetDuration
 from max_div._core.solver._presets import SolverPreset, get_preset_strategies
 from max_div._core.solver._solver import MaxDivSolver

@@ -3,7 +3,7 @@ from dataclasses import replace
 
 import numpy as np
 
-from max_div._core.solver._distance_storage import DistanceStorageTypes
+from max_div._core.distance_storage import DistanceStorageTypes
 from max_div._core.solver._duration import Elapsed, Progress
 from max_div._core.solver._parallel._progress_view import ParallelProgressView
 from max_div._core.solver._parallel._result import WorkerResult

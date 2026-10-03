@@ -8,9 +8,10 @@ from scipy.spatial.distance import squareform
 
 from max_div._core._utils import stdout_to_file
 from max_div._core.constraints import Constraint
+from max_div._core.distance_storage import DistanceStorageType
 from max_div._core.metrics import DistanceMetric, DiversityMetric, HybridAggregationBase, HybridDiversityMetric
 from max_div._core.problem import MaxDivProblem
-from max_div._core.solver import DistanceStorageType, MaxDivSolution, MaxDivSolverBuilder, Verbosity
+from max_div._core.solver import MaxDivSolution, MaxDivSolverBuilder, Verbosity
 from max_div._core.solver._builders import ParallelMaxDivSolverBuilder
 from max_div._core.solver._duration import iterations
 from max_div._core.solver._presets import SolverPreset

@@ -1,12 +1,12 @@
 import numpy as np
 
-from max_div._core.metrics import DistanceMetric
-from max_div._core.metrics._distance import KIND_FULL_MATRIX, KIND_LAZY
-from max_div._core.solver._distance_storage import attached_distance_store
-from max_div._core.solver._distance_storage.allocation import (
+from max_div._core.distance_storage import attached_distance_store
+from max_div._core.distance_storage.allocation import (
     InProcessDistanceStoreAllocator,
     SharedMemoryDistanceStoreAllocator,
 )
+from max_div._core.metrics import DistanceMetric
+from max_div._core.metrics._distance import KIND_FULL_MATRIX, KIND_LAZY
 
 L2 = DistanceMetric.l2_euclidean()
 

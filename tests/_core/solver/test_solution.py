@@ -1,8 +1,8 @@
 import numpy as np
 
+from max_div._core.distance_storage import DistanceStorageType, DistanceStorageTypes
 from max_div._core.metrics import DistanceMetric
 from max_div._core.solver import MaxDivSolution
-from max_div._core.solver._distance_storage import DistanceStorageType, DistanceStorageTypes
 from max_div._core.solver._duration import Elapsed
 from max_div._core.solver._score import Score
 from max_div._core.solver._score_checkpoint import ScoreCheckpoint

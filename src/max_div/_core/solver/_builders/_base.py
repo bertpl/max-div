@@ -18,6 +18,12 @@ from typing import TYPE_CHECKING, Self
 
 from numpy.typing import ArrayLike
 
+from max_div._core.distance_storage import (
+    DistanceStorageType,
+    DistanceStorageTypes,
+    DistanceStoreFactory,
+    total_physical_memory_bytes,
+)
 from max_div._core.metrics import (
     DiversityMetric,
     DiversityObjective,
@@ -25,12 +31,6 @@ from max_div._core.metrics import (
 )
 from max_div._core.problem import MaxDivProblem
 from max_div._core.solver._constraint_penalty import ConstraintPenalty
-from max_div._core.solver._distance_storage import (
-    DistanceStorageType,
-    DistanceStorageTypes,
-    DistanceStoreFactory,
-    total_physical_memory_bytes,
-)
 from max_div._core.solver._diversity_contribution import DiversityObjectiveBindings
 from max_div._core.solver._duration import E2eBudget, TargetDuration, TargetTimeDuration
 from max_div._core.solver._strategies import InitializationStrategy

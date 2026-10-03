@@ -6,7 +6,7 @@ import warnings
 from dataclasses import fields
 
 from max_div._core._warnings import ParallelSolvingWarning
-from max_div._core.solver._distance_storage import DistanceStoreFactory
+from max_div._core.distance_storage import DistanceStoreFactory
 from max_div._core.solver._progress_reporting import ProgressReporter, Verbosity
 from max_div._core.solver._solution import MaxDivSolution
 from max_div._core.solver._solver_config import SolverConfig
