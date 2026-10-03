@@ -12,8 +12,8 @@ from numpy.typing import NDArray
 class DataMatrixReader(ABC):
     """A data matrix reader returns each data matrix of one solve by its matrix id.
 
-    A data matrix is an array that a distance store reads: a full distance matrix, or the vectors
-    that a lazy distance store computes its distances from.  Each data matrix of a solve has an
+    A data matrix is an array that a distance store reads: a full distance matrix, or the input
+    vectors of a lazy distance store.  Each data matrix of a solve has an
     integer matrix id, which a `DistanceSpec` names.
     """
 

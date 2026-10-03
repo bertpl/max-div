@@ -13,7 +13,7 @@ from max_div._core.metrics._distance import (
     compute_full_matrix,
 )
 from max_div._core.metrics._distance._store import KIND_FULL_MATRIX, KIND_LAZY
-from tests._core.metrics._distance.helpers import all_pairs
+from tests._core.metrics._distance.helpers import all_pair_distances
 
 # ==================================================================================================
 #  Fixtures / helpers
@@ -32,9 +32,11 @@ class _DictDataMatrixReader(DataMatrixReader):
     """A test reader returns the data matrices of a dict, keyed by matrix id."""
 
     def __init__(self, arrays: dict[int, np.ndarray]) -> None:
+        """Keep the given data matrices, keyed by matrix id."""
         self._arrays = arrays
 
     def array(self, matrix_id: int) -> np.ndarray:
+        """Return the data matrix with the given id from the dict."""
         return self._arrays[matrix_id]
 
 
@@ -42,7 +44,7 @@ class _DictDataMatrixReader(DataMatrixReader):
 #  Building a distance store
 # ==================================================================================================
 def test_precomputed_spec_reads_the_distance_matrix_with_its_id(vectors: np.ndarray):
-    """A precomputed spec builds a full-matrix store over its own matrix id, not over another matrix of the reader."""
+    """A precomputed spec builds a full-matrix store over the matrix that its `matrix_id` names, not another one."""
     # --- arrange ----------------------
     matrix = compute_full_matrix(vectors, L2)
     reader = _DictDataMatrixReader({0: vectors, 3: matrix})
@@ -57,7 +59,7 @@ def test_precomputed_spec_reads_the_distance_matrix_with_its_id(vectors: np.ndar
 
 @pytest.mark.parametrize("metric", [L2, COSINE], ids=["non-preprocessing", "preprocessing"])
 def test_preprocessed_vector_spec_computes_the_metrics_distances(metric: DistanceMetric, vectors: np.ndarray):
-    """A vector spec over preprocessed vectors builds a lazy store that reads the same distances as the metric."""
+    """A vector spec over preprocessed vectors reports the same distances as a lazy store built from the raw vectors."""
     # --- arrange ----------------------
     reader = _DictDataMatrixReader({0: vectors, 2: metric.preprocess(vectors)})
 
@@ -66,7 +68,7 @@ def test_preprocessed_vector_spec_computes_the_metrics_distances(metric: Distanc
 
     # --- assert -----------------------
     assert store.kind == KIND_LAZY
-    assert all_pairs(store) == all_pairs(DistanceStore.lazy_from_vectors(vectors, metric))
+    assert all_pair_distances(store) == all_pair_distances(DistanceStore.lazy_from_vectors(vectors, metric))
 
 
 def test_vector_spec_over_the_vectors_as_given_builds_no_store(vectors: np.ndarray):

@@ -1,17 +1,14 @@
-"""A distance spec names the data matrix of a set of pairwise distances, and says how to obtain the distances from it.
+"""A distance spec identifies, by its id, the data matrix of a set of pairwise distances, and how to read them.
 
-A data matrix is a full distance matrix or a set of vectors.  Each kind of spec is a subclass of
-`DistanceSpec`:
-
-- `PrecomputedDistanceSpec` reads the distances from a full distance matrix;
-- `VectorDistanceSpec` computes each distance on demand from vectors, with its distance metric.
+A data matrix is a full distance matrix or a set of vectors, and each subclass of `DistanceSpec`
+reads one of the two.
 
 A spec is a small frozen value that holds no array, so it can be pickled inside an objective and
 sent to a worker process.
 
 Specs are equal when they have the same kind and the same fields.  A precomputed spec and a vector
-spec always compare unequal, even when the distance matrix holds exactly the vector spec's
-distances, because the specs alone cannot show that.
+spec always compare unequal, even when the precomputed spec's distance matrix holds exactly the
+vector spec's distances, because a spec holds no array to compare.
 """
 
 from abc import ABC, abstractmethod
@@ -53,8 +50,8 @@ class PrecomputedDistanceSpec(DistanceSpec):
     The label is a field, because a distance matrix carries no name of its own.
     """
 
-    # `slots=True` lets this field implement the abstract `label` property: the slot replaces the
-    # inherited property on this class.
+    # `slots=True` turns this field into a slot attribute on the generated class, and that attribute
+    # overrides the abstract `label` property inherited from `DistanceSpec`.
     label: str
 
     def distance_store(self, data_matrices: DataMatrixReader) -> DistanceStore:
@@ -70,11 +67,12 @@ class VectorDistanceSpec(DistanceSpec):
 
     - **off:** the user's vectors as given;
     - **on:** the vectors as `DistanceMetric.preprocess` returns them for the metric, which are the
-      vectors that a lazy distance store reads.
+      input vectors of a lazy distance store.
 
     `distance_store` raises for every spec with the flag off.  For a metric that preprocesses, a lazy
-    distance store over the user's vectors as given would compute wrong distances; raising for every
-    metric, including a metric whose preprocessing returns the vectors unchanged, keeps a single rule.
+    distance store over the user's vectors as given would compute wrong distances.  Raising for every
+    metric, including a metric whose preprocessing returns the vectors unchanged, means a caller never
+    needs to know which metrics preprocess.
 
     A spec with the flag off still has a label and compares by its fields, so it can name a set of
     distances before its vectors are preprocessed.

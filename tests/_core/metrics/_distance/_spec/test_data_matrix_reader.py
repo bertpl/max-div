@@ -9,13 +9,16 @@ def test_a_reader_must_implement_array():
 
     # --- arrange ----------------------
     class _Incomplete(DataMatrixReader):
-        pass
+        """A reader that leaves `array` unimplemented."""
 
-    class _Single(DataMatrixReader):
+    class _Complete(DataMatrixReader):
+        """A reader that returns a 2x2 matrix filled with the requested id."""
+
         def array(self, matrix_id: int) -> np.ndarray:
+            """Return a 2x2 matrix filled with `matrix_id`."""
             return np.full((2, 2), matrix_id, dtype=np.float32)
 
     # --- act / assert -----------------
     with pytest.raises(TypeError):
         _Incomplete()
-    assert _Single().array(3)[0, 0] == 3.0
+    assert _Complete().array(3)[0, 0] == 3.0

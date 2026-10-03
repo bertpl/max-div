@@ -1,4 +1,4 @@
-"""Helpers shared by tests that read pairwise distances: every pair that a store reports, or scipy's condensed order."""
+"""These helpers compute or read pairwise distances for tests."""
 
 import numpy as np
 from scipy.spatial.distance import squareform
@@ -17,7 +17,7 @@ def l2_and_projections_reference(a: np.ndarray, b: np.ndarray, l2_scale: float, 
         return float(min(gaps.min(), l2_scale * (k ** (1.0 / len(gaps)) - 1.0) / (k - 1.0) * l2))
 
 
-def all_pairs(store: DistanceStore) -> list[float]:
+def all_pair_distances(store: DistanceStore) -> list[float]:
     """Return every (i, j) distance that the store reports, self-pairs included."""
     return [float(get_distance(store, np.int32(i), np.int32(j))) for i in range(store.n) for j in range(store.n)]
 

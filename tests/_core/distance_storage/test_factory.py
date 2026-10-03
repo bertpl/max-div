@@ -14,7 +14,7 @@ from max_div._core.metrics._distance import (
 from max_div._core.problem import MaxDivProblem
 from max_div._core.solver import MaxDivSolverBuilder, SolverPreset, Verbosity
 from max_div._core.solver._duration import iterations
-from tests._core.metrics._distance.helpers import all_pairs
+from tests._core.metrics._distance.helpers import all_pair_distances
 
 # ==================================================================================================
 #  Fixtures / helpers
@@ -220,7 +220,7 @@ def test_full_matrix_and_lazy_stores_agree(metric: DistanceMetric):
     (lazy,) = _factory(problem, DistanceStorageType.LAZY).create_stores()
 
     # --- assert -----------------------
-    assert all_pairs(full) == all_pairs(lazy)
+    assert all_pair_distances(full) == all_pair_distances(lazy)
 
 
 def test_square_input_is_adopted_zero_copy():
@@ -340,10 +340,10 @@ def test_published_stores_match_the_in_process_build(storage: DistanceStorageTyp
 
     # --- act --------------------------
     with factory.publish_distance_stores() as specs, DistanceStoreFactory.attach_distance_stores(specs) as attached:
-        read_attached = all_pairs(attached[0])
+        read_attached = all_pair_distances(attached[0])
 
     # --- assert -----------------------
-    assert read_attached == all_pairs(expected)
+    assert read_attached == all_pair_distances(expected)
 
 
 @pytest.mark.parametrize("form", ["square", "condensed"])
@@ -356,10 +356,10 @@ def test_published_stores_hold_distance_input(form: str):
 
     # --- act --------------------------
     with factory.publish_distance_stores() as specs, DistanceStoreFactory.attach_distance_stores(specs) as attached:
-        read = all_pairs(attached[0])
+        read = all_pair_distances(attached[0])
 
     # --- assert -----------------------
-    assert read == all_pairs(expected)
+    assert read == all_pair_distances(expected)
 
 
 def test_published_full_matrix_has_the_problem_size():
