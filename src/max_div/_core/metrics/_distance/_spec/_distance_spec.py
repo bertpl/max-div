@@ -6,8 +6,8 @@ reads one of the two.
 A spec is a small frozen value that holds no array, so it can be pickled inside an objective and
 sent to a worker process.
 
-Specs are equal when they have the same kind and the same fields.  A precomputed spec and a vector
-spec always compare unequal, even when the precomputed spec's distance matrix holds exactly the
+Specs are equal when they have the same kind and the same fields.  A full-matrix spec and a vector
+spec always compare unequal, even when the full-matrix spec's distance matrix holds exactly the
 vector spec's distances, because a spec holds no array to compare.
 """
 
@@ -36,16 +36,16 @@ class DistanceSpec(ABC):
         """Return the short name of these distances, which an objective shows in its own label."""
 
     @abstractmethod
-    def distance_store(self, data_matrices: DataMatrixReader) -> DistanceStore:
-        """Return the distance store that reads this spec's data matrix, fetched from `data_matrices` by `matrix_id`."""
+    def build_distance_store(self, data_matrix_reader: DataMatrixReader) -> DistanceStore:
+        """Return the distance store over this spec's data matrix, fetched from `data_matrix_reader` by `matrix_id`."""
 
 
 # ==================================================================================================
 #  Kinds of spec
 # ==================================================================================================
 @dataclass(frozen=True, slots=True, kw_only=True)
-class PrecomputedDistanceSpec(DistanceSpec):
-    """A precomputed distance spec reads its distances from a full (n, n) distance matrix.
+class FullMatrixDistanceSpec(DistanceSpec):
+    """A full-matrix distance spec reads its distances from a full (n, n) distance matrix.
 
     The label is a field, because a distance matrix carries no name of its own.
     """
@@ -54,22 +54,22 @@ class PrecomputedDistanceSpec(DistanceSpec):
     # overrides the abstract `label` property inherited from `DistanceSpec`.
     label: str
 
-    def distance_store(self, data_matrices: DataMatrixReader) -> DistanceStore:
+    def build_distance_store(self, data_matrix_reader: DataMatrixReader) -> DistanceStore:
         """Return the full-matrix distance store over this spec's distance matrix."""
-        return DistanceStore.full_matrix(data_matrices.array(self.matrix_id))
+        return DistanceStore.full_matrix(data_matrix_reader.array(self.matrix_id))
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
 class VectorDistanceSpec(DistanceSpec):
     """A vector distance spec computes its distances on demand from vectors, with its distance metric.
 
-    `is_preprocessed` says which vectors `matrix_id` names:
+    `is_matrix_preprocessed` says which vectors `matrix_id` names:
 
     - **off:** the user's vectors as given;
     - **on:** the vectors as `DistanceMetric.preprocess` returns them for the metric, which are the
       input vectors of a lazy distance store.
 
-    `distance_store` raises for every spec with the flag off.  For a metric that preprocesses, a lazy
+    `build_distance_store` raises for every spec with the flag off.  For a metric that preprocesses, a lazy
     distance store over the user's vectors as given would compute wrong distances.  Raising for every
     metric, including a metric whose preprocessing returns the vectors unchanged, means a caller never
     needs to know which metrics preprocess.
@@ -79,22 +79,22 @@ class VectorDistanceSpec(DistanceSpec):
     """
 
     metric: DistanceMetric
-    is_preprocessed: bool
+    is_matrix_preprocessed: bool
 
     @property
     def label(self) -> str:
         """Return the metric's label, e.g. `L2` or `axis 2`."""
         return self.metric.label
 
-    def distance_store(self, data_matrices: DataMatrixReader) -> DistanceStore:
+    def build_distance_store(self, data_matrix_reader: DataMatrixReader) -> DistanceStore:
         """Return the lazy distance store that computes this spec's distances from its preprocessed vectors.
 
         Raises:
-            ValueError: If `is_preprocessed` is off.
+            ValueError: If `is_matrix_preprocessed` is off.
         """
-        if not self.is_preprocessed:
+        if not self.is_matrix_preprocessed:
             raise ValueError(
                 f"{self!r} names the user's vectors as given; a distance store reads only vectors that are "
                 "preprocessed for the metric."
             )
-        return DistanceStore.lazy(data_matrices.array(self.matrix_id), self.metric)
+        return DistanceStore.lazy(data_matrix_reader.array(self.matrix_id), self.metric)

@@ -8,7 +8,7 @@ from max_div._core.metrics._distance import (
     DistanceMetric,
     DistanceSpec,
     DistanceStore,
-    PrecomputedDistanceSpec,
+    FullMatrixDistanceSpec,
     VectorDistanceSpec,
     compute_full_matrix,
 )
@@ -23,8 +23,8 @@ COSINE = DistanceMetric.cosine()
 
 # the pickling test runs over this list, which holds one spec per subclass of `DistanceSpec`
 _ONE_SPEC_PER_KIND = [
-    PrecomputedDistanceSpec(matrix_id=4, label="user distances"),
-    VectorDistanceSpec(matrix_id=2, metric=DistanceMetric.minkowski(3), is_preprocessed=True),
+    FullMatrixDistanceSpec(matrix_id=4, label="user distances"),
+    VectorDistanceSpec(matrix_id=2, metric=DistanceMetric.minkowski(3), is_matrix_preprocessed=True),
 ]
 
 
@@ -43,14 +43,14 @@ class _DictDataMatrixReader(DataMatrixReader):
 # ==================================================================================================
 #  Building a distance store
 # ==================================================================================================
-def test_precomputed_spec_reads_the_distance_matrix_with_its_id(vectors: np.ndarray):
-    """A precomputed spec builds a full-matrix store over the matrix that its `matrix_id` names, not another one."""
+def test_full_matrix_spec_reads_the_distance_matrix_with_its_id(vectors: np.ndarray):
+    """A full-matrix spec builds a full-matrix store over the matrix that its `matrix_id` names, not another one."""
     # --- arrange ----------------------
     matrix = compute_full_matrix(vectors, L2)
     reader = _DictDataMatrixReader({0: vectors, 3: matrix})
 
     # --- act --------------------------
-    store = PrecomputedDistanceSpec(matrix_id=3, label="L2").distance_store(reader)
+    store = FullMatrixDistanceSpec(matrix_id=3, label="L2").build_distance_store(reader)
 
     # --- assert -----------------------
     assert store.kind == KIND_FULL_MATRIX
@@ -64,7 +64,7 @@ def test_preprocessed_vector_spec_computes_the_metrics_distances(metric: Distanc
     reader = _DictDataMatrixReader({0: vectors, 2: metric.preprocess(vectors)})
 
     # --- act --------------------------
-    store = VectorDistanceSpec(matrix_id=2, metric=metric, is_preprocessed=True).distance_store(reader)
+    store = VectorDistanceSpec(matrix_id=2, metric=metric, is_matrix_preprocessed=True).build_distance_store(reader)
 
     # --- assert -----------------------
     assert store.kind == KIND_LAZY
@@ -72,13 +72,13 @@ def test_preprocessed_vector_spec_computes_the_metrics_distances(metric: Distanc
 
 
 def test_vector_spec_over_the_vectors_as_given_builds_no_store(vectors: np.ndarray):
-    """A vector spec with `is_preprocessed` off refuses to build a store, even for a metric that does not preprocess."""
+    """A vector spec with `is_matrix_preprocessed` off builds no store, even for a metric that does not preprocess."""
     # --- arrange ----------------------
     reader = _DictDataMatrixReader({0: vectors})
 
     # --- act / assert -----------------
     with pytest.raises(ValueError, match="preprocessed"):
-        VectorDistanceSpec(matrix_id=0, metric=L2, is_preprocessed=False).distance_store(reader)
+        VectorDistanceSpec(matrix_id=0, metric=L2, is_matrix_preprocessed=False).build_distance_store(reader)
 
 
 # ==================================================================================================
@@ -87,13 +87,13 @@ def test_vector_spec_over_the_vectors_as_given_builds_no_store(vectors: np.ndarr
 @pytest.mark.parametrize(
     "spec, expected",
     [
-        (PrecomputedDistanceSpec(matrix_id=0, label="user distances"), "user distances"),
-        (VectorDistanceSpec(matrix_id=0, metric=L2, is_preprocessed=False), "L2"),
-        (VectorDistanceSpec(matrix_id=1, metric=DistanceMetric.along_axis(2), is_preprocessed=True), "axis 2"),
+        (FullMatrixDistanceSpec(matrix_id=0, label="user distances"), "user distances"),
+        (VectorDistanceSpec(matrix_id=0, metric=L2, is_matrix_preprocessed=False), "L2"),
+        (VectorDistanceSpec(matrix_id=1, metric=DistanceMetric.along_axis(2), is_matrix_preprocessed=True), "axis 2"),
     ],
 )
 def test_label_names_the_distances(spec: DistanceSpec, expected: str):
-    """A precomputed spec's label is its field; a vector spec's label is its metric's."""
+    """A full-matrix spec's label is its field; a vector spec's label is its metric's."""
     # --- act / assert -----------------
     assert spec.label == expected
 
@@ -101,25 +101,25 @@ def test_label_names_the_distances(spec: DistanceSpec, expected: str):
 @pytest.mark.parametrize(
     "other, is_equal",
     [
-        (VectorDistanceSpec(matrix_id=0, metric=L2, is_preprocessed=True), True),
-        (VectorDistanceSpec(matrix_id=1, metric=L2, is_preprocessed=True), False),
-        (VectorDistanceSpec(matrix_id=0, metric=L2, is_preprocessed=False), False),
-        (VectorDistanceSpec(matrix_id=0, metric=COSINE, is_preprocessed=True), False),
-        (PrecomputedDistanceSpec(matrix_id=0, label="L2"), False),
+        (VectorDistanceSpec(matrix_id=0, metric=L2, is_matrix_preprocessed=True), True),
+        (VectorDistanceSpec(matrix_id=1, metric=L2, is_matrix_preprocessed=True), False),
+        (VectorDistanceSpec(matrix_id=0, metric=L2, is_matrix_preprocessed=False), False),
+        (VectorDistanceSpec(matrix_id=0, metric=COSINE, is_matrix_preprocessed=True), False),
+        (FullMatrixDistanceSpec(matrix_id=0, label="L2"), False),
     ],
     ids=["same-fields", "other-matrix", "not-preprocessed", "other-metric", "other-kind"],
 )
 def test_specs_are_equal_when_kind_and_fields_are(other: DistanceSpec, is_equal: bool):
     """Specs compare and hash alike exactly when they have the same kind and the same fields."""
     # --- arrange ----------------------
-    spec = VectorDistanceSpec(matrix_id=0, metric=L2, is_preprocessed=True)
+    spec = VectorDistanceSpec(matrix_id=0, metric=L2, is_matrix_preprocessed=True)
 
     # --- act / assert -----------------
     assert (spec == other) is is_equal
     assert (len({spec, other}) == 1) is is_equal
 
 
-@pytest.mark.parametrize("spec", _ONE_SPEC_PER_KIND, ids=["precomputed", "vector"])
+@pytest.mark.parametrize("spec", _ONE_SPEC_PER_KIND, ids=["full-matrix", "vector"])
 def test_spec_survives_pickling(spec: DistanceSpec):
     """A spec is picklable, which lets it reach a spawned worker inside an objective."""
     # --- act / assert -----------------

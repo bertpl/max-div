@@ -11,7 +11,7 @@ Each layer depends only on the ones before it:
 
 from ._build import compute_full_matrix, expand_condensed
 from ._metric import NO_FLOAT_PARAM, DistanceMetric
-from ._spec import DataMatrixReader, DistanceSpec, PrecomputedDistanceSpec, VectorDistanceSpec
+from ._spec import DataMatrixReader, DistanceSpec, FullMatrixDistanceSpec, VectorDistanceSpec
 from ._store import (
     DISTANCE_STORE_TYPE,
     KIND_FULL_MATRIX,

@@ -4,11 +4,11 @@ A data matrix is a full distance matrix or a set of vectors.
 """
 
 from ._data_matrix_reader import DataMatrixReader
-from ._distance_spec import DistanceSpec, PrecomputedDistanceSpec, VectorDistanceSpec
+from ._distance_spec import DistanceSpec, FullMatrixDistanceSpec, VectorDistanceSpec
 
 __all__ = [
     "DataMatrixReader",
     "DistanceSpec",
-    "PrecomputedDistanceSpec",
+    "FullMatrixDistanceSpec",
     "VectorDistanceSpec",
 ]
