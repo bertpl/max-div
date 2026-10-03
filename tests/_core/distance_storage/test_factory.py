@@ -9,13 +9,12 @@ from max_div._core.metrics import DistanceMetric, DiversityMetric
 from max_div._core.metrics._distance import (
     KIND_FULL_MATRIX,
     KIND_LAZY,
-    DistanceStore,
     compute_full_matrix,
-    get_distance,
 )
 from max_div._core.problem import MaxDivProblem
 from max_div._core.solver import MaxDivSolverBuilder, SolverPreset, Verbosity
 from max_div._core.solver._duration import iterations
+from tests._core.metrics._distance.helpers import all_pairs
 
 # ==================================================================================================
 #  Fixtures / helpers
@@ -51,11 +50,6 @@ def _stub_vector_problem(n: int, d: int = 0):
     object.__setattr__(stub, "vectors", np.zeros((n, d), dtype=np.float32))
     object.__setattr__(stub, "distance_metric", L2)
     return stub
-
-
-def _all_pairs(store: DistanceStore, n: int) -> list[float]:
-    """Return every (i, j) distance the store reports, self-pairs included."""
-    return [get_distance(store, np.int32(i), np.int32(j)) for i in range(n) for j in range(n)]
 
 
 # ==================================================================================================
@@ -226,7 +220,7 @@ def test_full_matrix_and_lazy_stores_agree(metric: DistanceMetric):
     (lazy,) = _factory(problem, DistanceStorageType.LAZY).create_stores()
 
     # --- assert -----------------------
-    assert _all_pairs(full, problem.n) == _all_pairs(lazy, problem.n)
+    assert all_pairs(full) == all_pairs(lazy)
 
 
 def test_square_input_is_adopted_zero_copy():
@@ -346,10 +340,10 @@ def test_published_stores_match_the_in_process_build(storage: DistanceStorageTyp
 
     # --- act --------------------------
     with factory.publish_distance_stores() as specs, DistanceStoreFactory.attach_distance_stores(specs) as attached:
-        read_attached = _all_pairs(attached[0], problem.n)
+        read_attached = all_pairs(attached[0])
 
     # --- assert -----------------------
-    assert read_attached == _all_pairs(expected, problem.n)
+    assert read_attached == all_pairs(expected)
 
 
 @pytest.mark.parametrize("form", ["square", "condensed"])
@@ -362,10 +356,10 @@ def test_published_stores_hold_distance_input(form: str):
 
     # --- act --------------------------
     with factory.publish_distance_stores() as specs, DistanceStoreFactory.attach_distance_stores(specs) as attached:
-        read = _all_pairs(attached[0], problem.n)
+        read = all_pairs(attached[0])
 
     # --- assert -----------------------
-    assert read == _all_pairs(expected, problem.n)
+    assert read == all_pairs(expected)
 
 
 def test_published_full_matrix_has_the_problem_size():

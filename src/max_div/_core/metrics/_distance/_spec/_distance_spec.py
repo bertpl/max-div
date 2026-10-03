@@ -1,14 +1,17 @@
-"""A distance spec says which data matrix a set of pairwise distances is read from, and how.
+"""A distance spec names the data matrix of a set of pairwise distances, and says how to obtain the distances from it.
 
-There are 2 kinds of spec:
+A data matrix is a full distance matrix or a set of vectors.  Each kind of spec is a subclass of
+`DistanceSpec`:
 
 - `PrecomputedDistanceSpec` reads the distances from a full distance matrix;
 - `VectorDistanceSpec` computes each distance on demand from vectors, with its distance metric.
 
-A spec is a small frozen value that holds no array, so it can travel to a worker process inside
-a pickled objective.  Two specs are equal when they have the same kind and the same fields;
-whether a distance matrix holds exactly the distances of some vector spec is not visible from
-the specs, so such a pair compares unequal.
+A spec is a small frozen value that holds no array, so it can be pickled inside an objective and
+sent to a worker process.
+
+Specs are equal when they have the same kind and the same fields.  A precomputed spec and a vector
+spec always compare unequal, even when the distance matrix holds exactly the vector spec's
+distances, because the specs alone cannot show that.
 """
 
 from abc import ABC, abstractmethod
@@ -25,18 +28,19 @@ from ._data_matrix_reader import DataMatrixReader
 # ==================================================================================================
 @dataclass(frozen=True, slots=True, kw_only=True)
 class DistanceSpec(ABC):
-    """A distance spec names the data matrix that a set of distances is read from, and builds the store that reads it."""
+    """A distance spec names the data matrix of a set of distances, and builds the distance store over that matrix."""
 
-    matrix_id: int  # the id of the data matrix that the distances are read from
+    # This id names the data matrix of the distances.
+    matrix_id: int
 
     @property
     @abstractmethod
     def label(self) -> str:
-        """Return the short name of these distances, as an objective's label shows it."""
+        """Return the short name of these distances, which an objective shows in its own label."""
 
     @abstractmethod
     def distance_store(self, data_matrices: DataMatrixReader) -> DistanceStore:
-        """Return the distance store that reads this spec's data matrix, which it fetches from `data_matrices` by its id."""
+        """Return the distance store that reads this spec's data matrix, fetched from `data_matrices` by `matrix_id`."""
 
 
 # ==================================================================================================
@@ -65,12 +69,15 @@ class VectorDistanceSpec(DistanceSpec):
     `is_preprocessed` says which vectors `matrix_id` names:
 
     - **off:** the user's vectors as given;
-    - **on:** the vectors as `DistanceMetric.preprocess` returns them for the metric, the form that
-      a lazy distance store reads.
+    - **on:** the vectors as `DistanceMetric.preprocess` returns them for the metric, which are the
+      vectors that a lazy distance store reads.
 
-    A distance store is built only from a spec with the flag on.  A metric that preprocesses cannot
-    read the user's vectors as given, and refusing every spec with the flag off keeps one rule for
-    every metric, including one whose preprocessing returns the vectors unchanged.
+    `distance_store` raises for every spec with the flag off.  For a metric that preprocesses, a lazy
+    distance store over the user's vectors as given would compute wrong distances; raising for every
+    metric, including a metric whose preprocessing returns the vectors unchanged, keeps a single rule.
+
+    A spec with the flag off still has a label and compares by its fields, so it can name a set of
+    distances before its vectors are preprocessed.
     """
 
     metric: DistanceMetric

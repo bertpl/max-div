@@ -5,7 +5,7 @@ Each layer depends only on the ones before it:
 - `_metric` defines the distances themselves.
 - `_build` turns vectors into a distance matrix.
 - `_store` holds that data and reads it back.
-- `_spec` says which data matrix a set of distances is read from, and builds the store that reads it.
+- `_spec` names the data matrix of a set of distances, and builds the distance store over that matrix.
 """
 
 from ._build import compute_full_matrix, expand_condensed
