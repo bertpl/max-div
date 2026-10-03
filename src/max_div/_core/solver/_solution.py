@@ -3,7 +3,8 @@ from dataclasses import dataclass, field
 import numpy as np
 from numpy.typing import NDArray
 
-from ._distance_storage import DistanceStorageTypes
+from max_div._core.distance_storage import DistanceStorageTypes
+
 from ._duration import Elapsed
 from ._score import Score
 from ._score_checkpoint import ScoreCheckpoint

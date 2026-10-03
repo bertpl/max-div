@@ -175,7 +175,7 @@ def test_max_div_solver_builder_refuses_custom_tie_breakers_for_a_hybrid_metric(
 def test_the_store_is_built_by_solve_not_by_build(dummy_problem, monkeypatch):
     """build() only assembles the solver; each solve() builds the store, so its cost sits in solve()."""
     # --- arrange ----------------------
-    from max_div._core.solver._distance_storage import DistanceStoreFactory
+    from max_div._core.distance_storage import DistanceStoreFactory
 
     builds = 0
     real_create = DistanceStoreFactory.create_stores_by_distance

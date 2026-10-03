@@ -5,8 +5,8 @@ from dataclasses import replace
 from typing import Self, cast
 
 from max_div._core._utils import deterministic_hash_int64
+from max_div._core.distance_storage import DistanceStorageTypes
 from max_div._core.problem import MaxDivProblem
-from max_div._core.solver._distance_storage import DistanceStorageTypes
 from max_div._core.solver._duration import E2eBudget, TargetDuration
 from max_div._core.solver._parallel import (
     DEFAULT_GROUP_MERGE_RATE,

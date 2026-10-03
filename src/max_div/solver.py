@@ -1,9 +1,9 @@
 """Public API for building and running Maximum Diversity solvers."""
 
 from ._core._warnings import ParallelSolvingWarning, SolverBudgetWarning
+from ._core.distance_storage import DistanceStorageType
 from ._core.solver import (
     ConstraintPenalty,
-    DistanceStorageType,
     InitializationStrategy,
     MaxDivSolver,
     MaxDivSolverBuilder,

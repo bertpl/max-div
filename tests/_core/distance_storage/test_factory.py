@@ -3,6 +3,8 @@ import pytest
 from scipy.spatial.distance import squareform
 
 from max_div._core.constraints import Constraint
+from max_div._core.distance_storage import DistanceStorageType, DistanceStoreFactory, attached_distance_store
+from max_div._core.distance_storage.memory_budget import AUTO_MEMORY_FRACTION, full_matrix_bytes
 from max_div._core.metrics import DistanceMetric, DiversityMetric
 from max_div._core.metrics._distance import (
     KIND_FULL_MATRIX,
@@ -13,8 +15,6 @@ from max_div._core.metrics._distance import (
 )
 from max_div._core.problem import MaxDivProblem
 from max_div._core.solver import MaxDivSolverBuilder, SolverPreset, Verbosity
-from max_div._core.solver._distance_storage import DistanceStorageType, DistanceStoreFactory, attached_distance_store
-from max_div._core.solver._distance_storage.memory_budget import AUTO_MEMORY_FRACTION, full_matrix_bytes
 from max_div._core.solver._duration import iterations
 
 # ==================================================================================================
