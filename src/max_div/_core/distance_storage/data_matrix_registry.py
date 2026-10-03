@@ -10,7 +10,7 @@ from max_div._core.metrics._distance import DataMatrixReader
 
 from .allocation import DataMatrixAllocator, InProcessDataMatrixAllocator, SharedMemoryDataMatrixAllocator
 from .data_matrix_source import DataMatrixSource
-from .shared_memory import PublishedDataMatrices
+from .shared_memory import PublishedDataMatrixRecords
 
 
 # ==================================================================================================
@@ -43,7 +43,7 @@ class DataMatrixRegistry(DataMatrixReader):
 
     @classmethod
     @contextmanager
-    def publish_to_shared_memory(cls, sources: Mapping[int, DataMatrixSource]) -> Iterator[PublishedDataMatrices]:
+    def publish_to_shared_memory(cls, sources: Mapping[int, DataMatrixSource]) -> Iterator[PublishedDataMatrixRecords]:
         """Produce the data matrices in shared memory and yield their published records, for the duration of the block.
 
         Inside the block the shared-memory segments exist and worker processes can attach to them
@@ -54,7 +54,7 @@ class DataMatrixRegistry(DataMatrixReader):
         try:
             # this process reads none of the matrices; they stay in their segments until the allocator closes
             cls(sources, allocator)
-            yield allocator.published_matrices
+            yield allocator.published_matrix_records
         finally:
             allocator.close()
 

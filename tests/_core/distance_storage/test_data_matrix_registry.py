@@ -5,7 +5,7 @@ import pytest
 
 from max_div._core.distance_storage.data_matrix_registry import DataMatrixRegistry
 from max_div._core.distance_storage.data_matrix_source import ComputedDataMatrixSource, ExistingDataMatrixSource
-from max_div._core.distance_storage.shared_memory import AttachedDataMatrixRegistry
+from max_div._core.distance_storage.shared_memory import SharedMemoryDataMatrixReader
 from max_div._core.metrics._distance import DataMatrixReader
 
 
@@ -66,13 +66,13 @@ def test_publishing_to_shared_memory_records_every_data_matrix_under_its_id():
 
     # --- act --------------------------
     with (
-        DataMatrixRegistry.publish_to_shared_memory(sources) as published_matrices,
-        AttachedDataMatrixRegistry(published_matrices) as reader,
+        DataMatrixRegistry.publish_to_shared_memory(sources) as published_matrix_records,
+        SharedMemoryDataMatrixReader(published_matrix_records) as reader,
     ):
         read_vectors, read_ones = np.array(reader.array(0)), np.array(reader.array(5))
 
     # --- assert -----------------------
-    assert sorted(published_matrices.matrices) == [0, 5]
+    assert sorted(published_matrix_records.records) == [0, 5]
     np.testing.assert_array_equal(read_vectors, vectors)
     np.testing.assert_array_equal(read_ones, np.ones((2, 2), dtype=np.float32))
 
@@ -80,8 +80,10 @@ def test_publishing_to_shared_memory_records_every_data_matrix_under_its_id():
 def test_leaving_the_published_block_destroys_the_segments():
     """After the block every segment is destroyed, so its name no longer resolves."""
     # --- arrange ----------------------
-    with DataMatrixRegistry.publish_to_shared_memory({0: ExistingDataMatrixSource(_vectors())}) as published_matrices:
-        segment_name = published_matrices.matrices[0].segment_name
+    with DataMatrixRegistry.publish_to_shared_memory(
+        {0: ExistingDataMatrixSource(_vectors())}
+    ) as published_matrix_records:
+        segment_name = published_matrix_records.records[0].segment_name
 
     # --- act / assert -----------------
     with pytest.raises(FileNotFoundError):

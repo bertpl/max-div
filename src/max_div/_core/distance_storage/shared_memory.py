@@ -3,12 +3,12 @@
 The process that publishes the data matrices owns their segments, and a worker process reads them:
 
 - `SharedMemoryDataMatrixAllocator` places each data matrix in a shared-memory segment of its own
-  and records a `PublishedDataMatrix` per matrix id, which says which segment holds that matrix.
-- A worker process receives the `PublishedDataMatrices`, which hold the `PublishedDataMatrix` of
+  and records a `PublishedDataMatrixRecord` per matrix id, which says which segment holds that matrix.
+- A worker process receives the `PublishedDataMatrixRecords`, which hold the `PublishedDataMatrixRecord` of
   every data matrix of the solve, as an ordinary pickled argument.
-- The worker reads the data matrices through an `AttachedDataMatrixRegistry`.
+- The worker reads the data matrices through a `SharedMemoryDataMatrixReader`.
 
-`PublishedDistanceStores` bundles the `PublishedDataMatrices` with the distance spec of each
+`PublishedDistanceStoresRecord` bundles the `PublishedDataMatrixRecords` with the distance spec of each
 distance store, in store order, so that a worker process builds the same distance stores that
 `DistanceStoreFactory.create_stores` builds in a single process.
 
@@ -35,10 +35,10 @@ if TYPE_CHECKING:
 
 
 # ==================================================================================================
-#  Published data matrices
+#  Published data matrix records
 # ==================================================================================================
-class PublishedDataMatrix(NamedTuple):
-    """A published data matrix says which shared-memory segment holds one data matrix, and its shape."""
+class PublishedDataMatrixRecord(NamedTuple):
+    """A published data matrix record says which shared-memory segment holds one data matrix, and its shape."""
 
     segment_name: str  # the operating-system name of the segment, which is how another process finds it
     shape: tuple[int, ...]  # the shape of the float32 array in the segment; its first axis is the item count
@@ -54,40 +54,40 @@ class PublishedDataMatrix(NamedTuple):
 
 
 @dataclass(frozen=True)
-class PublishedDataMatrices:
-    """Published data matrices hold, by matrix id, what another process needs to find the data matrices of one solve."""
+class PublishedDataMatrixRecords:
+    """Published data matrix records hold, by matrix id, what another process needs to find a solve's data matrices."""
 
-    matrices: dict[int, PublishedDataMatrix]
+    records: dict[int, PublishedDataMatrixRecord]
 
 
 # ==================================================================================================
-#  AttachedDataMatrixRegistry
+#  SharedMemoryDataMatrixReader
 # ==================================================================================================
-class AttachedDataMatrixRegistry(DataMatrixReader):
-    """An attached data matrix registry reads the data matrices that another process published, by matrix id.
+class SharedMemoryDataMatrixReader(DataMatrixReader):
+    """A shared-memory data matrix reader reads the data matrices that another process published, by matrix id.
 
     Entering the `with` block attaches to every published segment; leaving closes this process's
     mapping of each segment and never unlinks a segment, which belongs to the process that published
     it.  Read the data matrices, and the distance stores over them, only inside the block.
     """
 
-    def __init__(self, published_matrices: PublishedDataMatrices) -> None:
+    def __init__(self, published_matrix_records: PublishedDataMatrixRecords) -> None:
         """Keep the published data matrices; the segments are attached when the block is entered."""
-        self._published_matrices = published_matrices
+        self._published_matrix_records = published_matrix_records
         self._segments: list[SharedMemory] = []
         self._arrays: dict[int, NDArray[np.float32]] = {}
 
-    def __enter__(self) -> "AttachedDataMatrixRegistry":
+    def __enter__(self) -> "SharedMemoryDataMatrixReader":
         """Attach to every published segment and return this registry.
 
         Raises:
             FileNotFoundError: If a segment no longer exists; the segments attached before it are closed.
         """
         try:
-            for matrix_id, published_matrix in self._published_matrices.matrices.items():
-                segment = attach_shared_memory_segment(published_matrix.segment_name)
+            for matrix_id, published_matrix_record in self._published_matrix_records.records.items():
+                segment = attach_shared_memory_segment(published_matrix_record.segment_name)
                 self._segments.append(segment)
-                self._arrays[matrix_id] = published_matrix.array_over(segment)
+                self._arrays[matrix_id] = published_matrix_record.array_over(segment)
         except BaseException:
             self._close()
             raise
@@ -113,21 +113,21 @@ class AttachedDataMatrixRegistry(DataMatrixReader):
 
 
 # ==================================================================================================
-#  PublishedDistanceStores
+#  PublishedDistanceStoresRecord
 # ==================================================================================================
 @dataclass(frozen=True)
-class PublishedDistanceStores:
-    """Published distance stores hold a solve's data matrices in shared memory and the distance spec of each store.
+class PublishedDistanceStoresRecord:
+    """A published distance stores record locates a solve's data matrices in shared memory and holds each store's spec.
 
-    A `PublishedDistanceStores` record is small enough to pass to a worker process as an ordinary
+    A `PublishedDistanceStoresRecord` is small enough to pass to a worker process as an ordinary
     pickled argument.
     """
 
-    published_matrices: PublishedDataMatrices
+    published_matrix_records: PublishedDataMatrixRecords
     distance_specs: tuple[DistanceSpec, ...]  # there is one distance spec per distance store, in store order
 
     @contextmanager
     def attached_distance_stores(self) -> Iterator[list[DistanceStore]]:
         """Yield the distance stores, in store order, over the attached data matrices, for the duration of the block."""
-        with AttachedDataMatrixRegistry(self.published_matrices) as data_matrix_reader:
+        with SharedMemoryDataMatrixReader(self.published_matrix_records) as data_matrix_reader:
             yield [spec.build_distance_store(data_matrix_reader) for spec in self.distance_specs]

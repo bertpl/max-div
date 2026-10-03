@@ -22,7 +22,7 @@ from collections.abc import Sequence
 from multiprocessing.process import BaseProcess
 from multiprocessing.queues import Queue
 
-from max_div._core.distance_storage import PublishedDistanceStores, stores_by_distance
+from max_div._core.distance_storage import PublishedDistanceStoresRecord, stores_by_distance
 from max_div._core.solver._diversity_contribution import DiversityObjectiveBindings
 from max_div._core.solver._progress_reporting import ProgressReporter, ProgressSnapshot, SnapshotRequirements
 from max_div._core.solver._solver_config import SolverConfig
@@ -46,7 +46,7 @@ _JOIN_SECONDS = 30.0
 
 def run_workers(
     configs: list[SolverConfig],
-    published_distance_stores: PublishedDistanceStores,
+    published_distance_stores_record: PublishedDistanceStoresRecord,
     coordinators: Sequence[WorkerCoordinator],
     progress_reporter: ProgressReporter | None = None,
 ) -> tuple[list[WorkerResult], list[WorkerFailure]]:
@@ -57,7 +57,7 @@ def run_workers(
 
     Args:
         configs: one solver configuration per worker, in worker order.
-        published_distance_stores: the distance stores that this process published; every worker
+        published_distance_stores_record: the distance stores that this process published; every worker
             builds its distance stores from them.
         coordinators: one coordinator per worker, in worker order; `_coordinator` documents
             the topology this list wires up.
@@ -83,7 +83,7 @@ def run_workers(
     workers = [
         context.Process(
             target=solve_in_worker,
-            args=(index, config, published_distance_stores, coordinators[index], messages, requirements),
+            args=(index, config, published_distance_stores_record, coordinators[index], messages, requirements),
             daemon=True,
         )
         for index, config in enumerate(configs)
@@ -107,7 +107,7 @@ def run_workers(
 def solve_in_worker(
     worker_index: int,
     config: SolverConfig,
-    published_distance_stores: PublishedDistanceStores,
+    published_distance_stores_record: PublishedDistanceStoresRecord,
     coordinator: WorkerCoordinator,
     messages: Queue,
     requirements: SnapshotRequirements | None,
@@ -122,7 +122,7 @@ def solve_in_worker(
     else:
         reporter = ProgressReporter.silent()
     try:
-        with published_distance_stores.attached_distance_stores() as stores:
+        with published_distance_stores_record.attached_distance_stores() as stores:
             # the stores were published in the bindings' store order, which the worker derives from
             # the same objectives, so it rebuilds the same distance -> store mapping
             bindings = DiversityObjectiveBindings.for_objectives(config.diversity_objectives)

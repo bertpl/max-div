@@ -24,7 +24,7 @@ from numpy.typing import NDArray
 
 from max_div._core._utils import create_shared_memory_segment, destroy_shared_memory_segment
 
-from .shared_memory import PublishedDataMatrices, PublishedDataMatrix
+from .shared_memory import PublishedDataMatrixRecord, PublishedDataMatrixRecords
 
 if TYPE_CHECKING:
     from multiprocessing.shared_memory import SharedMemory
@@ -80,8 +80,8 @@ class SharedMemoryDataMatrixAllocator(DataMatrixAllocator):
     """This allocator places each data matrix in a shared-memory segment of its own, which worker processes can read.
 
     This process creates and owns every segment.  For each data matrix that it places, the
-    allocator records, under the matrix id, a `PublishedDataMatrix` that says which segment holds the
-    matrix; `published_matrices` returns these records, which a worker process needs to find the
+    allocator records, under the matrix id, a `PublishedDataMatrixRecord` that says which segment holds the
+    matrix; `published_matrix_records` returns these records, which a worker process needs to find the
     segments.
 
     Place each matrix id at most once: placing an id again creates a second segment and replaces the
@@ -95,7 +95,7 @@ class SharedMemoryDataMatrixAllocator(DataMatrixAllocator):
     def __init__(self) -> None:
         """Start without any segment; segments are created as data matrices are allocated and adopted."""
         self._segments: list[SharedMemory] = []
-        self._published_matrices: dict[int, PublishedDataMatrix] = {}
+        self._published_matrix_records: dict[int, PublishedDataMatrixRecord] = {}
 
     def allocate(self, matrix_id: int, shape: tuple[int, ...]) -> NDArray[np.float32]:
         """Create a segment sized for the given shape and return the writable array that views it."""
@@ -108,12 +108,12 @@ class SharedMemoryDataMatrixAllocator(DataMatrixAllocator):
         return buffer
 
     @property
-    def published_matrices(self) -> PublishedDataMatrices:
-        """Return the `PublishedDataMatrix` record of every data matrix that this allocator placed, by matrix id.
+    def published_matrix_records(self) -> PublishedDataMatrixRecords:
+        """Return the `PublishedDataMatrixRecord` of every data matrix that this allocator placed, by matrix id.
 
         The records stay available after `close`.
         """
-        return PublishedDataMatrices(dict(self._published_matrices))
+        return PublishedDataMatrixRecords(dict(self._published_matrix_records))
 
     def close(self) -> None:
         """Destroy every segment that this allocator created.
@@ -130,8 +130,8 @@ class SharedMemoryDataMatrixAllocator(DataMatrixAllocator):
     # --------------------------------------------------------------------------
     def _create_segment(self, matrix_id: int, shape: tuple[int, ...]) -> NDArray[np.float32]:
         """Create a shared-memory segment for the shape, publish it under the matrix id, and return its array."""
-        segment = create_shared_memory_segment(PublishedDataMatrix.nbytes_for(shape))
+        segment = create_shared_memory_segment(PublishedDataMatrixRecord.nbytes_for(shape))
         self._segments.append(segment)
-        published_matrix = PublishedDataMatrix(segment_name=segment.name, shape=tuple(shape))
-        self._published_matrices[matrix_id] = published_matrix
-        return published_matrix.array_over(segment)
+        published_matrix_record = PublishedDataMatrixRecord(segment_name=segment.name, shape=tuple(shape))
+        self._published_matrix_records[matrix_id] = published_matrix_record
+        return published_matrix_record.array_over(segment)

@@ -49,10 +49,10 @@ def parallel_results():
     """Run one set of spawned workers, and hand back their results with the builder used."""
     builder = _builder()
     factory, config = builder.prepare_storage_and_config()
-    with factory.publish_distance_stores() as published_distance_stores:
+    with factory.publish_distance_stores() as published_distance_stores_record:
         results, failures = run_workers(
             [config.with_seed(seed) for seed in _SEEDS],
-            published_distance_stores,
+            published_distance_stores_record,
             _independent_coordinators(config, len(_SEEDS)),
         )
         assert failures == []
@@ -119,9 +119,11 @@ def test_one_coordinator_per_worker_is_required():
     factory, config = builder.prepare_storage_and_config()
 
     # --- act & assert -----------------
-    with factory.publish_distance_stores() as published_distance_stores, pytest.raises(ValueError):
+    with factory.publish_distance_stores() as published_distance_stores_record, pytest.raises(ValueError):
         run_workers(
-            [config.with_seed(1), config.with_seed(2)], published_distance_stores, _independent_coordinators(config, 1)
+            [config.with_seed(1), config.with_seed(2)],
+            published_distance_stores_record,
+            _independent_coordinators(config, 1),
         )
 
 
@@ -140,9 +142,9 @@ def test_a_group_of_cooperative_workers_solves_and_exchanges():
     coordinators = [group_state.coordinator_for(index) for index in range(len(_SEEDS))]
 
     # --- act --------------------------
-    with factory.publish_distance_stores() as published_distance_stores:
+    with factory.publish_distance_stores() as published_distance_stores_record:
         results, _failures = run_workers(
-            [config.with_seed(seed) for seed in _SEEDS], published_distance_stores, coordinators
+            [config.with_seed(seed) for seed in _SEEDS], published_distance_stores_record, coordinators
         )
 
     # --- assert -----------------------
@@ -159,10 +161,10 @@ def test_parallel_solve_renders_coherent_progress(capsys):
     reporter = ProgressReporter.from_verbosity(Verbosity.TABULAR, worker_columns=True)
 
     # --- act --------------------------
-    with factory.publish_distance_stores() as published_distance_stores:
+    with factory.publish_distance_stores() as published_distance_stores_record:
         results, _failures = run_workers(
             [config.with_seed(seed) for seed in _SEEDS],
-            published_distance_stores,
+            published_distance_stores_record,
             _independent_coordinators(config, len(_SEEDS)),
             progress_reporter=reporter,
         )
@@ -186,14 +188,19 @@ def test_solve_in_worker_runs_in_process():
     requirements = SnapshotRequirements(debug_info=False, selection_hash=True)
 
     # --- act --------------------------
-    with factory.publish_distance_stores() as published_distance_stores:
+    with factory.publish_distance_stores() as published_distance_stores_record:
         solve_in_worker(
-            0, config.with_seed(1), published_distance_stores, _independent_coordinators(config, 1)[0], messages, None
+            0,
+            config.with_seed(1),
+            published_distance_stores_record,
+            _independent_coordinators(config, 1)[0],
+            messages,
+            None,
         )
         solve_in_worker(
             1,
             config.with_seed(2),
-            published_distance_stores,
+            published_distance_stores_record,
             _independent_coordinators(config, 1)[0],
             messages,
             requirements,
@@ -226,9 +233,14 @@ def test_drain_collects_in_flight_results_of_dead_workers():
     builder = _builder()
     factory, config = builder.prepare_storage_and_config()
     messages = queue.Queue()
-    with factory.publish_distance_stores() as published_distance_stores:
+    with factory.publish_distance_stores() as published_distance_stores_record:
         solve_in_worker(
-            0, config.with_seed(1), published_distance_stores, _independent_coordinators(config, 1)[0], messages, None
+            0,
+            config.with_seed(1),
+            published_distance_stores_record,
+            _independent_coordinators(config, 1)[0],
+            messages,
+            None,
         )
     workers = [_StubWorker(alive=False), _StubWorker(alive=False)]  # worker 1 died without reporting
 
@@ -275,9 +287,9 @@ def test_a_failing_worker_is_reported_with_its_traceback():
     configs = [config.with_seed(1), _FailingConfig(), config.with_seed(2)]
 
     # --- act --------------------------
-    with factory.publish_distance_stores() as published_distance_stores:
+    with factory.publish_distance_stores() as published_distance_stores_record:
         results, failures = run_workers(
-            configs, published_distance_stores, _independent_coordinators(config, len(configs))
+            configs, published_distance_stores_record, _independent_coordinators(config, len(configs))
         )
 
     # --- assert -----------------------
@@ -295,9 +307,9 @@ def test_all_workers_failing_raises_with_the_first_traceback():
     configs = [_FailingConfig(seed=1), _FailingConfig(seed=2)]
 
     # --- act --------------------------
-    with factory.publish_distance_stores() as published_distance_stores:
+    with factory.publish_distance_stores() as published_distance_stores_record:
         results, failures = run_workers(
-            configs, published_distance_stores, _independent_coordinators(config, len(configs))
+            configs, published_distance_stores_record, _independent_coordinators(config, len(configs))
         )
 
     # --- assert -----------------------

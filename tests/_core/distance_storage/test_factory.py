@@ -5,7 +5,7 @@ from scipy.spatial.distance import squareform
 from max_div._core.constraints import Constraint
 from max_div._core.distance_storage import DistanceStorageType, DistanceStoreFactory
 from max_div._core.distance_storage.memory_budget import AUTO_MEMORY_FRACTION, full_matrix_bytes
-from max_div._core.distance_storage.shared_memory import AttachedDataMatrixRegistry
+from max_div._core.distance_storage.shared_memory import SharedMemoryDataMatrixReader
 from max_div._core.metrics import DistanceMetric, DiversityMetric
 from max_div._core.metrics._distance import (
     KIND_FULL_MATRIX,
@@ -341,8 +341,8 @@ def test_published_stores_match_the_in_process_build(storage: DistanceStorageTyp
 
     # --- act --------------------------
     with (
-        factory.publish_distance_stores() as published_distance_stores,
-        published_distance_stores.attached_distance_stores() as attached,
+        factory.publish_distance_stores() as published_distance_stores_record,
+        published_distance_stores_record.attached_distance_stores() as attached,
     ):
         read_attached = all_pair_distances(attached[0])
 
@@ -360,8 +360,8 @@ def test_published_stores_hold_distance_input(form: str):
 
     # --- act --------------------------
     with (
-        factory.publish_distance_stores() as published_distance_stores,
-        published_distance_stores.attached_distance_stores() as attached,
+        factory.publish_distance_stores() as published_distance_stores_record,
+        published_distance_stores_record.attached_distance_stores() as attached,
     ):
         read = all_pair_distances(attached[0])
 
@@ -374,11 +374,11 @@ def test_published_full_matrix_has_the_problem_size():
     # --- arrange / act ----------------
     with _factory(
         _vector_problem(), DistanceStorageType.FULL_MATRIX
-    ).publish_distance_stores() as published_distance_stores:
-        (spec,) = published_distance_stores.distance_specs
+    ).publish_distance_stores() as published_distance_stores_record:
+        (spec,) = published_distance_stores_record.distance_specs
 
         # --- assert -------------------
-        assert published_distance_stores.published_matrices.matrices[spec.matrix_id].shape == (10, 10)
+        assert published_distance_stores_record.published_matrix_records.records[spec.matrix_id].shape == (10, 10)
 
 
 def test_published_full_matrices_leave_the_vectors_unpublished():
@@ -387,9 +387,9 @@ def test_published_full_matrices_leave_the_vectors_unpublished():
     factory = DistanceStoreFactory(_vector_problem(), [L2, L1], DistanceStorageType.FULL_MATRIX, 64 * GIB)
 
     # --- act --------------------------
-    with factory.publish_distance_stores() as published_distance_stores:
-        published_ids = sorted(published_distance_stores.published_matrices.matrices)
-        read_ids = sorted(spec.matrix_id for spec in published_distance_stores.distance_specs)
+    with factory.publish_distance_stores() as published_distance_stores_record:
+        published_ids = sorted(published_distance_stores_record.published_matrix_records.records)
+        read_ids = sorted(spec.matrix_id for spec in published_distance_stores_record.distance_specs)
 
     # --- assert -----------------------
     assert published_ids == read_ids == [1, 2]
@@ -403,9 +403,9 @@ def test_published_metrics_that_do_not_preprocess_share_one_data_matrix():
     factory = DistanceStoreFactory(problem, metrics, DistanceStorageType.LAZY, 64 * GIB)
 
     # --- act --------------------------
-    with factory.publish_distance_stores() as published_distance_stores:
-        matrix_ids = [spec.matrix_id for spec in published_distance_stores.distance_specs]
-        n_published = len(published_distance_stores.published_matrices.matrices)
+    with factory.publish_distance_stores() as published_distance_stores_record:
+        matrix_ids = [spec.matrix_id for spec in published_distance_stores_record.distance_specs]
+        n_published = len(published_distance_stores_record.published_matrix_records.records)
 
     # --- assert -----------------------
     assert matrix_ids[0] == matrix_ids[1] != matrix_ids[2]
@@ -427,9 +427,9 @@ def test_leaving_the_publish_block_destroys_the_segments():
     # --- arrange ----------------------
     with _factory(
         _vector_problem(), DistanceStorageType.FULL_MATRIX
-    ).publish_distance_stores() as published_distance_stores:
-        stale = published_distance_stores.published_matrices
+    ).publish_distance_stores() as published_distance_stores_record:
+        stale = published_distance_stores_record.published_matrix_records
 
     # --- act / assert -----------------
-    with pytest.raises(FileNotFoundError), AttachedDataMatrixRegistry(stale):
+    with pytest.raises(FileNotFoundError), SharedMemoryDataMatrixReader(stale):
         pass

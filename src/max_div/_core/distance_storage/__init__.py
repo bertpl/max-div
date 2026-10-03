@@ -12,14 +12,14 @@
 
 from .factory import DistanceStoreFactory, stores_by_distance
 from .memory_budget import total_physical_memory_bytes
-from .shared_memory import PublishedDistanceStores
+from .shared_memory import PublishedDistanceStoresRecord
 from .storage import DistanceStorageType, DistanceStorageTypes
 
 __all__ = [
     "DistanceStorageType",
     "DistanceStorageTypes",
     "DistanceStoreFactory",
-    "PublishedDistanceStores",
+    "PublishedDistanceStoresRecord",
     "stores_by_distance",
     "total_physical_memory_bytes",
 ]

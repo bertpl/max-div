@@ -9,10 +9,10 @@ import pytest
 from max_div._core.distance_storage.data_matrix_registry import DataMatrixRegistry
 from max_div._core.distance_storage.data_matrix_source import ExistingDataMatrixSource
 from max_div._core.distance_storage.shared_memory import (
-    AttachedDataMatrixRegistry,
-    PublishedDataMatrices,
-    PublishedDataMatrix,
-    PublishedDistanceStores,
+    PublishedDataMatrixRecord,
+    PublishedDataMatrixRecords,
+    PublishedDistanceStoresRecord,
+    SharedMemoryDataMatrixReader,
 )
 from max_div._core.metrics._distance import (
     DistanceMetric,
@@ -48,7 +48,7 @@ def _reference_stores() -> dict[str, DistanceStore]:
 
 
 @contextmanager
-def _published_distance_stores() -> Iterator[PublishedDistanceStores]:
+def _published_distance_stores_record() -> Iterator[PublishedDistanceStoresRecord]:
     """Publish one distance store per kind, full matrix first, for the duration of the block."""
     vectors = _vectors()
     sources = {
@@ -59,8 +59,8 @@ def _published_distance_stores() -> Iterator[PublishedDistanceStores]:
         FullMatrixDistanceSpec(matrix_id=1, label=_METRIC.label),
         VectorDistanceSpec(matrix_id=0, metric=_METRIC, is_matrix_preprocessed=True),
     )
-    with DataMatrixRegistry.publish_to_shared_memory(sources) as published_matrices:
-        yield PublishedDistanceStores(published_matrices, distance_specs)
+    with DataMatrixRegistry.publish_to_shared_memory(sources) as published_matrix_records:
+        yield PublishedDistanceStoresRecord(published_matrix_records, distance_specs)
 
 
 def _read_pairs(store: DistanceStore) -> list[float]:
@@ -69,15 +69,17 @@ def _read_pairs(store: DistanceStore) -> list[float]:
 
 
 def _expected_pairs() -> list[list[float]]:
-    """Return the pairs read through the unshared stores, in the order of `_published_distance_stores`."""
+    """Return the pairs read through the unshared stores, in the order of `_published_distance_stores_record`."""
     references = _reference_stores()
     return [_read_pairs(references["full_matrix"]), _read_pairs(references["lazy"])]
 
 
 # the child re-imports this module by name, so its entry point must be at module level
-def _read_in_child(published_distance_stores: PublishedDistanceStores, queue: multiprocessing.Queue) -> None:
+def _read_in_child(
+    published_distance_stores_record: PublishedDistanceStoresRecord, queue: multiprocessing.Queue
+) -> None:
     """Attach to the published distance stores and report the distances read through each one."""
-    with published_distance_stores.attached_distance_stores() as stores:
+    with published_distance_stores_record.attached_distance_stores() as stores:
         queue.put([_read_pairs(store) for store in stores])
 
 
@@ -91,8 +93,8 @@ def test_spawned_process_reads_the_published_values():
     queue = context.Queue()
 
     # --- act --------------------------
-    with _published_distance_stores() as published_distance_stores:
-        child = context.Process(target=_read_in_child, args=(published_distance_stores, queue))
+    with _published_distance_stores_record() as published_distance_stores_record:
+        child = context.Process(target=_read_in_child, args=(published_distance_stores_record, queue))
         child.start()
         try:
             actual = queue.get(timeout=_CHILD_TIMEOUT_S)
@@ -107,8 +109,8 @@ def test_attached_stores_read_the_published_values():
     """Attaching in this process reproduces the unshared stores' distances, for both kinds of store."""
     # --- arrange / act ----------------
     with (
-        _published_distance_stores() as published_distance_stores,
-        published_distance_stores.attached_distance_stores() as stores,
+        _published_distance_stores_record() as published_distance_stores_record,
+        published_distance_stores_record.attached_distance_stores() as stores,
     ):
         read = [_read_pairs(store) for store in stores]
 
@@ -119,11 +121,11 @@ def test_attached_stores_read_the_published_values():
 def test_published_stores_survive_pickling():
     """The published record is picklable, which lets it reach a spawned worker as an argument."""
     # --- arrange / act ----------------
-    with _published_distance_stores() as published_distance_stores:
-        restored = pickle.loads(pickle.dumps(published_distance_stores))  # noqa: S301 -- our own record, not untrusted input
+    with _published_distance_stores_record() as published_distance_stores_record:
+        restored = pickle.loads(pickle.dumps(published_distance_stores_record))  # noqa: S301 -- our own record, not untrusted input
 
     # --- assert -----------------------
-    assert restored == published_distance_stores
+    assert restored == published_distance_stores_record
 
 
 # ==================================================================================================
@@ -133,8 +135,8 @@ def test_attached_stores_cannot_be_written_through():
     """Nothing that is reachable from an attached distance store can write into the shared segment."""
     # --- arrange / act ----------------
     with (
-        _published_distance_stores() as published_distance_stores,
-        published_distance_stores.attached_distance_stores() as stores,
+        _published_distance_stores_record() as published_distance_stores_record,
+        published_distance_stores_record.attached_distance_stores() as stores,
     ):
         writeable = [(store.matrix.flags.writeable, store.preprocessed_vectors.flags.writeable) for store in stores]
 
@@ -146,12 +148,12 @@ def test_attached_stores_cannot_be_written_through():
 #  Segment lifetime
 # ==================================================================================================
 def test_attaching_leaves_the_segments_usable():
-    """Leaving an attached registry releases only its mappings, so the segments survive for later readers."""
+    """Leaving a shared-memory data matrix reader releases only its mappings, so the segments stay for later readers."""
     # --- arrange / act ----------------
-    with _published_distance_stores() as published_distance_stores:
-        with published_distance_stores.attached_distance_stores() as first:
+    with _published_distance_stores_record() as published_distance_stores_record:
+        with published_distance_stores_record.attached_distance_stores() as first:
             read_first = [_read_pairs(store) for store in first]
-        with published_distance_stores.attached_distance_stores() as second:
+        with published_distance_stores_record.attached_distance_stores() as second:
             read_after = [_read_pairs(store) for store in second]
 
     # --- assert -----------------------
@@ -161,12 +163,12 @@ def test_attaching_leaves_the_segments_usable():
 def test_attaching_to_a_missing_segment_raises():
     """A published record whose segment is gone cannot be attached; the segments attached before it are closed."""
     # --- arrange ----------------------
-    with _published_distance_stores() as published_distance_stores:
-        live = published_distance_stores.published_matrices
-        missing = PublishedDataMatrices(
-            {**live.matrices, 7: PublishedDataMatrix(segment_name="max_div_missing_segment", shape=(2, 2))}
+    with _published_distance_stores_record() as published_distance_stores_record:
+        live = published_distance_stores_record.published_matrix_records
+        missing = PublishedDataMatrixRecords(
+            {**live.records, 7: PublishedDataMatrixRecord(segment_name="max_div_missing_segment", shape=(2, 2))}
         )
 
         # --- act / assert -------------
-        with pytest.raises(FileNotFoundError), AttachedDataMatrixRegistry(missing):
+        with pytest.raises(FileNotFoundError), SharedMemoryDataMatrixReader(missing):
             pass

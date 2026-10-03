@@ -35,7 +35,7 @@ from max_div._core.problem import DistanceMaxDivProblem, MaxDivProblem, VectorMa
 from .data_matrix_registry import DataMatrixRegistry
 from .data_matrix_source import ComputedDataMatrixSource, DataMatrixSource, ExistingDataMatrixSource
 from .memory_budget import AUTO_MEMORY_FRACTION, check_fits_physical_memory, full_matrix_bytes
-from .shared_memory import PublishedDistanceStores
+from .shared_memory import PublishedDistanceStoresRecord
 from .storage import DistanceStorageType, DistanceStorageTypes
 
 
@@ -175,19 +175,19 @@ class DistanceStoreFactory:
         return stores_by_distance(self._distances, self.create_stores())
 
     @contextmanager
-    def publish_distance_stores(self) -> Iterator[PublishedDistanceStores]:
+    def publish_distance_stores(self) -> Iterator[PublishedDistanceStoresRecord]:
         """Build the data matrices in shared memory and yield the published distance stores, for the block's duration.
 
         Inside the block the shared-memory segments exist, and a worker process builds the distance
-        stores with `PublishedDistanceStores.attached_distance_stores`.  On exit the segments are
+        stores with `PublishedDistanceStoresRecord.attached_distance_stores`.  On exit the segments are
         destroyed, so leave the block only after every worker is done.
 
         Raises:
             ValueError: as `create_stores`.
         """
         sources, distance_specs = self._data_matrix_sources_and_distance_specs()
-        with DataMatrixRegistry.publish_to_shared_memory(sources) as published_matrices:
-            yield PublishedDistanceStores(published_matrices, distance_specs)
+        with DataMatrixRegistry.publish_to_shared_memory(sources) as published_matrix_records:
+            yield PublishedDistanceStoresRecord(published_matrix_records, distance_specs)
 
     # --------------------------------------------------------------------------
     #  Helpers
