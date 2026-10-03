@@ -1,20 +1,36 @@
 import multiprocessing
 import pickle
-from multiprocessing.shared_memory import SharedMemory
+from collections.abc import Iterator
+from contextlib import contextmanager
 
 import numpy as np
 import pytest
 
-from max_div._core.distance_storage import SharedStoreSpec, attached_distance_store
-from max_div._core.distance_storage.allocation import SharedMemoryDistanceStoreAllocator
-from max_div._core.metrics._distance import KIND_FULL_MATRIX, KIND_LAZY, DistanceMetric, DistanceStore, get_distance
+from max_div._core.distance_storage.data_matrix_registry import DataMatrixRegistry
+from max_div._core.distance_storage.data_matrix_source import ExistingDataMatrixSource
+from max_div._core.distance_storage.shared_memory import (
+    PublishedDataMatrixRecord,
+    PublishedDataMatrixRecords,
+    PublishedDistanceStoresRecord,
+    SharedMemoryDataMatrixReader,
+)
+from max_div._core.metrics._distance import (
+    DistanceMetric,
+    DistanceStore,
+    FullMatrixDistanceSpec,
+    VectorDistanceSpec,
+    compute_full_matrix,
+    get_distance,
+)
 
 # how long a spawned child may take to boot an interpreter, import max_div and answer
 _CHILD_TIMEOUT_S = 120
 
 _N = 12
 _PAIRS = [(0, 1), (2, 7), (5, 5), (11, 3)]
-_METRIC = DistanceMetric.l2_euclidean()
+_METRIC = DistanceMetric.minkowski(
+    3
+)  # the exponent 3 must reach the worker unchanged; a worker without it would compute a different distance
 
 
 def _vectors() -> np.ndarray:
@@ -31,14 +47,20 @@ def _reference_stores() -> dict[str, DistanceStore]:
     }
 
 
-def _publish(store: DistanceStore) -> tuple[SharedMemoryDistanceStoreAllocator, SharedStoreSpec]:
-    """Copy a distance store's array into a segment and return the allocator that owns it, with the spec."""
-    allocator = SharedMemoryDistanceStoreAllocator()
-    if store.kind == KIND_FULL_MATRIX:
-        allocator.adopt(store.matrix, KIND_FULL_MATRIX, None)
-    else:
-        allocator.adopt(store.preprocessed_vectors, KIND_LAZY, _METRIC)
-    return allocator, allocator.specs[0]
+@contextmanager
+def _published_distance_stores_record() -> Iterator[PublishedDistanceStoresRecord]:
+    """Publish one distance store per kind, full matrix first, for the duration of the block."""
+    vectors = _vectors()
+    sources = {
+        0: ExistingDataMatrixSource(vectors),
+        1: ExistingDataMatrixSource(compute_full_matrix(vectors, _METRIC)),
+    }
+    distance_specs = (
+        FullMatrixDistanceSpec(matrix_id=1, label=_METRIC.label),
+        VectorDistanceSpec(matrix_id=0, metric=_METRIC, is_matrix_preprocessed=True),
+    )
+    with DataMatrixRegistry.publish_to_shared_memory(sources) as published_matrix_records:
+        yield PublishedDistanceStoresRecord(published_matrix_records, distance_specs)
 
 
 def _read_pairs(store: DistanceStore) -> list[float]:
@@ -46,152 +68,107 @@ def _read_pairs(store: DistanceStore) -> list[float]:
     return [float(get_distance(store, np.int32(i), np.int32(j))) for i, j in _PAIRS]
 
 
+def _expected_pairs() -> list[list[float]]:
+    """Return the pairs read through the unshared stores, in the order of `_published_distance_stores_record`."""
+    references = _reference_stores()
+    return [_read_pairs(references["full_matrix"]), _read_pairs(references["lazy"])]
+
+
 # the child re-imports this module by name, so its entry point must be at module level
-def _read_in_child(specs: dict[str, SharedStoreSpec], queue: multiprocessing.Queue) -> None:
-    """Attach to each published distance store and report the distances read through it."""
-    results = {}
-    for kind, spec in specs.items():
-        with attached_distance_store(spec) as store:
-            results[kind] = _read_pairs(store)
-    queue.put(results)
+def _read_in_child(
+    published_distance_stores_record: PublishedDistanceStoresRecord, queue: multiprocessing.Queue
+) -> None:
+    """Attach to the published distance stores and report the distances read through each one."""
+    with published_distance_stores_record.attached_distance_stores() as stores:
+        queue.put([_read_pairs(store) for store in stores])
 
 
 # ==================================================================================================
 #  Round trip
 # ==================================================================================================
 def test_spawned_process_reads_the_published_values():
-    """A spawned process that attaches to a published distance store reads exactly what the unshared store holds."""
+    """A spawned process that attaches to published distance stores reads exactly what the unshared stores hold."""
     # --- arrange ----------------------
-    references = _reference_stores()
-    expected = {kind: _read_pairs(store) for kind, store in references.items()}
-    published = {kind: _publish(store) for kind, store in references.items()}
     context = multiprocessing.get_context("spawn")  # never fork: numba's threading layer is fork-unsafe
     queue = context.Queue()
 
     # --- act --------------------------
-    child = context.Process(target=_read_in_child, args=({k: spec for k, (_, spec) in published.items()}, queue))
-    child.start()
-    try:
-        actual = queue.get(timeout=_CHILD_TIMEOUT_S)
-    finally:
-        child.join(timeout=_CHILD_TIMEOUT_S)
-        for allocator, _ in published.values():
-            allocator.close()
+    with _published_distance_stores_record() as published_distance_stores_record:
+        child = context.Process(target=_read_in_child, args=(published_distance_stores_record, queue))
+        child.start()
+        try:
+            actual = queue.get(timeout=_CHILD_TIMEOUT_S)
+        finally:
+            child.join(timeout=_CHILD_TIMEOUT_S)
 
     # --- assert -----------------------
-    assert actual == expected
+    assert actual == _expected_pairs()
 
 
-@pytest.mark.parametrize("kind", ["full_matrix", "lazy"])
-def test_attached_store_reads_the_published_values(kind: str):
-    """Attaching in this process reproduces the unshared distance store's distances, for both kinds."""
-    # --- arrange ----------------------
-    reference = _reference_stores()[kind]
-    allocator, spec = _publish(reference)
-
-    # --- act --------------------------
-    with attached_distance_store(spec) as attached:
-        read_attached = _read_pairs(attached)
-    allocator.close()
-
-    # --- assert -----------------------
-    assert read_attached == _read_pairs(reference)
-
-
-@pytest.mark.parametrize("kind, expected_kind", [("full_matrix", KIND_FULL_MATRIX), ("lazy", KIND_LAZY)])
-def test_published_spec_names_the_kind_it_holds(kind: str, expected_kind: np.int32):
-    """The spec carries the kind selector, so an attaching process rebuilds a distance store of the same kind."""
+def test_attached_stores_read_the_published_values():
+    """Attaching in this process reproduces the unshared stores' distances, for both kinds of store."""
     # --- arrange / act ----------------
-    allocator, spec = _publish(_reference_stores()[kind])
-    allocator.close()
+    with (
+        _published_distance_stores_record() as published_distance_stores_record,
+        published_distance_stores_record.attached_distance_stores() as stores,
+    ):
+        read = [_read_pairs(store) for store in stores]
 
     # --- assert -----------------------
-    assert spec.kind == expected_kind
-    assert spec.shape[0] == _N
+    assert read == _expected_pairs()
 
 
-def test_spec_survives_pickling():
-    """The spec is picklable, which lets it reach a spawned worker as an argument."""
-    # --- arrange ----------------------
-    allocator, spec = _publish(_reference_stores()["full_matrix"])
-    allocator.close()
-
-    # --- act --------------------------
-    restored = pickle.loads(pickle.dumps(spec))  # noqa: S301 -- our own spec, not untrusted input
+def test_published_stores_survive_pickling():
+    """The published record is picklable, which lets it reach a spawned worker as an argument."""
+    # --- arrange / act ----------------
+    with _published_distance_stores_record() as published_distance_stores_record:
+        restored = pickle.loads(pickle.dumps(published_distance_stores_record))  # noqa: S301 -- our own record, not untrusted input
 
     # --- assert -----------------------
-    assert restored == spec
-
-
-def test_attached_minkowski_store_reads_the_published_values():
-    """The metric's exponent must survive publish and attach, or an attached reader computes another distance."""
-    # --- arrange ----------------------
-    rng = np.random.default_rng(20260829)
-    vectors = rng.standard_normal((12, 4)).astype(np.float32)
-    metric = DistanceMetric.minkowski(3)
-    reference = DistanceStore.lazy_from_vectors(vectors, metric)
-    allocator = SharedMemoryDistanceStoreAllocator()
-    allocator.adopt(reference.preprocessed_vectors, KIND_LAZY, metric)
-
-    # --- act --------------------------
-    with attached_distance_store(allocator.specs[0]) as attached:
-        read_attached = _read_pairs(attached)
-    allocator.close()
-
-    # --- assert -----------------------
-    assert allocator.specs[0].distance_metric == metric
-    assert read_attached == _read_pairs(reference)
+    assert restored == published_distance_stores_record
 
 
 # ==================================================================================================
 #  Read-only enforcement
 # ==================================================================================================
-@pytest.mark.parametrize("kind", ["full_matrix", "lazy"])
-def test_attached_store_cannot_be_written_through(kind: str):
+def test_attached_stores_cannot_be_written_through():
     """Nothing that is reachable from an attached distance store can write into the shared segment."""
-    # --- arrange ----------------------
-    allocator, spec = _publish(_reference_stores()[kind])
-
-    # --- act --------------------------
-    with attached_distance_store(spec) as attached:
-        matrix_writeable = attached.matrix.flags.writeable
-        vectors_writeable = attached.preprocessed_vectors.flags.writeable
-    allocator.close()
+    # --- arrange / act ----------------
+    with (
+        _published_distance_stores_record() as published_distance_stores_record,
+        published_distance_stores_record.attached_distance_stores() as stores,
+    ):
+        writeable = [(store.matrix.flags.writeable, store.preprocessed_vectors.flags.writeable) for store in stores]
 
     # --- assert -----------------------
-    assert not matrix_writeable
-    assert not vectors_writeable
+    assert writeable == [(False, False), (False, False)]
 
 
 # ==================================================================================================
 #  Segment lifetime
 # ==================================================================================================
-def test_attaching_leaves_the_segment_usable():
-    """Closing an attachment releases only that mapping, so the segment survives for later readers."""
-    # --- arrange ----------------------
-    allocator, spec = _publish(_reference_stores()["full_matrix"])
-    expected = _read_pairs(_reference_stores()["full_matrix"])
-
-    # --- act --------------------------
-    with attached_distance_store(spec) as first:
-        read_first = _read_pairs(first)
-    with attached_distance_store(spec) as second:
-        read_after = _read_pairs(second)
-    allocator.close()
+def test_attaching_leaves_the_segments_usable():
+    """Leaving a shared-memory data matrix reader releases only its mappings, so the segments stay for later readers."""
+    # --- arrange / act ----------------
+    with _published_distance_stores_record() as published_distance_stores_record:
+        with published_distance_stores_record.attached_distance_stores() as first:
+            read_first = [_read_pairs(store) for store in first]
+        with published_distance_stores_record.attached_distance_stores() as second:
+            read_after = [_read_pairs(store) for store in second]
 
     # --- assert -----------------------
-    assert read_first == expected
-    assert read_after == expected
+    assert read_first == read_after == _expected_pairs()
 
 
-def test_closing_the_allocator_destroys_the_segment():
-    """The allocator's close unlinks the segment, so its name no longer resolves."""
+def test_attaching_to_a_missing_segment_raises():
+    """A published record whose segment is gone cannot be attached; the segments attached before it are closed."""
     # --- arrange ----------------------
-    allocator, spec = _publish(_reference_stores()["full_matrix"])
+    with _published_distance_stores_record() as published_distance_stores_record:
+        live = published_distance_stores_record.published_matrix_records
+        missing = PublishedDataMatrixRecords(
+            {**live.records, 7: PublishedDataMatrixRecord(segment_name="max_div_missing_segment", shape=(2, 2))}
+        )
 
-    # --- act --------------------------
-    allocator.close()
-
-    # --- assert -----------------------
-    with pytest.raises(FileNotFoundError):
-        SharedMemory(name=spec.segment_name).close()
+        # --- act / assert -------------
+        with pytest.raises(FileNotFoundError), SharedMemoryDataMatrixReader(missing):
+            pass

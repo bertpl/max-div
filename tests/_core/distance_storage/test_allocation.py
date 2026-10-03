@@ -1,14 +1,7 @@
 import numpy as np
 
-from max_div._core.distance_storage import attached_distance_store
-from max_div._core.distance_storage.allocation import (
-    InProcessDistanceStoreAllocator,
-    SharedMemoryDistanceStoreAllocator,
-)
-from max_div._core.metrics import DistanceMetric
-from max_div._core.metrics._distance import KIND_FULL_MATRIX, KIND_LAZY
-
-L2 = DistanceMetric.l2_euclidean()
+from max_div._core.distance_storage.allocation import InProcessDataMatrixAllocator, SharedMemoryDataMatrixAllocator
+from max_div._core.distance_storage.shared_memory import SharedMemoryDataMatrixReader
 
 
 def _vectors() -> np.ndarray:
@@ -17,12 +10,12 @@ def _vectors() -> np.ndarray:
 
 
 # ==================================================================================================
-#  InProcessDistanceStoreAllocator
+#  InProcessDataMatrixAllocator
 # ==================================================================================================
 def test_in_process_allocate_returns_a_fresh_writable_buffer():
-    """In this process, a buffer is a plain float32 numpy array that the factory can fill."""
+    """In this process, a buffer is a plain float32 numpy array that a source can fill."""
     # --- act --------------------------
-    buffer = InProcessDistanceStoreAllocator().allocate((5, 5), KIND_FULL_MATRIX)
+    buffer = InProcessDataMatrixAllocator().allocate(1, (5, 5))
 
     # --- assert -----------------------
     assert buffer.shape == (5, 5)
@@ -31,105 +24,63 @@ def test_in_process_allocate_returns_a_fresh_writable_buffer():
 
 
 def test_in_process_adopt_returns_the_array_itself():
-    """In this process, adopting copies nothing: the distance store wraps the array that it was given."""
+    """In this process, adopting copies nothing: `adopt` returns the array that it was given."""
     # --- arrange ----------------------
     vectors = _vectors()
 
     # --- act / assert -----------------
-    assert InProcessDistanceStoreAllocator().adopt(vectors, KIND_LAZY, L2) is vectors
+    assert InProcessDataMatrixAllocator().adopt(0, vectors) is vectors
 
 
 # ==================================================================================================
-#  SharedMemoryDistanceStoreAllocator
+#  SharedMemoryDataMatrixAllocator
 # ==================================================================================================
-def test_shared_allocate_creates_one_segment_per_call_and_records_a_spec_for_each():
-    """Each allocated buffer lives in a segment of its own, described by a spec in call order."""
+def test_shared_allocator_publishes_one_segment_per_matrix_id():
+    """Each data matrix lives in a segment of its own, published under its matrix id with its shape."""
     # --- arrange ----------------------
-    allocator = SharedMemoryDistanceStoreAllocator()
+    allocator = SharedMemoryDataMatrixAllocator()
 
     # --- act --------------------------
-    first = allocator.allocate((3, 3), KIND_FULL_MATRIX)
-    second = allocator.allocate((4, 4), KIND_FULL_MATRIX)
-    specs = allocator.specs
+    allocator.allocate(1, (3, 3))
+    allocator.adopt(0, _vectors())
+    published_matrix_records = allocator.published_matrix_records
     allocator.close()
 
     # --- assert -----------------------
-    assert [spec.shape for spec in specs] == [(3, 3), (4, 4)]
-    assert specs[0].segment_name != specs[1].segment_name
-    assert first.shape == (3, 3)
-    assert second.shape == (4, 4)
+    assert {matrix_id: matrix.shape for matrix_id, matrix in published_matrix_records.records.items()} == {
+        1: (3, 3),
+        0: (5, 2),
+    }
+    assert published_matrix_records.records[0].segment_name != published_matrix_records.records[1].segment_name
 
 
-def test_shared_adopt_copies_into_a_segment_and_reuses_it_for_the_same_array():
-    """Adopting one array twice yields one segment and two specs that name it; a different array gets its own."""
+def test_shared_adopt_copies_the_array_into_its_segment():
+    """Adopting copies the array into the segment, so the returned array holds the same values in other memory."""
     # --- arrange ----------------------
-    allocator = SharedMemoryDistanceStoreAllocator()
+    allocator = SharedMemoryDataMatrixAllocator()
     vectors = _vectors()
-    other = _vectors() + 1.0
 
     # --- act --------------------------
-    first = allocator.adopt(vectors, KIND_LAZY, L2)
-    second = allocator.adopt(vectors, KIND_LAZY, DistanceMetric.l1_manhattan())
-    third = allocator.adopt(other, KIND_LAZY, L2)
-    specs = allocator.specs
-    copied = np.array(first)
+    adopted = allocator.adopt(0, vectors)
+    copied = np.array(adopted)
+    shares_memory = np.shares_memory(adopted, vectors)
     allocator.close()
 
     # --- assert -----------------------
-    assert np.shares_memory(first, second)
-    assert not np.shares_memory(first, third)
-    assert specs[0].segment_name == specs[1].segment_name != specs[2].segment_name
+    assert not shares_memory
     np.testing.assert_array_equal(copied, vectors)
 
 
-def test_shared_adopt_does_not_mistake_a_new_array_for_a_freed_one():
-    """Arrays that the caller drops right after adopting them each get their own segment, holding their own values.
-
-    Python may give a new array the id of one that was freed, and the allocator recognizes an
-    array by its id.
-    """
+def test_shared_published_matrix_reads_back_what_was_written():
+    """Another reader that attaches to a published segment reads the bytes that were written into it."""
     # --- arrange ----------------------
-    allocator = SharedMemoryDistanceStoreAllocator()
-    n_arrays = 8
-
-    # --- act --------------------------
-    buffers = [allocator.adopt(_vectors() + i, KIND_LAZY, L2) for i in range(n_arrays)]
-    copies = [np.array(buffer) for buffer in buffers]
-    segment_names = {spec.segment_name for spec in allocator.specs}
-    allocator.close()
-
-    # --- assert -----------------------
-    assert len(segment_names) == n_arrays
-    for i, copied in enumerate(copies):
-        np.testing.assert_array_equal(copied, _vectors() + i)
-
-
-def test_shared_specs_carry_the_metric_of_a_lazy_store():
-    """A spec for an adopted lazy array carries the metric's kind and exponent, so a worker rebuilds the same store."""
-    # --- arrange ----------------------
-    allocator = SharedMemoryDistanceStoreAllocator()
-    metric = DistanceMetric.minkowski(3)
-
-    # --- act --------------------------
-    allocator.adopt(_vectors(), KIND_LAZY, metric)
-    spec = allocator.specs[0]
-    allocator.close()
-
-    # --- assert -----------------------
-    assert spec.kind == KIND_LAZY
-    assert spec.distance_metric == metric
-
-
-def test_shared_specs_attach_to_the_data_in_the_segment():
-    """A spec that the allocator recorded attaches to the bytes that were written into its segment."""
-    # --- arrange ----------------------
-    allocator = SharedMemoryDistanceStoreAllocator()
+    allocator = SharedMemoryDataMatrixAllocator()
     matrix = np.arange(9, dtype=np.float32).reshape(3, 3)
-    allocator.allocate((3, 3), KIND_FULL_MATRIX)[:] = matrix
+    allocator.allocate(4, (3, 3))[:] = matrix
 
     # --- act --------------------------
-    with attached_distance_store(allocator.specs[0]) as store:
-        seen = np.array(store.matrix)
+    with SharedMemoryDataMatrixReader(allocator.published_matrix_records) as reader:
+        seen = np.array(reader.array(4))
     allocator.close()
 
     # --- assert -----------------------
@@ -139,27 +90,27 @@ def test_shared_specs_attach_to_the_data_in_the_segment():
 def test_shared_degenerate_shape_still_gets_a_segment():
     """An empty array still gets a segment, because the operating system rejects a segment of zero bytes."""
     # --- arrange ----------------------
-    allocator = SharedMemoryDistanceStoreAllocator()
+    allocator = SharedMemoryDataMatrixAllocator()
 
     # --- act --------------------------
-    buffer = allocator.allocate((0, 0), KIND_FULL_MATRIX)
-    spec = allocator.specs[0]
+    buffer = allocator.allocate(1, (0, 0))
+    published_matrix_records = allocator.published_matrix_records
     allocator.close()
 
     # --- assert -----------------------
     assert buffer.size == 0
-    assert spec.shape == (0, 0)
+    assert published_matrix_records.records[1].shape == (0, 0)
 
 
 def test_shared_close_forgets_its_segments():
-    """A second close is harmless, and the specs stay as a record of what was built."""
+    """A second close is harmless, and the published records stay available."""
     # --- arrange ----------------------
-    allocator = SharedMemoryDistanceStoreAllocator()
-    allocator.allocate((2, 2), KIND_FULL_MATRIX)
+    allocator = SharedMemoryDataMatrixAllocator()
+    allocator.allocate(1, (2, 2))
 
     # --- act --------------------------
     allocator.close()
     allocator.close()
 
     # --- assert -----------------------
-    assert len(allocator.specs) == 1
+    assert list(allocator.published_matrix_records.records) == [1]
