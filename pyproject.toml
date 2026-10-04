@@ -211,6 +211,7 @@ ignore = [
     "B905",    # numba nopython mode can't take zip()'s strict= kwarg
     "E731",    # assigning a lambda to a name is fine here; a trivial thunk reads better than a def
     "RET505",  # an explicit else after an if-return chain reads as the final case of a dispatch; no-else-return is not house preference
+    "SIM108",  # an if/else block reads better than a conditional expression when a branch does work, which this rule cannot tell
 ]
 
 # matplotlib is the `plot` extra: only `max_div._core.plotting` may import it, so `import max_div` never
