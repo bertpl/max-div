@@ -19,8 +19,8 @@ solver = (
   layout, at twice the memory of the condensed input.
 - **`LAZY`** — no stored distances at all: each distance is computed on demand from the vectors.
   Slower per distance, but removes the O(n²) memory requirement entirely, so much larger problems
-  become feasible. Available only when the problem is built from vectors; on a problem built via
-  `from_distances`, `build()` raises a `ValueError`.
+  become feasible. Available only when the problem is built from vectors; selecting `LAZY` for a
+  problem built via `from_distances` makes `build()` raise a `ValueError`.
 - **`AUTO`** (default) — picks a storage type per distance:
     - **Vector problems:** a full matrix for every distance when all the full matrices together fit in half of the total RAM, since reading a distance from a full matrix is faster than computing it under any metric.
         - **When the matrices do not all fit,** the distances that are most expensive to compute get the full matrices and the rest are lazy; an `along_axis` distance is the cheapest to compute, so it is the first to stay lazy.
