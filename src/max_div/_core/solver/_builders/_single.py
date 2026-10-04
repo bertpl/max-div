@@ -127,8 +127,9 @@ class MaxDivSolverBuilder(SolverBuilderBase):
     def prepare_storage_and_config(self) -> tuple[DistanceStoragePlan, SolverConfig]:
         """Return the distance storage plan of a single solve, and the solver config over its resolved objectives.
 
-        Keeping the plan and the config apart lets a caller produce the data matrices in a place of
-        its choosing, such as shared memory, and assemble a solver over them.
+        The plan's memory check assumes a single solve, which produces the data matrices in this
+        process and does not copy the user's array; a caller that publishes them into shared memory
+        needs a plan that counts that copy.
 
         Raises:
             ValueError: If `with_initial_selection` was used and `set_initialization_strategy` was called

@@ -150,7 +150,7 @@ def test_a_simple_objectives_tracker_spec_is_its_one_spec() -> None:
     ],
 )
 def test_distinct_distance_specs(objective, expected) -> None:
-    """The distinct distance specs an objective reads, in first-seen order."""
+    """An objective lists each of its distance specs once, in first-seen order."""
     # --- act / assert -----------------
     assert objective.distinct_distance_specs() == expected
 

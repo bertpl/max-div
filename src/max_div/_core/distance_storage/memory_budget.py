@@ -1,4 +1,4 @@
-"""This module sizes a data matrix, probes total physical RAM, and refuses a distance storage that cannot fit."""
+"""The memory budget sizes a data matrix and probes the machine's total physical RAM."""
 
 import os
 from typing import ClassVar
@@ -14,29 +14,13 @@ AUTO_MEMORY_FRACTION = 1 / 2
 
 
 def data_matrix_bytes(shape: tuple[int, ...]) -> int:
-    """Return the bytes a float32 data matrix of the given shape claims."""
+    """Return the size in bytes of a float32 data matrix of the given shape."""
     return int(np.prod(shape, dtype=np.int64)) * np.dtype(np.float32).itemsize
 
 
 def full_matrix_bytes(n: int) -> int:
     """Return the bytes a full float32 distance matrix claims for n items."""
     return data_matrix_bytes((n, n))
-
-
-def check_fits_physical_memory(bytes_needed: int, total_memory_bytes: int | None, lazy_available: bool) -> None:
-    """Raise early, with the remedy named, when a solve's data matrices cannot fit in physical RAM at all.
-
-    Args:
-        bytes_needed: the bytes the allocations will claim together.
-        total_memory_bytes: the total physical RAM of the machine; None, when it is unknown, skips the check.
-        lazy_available: whether the problem has vectors, so the lazy storage type can be named as the remedy.
-    """
-    if total_memory_bytes is not None and bytes_needed > total_memory_bytes:
-        lazy_hint = " or DistanceStorageType.LAZY (no O(n²) memory)" if lazy_available else ""
-        raise ValueError(
-            f"Distance storage needs ~{bytes_needed / 2**30:.1f} GiB, but this machine "
-            f"has {total_memory_bytes / 2**30:.1f} GiB of physical memory; choose a smaller problem{lazy_hint}."
-        )
 
 
 def total_physical_memory_bytes() -> int | None:

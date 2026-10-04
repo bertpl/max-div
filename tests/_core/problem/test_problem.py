@@ -225,8 +225,10 @@ def test_user_data_matrix_producer_hands_out_the_problems_own_data(form: str):
     matrix = compute_full_matrix(vectors, DistanceMetric.l2_euclidean())
     if form == "vectors":
         problem = MaxDivProblem.new(vectors, k=3)
+    elif form == "square":
+        problem = MaxDivProblem.from_distances(matrix, k=3)
     else:
-        problem = MaxDivProblem.from_distances(matrix if form == "square" else squareform(matrix), k=3)
+        problem = MaxDivProblem.from_distances(squareform(matrix), k=3)
 
     # --- act --------------------------
     producer = problem._user_data_matrix_producer()

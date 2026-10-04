@@ -96,11 +96,13 @@ class MaxDivProblem(ABC):
     # --- computed fields ------------------------
     @property
     def diversity_objective(self) -> DiversityObjective:
-        """Return the objective the solver maximizes, declared over the problem's own data matrix.
+        """Return the objective that the solver maximizes, declared over the problem's own data matrix.
 
         A `DiversityMetric` becomes a simple objective over the problem's own distance; a
         `HybridDiversityMetric` becomes a hybrid objective, each term over the distance that it reads.
-        This property is the one place that tells a bare metric from a hybrid.
+        This property is the one place that tells a bare metric from a hybrid.  Its vector distance specs
+        name the vectors as given, so `DistanceStoragePlan.decide` must resolve them before a distance
+        store can be built over them.
         """
         if isinstance(self.diversity_metric, DiversityMetric):
             return DiversityObjectiveSimple(self.diversity_metric, self._own_distance_spec())
@@ -345,7 +347,7 @@ class DistanceMaxDivProblem(MaxDivProblem):
     Use `MaxDivProblem.from_distances` to create instances with validation.
     """
 
-    # the label of the given distances, which no distance metric names
+    # The given distances carry this label, because no distance metric names them.
     _USER_DISTANCES_LABEL: ClassVar[str] = "user distances"
 
     # --- primary fields -------------------------

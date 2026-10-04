@@ -56,9 +56,9 @@ class MaxDivSolver:
 
         Args:
             n: (int) The number of items in the problem ('universe').
-            data_matrix_reader_provider: called at the start of each `solve` to obtain the reader
-                that the distance stores are built from, so `build` stays lean and the data
-                matrices are produced inside `solve`.
+            data_matrix_reader_provider: called at the start of each `solve` to obtain the data
+                matrix reader, from which the distance stores are built, so `build` stays cheap and
+                the data matrices are produced inside `solve`.
             k: (int) The number of items to be selected from the input set ('universe').
             diversity_objectives: the primary objective first, then the tie-breakers, scored in
                 that order; each distance spec names the data matrix that its distance store reads.

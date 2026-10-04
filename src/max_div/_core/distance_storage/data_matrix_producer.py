@@ -35,18 +35,13 @@ class DataMatrixProducer(ABC):
         """Return the data matrix, placed by the allocator under the given matrix id."""
 
     @abstractmethod
-    def bytes_allocated(self, is_adopted_array_copied: bool) -> int:
-        """Return the bytes that producing the data matrix allocates.
+    def bytes_to_allocate(self, is_adopted_array_copied: bool) -> int:
+        """Return the size in bytes of the allocations made while producing the data matrix.
 
         Args:
             is_adopted_array_copied: whether the allocator copies an array that it adopts, as the
                 shared-memory allocator does.
         """
-
-    @property
-    def nbytes(self) -> int:
-        """Return the size in bytes of the float32 data matrix."""
-        return data_matrix_bytes(self.shape)
 
     @staticmethod
     def produce_all(
@@ -74,10 +69,10 @@ class AdoptingDataMatrixProducer(DataMatrixProducer):
         """Return the array as the allocator adopts it."""
         return allocator.adopt(matrix_id, self.array)
 
-    def bytes_allocated(self, is_adopted_array_copied: bool) -> int:
+    def bytes_to_allocate(self, is_adopted_array_copied: bool) -> int:
         """Return the size of the array when the allocator copies it, and 0 when it does not."""
         if is_adopted_array_copied:
-            return self.nbytes
+            return data_matrix_bytes(self.shape)
         else:
             return 0
 
@@ -100,6 +95,6 @@ class ComputingDataMatrixProducer(DataMatrixProducer):
         self.compute_into(buffer)
         return buffer
 
-    def bytes_allocated(self, is_adopted_array_copied: bool) -> int:
+    def bytes_to_allocate(self, is_adopted_array_copied: bool) -> int:
         """Return the size of the buffer, which every allocator allocates."""
-        return self.nbytes
+        return data_matrix_bytes(self.shape)

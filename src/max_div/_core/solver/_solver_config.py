@@ -57,7 +57,7 @@ class SolverConfig:
             data_matrix_reader: a reader over data matrices that exist already — a worker of the
                 parallel solver reads the ones that its parent published in shared memory.
             data_matrix_reader_provider: a callable that returns the reader when the solve starts,
-                so `build` stays lean and the data matrices are produced inside `solve`.
+                so `build` stays cheap and the data matrices are produced inside `solve`.
 
         Raises:
             ValueError: if neither or both are given.

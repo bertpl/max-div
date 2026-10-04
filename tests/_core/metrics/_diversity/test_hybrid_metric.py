@@ -101,7 +101,7 @@ def test_a_hybrid_needs_one_distance_spec_per_term() -> None:
 
 
 def test_a_bare_term_reads_the_problems_own_distance_metric_and_a_named_term_its_own() -> None:
-    """The distance metric of each term, in term order: the given own metric for a bare term."""
+    """The hybrid returns the distance metric of each term in term order; a bare term reads the problem's own."""
     # --- arrange ----------------------
     own = DistanceMetric.l2_euclidean()
 

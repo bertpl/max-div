@@ -21,9 +21,8 @@ class DiversityObjectiveBindings:
 
     The score reads one contribution array per tracker, in the trackers' order; the bindings also
     record where each objective's own arrays sit in that order. The bindings are a function of the objective
-    list alone, so every place that needs an order calls `for_objectives` and gets the same one: the
-    solver state, for the stores and trackers it builds and the arrays it scores, and the score
-    generator, for the arrays it reads.
+    list alone, so the distance stores, the trackers and the score's contribution arrays all follow
+    the one order that `for_objectives` returns.
 
     No layer derives an order of its own.
     """

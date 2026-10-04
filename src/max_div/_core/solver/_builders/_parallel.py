@@ -150,9 +150,9 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
     def build(self) -> ParallelMaxDivSolver:
         """Build the parallel solver: one solver configuration per worker over data matrices they will share.
 
-        The memory check of the distance storage plan counts the copies that publishing the data
-        matrices into shared memory makes of the arrays that already exist, such as the user's
-        vectors or distances.
+        The memory check of the distance storage plan also counts the arrays that already exist,
+        such as the user's vectors or distances, because publishing them into shared memory copies
+        them.
 
         Raises:
             ValueError: If no workers were configured, `with_initial_selection` was combined with

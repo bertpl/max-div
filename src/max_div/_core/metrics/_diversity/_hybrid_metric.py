@@ -207,7 +207,7 @@ class HybridDiversityMetric:
         )
 
     def _to_objective(self, distance_specs: Sequence[DistanceSpec]) -> DiversityObjectiveHybrid:
-        """Return the objective the solver maximizes for this hybrid, each term over its distance spec.
+        """Return the objective that the solver maximizes for this hybrid, each term over its distance spec.
 
         Args:
             distance_specs: the distance spec of each term, in term order.

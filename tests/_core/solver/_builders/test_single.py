@@ -173,30 +173,30 @@ def test_max_div_solver_builder_refuses_custom_tie_breakers_for_a_hybrid_metric(
 
 
 # ==================================================================================================
-#  MaxDivSolverBuilder - Store built in solve(), not build()
+#  MaxDivSolverBuilder - Data matrices produced in solve(), not build()
 # ==================================================================================================
 def test_the_data_matrices_are_produced_by_solve_not_by_build(dummy_problem, monkeypatch):
     """build() only assembles the solver; each solve() produces the data matrices, so their cost sits in solve()."""
     # --- arrange ----------------------
     from max_div._core.distance_storage import InProcessDataMatrixReader
 
-    builds = 0
+    n_readers_created = 0
     real_init = InProcessDataMatrixReader.__init__
 
     def counting_init(self, producers):
-        nonlocal builds
-        builds += 1
+        nonlocal n_readers_created
+        n_readers_created += 1
         real_init(self, producers)
 
     monkeypatch.setattr(InProcessDataMatrixReader, "__init__", counting_init)
 
     # --- act / assert -----------------
     solver = MaxDivSolverBuilder(dummy_problem).with_preset(iterations(5), SolverPreset.RANDOM).build()
-    assert builds == 0  # build() did not touch the distances
+    assert n_readers_created == 0  # build() did not touch the distances
 
     solver.solve(verbosity=Verbosity.SILENT)
     solver.solve(verbosity=Verbosity.SILENT)
-    assert builds == 2  # the data matrices are produced once per solve
+    assert n_readers_created == 2  # the data matrices are produced once per solve
 
 
 # ==================================================================================================

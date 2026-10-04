@@ -1,12 +1,14 @@
 """This package stores a solve's pairwise distances, following the storage type that the user chose.
 
+"Storage type" names a `DistanceStorageType` value throughout this package; "kind" is reserved for
+`DistanceStore.kind`, the compiled selector that a distance store carries.
+
 - `storage` holds the public choice.
-- `memory_budget` sizes a data matrix in bytes, probes the machine's RAM, and refuses a solve whose
-  data matrices cannot fit.
+- `memory_budget` sizes a data matrix in bytes and probes the machine's RAM.
 - `data_matrix_producer` says how each data matrix of a solve is produced; a data matrix is an array that a
   distance store reads.
 - `storage_plan` decides, before a solve starts, how each distance of a solve is stored and which data
-  matrices its distance stores read.
+  matrices its distance stores read, and refuses a solve whose data matrices cannot fit in memory.
 - `allocation` decides where each data matrix is placed in memory, and records where a shared-memory segment
   holds one.
 - `data_matrix_readers` returns a solve's data matrices by matrix id, in a single solve or in a worker of a
