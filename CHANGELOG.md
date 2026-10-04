@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The labels of a solution's diversity objectives always name the distance they read: `MIN_SEPARATION over L2` for a problem built from vectors, `MIN_SEPARATION over user distances` for one built from distances
 - A solver's `build()` raises for a distance storage type that cannot work, such as `LAZY` on a problem built from distances, where before `solve()` raised
 - A parallel solve over a square distance matrix raises at `build()` when copying the matrix into shared memory would exceed physical memory, where before the copy went ahead unchecked
+- `HybridDiversityMetric.terms` returns a `DiversityTerm` for every term; a bare `DiversityMetric` given as a term has `None` as its `distance_metric`
 
 ### Deprecated
 

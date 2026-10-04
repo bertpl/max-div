@@ -82,12 +82,12 @@ class MaxDivProblem(ABC):
         """
 
     @abstractmethod
-    def _own_distance_spec(self) -> DistanceSpec:
-        """Return the distance spec of the problem's own distance, which a bare diversity metric reads."""
+    def _distance_spec_of(self, distance_metric: DistanceMetric | None) -> DistanceSpec:
+        """Return the distance spec of the distances that a diversity term over `distance_metric` reads.
 
-    @abstractmethod
-    def _distance_specs_of_terms(self, hybrid: HybridDiversityMetric) -> tuple[DistanceSpec, ...]:
-        """Return the distance spec that each term of `hybrid` reads, in term order."""
+        `None` stands for a bare `DiversityMetric`, or a hybrid term that names no distance metric; this
+        method is the only code that decides what such a term reads.
+        """
 
     @abstractmethod
     def _user_data_matrix_producer(self) -> DataMatrixProducer:
@@ -100,15 +100,15 @@ class MaxDivProblem(ABC):
 
         A `DiversityMetric` becomes a simple objective over the problem's own distance; a
         `HybridDiversityMetric` becomes a hybrid objective, each term over the distance that it reads.
+        `_distance_spec_of` gives the distance spec in both cases.
 
         The returned objective's vector distance specs name the vectors as given, so
         `DistanceStoragePlan.decide` must resolve them before a distance store can be built over them.
         """
         if isinstance(self.diversity_metric, DiversityMetric):
-            return DiversityObjectiveSimple(self.diversity_metric, self._own_distance_spec())
+            return DiversityObjectiveSimple(self.diversity_metric, self._distance_spec_of(None))
         else:
-            distance_specs = self._distance_specs_of_terms(self.diversity_metric)
-            return self.diversity_metric._to_objective(distance_specs)  # noqa: SLF001 -- kept off the public API; the problem is its intended caller
+            return self.diversity_metric._to_objective(self._distance_spec_of)  # noqa: SLF001 -- kept off the public API; the problem is its intended caller
 
     @property
     def m(self) -> int:
@@ -181,7 +181,11 @@ class MaxDivProblem(ABC):
         vectors = np.ascontiguousarray(vectors, dtype=np.float32)  # the form every distance function expects
         # Validate k before the metrics, so a k out of range is reported as such, not as a mismatch with a metric's k
         cls._validate_k(k, vectors.shape[0])
-        for metric in cls._distance_metrics_read(distance_metric, diversity_metric):
+        # the problem computes its own distance metric, which `full_matrix()` reads, and each one that a term names
+        distance_metrics = [distance_metric]
+        if isinstance(diversity_metric, HybridDiversityMetric):
+            distance_metrics.extend(diversity_metric.named_distance_metrics)
+        for metric in distance_metrics:
             metric.validate(vectors, k)  # fail fast, before any distance store is built
 
         if constraints is None:
@@ -234,37 +238,24 @@ class MaxDivProblem(ABC):
             raise ValueError(f"Distances must be a square (n, n) matrix or condensed 1D vector; got {distances.ndim}D.")
 
         cls._validate_k(k, n)
-        if isinstance(diversity_metric, HybridDiversityMetric) and diversity_metric.named_distance_metrics:
-            raise ValueError(
-                "A problem defined by its distances has no vectors, so a hybrid term cannot read a distance "
-                f"metric of its own; got {diversity_metric.named_distance_metrics}."
-            )
-
         if constraints is None:
             constraints = []
         cls._validate_constraints(constraints, n)
 
         # --- build ------------------------------
-        return DistanceMaxDivProblem(
+        problem = DistanceMaxDivProblem(
             distances=validated,
             k=k,
             diversity_metric=diversity_metric,
             constraints=constraints,
         )
+        # declaring the objective raises for a hybrid term that names a distance metric (`_distance_spec_of`)
+        _ = problem.diversity_objective
+        return problem
 
     # --------------------------------------------------------------------------
     #  Helpers
     # --------------------------------------------------------------------------
-    @staticmethod
-    def _distance_metrics_read(
-        distance_metric: DistanceMetric, diversity_metric: DiversityMetric | HybridDiversityMetric
-    ) -> tuple[DistanceMetric, ...]:
-        """Return every distance metric a vector problem computes: its own, plus those a hybrid's terms name."""
-        if isinstance(diversity_metric, HybridDiversityMetric):
-            return (distance_metric, *diversity_metric.named_distance_metrics)
-        else:
-            return (distance_metric,)
-
     @staticmethod
     def _validate_k(k: int, n: int) -> None:
         """Raise ValueError unless 2 <= k <= n.
@@ -323,17 +314,14 @@ class VectorMaxDivProblem(MaxDivProblem):
     def full_matrix(self) -> NDArray[np.float32]:
         return compute_full_matrix(self.vectors, self.distance_metric)
 
-    def _own_distance_spec(self) -> DistanceSpec:
-        """Return the spec of the distances under `distance_metric`, over the vectors as given."""
-        return VectorDistanceSpec(matrix_id=USER_MATRIX_ID, metric=self.distance_metric, is_matrix_preprocessed=False)
+    def _distance_spec_of(self, distance_metric: DistanceMetric | None) -> DistanceSpec:
+        """Return the spec of the distances under `distance_metric`, over the vectors as given.
 
-    def _distance_specs_of_terms(self, hybrid: HybridDiversityMetric) -> tuple[DistanceSpec, ...]:
-        """Return, per term, the spec of the distances under the term's metric, over the vectors as given."""
-        metrics = hybrid._distance_metrics_of_terms(self.distance_metric)  # noqa: SLF001 -- the problem is its intended caller
-        return tuple(
-            VectorDistanceSpec(matrix_id=USER_MATRIX_ID, metric=metric, is_matrix_preprocessed=False)
-            for metric in metrics
-        )
+        `None` reads the problem's own `distance_metric`.
+        """
+        # the user's convenience: a term that names no distance metric reads the problem's own
+        metric = self.distance_metric if distance_metric is None else distance_metric
+        return VectorDistanceSpec(matrix_id=USER_MATRIX_ID, metric=metric, is_matrix_preprocessed=False)
 
     def _user_data_matrix_producer(self) -> DataMatrixProducer:
         """Return the producer that adopts the vectors."""
@@ -369,16 +357,18 @@ class DistanceMaxDivProblem(MaxDivProblem):
             return self.distances
         return expand_condensed(self.distances, self.n)
 
-    def _own_distance_spec(self) -> DistanceSpec:
-        """Return the spec of the given distances, as a full matrix."""
-        return FullMatrixDistanceSpec(matrix_id=USER_MATRIX_ID, label=self._USER_DISTANCES_LABEL)
+    def _distance_spec_of(self, distance_metric: DistanceMetric | None) -> DistanceSpec:
+        """Return the spec of the given distances, as a full matrix, which a term that names no distance metric reads.
 
-    def _distance_specs_of_terms(self, hybrid: HybridDiversityMetric) -> tuple[DistanceSpec, ...]:
-        """Return the spec of the given distances once per term.
-
-        No term names a metric of its own: `from_distances` rejects such a term.
+        Raises:
+            ValueError: If `distance_metric` is not None: the problem has no vectors to compute it from.
         """
-        return (self._own_distance_spec(),) * len(hybrid.terms)
+        if distance_metric is not None:
+            raise ValueError(
+                "A problem defined by its distances has no vectors, so a hybrid term cannot read a distance "
+                f"metric of its own; got {distance_metric!r}."
+            )
+        return FullMatrixDistanceSpec(matrix_id=USER_MATRIX_ID, label=self._USER_DISTANCES_LABEL)
 
     def _user_data_matrix_producer(self) -> DataMatrixProducer:
         """Return the producer of the given distances as a full matrix; a condensed input is expanded into it."""

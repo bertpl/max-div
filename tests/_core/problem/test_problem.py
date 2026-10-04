@@ -659,10 +659,13 @@ def test_problem_diversity_objective_is_a_hybrid_for_a_hybrid_metric(flavor: str
         problem = MaxDivProblem.from_distances(np.ones((5, 5)) - np.eye(5), k=2, diversity_metric=hybrid)
         expected_specs = (_USER_DISTANCES, _USER_DISTANCES)
 
-    # --- act / assert -----------------
+    # --- act --------------------------
+    objective = problem.diversity_objective
+
+    # --- assert -----------------------
     assert problem.diversity_metric is hybrid
-    assert isinstance(problem.diversity_objective, DiversityObjectiveHybrid)
-    assert problem.diversity_objective == hybrid._to_objective(expected_specs)
+    assert isinstance(objective, DiversityObjectiveHybrid)
+    assert tuple(term.distance_spec for term in objective.terms) == expected_specs
 
 
 def test_a_bare_term_and_a_term_over_the_problems_own_metric_read_one_distance_spec():

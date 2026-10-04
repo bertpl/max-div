@@ -24,6 +24,11 @@ def _two_term_hybrid(factory, **kwargs) -> HybridDiversityMetric:
     return factory(DiversityMetric.MIN_SEPARATION, DiversityMetric.GEOMEAN_SEPARATION.over(_AXIS_0), **kwargs)
 
 
+def _distance_spec_of(distance_metric: DistanceMetric | None) -> FullMatrixDistanceSpec:
+    """Return spec `a` for a term that names no distance metric, and spec `b` for a term along axis 0."""
+    return {None: _SPEC_A, _AXIS_0: _SPEC_B}[distance_metric]
+
+
 # ==================================================================================================
 #  DiversityTerm
 # ==================================================================================================
@@ -52,13 +57,23 @@ def test_terms_compare_and_hash_by_value() -> None:
     assert term != DiversityMetric.MIN_SEPARATION
 
 
-def test_a_terms_label_and_repr_name_both_metrics() -> None:
-    # --- arrange ----------------------
-    term = DiversityMetric.MIN_SEPARATION.over(_AXIS_0)
-
-    # --- assert -----------------------
-    assert term.label == "MIN_SEPARATION over axis 0"
-    assert repr(term) == "DiversityMetric.MIN_SEPARATION.over(DistanceMetric.along_axis(0))"
+@pytest.mark.parametrize(
+    "term, expected_label, expected_repr",
+    [
+        (
+            DiversityMetric.MIN_SEPARATION.over(_AXIS_0),
+            "MIN_SEPARATION over axis 0",
+            "DiversityMetric.MIN_SEPARATION.over(DistanceMetric.along_axis(0))",
+        ),
+        (DiversityTerm(DiversityMetric.MIN_SEPARATION), "MIN_SEPARATION", "DiversityMetric.MIN_SEPARATION"),
+    ],
+    ids=["named_distance_metric", "no_distance_metric"],
+)
+def test_a_terms_label_and_repr_name_its_metrics(term: DiversityTerm, expected_label: str, expected_repr: str) -> None:
+    """A term's label and repr name its diversity metric, and its distance metric when it names one."""
+    # --- act / assert -----------------
+    assert term.label == expected_label
+    assert repr(term) == expected_repr
 
 
 # ==================================================================================================
@@ -81,7 +96,7 @@ def test_a_hybrid_resolves_to_a_hybrid_objective_with_its_aggregation(factory, w
     hybrid = _two_term_hybrid(factory, weights=weights)
 
     # --- act --------------------------
-    objective = hybrid._to_objective((_SPEC_A, _SPEC_B))
+    objective = hybrid._to_objective(_distance_spec_of)
 
     # --- assert -----------------------
     assert objective == DiversityObjectiveHybrid(
@@ -93,29 +108,30 @@ def test_a_hybrid_resolves_to_a_hybrid_objective_with_its_aggregation(factory, w
     )
 
 
-def test_a_hybrid_needs_one_distance_spec_per_term() -> None:
-    """Each term reads exactly one distance spec, so a spec list of another length is rejected."""
-    # --- act / assert -----------------
-    with pytest.raises(ValueError):
-        _two_term_hybrid(HybridDiversityMetric.geomean_of)._to_objective((_SPEC_A,))
-
-
-def test_a_bare_term_reads_the_problems_own_distance_metric_and_a_named_term_its_own() -> None:
-    """The hybrid returns the distance metric of each term in term order; a bare term reads the problem's own."""
+def test_a_hybrid_asks_for_the_distance_spec_of_each_terms_distance_metric_none_included() -> None:
+    """The hybrid passes each term's distance metric on unread, in term order, and `None` for a bare term."""
     # --- arrange ----------------------
-    own = DistanceMetric.l2_euclidean()
+    asked: list[DistanceMetric | None] = []
 
-    # --- act / assert -----------------
-    assert _two_term_hybrid(HybridDiversityMetric.geomean_of)._distance_metrics_of_terms(own) == (own, _AXIS_0)
+    def recording_distance_spec_of(distance_metric: DistanceMetric | None) -> FullMatrixDistanceSpec:
+        """Record the distance metric that the hybrid asks about, and return spec `a`."""
+        asked.append(distance_metric)
+        return _SPEC_A
+
+    # --- act --------------------------
+    _two_term_hybrid(HybridDiversityMetric.geomean_of)._to_objective(recording_distance_spec_of)
+
+    # --- assert -----------------------
+    assert asked == [None, _AXIS_0]
 
 
-def test_a_hybrid_keeps_its_terms_as_given_and_lists_the_distinct_distance_metrics() -> None:
+def test_a_hybrid_holds_a_bare_metric_as_a_term_without_a_distance_metric_and_lists_the_named_ones() -> None:
     # --- arrange ----------------------
     axis_term = DiversityMetric.MIN_SEPARATION.over(_AXIS_0)
     hybrid = HybridDiversityMetric.geomean_of(DiversityMetric.MIN_SEPARATION, axis_term, axis_term)
 
     # --- assert -----------------------
-    assert hybrid.terms == (DiversityMetric.MIN_SEPARATION, axis_term, axis_term)
+    assert hybrid.terms == (DiversityTerm(DiversityMetric.MIN_SEPARATION), axis_term, axis_term)
     assert hybrid.named_distance_metrics == (_AXIS_0,)
 
 
@@ -125,7 +141,7 @@ def test_a_repeated_term_counts_once_per_repeat() -> None:
 
     # --- act --------------------------
     objective = HybridDiversityMetric.mean_of(DiversityMetric.MIN_SEPARATION, axis_term, axis_term)._to_objective(
-        (_SPEC_A, _SPEC_B, _SPEC_B)
+        _distance_spec_of
     )
 
     # --- assert -----------------------
@@ -141,7 +157,7 @@ def test_every_aggregation_has_a_factory_named_after_it() -> None:
     built = {
         aggregation_type: type(
             _two_term_hybrid(getattr(HybridDiversityMetric, f"{aggregation_type.name}_of"))
-            ._to_objective((_SPEC_A, _SPEC_B))
+            ._to_objective(_distance_spec_of)
             .aggregation
         )
         for aggregation_type in aggregation_types

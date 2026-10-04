@@ -1,10 +1,11 @@
 """`HybridDiversityMetric` is the public form of a hybrid diversity metric: terms under one weighted aggregation.
 
-A term pairs a diversity metric with the distance metric it reads (`DiversityTerm`, obtained
-through `DiversityMetric.over`); a bare `DiversityMetric` given as a term reads the problem's own
-distance. `HybridDiversityMetric` holds the terms and their aggregation, which carries one weight per
-term. `DiversityTerm` and `HybridDiversityMetric` are immutable descriptions; the problem turns them into the
-solver's objective.
+A term pairs a diversity metric with the distance metric that it reads (`DiversityTerm`, obtained
+through `DiversityMetric.over`), or with none: a bare `DiversityMetric` given as a term becomes a
+term whose distance metric is `None`, which reads the problem's own distance. `HybridDiversityMetric`
+holds the terms and their aggregation, which carries one weight per term. `DiversityTerm` and
+`HybridDiversityMetric` are immutable descriptions; the problem turns them into the solver's
+objective, and is the only code that decides what a term without a distance metric reads.
 """
 
 from __future__ import annotations
@@ -22,7 +23,7 @@ from ._enum import DiversityMetric
 from ._objective import DiversityObjectiveHybrid, DiversityObjectiveSimple
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
+    from collections.abc import Callable, Sequence
 
     from max_div._core.metrics._distance import DistanceMetric, DistanceSpec
 
@@ -32,22 +33,31 @@ if TYPE_CHECKING:
 # ==================================================================================================
 @dataclass(frozen=True, slots=True)
 class DiversityTerm:
-    """A diversity metric over one distance metric, one term of a `HybridDiversityMetric`.
+    """A diversity term is one term of a `HybridDiversityMetric`: a diversity metric over a distance metric, or none.
 
-    Obtain one through `DiversityMetric.over(distance_metric)`; a term is not constructed directly.
+    Obtain one that names its distance metric through `DiversityMetric.over(distance_metric)`.  A hybrid
+    turns a bare `DiversityMetric` given as a term into a term whose `distance_metric` is `None`, which
+    reads the problem's own distance.
     """
 
     diversity_metric: DiversityMetric
-    distance_metric: DistanceMetric
+    # None when the term names no distance metric and reads the problem's own distance
+    distance_metric: DistanceMetric | None = None
 
     @property
     def label(self) -> str:
-        """Return a short label, e.g. `MIN_SEPARATION over axis 2`."""
-        return f"{self.diversity_metric.value} over {self.distance_metric.label}"
+        """Return a short label, e.g. `MIN_SEPARATION over axis 2`, or `MIN_SEPARATION` without a distance metric."""
+        if self.distance_metric is None:
+            return self.diversity_metric.value
+        else:
+            return f"{self.diversity_metric.value} over {self.distance_metric.label}"
 
     def __repr__(self) -> str:
-        """Return the call that constructs this term."""
-        return f"DiversityMetric.{self.diversity_metric.name}.over({self.distance_metric!r})"
+        """Return the expression for this term that the factory methods of `HybridDiversityMetric` accept."""
+        if self.distance_metric is None:
+            return f"DiversityMetric.{self.diversity_metric.name}"
+        else:
+            return f"DiversityMetric.{self.diversity_metric.name}.over({self.distance_metric!r})"
 
 
 # ==================================================================================================
@@ -59,7 +69,8 @@ class HybridDiversityMetric:
     Each term is a `DiversityMetric` over its own distance: a bare `DiversityMetric` reads the
     problem's own distance, and `DiversityMetric.over(distance_metric)` names another one, so one
     solve can spread a selection in the full space and in chosen coordinate projections at once.
-    Create instances via `geomean_of`, `mean_of` and `min_of`.
+    Create instances via `geomean_of`, `mean_of` and `min_of`.  The hybrid holds every term as a
+    `DiversityTerm`: a bare `DiversityMetric` becomes one whose `distance_metric` is `None`.
 
     Each term carries a weight, 1 unless given, whose meaning depends on the aggregation: an exponent
     on the term's value in the geometric mean, a multiplier of the term's value in the arithmetic mean
@@ -93,7 +104,8 @@ class HybridDiversityMetric:
                     f"DiversityMetric.over(...); got {type(term).__name__}."
                 )
         aggregation.validate_term_count(len(terms))
-        self._terms = terms
+        # a bare DiversityMetric becomes a term that names no distance metric, so the hybrid holds 1 type of term
+        self._terms = tuple(DiversityTerm(term) if isinstance(term, DiversityMetric) else term for term in terms)
         self._aggregation = aggregation
 
     # --------------------------------------------------------------------------
@@ -172,8 +184,8 @@ class HybridDiversityMetric:
     #  Properties
     # --------------------------------------------------------------------------
     @property
-    def terms(self) -> tuple[DiversityTerm | DiversityMetric, ...]:
-        """Return the terms as given; a bare `DiversityMetric` reads the problem's own distance."""
+    def terms(self) -> tuple[DiversityTerm, ...]:
+        """Return the terms; a bare `DiversityMetric` given as a term is a term whose `distance_metric` is `None`."""
         return self._terms
 
     @property
@@ -183,8 +195,8 @@ class HybridDiversityMetric:
 
     @property
     def named_distance_metrics(self) -> tuple[DistanceMetric, ...]:
-        """Return the distinct distance metrics the terms name, in first-seen order; bare terms name none."""
-        return tuple(dict.fromkeys(term.distance_metric for term in self._terms if isinstance(term, DiversityTerm)))
+        """Return the distinct distance metrics that the terms name, in first-seen order."""
+        return tuple(dict.fromkeys(term.distance_metric for term in self._terms if term.distance_metric is not None))
 
     @property
     def label(self) -> str:
@@ -192,33 +204,27 @@ class HybridDiversityMetric:
 
         When any weight differs from 1, all weights follow the terms: `geomean(...; weights 2, 1)`.
         """
-        return self._aggregation.format_label(
-            [term.value if isinstance(term, DiversityMetric) else term.label for term in self._terms]
-        )
+        return self._aggregation.format_label([term.label for term in self._terms])
 
     # --------------------------------------------------------------------------
     #  Conversion to an objective
     # --------------------------------------------------------------------------
-    def _distance_metrics_of_terms(self, own_distance_metric: DistanceMetric) -> tuple[DistanceMetric, ...]:
-        """Return the distance metric that each term reads, in term order.
+    def _to_objective(
+        self, distance_spec_of: Callable[[DistanceMetric | None], DistanceSpec]
+    ) -> DiversityObjectiveHybrid:
+        """Return the objective that the solver maximizes for this hybrid, each term over the distances that it reads.
+
+        The hybrid passes each term's `distance_metric` to `distance_spec_of` unread, `None` included, so
+        the problem alone decides what a term without a distance metric reads.
 
         Args:
-            own_distance_metric: the problem's own distance metric, which a bare `DiversityMetric` term reads.
-        """
-        return tuple(
-            own_distance_metric if isinstance(term, DiversityMetric) else term.distance_metric for term in self._terms
-        )
-
-    def _to_objective(self, distance_specs: Sequence[DistanceSpec]) -> DiversityObjectiveHybrid:
-        """Return the objective that the solver maximizes for this hybrid, each term over its distance spec.
-
-        Args:
-            distance_specs: the distance spec of each term, in term order.
+            distance_spec_of: the problem's `_distance_spec_of`, which returns the distance spec of a
+                term's distance metric.
         """
         return DiversityObjectiveHybrid(
             tuple(
-                DiversityObjectiveSimple(term if isinstance(term, DiversityMetric) else term.diversity_metric, spec)
-                for term, spec in zip(self._terms, distance_specs, strict=True)
+                DiversityObjectiveSimple(term.diversity_metric, distance_spec_of(term.distance_metric))
+                for term in self._terms
             ),
             self._aggregation,
         )
@@ -236,8 +242,6 @@ class HybridDiversityMetric:
 
     def __repr__(self) -> str:
         """Return the factory call that constructs this hybrid."""
-        term_reprs = ", ".join(
-            f"DiversityMetric.{term.name}" if isinstance(term, DiversityMetric) else repr(term) for term in self._terms
-        )
+        term_reprs = ", ".join(repr(term) for term in self._terms)
         weights_suffix = f", weights={self._aggregation.weights!r}" if self._aggregation.has_non_unit_weights else ""
         return f"HybridDiversityMetric.{self._aggregation.name}_of({term_reprs}{weights_suffix})"
