@@ -5,6 +5,8 @@ portfolio** — and keeps the best result any of them reached. The workers share
 distances, which are usually the most memory-intensive structure in a solve, so N workers cost N
 processes but not N copies of that data.
 
+On Linux the workers' shared copy of the distances lives in `/dev/shm`, which a default Docker container limits to 64 MB; give such a container a larger `--shm-size`.
+
 The workers form **[worker groups](glossary.md#worker-group)** — the parallel-metaheuristics
 literature calls them *islands*: within a group, every worker adopts the best selection any
 member has found so far, exchanged many times per second while solving; groups never communicate
