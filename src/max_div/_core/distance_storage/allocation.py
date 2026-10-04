@@ -29,6 +29,8 @@ import numpy as np
 
 from max_div._core._utils import create_shared_memory_segment, destroy_shared_memory_segment
 
+from .memory_budget import data_matrix_bytes
+
 if TYPE_CHECKING:
     from multiprocessing.shared_memory import SharedMemory
 
@@ -135,7 +137,7 @@ class SharedMemoryDataMatrixAllocator(DataMatrixAllocator):
     # --------------------------------------------------------------------------
     def _create_segment(self, matrix_id: int, shape: tuple[int, ...]) -> NDArray[np.float32]:
         """Create a shared-memory segment for the shape, publish it under the matrix id, and return its array."""
-        segment = create_shared_memory_segment(PublishedDataMatrixRecord.nbytes_for(shape))
+        segment = create_shared_memory_segment(data_matrix_bytes(shape))
         self._segments.append(segment)
         published_matrix_record = PublishedDataMatrixRecord(segment_name=segment.name, shape=tuple(shape))
         self._published_matrix_records[matrix_id] = published_matrix_record
@@ -154,11 +156,6 @@ class PublishedDataMatrixRecord(NamedTuple):
     def array_over(self, segment: SharedMemory) -> NDArray[np.float32]:
         """Return the float32 array of this data matrix's shape over the segment's bytes."""
         return np.ndarray(self.shape, dtype=np.float32, buffer=segment.buf)
-
-    @staticmethod
-    def nbytes_for(shape: tuple[int, ...]) -> int:
-        """Return the size in bytes of a float32 array of the given shape, which its segment must hold."""
-        return int(np.prod(shape, dtype=np.int64)) * np.dtype(np.float32).itemsize
 
 
 @dataclass(frozen=True)

@@ -127,7 +127,10 @@ def test_max_div_solver_builder_tie_breaker_metrics_defaults(
 
     # --- assert -----------------------
     assert solver._diversity_objectives[0].diversity_metric == diversity_metric
-    assert solver._diversity_objectives[1:] == [DiversityObjectiveSimple(tb) for tb in expected_tie_breakers]
+    primary_spec = solver._diversity_objectives[0].distance_spec
+    assert solver._diversity_objectives[1:] == [
+        DiversityObjectiveSimple(tb, primary_spec) for tb in expected_tie_breakers
+    ]
 
 
 def test_max_div_solver_builder_tie_breaker_metrics_custom(dummy_problem):
@@ -170,30 +173,30 @@ def test_max_div_solver_builder_refuses_custom_tie_breakers_for_a_hybrid_metric(
 
 
 # ==================================================================================================
-#  MaxDivSolverBuilder - Store built in solve(), not build()
+#  MaxDivSolverBuilder - Data matrices produced in solve(), not build()
 # ==================================================================================================
-def test_the_store_is_built_by_solve_not_by_build(dummy_problem, monkeypatch):
-    """build() only assembles the solver; each solve() builds the store, so its cost sits in solve()."""
+def test_the_data_matrices_are_produced_by_solve_not_by_build(dummy_problem, monkeypatch):
+    """build() only assembles the solver; each solve() produces the data matrices, so their cost is part of solve()."""
     # --- arrange ----------------------
-    from max_div._core.distance_storage import DistanceStoreFactory
+    from max_div._core.distance_storage import InProcessDataMatrixReader
 
-    builds = 0
-    real_create = DistanceStoreFactory.create_stores_by_distance
+    n_readers_created = 0
+    real_init = InProcessDataMatrixReader.__init__
 
-    def counting_create(self):
-        nonlocal builds
-        builds += 1
-        return real_create(self)
+    def counting_init(self, producers):
+        nonlocal n_readers_created
+        n_readers_created += 1
+        real_init(self, producers)
 
-    monkeypatch.setattr(DistanceStoreFactory, "create_stores_by_distance", counting_create)
+    monkeypatch.setattr(InProcessDataMatrixReader, "__init__", counting_init)
 
     # --- act / assert -----------------
     solver = MaxDivSolverBuilder(dummy_problem).with_preset(iterations(5), SolverPreset.RANDOM).build()
-    assert builds == 0  # build() did not touch the distances
+    assert n_readers_created == 0  # build() did not touch the distances
 
     solver.solve(verbosity=Verbosity.SILENT)
     solver.solve(verbosity=Verbosity.SILENT)
-    assert builds == 2  # one store built per solve
+    assert n_readers_created == 2  # the data matrices are produced once per solve
 
 
 # ==================================================================================================
@@ -233,9 +236,10 @@ def test_max_div_solver_builder_end_to_end():
     # --- assert -----------------------
     assert isinstance(solver, MaxDivSolver)
     assert solver._n == vectors.shape[0]
-    # the store is built by solve(), not build(): a full-matrix store of the expected shape here
-    ((_, store),) = solver._stores_by_distance_provider().items()
-    assert store.matrix.shape == (vectors.shape[0], vectors.shape[0])  # AUTO -> full matrix at this size
+    # the data matrices are produced by solve(), not build(): a full matrix of the expected shape here
+    (distance_spec,) = solver._diversity_objectives[0].distinct_distance_specs()
+    data_matrix = solver._data_matrix_reader_provider().array(distance_spec.matrix_id)
+    assert data_matrix.shape == (vectors.shape[0], vectors.shape[0])  # AUTO -> full matrix at this size
     assert solver._k == k
     assert len(solver._solver_steps) == 3
     assert solver._solver_steps[0].name() == init_strategy.name
@@ -445,10 +449,10 @@ def test_a_budget_spent_during_setup_skips_the_optimization(dummy_problem, fake_
         .with_end_to_end_budget()
         .build()
     )
-    stores_provider = solver._stores_by_distance_provider
-    solver._stores_by_distance_provider = lambda: (fake_clock.advance(11.0), stores_provider())[
+    reader_provider = solver._data_matrix_reader_provider
+    solver._data_matrix_reader_provider = lambda: (fake_clock.advance(11.0), reader_provider())[
         1
-    ]  # the build spends the whole budget
+    ]  # producing the data matrices spends the whole budget
 
     # --- act --------------------------
     with pytest.warns(SolverBudgetWarning, match="spent before optimization started"):

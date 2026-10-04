@@ -656,5 +656,5 @@ def test_a_solution_records_the_labels_of_its_diversity_objectives():
     )
 
     # --- assert -----------------------
-    assert solution.diversity_objective_labels[0] == "MIN_SEPARATION"
+    assert solution.diversity_objective_labels[0] == "MIN_SEPARATION over L2"
     assert len(solution.diversity_objective_labels) == len(solution.score.diversities) > 1

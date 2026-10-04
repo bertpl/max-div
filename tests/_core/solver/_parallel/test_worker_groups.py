@@ -4,11 +4,10 @@ import numpy as np
 import pytest
 
 from max_div._core.metrics import DistanceMetric, DiversityMetric
-from max_div._core.metrics._distance import DistanceStore
 from max_div._core.solver._duration import Elapsed
 from max_div._core.solver._parallel import FixedGroupCount, PowerLawGroupMerge, WorkerGroupState
 from max_div._core.solver._solver_state import SolverState
-from tests._core.solver.objectives import simple_objective
+from tests._core.solver.objectives import full_matrix_reader, simple_objective
 
 
 def _group_state(n_workers: int, group_sizes: list[int] | None = None, dynamic: bool = True) -> WorkerGroupState:
@@ -42,7 +41,7 @@ def _state_with(indices: list[int]) -> SolverState:
     vectors = np.array([[0.0], [1.0], [2.0], [10.0], [20.0], [30.0]], dtype=np.float32)
     state = SolverState.new(
         n=vectors.shape[0],
-        stores_by_distance={None: DistanceStore.full_matrix_from_vectors(vectors, DistanceMetric.l1_manhattan())},
+        data_matrix_reader=full_matrix_reader(vectors, DistanceMetric.l1_manhattan()),
         k=3,
         diversity_objectives=[simple_objective(DiversityMetric.MIN_SEPARATION)],
         constraints=[],

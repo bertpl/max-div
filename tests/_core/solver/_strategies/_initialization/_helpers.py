@@ -2,9 +2,8 @@ import numpy as np
 
 from max_div._core.constraints import Constraint
 from max_div._core.metrics import DistanceMetric, DiversityMetric
-from max_div._core.metrics._distance import DistanceStore
 from max_div._core.solver._solver_state import SolverState
-from tests._core.solver.objectives import simple_objective
+from tests._core.solver.objectives import full_matrix_reader, simple_objective
 
 
 def new_solver_state(has_constraints: bool) -> SolverState:
@@ -21,7 +20,7 @@ def new_solver_state(has_constraints: bool) -> SolverState:
 
     return SolverState.new(
         n=vectors.shape[0],
-        stores_by_distance={None: DistanceStore.full_matrix_from_vectors(vectors, DistanceMetric.l2_euclidean())},
+        data_matrix_reader=full_matrix_reader(vectors, DistanceMetric.l2_euclidean()),
         k=50,
         diversity_objectives=[simple_objective(DiversityMetric.GEOMEAN_SEPARATION)],
         constraints=constraints,
@@ -35,7 +34,7 @@ def new_solver_state_unconstrained(
     vectors = np.random.default_rng(20260901).random((n, 3)).astype(np.float32)
     return SolverState.new(
         n=n,
-        stores_by_distance={None: DistanceStore.full_matrix_from_vectors(vectors, DistanceMetric.l2_euclidean())},
+        data_matrix_reader=full_matrix_reader(vectors, DistanceMetric.l2_euclidean()),
         k=k,
         diversity_objectives=[simple_objective(metric)],
         constraints=[],

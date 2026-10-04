@@ -1,17 +1,17 @@
-"""A solver's configuration is held apart from the distances it will read.
+"""A solver's configuration is held apart from the data matrices that its distance stores read.
 
-The distance store and the rest of a solver are separated because the distance store is built once
-and read by several processes, while each process assembles its own solver over it from a copy of
+The data matrices and the rest of a solver are separated because the data matrices are produced once
+and read by several processes, while each process assembles its own solver over them from a copy of
 this record — which is why the record must stay small enough to pickle.
 """
 
-from collections.abc import Callable, Mapping
+from collections.abc import Callable
 from dataclasses import dataclass, replace
 
 from max_div._core.constraints import Constraint
 from max_div._core.distance_storage import DistanceStorageTypes
-from max_div._core.metrics import DistanceMetric, DiversityObjective
-from max_div._core.metrics._distance import DistanceStore
+from max_div._core.metrics import DiversityObjective
+from max_div._core.metrics._distance import DataMatrixReader
 
 from ._constraint_penalty import ConstraintPenalty
 from ._duration import E2eBudget
@@ -21,11 +21,12 @@ from ._solver_step import REPORTING_BATCH_SECONDS, SolverStep
 
 @dataclass(frozen=True)
 class SolverConfig:
-    """A config holds everything a solver needs apart from the distances it reads."""
+    """A config holds everything that a solver needs apart from the data matrices that its distance stores read."""
 
     n: int
     k: int
-    # the primary objective first, then the tie-breakers in order
+    # The primary objective comes first, then the tie-breakers in order; each distance spec names the data
+    # matrix that its distance store reads.
     diversity_objectives: list[DiversityObjective]
     constraints: list[Constraint]
     solver_steps: list[SolverStep]
@@ -45,31 +46,31 @@ class SolverConfig:
     def build_solver(
         self,
         *,
-        stores_by_distance: Mapping[DistanceMetric | None, DistanceStore] | None = None,
-        stores_by_distance_provider: Callable[[], Mapping[DistanceMetric | None, DistanceStore]] | None = None,
+        data_matrix_reader: DataMatrixReader | None = None,
+        data_matrix_reader_provider: Callable[[], DataMatrixReader] | None = None,
     ) -> MaxDivSolver:
-        """Return a solver configured as this record describes, given the distances it will read.
+        """Return a solver configured as this record describes, given the reader of its data matrices.
 
         Pass exactly one of:
 
         Args:
-            stores_by_distance: an already-built distance -> store mapping — the parallel solver's
-                workers attach to the shared stores and hand the mapping in.
-            stores_by_distance_provider: a callable that yields the mapping when the solve starts,
-                so `build` stays lean and the stores are built inside `solve`.
+            data_matrix_reader: a reader over data matrices that exist already — a worker of the
+                parallel solver reads the ones that its parent published in shared memory.
+            data_matrix_reader_provider: a callable that returns the reader when the solve starts,
+                so `build` stays cheap and the data matrices are produced inside `solve`.
 
         Raises:
             ValueError: if neither or both are given.
         """
-        if stores_by_distance is not None and stores_by_distance_provider is None:
-            provider: Callable[[], Mapping[DistanceMetric | None, DistanceStore]] = lambda: stores_by_distance
-        elif stores_by_distance is None and stores_by_distance_provider is not None:
-            provider = stores_by_distance_provider
+        if data_matrix_reader is not None and data_matrix_reader_provider is None:
+            provider: Callable[[], DataMatrixReader] = lambda: data_matrix_reader
+        elif data_matrix_reader is None and data_matrix_reader_provider is not None:
+            provider = data_matrix_reader_provider
         else:
-            raise ValueError("Pass exactly one of `stores_by_distance` or `stores_by_distance_provider`.")
+            raise ValueError("Pass exactly one of `data_matrix_reader` or `data_matrix_reader_provider`.")
         return MaxDivSolver(
             n=self.n,
-            stores_by_distance_provider=provider,
+            data_matrix_reader_provider=provider,
             k=self.k,
             diversity_objectives=self.diversity_objectives,
             constraints=self.constraints,

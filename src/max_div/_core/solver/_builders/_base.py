@@ -19,9 +19,8 @@ from typing import TYPE_CHECKING, Self
 from numpy.typing import ArrayLike
 
 from max_div._core.distance_storage import (
+    DistanceStoragePlan,
     DistanceStorageType,
-    DistanceStorageTypes,
-    DistanceStoreFactory,
     total_physical_memory_bytes,
 )
 from max_div._core.metrics import (
@@ -31,7 +30,6 @@ from max_div._core.metrics import (
 )
 from max_div._core.problem import MaxDivProblem
 from max_div._core.solver._constraint_penalty import ConstraintPenalty
-from max_div._core.solver._diversity_contribution import DiversityObjectiveBindings
 from max_div._core.solver._duration import E2eBudget, TargetDuration, TargetTimeDuration
 from max_div._core.solver._strategies import InitializationStrategy
 
@@ -84,7 +82,7 @@ class SolverBuilderBase:
         if not isinstance(self._primary_objective, DiversityObjectiveSimple):
             raise ValueError("Custom diversity tie-breakers are not supported for a hybrid diversity metric.")
         self._custom_diversity_tie_breakers = [
-            DiversityObjectiveSimple(metric, self._primary_objective.distance_metric)
+            DiversityObjectiveSimple(metric, self._primary_objective.distance_spec)
             for metric in diversity_tie_breaker_metrics
         ]
         return self
@@ -203,16 +201,24 @@ class SolverBuilderBase:
         else:
             return hot_start_strategy
 
-    def _store_factory(self) -> tuple[DistanceStoreFactory, DistanceStorageTypes]:
-        """Return the store factory and each store's resolved (distance, storage type)."""
-        bindings = DiversityObjectiveBindings.for_objectives(self._determine_diversity_objectives())
-        factory = DistanceStoreFactory(
-            self._problem,
-            bindings.distance_metrics,
+    def _decide_distance_storage_plan(self, are_adopted_arrays_copied: bool) -> DistanceStoragePlan:
+        """Return the distance storage plan of this configuration's diversity objectives.
+
+        Args:
+            are_adopted_arrays_copied: whether the solve copies the arrays that already exist, such as
+                the user's vectors, as a parallel solve does into shared memory.
+
+        Raises:
+            ValueError: For the LAZY storage type on a distance-input problem, or when the data
+                matrices cannot fit in physical memory at all.
+        """
+        return DistanceStoragePlan.decide(
+            self._determine_diversity_objectives(),
+            self._problem._user_data_matrix_producer(),  # noqa: SLF001 -- kept off the public API; the builder is its intended caller
             self._distance_storage_type,
             total_physical_memory_bytes(),
+            are_adopted_arrays_copied=are_adopted_arrays_copied,
         )
-        return factory, factory.resolved_storage()
 
     def _determine_diversity_objectives(self) -> list[DiversityObjective]:
         """Return the diversity objectives, the primary objective first and then its tie-breakers."""

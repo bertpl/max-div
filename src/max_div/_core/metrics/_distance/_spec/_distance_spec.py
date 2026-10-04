@@ -12,7 +12,7 @@ vector spec's distances, because a spec holds no array to compare.
 """
 
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from max_div._core.metrics._distance._metric import DistanceMetric
 from max_div._core.metrics._distance._store import DistanceStore
@@ -51,8 +51,10 @@ class FullMatrixDistanceSpec(DistanceSpec):
     """
 
     # `slots=True` turns this field into a slot attribute on the generated class, and that attribute
-    # overrides the abstract `label` property inherited from `DistanceSpec`.
-    label: str
+    # overrides the abstract `label` property inherited from `DistanceSpec`.  The explicit `field()`
+    # keeps the field required: without it, the dataclass would take the inherited property object as
+    # the field's default.
+    label: str = field()
 
     def build_distance_store(self, data_matrix_reader: DataMatrixReader) -> DistanceStore:
         """Return the full-matrix distance store over this spec's distance matrix."""

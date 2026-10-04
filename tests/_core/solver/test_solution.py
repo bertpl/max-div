@@ -1,7 +1,6 @@
 import numpy as np
 
 from max_div._core.distance_storage import DistanceStorageType, DistanceStorageTypes
-from max_div._core.metrics import DistanceMetric
 from max_div._core.solver import MaxDivSolution
 from max_div._core.solver._duration import Elapsed
 from max_div._core.solver._score import Score
@@ -72,7 +71,7 @@ def test_solution_str_reports_storage():
             )
         ],
         step_durations=[Elapsed(t_elapsed_sec=0.1, n_iterations=1)],
-        distance_storage=DistanceStorageTypes(((DistanceMetric.l2_euclidean(), DistanceStorageType.FULL_MATRIX),)),
+        distance_storage=DistanceStorageTypes((("L2", DistanceStorageType.FULL_MATRIX),)),
     )
 
     # --- act / assert -----------------

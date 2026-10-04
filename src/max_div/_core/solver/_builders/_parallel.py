@@ -5,7 +5,7 @@ from dataclasses import replace
 from typing import Self, cast
 
 from max_div._core._utils import deterministic_hash_int64
-from max_div._core.distance_storage import DistanceStorageTypes
+from max_div._core.distance_storage import DistanceStoragePlan
 from max_div._core.problem import MaxDivProblem
 from max_div._core.solver._duration import E2eBudget, TargetDuration
 from max_div._core.solver._parallel import (
@@ -148,11 +148,20 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
     #  Build
     # --------------------------------------------------------------------------
     def build(self) -> ParallelMaxDivSolver:
-        """Build the parallel solver: one solver configuration per worker over a store they will share.
+        """Build the parallel solver: one solver configuration per worker over data matrices that they will share.
+
+        When the distance storage plan checks that the data matrices fit in physical memory, it also
+        counts the arrays that already exist, such as the user's vectors or distances, because
+        publishing them into shared memory copies them.
 
         Raises:
-            ValueError: If no workers were configured, or `with_initial_selection` was combined with
-                a `WorkerConfig` that sets its own `init_strategy`.
+            ValueError: If any of these holds:
+
+                - no workers were configured;
+                - `with_initial_selection` was combined with a `WorkerConfig` that sets its own
+                  `init_strategy`;
+                - the storage type is LAZY on a distance-input problem;
+                - the data matrices cannot fit in physical memory at all.
         """
         if self._target_duration is None or not self._worker_configs:
             raise ValueError("A parallel solver needs workers; call with_workers or with_custom_worker_groups first.")
@@ -165,15 +174,15 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
             )
             for worker in self._worker_configs
         ]
-        factory, distance_storage = self._store_factory()
+        distance_storage_plan = self._decide_distance_storage_plan(are_adopted_arrays_copied=True)
         e2e_budget = self._resolve_e2e_budget()
         batch_intervals = self._batch_interval_per_worker()
         return ParallelMaxDivSolver(
-            store_factory=factory,
+            data_matrix_producers=distance_storage_plan.data_matrix_producers,
             worker_configs=worker_configs,
             solver_configs=[
                 self._solver_config_for(
-                    index, worker, self._target_duration, distance_storage, batch_intervals[index], e2e_budget
+                    index, worker, self._target_duration, distance_storage_plan, batch_intervals[index], e2e_budget
                 )
                 for index, worker in enumerate(worker_configs)
             ],
@@ -207,7 +216,7 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
         index: int,
         worker: WorkerConfig,
         duration: TargetDuration,
-        distance_storage: DistanceStorageTypes,
+        distance_storage_plan: DistanceStoragePlan,
         batch_seconds: float,
         e2e_budget: "E2eBudget | None",
     ) -> SolverConfig:
@@ -226,12 +235,12 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
         return SolverConfig(
             n=self._n,
             k=self._k,
-            diversity_objectives=self._determine_diversity_objectives(),
+            diversity_objectives=distance_storage_plan.diversity_objectives,
             constraints=self._constraints,
             solver_steps=[InitializationStep(worker.init_strategy or init_strategy), *optim_steps],
             seed=int(deterministic_hash_int64(("parallel_worker_seed", self._seed, index))),
             constraint_penalty=self._constraint_penalty,
-            distance_storage=distance_storage,
+            distance_storage=distance_storage_plan.distance_storage,
             batch_seconds=batch_seconds,
             e2e_budget=e2e_budget,
             intermediate_selections_enabled=self._intermediate_selections_enabled,

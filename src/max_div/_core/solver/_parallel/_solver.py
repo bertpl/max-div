@@ -1,12 +1,13 @@
-"""The parallel solver runs several workers over one shared store and returns the best result they reach."""
+"""The parallel solver runs several workers over shared data matrices and returns the best result they reach."""
 
 import multiprocessing
 import os
 import warnings
+from collections.abc import Mapping
 from dataclasses import fields
 
 from max_div._core._warnings import ParallelSolvingWarning
-from max_div._core.distance_storage import DistanceStoreFactory
+from max_div._core.distance_storage import DataMatrixProducer, SharedMemoryDataMatrixPublisher
 from max_div._core.solver._progress_reporting import ProgressReporter, Verbosity
 from max_div._core.solver._solution import MaxDivSolution
 from max_div._core.solver._solver_config import SolverConfig
@@ -32,16 +33,17 @@ class ParallelMaxDivSolver:
     # --------------------------------------------------------------------------
     def __init__(
         self,
-        store_factory: DistanceStoreFactory,
+        data_matrix_producers: Mapping[int, DataMatrixProducer],
         worker_configs: list[WorkerConfig],
         solver_configs: list[SolverConfig],
         group_sizes: list[int],
         merge_schedule: GroupMergeSchedule,
     ) -> None:
-        """Hold the store factory and one configuration per worker.
+        """Hold the producers of the shared data matrices and one configuration per worker.
 
         Args:
-            store_factory: builds the store every worker shares, into shared memory.
+            data_matrix_producers: the producer of every data matrix that the workers' distance stores
+                read, by matrix id; `solve` produces each one into shared memory.
             worker_configs: what each worker runs, reported back in the solution.
             solver_configs: the solver each worker assembles, in the same order.
             group_sizes: how the workers start out grouped, as consecutive run lengths over
@@ -50,7 +52,7 @@ class ParallelMaxDivSolver:
                 `_merge_schedule`); a fixed grouping's schedule keeps `group_sizes` for the
                 whole solve.
         """
-        self._store_factory = store_factory
+        self._data_matrix_producers = data_matrix_producers
         self._worker_configs = worker_configs
         self._solver_configs = solver_configs
         self._group_sizes = group_sizes
@@ -60,9 +62,9 @@ class ParallelMaxDivSolver:
     #  API
     # --------------------------------------------------------------------------
     def solve(self, verbosity: int | Verbosity = Verbosity.TABULAR) -> ParallelMaxDivSolution:
-        """Run every worker over one shared store and return the best result, with every worker summarized.
+        """Run every worker over shared data matrices and return the best result, with every worker summarized.
 
-        The distances are built once, into shared memory, and released when the last worker is done.
+        The data matrices are produced once, into shared memory, and released when the last worker is done.
 
         Args:
             verbosity: (int | Verbosity) The verbosity level, with the same levels as a single
@@ -83,10 +85,10 @@ class ParallelMaxDivSolver:
             solver_configs = [config.with_e2e_budget(e2e_budget) for config in solver_configs]
         group_state = self._build_group_state()
         coordinators = [group_state.coordinator_for(index) for index in range(len(solver_configs))]
-        with self._store_factory.publish_distance_stores() as published_distance_stores_record:
+        with SharedMemoryDataMatrixPublisher(self._data_matrix_producers) as published_matrix_records:
             results, failures = run_workers(
                 solver_configs,
-                published_distance_stores_record,
+                published_matrix_records,
                 coordinators,
                 progress_reporter=progress_reporter,
             )

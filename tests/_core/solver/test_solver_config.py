@@ -1,8 +1,9 @@
 import numpy as np
 import pytest
 
-from max_div._core.distance_storage import DistanceStorageType, DistanceStoreFactory
-from max_div._core.metrics import DiversityMetric, DiversityObjectiveSimple
+from max_div._core.distance_storage import DistanceStoragePlan, DistanceStorageType, InProcessDataMatrixReader
+from max_div._core.metrics import DistanceMetric, DiversityMetric, DiversityObjectiveSimple
+from max_div._core.metrics._distance import FullMatrixDistanceSpec
 from max_div._core.problem import MaxDivProblem
 from max_div._core.solver._builders import MaxDivSolverBuilder
 from max_div._core.solver._duration import iterations
@@ -18,52 +19,56 @@ def _builder() -> MaxDivSolverBuilder:
     return MaxDivSolverBuilder(problem).with_preset(iterations(20), SolverPreset.SMART)
 
 
-def test_resolve_returns_the_factory_and_a_config_over_it():
-    """Resolving hands back the store factory and a config carrying the builder's settings."""
+def test_prepare_returns_the_storage_plan_and_a_config_over_its_resolved_objectives():
+    """Preparing hands back the storage plan and a config with the builder's settings and the resolved objectives."""
     # --- arrange ----------------------
-    builder = _builder().with_seed(99)
+    builder = _builder().with_seed(99).with_distance_storage(DistanceStorageType.FULL_MATRIX)
 
     # --- act --------------------------
-    factory, config = builder.prepare_storage_and_config()
+    distance_storage_plan, config = builder.prepare_storage_and_config()
 
     # --- assert -----------------------
-    assert isinstance(factory, DistanceStoreFactory)
-    assert factory.determine_storage_types() != [DistanceStorageType.AUTO]  # AUTO is resolved to something concrete
+    assert isinstance(distance_storage_plan, DistanceStoragePlan)
     assert config.seed == 99
     assert config.k == 4
+    assert config.diversity_objectives == distance_storage_plan.diversity_objectives
     assert config.diversity_objectives[0] == DiversityObjectiveSimple(
-        DiversityMetric.GEOMEAN_SEPARATION
-    )  # the problem's own metric
+        DiversityMetric.GEOMEAN_SEPARATION,
+        FullMatrixDistanceSpec(matrix_id=1, label=DistanceMetric.l2_euclidean().label),
+    )  # the problem's own metric, over the full matrix that the plan adds
+    assert config.distance_storage == distance_storage_plan.distance_storage
 
 
-def test_a_config_builds_a_solver_over_any_store():
-    """A config plus a store is a solver."""
+def test_a_config_builds_a_solver_over_a_data_matrix_reader():
+    """A config plus a reader of its data matrices is a solver."""
     # --- arrange ----------------------
     builder = _builder()
-    factory, config = builder.prepare_storage_and_config()
+    distance_storage_plan, config = builder.prepare_storage_and_config()
 
     # --- act --------------------------
-    solver = config.build_solver(stores_by_distance=factory.create_stores_by_distance())
+    solver = config.build_solver(
+        data_matrix_reader=InProcessDataMatrixReader(distance_storage_plan.data_matrix_producers)
+    )
 
     # --- assert -----------------------
     assert isinstance(solver, MaxDivSolver)
     assert solver.solve(verbosity=Verbosity.SILENT).i_selected.size == 4
 
 
-def test_a_config_builds_a_solver_that_defers_its_store():
-    """Given a provider instead of a store, the provider is called at solve time, not before."""
+def test_a_config_builds_a_solver_that_defers_its_data_matrices():
+    """Given a provider instead of a reader, the provider is called at solve time, not before."""
     # --- arrange ----------------------
     builder = _builder()
-    factory, config = builder.prepare_storage_and_config()
+    distance_storage_plan, config = builder.prepare_storage_and_config()
     calls = 0
 
-    def provide_stores():
+    def provide_reader():
         nonlocal calls
         calls += 1
-        return factory.create_stores_by_distance()
+        return InProcessDataMatrixReader(distance_storage_plan.data_matrix_producers)
 
     # --- act --------------------------
-    solver = config.build_solver(stores_by_distance_provider=provide_stores)
+    solver = config.build_solver(data_matrix_reader_provider=provide_reader)
 
     # --- assert -----------------------
     assert calls == 0  # nothing built until we solve
@@ -75,11 +80,11 @@ def test_a_config_builds_a_solver_that_defers_its_store():
     "kwargs",
     [
         {},  # neither
-        {"stores_by_distance": {}, "stores_by_distance_provider": dict},  # both
+        {"data_matrix_reader": InProcessDataMatrixReader({}), "data_matrix_reader_provider": dict},  # both
     ],
 )
-def test_build_solver_requires_exactly_one_store_source(kwargs):
-    """Neither or both of stores_by_distance / its provider is a caller error, not a silent fallback."""
+def test_build_solver_requires_exactly_one_reader_source(kwargs):
+    """Neither or both of data_matrix_reader / its provider is a caller error, not a silent fallback."""
     # --- arrange ----------------------
     _, config = _builder().prepare_storage_and_config()
 
@@ -104,7 +109,7 @@ def test_with_seed_changes_only_the_seed():
 
 
 def test_build_produces_a_working_solver():
-    """`build` produces a solver over a store it built itself."""
+    """`build` produces a solver over data matrices that it produces itself."""
     # --- arrange / act ----------------
     solution = _builder().with_seed(5).build().solve(verbosity=Verbosity.SILENT)
 

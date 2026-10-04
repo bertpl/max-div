@@ -1,7 +1,9 @@
-"""This module sizes a full matrix, probes total physical RAM, and refuses a matrix that cannot fit."""
+"""The memory budget sizes a data matrix and probes the machine's total physical RAM."""
 
 import os
 from typing import ClassVar
+
+import numpy as np
 
 # Under AUTO the full matrices together may claim this fraction of *total* physical RAM.  Total is cheap and
 # stable to probe, unlike available memory, which fluctuates and is awkward to read on some
@@ -11,25 +13,9 @@ from typing import ClassVar
 AUTO_MEMORY_FRACTION = 1 / 2
 
 
-def full_matrix_bytes(n: int) -> int:
-    """Return the bytes a full float32 distance matrix claims for n items."""
-    return 4 * n * n
-
-
-def check_fits_physical_memory(bytes_needed: int, lazy_available: bool) -> None:
-    """Raise early, with the remedy named, when the full matrices cannot fit in physical RAM at all.
-
-    Args:
-        bytes_needed: the bytes the allocations will claim together.
-        lazy_available: whether the problem has vectors, so the lazy storage type can be named as the remedy.
-    """
-    total = total_physical_memory_bytes()
-    if total is not None and bytes_needed > total:
-        lazy_hint = " or DistanceStorageType.LAZY (no O(n²) memory)" if lazy_available else ""
-        raise ValueError(
-            f"Distance storage 'full_matrix' needs ~{bytes_needed / 2**30:.1f} GiB, but this machine "
-            f"has {total / 2**30:.1f} GiB of physical memory; choose a smaller problem{lazy_hint}."
-        )
+def data_matrix_bytes(shape: tuple[int, ...]) -> int:
+    """Return the size in bytes of a float32 data matrix of the given shape."""
+    return int(np.prod(shape, dtype=np.int64)) * np.dtype(np.float32).itemsize
 
 
 def total_physical_memory_bytes() -> int | None:

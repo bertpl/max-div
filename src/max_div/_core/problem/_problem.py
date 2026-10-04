@@ -1,11 +1,19 @@
 import warnings
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from functools import partial
+from typing import ClassVar
 
 import numpy as np
 from numpy.typing import NDArray
 
 from max_div._core.constraints import Constraint, ConstraintList
+from max_div._core.distance_storage import (
+    USER_MATRIX_ID,
+    AdoptingDataMatrixProducer,
+    ComputingDataMatrixProducer,
+    DataMatrixProducer,
+)
 from max_div._core.feasibility import (
     FeasibilityResult,
     find_feasible,
@@ -17,7 +25,13 @@ from max_div._core.metrics import (
     DiversityObjectiveSimple,
     HybridDiversityMetric,
 )
-from max_div._core.metrics._distance import compute_full_matrix, expand_condensed
+from max_div._core.metrics._distance import (
+    DistanceSpec,
+    FullMatrixDistanceSpec,
+    VectorDistanceSpec,
+    compute_full_matrix,
+    expand_condensed,
+)
 
 from ._validate_distances import _n_from_condensed_size, validated_condensed_distances, validated_square_distances
 
@@ -58,11 +72,6 @@ class MaxDivProblem(ABC):
     def has_full_matrix(self) -> bool:
         """Return True when the problem already holds its distances as a full matrix, so `full_matrix` is zero-copy."""
 
-    @property
-    @abstractmethod
-    def default_distance_metric(self) -> DistanceMetric | None:
-        """The problem's default distance, if the flavor defines one; None otherwise."""
-
     @abstractmethod
     def full_matrix(self) -> NDArray[np.float32]:
         """Return the full (n, n) pairwise-distance matrix under the problem's own distance.
@@ -72,15 +81,30 @@ class MaxDivProblem(ABC):
         without copying.  The solver does not read this matrix; it builds its own stores.
         """
 
+    @abstractmethod
+    def _distance_spec_of(self, distance_metric: DistanceMetric | None) -> DistanceSpec:
+        """Return the distance spec of the distances that a diversity term over `distance_metric` reads.
+
+        `None` stands for a bare `DiversityMetric`, or a hybrid term that names no distance metric; this
+        method is the only code that decides what such a term reads.
+        """
+
+    @abstractmethod
+    def _user_data_matrix_producer(self) -> DataMatrixProducer:
+        """Return the producer of the user's data matrix: the problem's vectors or its given distances."""
+
     # --- computed fields ------------------------
     @property
     def diversity_objective(self) -> DiversityObjective:
-        """Return the objective the solver maximizes: the diversity metric resolved to its internal form.
+        """Return the objective that the solver maximizes, declared over the user's data matrix.
 
-        A `DiversityMetric` becomes a simple objective over the problem's own distance (the objective's
-        `distance_metric` is `None`); a `HybridDiversityMetric` becomes a hybrid objective over its terms.
+        The returned objective's vector distance specs name the vectors as given, so
+        `DistanceStoragePlan.decide` must resolve them before a distance store can be built over them.
         """
-        return self._diversity_objective_of(self.diversity_metric)
+        if isinstance(self.diversity_metric, DiversityMetric):
+            return DiversityObjectiveSimple(self.diversity_metric, self._distance_spec_of(None))
+        else:
+            return self.diversity_metric._to_objective(self._distance_spec_of)  # noqa: SLF001 -- kept off the public API; the problem is its intended caller
 
     @property
     def m(self) -> int:
@@ -153,7 +177,12 @@ class MaxDivProblem(ABC):
         vectors = np.ascontiguousarray(vectors, dtype=np.float32)  # the form every distance function expects
         # Validate k before the metrics, so a k out of range is reported as such, not as a mismatch with a metric's k
         cls._validate_k(k, vectors.shape[0])
-        for metric in cls._distance_metrics_read(distance_metric, diversity_metric):
+        # validate the problem's own distance metric, which `full_matrix()` reads, and every distance metric that
+        # a hybrid term names
+        distance_metrics = [distance_metric]
+        if isinstance(diversity_metric, HybridDiversityMetric):
+            distance_metrics.extend(diversity_metric.named_distance_metrics)
+        for metric in distance_metrics:
             metric.validate(vectors, k)  # fail fast, before any distance store is built
 
         if constraints is None:
@@ -206,48 +235,25 @@ class MaxDivProblem(ABC):
             raise ValueError(f"Distances must be a square (n, n) matrix or condensed 1D vector; got {distances.ndim}D.")
 
         cls._validate_k(k, n)
-        if isinstance(diversity_metric, HybridDiversityMetric) and diversity_metric.named_distance_metrics:
-            raise ValueError(
-                "A problem defined by its distances has no vectors, so a hybrid term cannot read a distance "
-                f"metric of its own; got {diversity_metric.named_distance_metrics}."
-            )
-
         if constraints is None:
             constraints = []
         cls._validate_constraints(constraints, n)
 
         # --- build ------------------------------
-        return DistanceMaxDivProblem(
+        problem = DistanceMaxDivProblem(
             distances=validated,
             k=k,
             diversity_metric=diversity_metric,
             constraints=constraints,
         )
+        # reading `diversity_objective` calls `_distance_spec_of`, which raises for a hybrid term that names a
+        # distance metric
+        _ = problem.diversity_objective
+        return problem
 
     # --------------------------------------------------------------------------
     #  Helpers
     # --------------------------------------------------------------------------
-    @staticmethod
-    def _diversity_objective_of(diversity_metric: DiversityMetric | HybridDiversityMetric) -> DiversityObjective:
-        """Return the objective the solver maximizes for the user's diversity metric.
-
-        This function is the one place that tells a bare metric from a hybrid.
-        """
-        if isinstance(diversity_metric, DiversityMetric):
-            return DiversityObjectiveSimple(diversity_metric)
-        else:
-            return diversity_metric._to_objective()  # noqa: SLF001 -- kept off the public API; the problem is its intended caller
-
-    @staticmethod
-    def _distance_metrics_read(
-        distance_metric: DistanceMetric, diversity_metric: DiversityMetric | HybridDiversityMetric
-    ) -> tuple[DistanceMetric, ...]:
-        """Return every distance metric a vector problem computes: its own, plus those a hybrid's terms name."""
-        if isinstance(diversity_metric, HybridDiversityMetric):
-            return (distance_metric, *diversity_metric.named_distance_metrics)
-        else:
-            return (distance_metric,)
-
     @staticmethod
     def _validate_k(k: int, n: int) -> None:
         """Raise ValueError unless 2 <= k <= n.
@@ -300,15 +306,23 @@ class VectorMaxDivProblem(MaxDivProblem):
         return self.vectors.shape[1]
 
     @property
-    def default_distance_metric(self) -> DistanceMetric | None:
-        return self.distance_metric
-
-    @property
     def has_full_matrix(self) -> bool:
         return False
 
     def full_matrix(self) -> NDArray[np.float32]:
         return compute_full_matrix(self.vectors, self.distance_metric)
+
+    def _distance_spec_of(self, distance_metric: DistanceMetric | None) -> DistanceSpec:
+        """Return the spec of the distances under `distance_metric`, over the vectors as given.
+
+        `None` reads the problem's own `distance_metric`, so a term need not repeat the problem's metric.
+        """
+        metric = self.distance_metric if distance_metric is None else distance_metric
+        return VectorDistanceSpec(matrix_id=USER_MATRIX_ID, metric=metric, is_matrix_preprocessed=False)
+
+    def _user_data_matrix_producer(self) -> DataMatrixProducer:
+        """Return the producer that adopts the vectors."""
+        return AdoptingDataMatrixProducer(self.vectors)
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
@@ -317,6 +331,9 @@ class DistanceMaxDivProblem(MaxDivProblem):
 
     Use `MaxDivProblem.from_distances` to create instances with validation.
     """
+
+    # The given distances carry this label, because no distance metric names them.
+    _USER_DISTANCES_LABEL: ClassVar[str] = "user distances"
 
     # --- primary fields -------------------------
     distances: NDArray[np.float32]  # as provided: (n, n) square matrix or condensed 1D vector
@@ -329,10 +346,6 @@ class DistanceMaxDivProblem(MaxDivProblem):
         return _n_from_condensed_size(self.distances.size)
 
     @property
-    def default_distance_metric(self) -> DistanceMetric | None:
-        return None
-
-    @property
     def has_full_matrix(self) -> bool:
         return self.distances.ndim == 2
 
@@ -340,3 +353,26 @@ class DistanceMaxDivProblem(MaxDivProblem):
         if self.has_full_matrix:
             return self.distances
         return expand_condensed(self.distances, self.n)
+
+    def _distance_spec_of(self, distance_metric: DistanceMetric | None) -> DistanceSpec:
+        """Return the full-matrix spec of the given distances.
+
+        A term that names no distance metric reads these distances.
+
+        Raises:
+            ValueError: If `distance_metric` is not None: the problem has no vectors to compute it from.
+        """
+        if distance_metric is not None:
+            raise ValueError(
+                "A problem defined by its distances has no vectors, so a hybrid term cannot read a distance "
+                f"metric of its own; got {distance_metric!r}."
+            )
+        return FullMatrixDistanceSpec(matrix_id=USER_MATRIX_ID, label=self._USER_DISTANCES_LABEL)
+
+    def _user_data_matrix_producer(self) -> DataMatrixProducer:
+        """Return the producer of the given distances as a full matrix; a condensed input is expanded into it."""
+        if self.has_full_matrix:
+            return AdoptingDataMatrixProducer(self.distances)
+        else:
+            n = self.n
+            return ComputingDataMatrixProducer((n, n), partial(expand_condensed, self.distances, n))

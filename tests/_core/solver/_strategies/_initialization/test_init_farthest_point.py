@@ -3,7 +3,7 @@ import pytest
 
 from max_div._core._random import new_rng_state
 from max_div._core.metrics import DistanceMetric, DiversityObjectiveSimple
-from max_div._core.metrics._distance import DistanceStore
+from max_div._core.metrics._distance import DistanceStore, VectorDistanceSpec
 from max_div._core.solver._solver_step import InitializationStep
 from max_div._core.solver._step_identity import SolverStepIdentity
 from max_div._core.solver._strategies import InitializationStrategy
@@ -16,8 +16,8 @@ from ._helpers import new_solver_state, new_solver_state_unconstrained
 # each step records its checkpoints under this identity when run on its own in these tests
 _STEP_IDENTITY = SolverStepIdentity(1, "test")
 
-L1 = DistanceMetric.l1_manhattan()
-L2 = DistanceMetric.l2_euclidean()
+L1 = VectorDistanceSpec(matrix_id=0, metric=DistanceMetric.l1_manhattan(), is_matrix_preprocessed=True)
+L2 = VectorDistanceSpec(matrix_id=0, metric=DistanceMetric.l2_euclidean(), is_matrix_preprocessed=True)
 
 
 @pytest.mark.parametrize("problem_has_constraints", [True, False])
@@ -399,8 +399,8 @@ def test_top_k_one_reproduces_the_one_item_at_a_time_construction_exactly(seed: 
 @pytest.mark.parametrize(
     "objective, expected",
     [
-        (DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION), True),
-        (DiversityObjectiveSimple(DiversityMetric.MEAN_PAIRWISE_DISTANCE), False),  # mean-distance family
+        (DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L1), True),
+        (DiversityObjectiveSimple(DiversityMetric.MEAN_PAIRWISE_DISTANCE, L1), False),  # mean-distance family
         (
             hybrid_objective(
                 DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L1),

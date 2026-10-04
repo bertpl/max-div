@@ -5,7 +5,7 @@ matrix by its matrix id, and a `DistanceSpec` builds its distance store from it.
 serve the 2 ways a solve runs:
 
 - `InProcessDataMatrixReader` serves a single solve: it produces every data matrix in this process,
-  from the producers of the distance store factory, and returns them from there.
+  from the producers of the distance storage plan, and returns them from there.
 - `SharedMemoryDataMatrixReader` serves a worker of a parallel solve: it reads the data matrices that
   the parent process published in shared memory with `SharedMemoryDataMatrixPublisher`, and finds
   them through their `PublishedDataMatrixRecords`.

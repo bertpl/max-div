@@ -5,13 +5,12 @@ import pytest
 
 from max_div._core.benchmark_problems import BenchmarkProblemFactory
 from max_div._core.metrics import DiversityMetric
-from max_div._core.metrics._distance import DistanceStore
 from max_div._core.solver._solver_state import SolverState
 from max_div._core.solver._solver_step import InitializationStep
 from max_div._core.solver._step_identity import SolverStepIdentity
 from max_div._core.solver._strategies import InitializationStrategy
 from max_div._core.solver._strategies._optimization import OptimizationStrategy
-from tests._core.solver.objectives import simple_objective
+from tests._core.solver.objectives import full_matrix_reader, simple_objective
 from tests.helpers import swept_benchmark_problems
 
 if TYPE_CHECKING:
@@ -39,7 +38,7 @@ def test_optim_random_swaps(problem_name: str, n: int):
     )
     solver_state = SolverState.new(
         n=problem.n,
-        stores_by_distance={None: DistanceStore.full_matrix_from_vectors(problem.vectors, problem.distance_metric)},
+        data_matrix_reader=full_matrix_reader(problem.vectors, problem.distance_metric),
         k=problem.k,
         diversity_objectives=[simple_objective(problem.diversity_metric)],
         constraints=problem.constraints,
