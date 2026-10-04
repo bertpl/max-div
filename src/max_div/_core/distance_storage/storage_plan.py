@@ -47,16 +47,16 @@ class DistanceStoragePlan:
     diversity_objectives: list[DiversityObjective]
     # Every data matrix that a distance spec of `diversity_objectives` reads has its producer here, by matrix id.
     data_matrix_producers: dict[int, DataMatrixProducer]
-    # Each distinct distance spec has its label and storage type here, in first-seen order with the
-    # primary objective first.
+    # Each distinct distance spec has its label and storage type here, in the order in which the specs
+    # first appear across the objectives, starting with the primary objective.
     distance_storage: DistanceStorageTypes
 
     def __post_init__(self) -> None:
         """Reject an objective with a vector distance spec whose data matrix is not marked as preprocessed.
 
         Raises:
-            ValueError: If a vector distance spec of an objective is not preprocessed: no distance store
-                can be built over it.
+            ValueError: If the data matrix of an objective's vector distance spec is not marked as
+                preprocessed: no distance store can be built over it.
         """
         for objective in self.diversity_objectives:
             for spec in objective.distinct_distance_specs():
@@ -73,7 +73,7 @@ class DistanceStoragePlan:
         storage_type: DistanceStorageType,
         total_memory_bytes: int | None,
     ) -> list[DistanceStorageType]:
-        """Return the storage type of each declared spec; AUTO is decided here.
+        """Return the storage type of each declared spec, choosing full matrix or lazy for each vector spec under AUTO.
 
         An explicit choice applies to every vector spec.
 
@@ -85,8 +85,8 @@ class DistanceStoragePlan:
           and the others compute their distances on demand;
         - a full matrix is faster to read than any distance is to compute, so the full matrices go
           to the specs whose distances are most expensive to compute
-          (`DistanceMetric.estimated_lazy_cost_ns`), and among equal estimates to the spec earlier
-          in store order;
+          (`DistanceMetric.estimated_lazy_cost_ns`), and among equal estimates to the spec that comes
+          earlier in `declared_specs`;
         - when the total RAM is unknown, every vector spec is lazy, because a lazy store allocates no
           full matrix that could exceed RAM.
 
@@ -116,7 +116,7 @@ class DistanceStoragePlan:
         costs = {
             i: spec.metric.estimated_lazy_cost_ns(user_matrix_shape[1]) for i, spec in vector_spec_by_index.items()
         }
-        # sorted() is stable, so among equal estimates the spec earlier in store order comes first
+        # sorted() is stable, so among equal estimates the spec earlier in `declared_specs` comes first
         full_matrix_indices = set(sorted(vector_spec_by_index, key=lambda i: -costs[i])[:n_full_matrices])
         lazy_indices = set(vector_spec_by_index) - full_matrix_indices
         return [
@@ -155,12 +155,12 @@ class DistanceStoragePlan:
     ) -> "DistanceStoragePlan":
         """Decide how each distance of the declared objectives is stored, and return the plan.
 
-        The distinct distance specs of the objectives, in first-seen order with the primary objective
-        first, are the distance stores of the solve, in store order.
+        The solve has one distance store per distinct distance spec of the objectives; store order is the
+        order in which the specs first appear, starting with the primary objective.
 
         In that order, each spec gets a storage type and is then replaced by a resolved spec that names
-        the data matrix that its store reads, so the matrix ids of the data matrices that the plan adds
-        are deterministic:
+        the data matrix that its store reads. Processing the specs in store order makes the matrix ids
+        of the data matrices that the plan adds deterministic. A spec is resolved as follows:
 
         - a full-matrix spec stays as it is;
         - a vector spec stored as a full matrix becomes a full-matrix spec over a new data matrix,
@@ -169,8 +169,8 @@ class DistanceStoragePlan:
           preprocessed vectors;
         - any other lazy vector spec reads the user's vectors as they are.
 
-        Last, the plan checks that the data matrices that some resolved spec reads fit in physical
-        memory; the plan keeps only those data matrices.
+        Last, the plan drops every data matrix that no resolved spec reads, and checks that the remaining
+        data matrices fit in physical memory.
 
         Args:
             declared_objectives: the primary objective first, then the tie-breakers, as the problem
@@ -181,14 +181,16 @@ class DistanceStoragePlan:
             storage_type: the user's choice of storage type, possibly AUTO.
             total_memory_bytes: the total physical RAM of the machine, or None when it is unknown.
             are_adopted_arrays_copied: whether the data matrices are produced through an allocator
-                that copies the arrays that it adopts, as a parallel solve's shared memory does; the
-                check that the data matrices fit in physical memory then counts those copies.
+                that copies the arrays that already exist, such as the user's vectors, as a parallel
+                solve's shared memory does; the check that the data matrices fit in physical memory
+                then counts those copies.
 
         Raises:
             ValueError: For the LAZY storage type when no objective reads a vector distance spec (a
                 distance-input problem), or when the data matrices cannot fit in physical memory at all.
-            TypeError: If a vector distance spec reads a data matrix that its producer computes, so no
-                vectors exist to compute distances from.
+            TypeError: If the data matrix of a vector distance spec does not come from an
+                `AdoptingDataMatrixProducer`, which holds the vectors that the plan computes the derived
+                data matrices from.
         """
         # --- storage type per distinct spec -----
         declared_specs = tuple(

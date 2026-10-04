@@ -19,7 +19,7 @@ from tests.helpers import hybrid_objective
 
 SEPARATION = DiversityContributionFamily.SEPARATION
 MEAN_DISTANCE = DiversityContributionFamily.MEAN_DISTANCE
-OWN = FullMatrixDistanceSpec(matrix_id=0, label="user distances")
+USER_DISTANCES = FullMatrixDistanceSpec(matrix_id=0, label="user distances")
 
 # ==================================================================================================
 #  Fixtures / helpers
@@ -39,10 +39,10 @@ def store() -> DistanceStore:
 def test_for_specs_builds_one_tracker_per_spec_in_order(store: DistanceStore):
     """One tracker per spec, of that spec's family, in the given order."""
     # --- arrange ----------------------
-    specs = (DiversityTrackerSpec(OWN, SEPARATION), DiversityTrackerSpec(OWN, MEAN_DISTANCE))
+    specs = (DiversityTrackerSpec(USER_DISTANCES, SEPARATION), DiversityTrackerSpec(USER_DISTANCES, MEAN_DISTANCE))
 
     # --- act --------------------------
-    trackers = DiversityContributionTrackers.for_specs(specs, {OWN: store})
+    trackers = DiversityContributionTrackers.for_specs(specs, {USER_DISTANCES: store})
 
     # --- assert -----------------------
     assert trackers.tracker_specs == specs
@@ -55,9 +55,9 @@ def test_for_specs_builds_one_tracker_per_spec_in_order(store: DistanceStore):
 def test_source_for_one_spec_is_that_spec_tracker_itself(store: DistanceStore):
     """An objective over one spec gets the tracker of that spec as its source, with no wrapper."""
     # --- arrange ----------------------
-    specs = (DiversityTrackerSpec(OWN, SEPARATION), DiversityTrackerSpec(OWN, MEAN_DISTANCE))
-    trackers = DiversityContributionTrackers.for_specs(specs, {OWN: store})
-    objective = DiversityObjectiveSimple(DiversityMetric.MEAN_PAIRWISE_DISTANCE, OWN)
+    specs = (DiversityTrackerSpec(USER_DISTANCES, SEPARATION), DiversityTrackerSpec(USER_DISTANCES, MEAN_DISTANCE))
+    trackers = DiversityContributionTrackers.for_specs(specs, {USER_DISTANCES: store})
+    objective = DiversityObjectiveSimple(DiversityMetric.MEAN_PAIRWISE_DISTANCE, USER_DISTANCES)
 
     # --- act --------------------------
     source = trackers.per_item_contribution_source_for(objective, (1,))
@@ -69,12 +69,12 @@ def test_source_for_one_spec_is_that_spec_tracker_itself(store: DistanceStore):
 def test_source_for_several_specs_combines_the_trackers_at_the_positions(store: DistanceStore):
     """A hybrid gets a hybrid source over the trackers at the given positions, repeats kept."""
     # --- arrange ----------------------
-    specs = (DiversityTrackerSpec(OWN, SEPARATION), DiversityTrackerSpec(OWN, MEAN_DISTANCE))
-    trackers = DiversityContributionTrackers.for_specs(specs, {OWN: store})
+    specs = (DiversityTrackerSpec(USER_DISTANCES, SEPARATION), DiversityTrackerSpec(USER_DISTANCES, MEAN_DISTANCE))
+    trackers = DiversityContributionTrackers.for_specs(specs, {USER_DISTANCES: store})
     objective = hybrid_objective(
-        DiversityObjectiveSimple(DiversityMetric.MEAN_PAIRWISE_DISTANCE, OWN),
-        DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, OWN),
-        DiversityObjectiveSimple(DiversityMetric.GEOMEAN_SEPARATION, OWN),
+        DiversityObjectiveSimple(DiversityMetric.MEAN_PAIRWISE_DISTANCE, USER_DISTANCES),
+        DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, USER_DISTANCES),
+        DiversityObjectiveSimple(DiversityMetric.GEOMEAN_SEPARATION, USER_DISTANCES),
     )
 
     # --- act --------------------------
@@ -94,8 +94,8 @@ def test_mutations_reach_every_tracker(store: DistanceStore):
     sep, mean = SeparationTracker(store), MeanDistanceTracker(store)
     trackers = DiversityContributionTrackers(
         trackers_by_spec={
-            DiversityTrackerSpec(OWN, SEPARATION): sep,
-            DiversityTrackerSpec(OWN, MEAN_DISTANCE): mean,
+            DiversityTrackerSpec(USER_DISTANCES, SEPARATION): sep,
+            DiversityTrackerSpec(USER_DISTANCES, MEAN_DISTANCE): mean,
         }
     )
     sep_ref, mean_ref = SeparationTracker(store), MeanDistanceTracker(store)
@@ -132,7 +132,9 @@ def test_mutations_reach_every_tracker(store: DistanceStore):
 def test_selected_contributions_one_array_per_spec(store: DistanceStore):
     """A single-family set returns one spec's array, the selected vectors' separation values."""
     # --- arrange ----------------------
-    trackers = DiversityContributionTrackers.for_specs((DiversityTrackerSpec(OWN, SEPARATION),), {OWN: store})
+    trackers = DiversityContributionTrackers.for_specs(
+        (DiversityTrackerSpec(USER_DISTANCES, SEPARATION),), {USER_DISTANCES: store}
+    )
     trackers.add(np.int32(0))
     trackers.add(np.int32(2))  # selection: points 0.0 and 3.0 on a line
     selected = np.full(N, False, dtype=np.bool)
@@ -143,7 +145,7 @@ def test_selected_contributions_one_array_per_spec(store: DistanceStore):
     contributions = trackers.selected_contributions(selected, np.int32(2), selected_indices)
 
     # --- assert -----------------------
-    assert trackers.tracker_specs == (DiversityTrackerSpec(OWN, SEPARATION),)  # one tracked spec
+    assert trackers.tracker_specs == (DiversityTrackerSpec(USER_DISTANCES, SEPARATION),)  # one tracked spec
     assert len(contributions) == 1
     np.testing.assert_allclose(contributions[0], [3.0, 3.0])
 

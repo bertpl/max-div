@@ -304,12 +304,12 @@ class DistanceMetric:
             return vectors
 
     def preprocess_into(self, vectors: NDArray[np.float32], out: NDArray[np.float32]) -> None:
-        """Write the vectors, in the form that this metric's pairwise distance function reads, into `out`.
+        """Write the vectors into `out`, preprocessed for this metric's pairwise distance function.
 
         A metric that does not preprocess writes a copy of the vectors.  The input is never written.
 
         Args:
-            vectors: the vectors to preprocess, in the form that `preprocess` accepts.
+            vectors: the vectors to preprocess, as `preprocess` accepts them.
             out: a float32 buffer of shape `(n, preprocessed_n_dims(d))`, where `(n, d)` is the shape of
                 `vectors`.
 
@@ -332,9 +332,9 @@ class DistanceMetric:
         """Write into `out` the array that the pairwise distance function reads; by default a copy of `vectors`.
 
         `preprocess` and `preprocess_into` check `vectors` and then call this method, so a subclass overrides it
-        to transform the vectors without repeating the checks.  A subclass that overrides it also sets
-        `needs_preprocessed_vectors` to True, or `preprocess` returns the input untransformed, and overrides
-        `preprocessed_n_dims` when the transform changes the dimension count.
+        to transform the vectors without repeating the checks.  A subclass that overrides it must also set
+        `needs_preprocessed_vectors` to True, because `preprocess` otherwise returns the input untransformed.
+        It must also override `preprocessed_n_dims` when the transform changes the dimension count.
         """
         out[:] = vectors
 

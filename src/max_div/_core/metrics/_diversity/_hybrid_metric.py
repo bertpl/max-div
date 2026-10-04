@@ -2,10 +2,11 @@
 
 A term pairs a diversity metric with the distance metric that it reads (`DiversityTerm`, obtained
 through `DiversityMetric.over`), or with none: a bare `DiversityMetric` given as a term becomes a
-term whose distance metric is `None`, which reads the problem's own distance. `HybridDiversityMetric`
-holds the terms and their aggregation, which carries one weight per term. `DiversityTerm` and
-`HybridDiversityMetric` are immutable descriptions; the problem turns them into the solver's
-objective, and is the only code that decides what a term without a distance metric reads.
+term whose distance metric is `None`, which reads the problem's own distance.
+
+`HybridDiversityMetric` holds the terms and their aggregation, which carries one weight per term.
+`DiversityTerm` and `HybridDiversityMetric` are immutable descriptions; the problem turns them into
+the solver's objective.
 """
 
 from __future__ import annotations
@@ -35,9 +36,7 @@ if TYPE_CHECKING:
 class DiversityTerm:
     """A diversity term is one term of a `HybridDiversityMetric`: a diversity metric over a distance metric, or none.
 
-    Obtain one that names its distance metric through `DiversityMetric.over(distance_metric)`.  A hybrid
-    turns a bare `DiversityMetric` given as a term into a term whose `distance_metric` is `None`, which
-    reads the problem's own distance.
+    Obtain one that names its distance metric through `DiversityMetric.over(distance_metric)`.
     """
 
     diversity_metric: DiversityMetric
@@ -214,8 +213,8 @@ class HybridDiversityMetric:
     ) -> DiversityObjectiveHybrid:
         """Return the objective that the solver maximizes for this hybrid, each term over the distances that it reads.
 
-        The hybrid passes each term's `distance_metric` to `distance_spec_of` unread, `None` included, so
-        the problem alone decides what a term without a distance metric reads.
+        The hybrid passes each term's `distance_metric` to `distance_spec_of` without inspecting it, `None`
+        included, so the problem alone decides what a term without a distance metric reads.
 
         Args:
             distance_spec_of: the problem's `_distance_spec_of`, which returns the distance spec of a

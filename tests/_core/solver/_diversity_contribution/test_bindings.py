@@ -14,7 +14,7 @@ from tests.helpers import hybrid_objective
 
 SEPARATION = DiversityContributionFamily.SEPARATION
 MEAN_DISTANCE = DiversityContributionFamily.MEAN_DISTANCE
-OWN = FullMatrixDistanceSpec(matrix_id=0, label="user distances")
+USER_DISTANCES = FullMatrixDistanceSpec(matrix_id=0, label="user distances")
 L1 = VectorDistanceSpec(matrix_id=0, metric=DistanceMetric.l1_manhattan(), is_matrix_preprocessed=True)
 L2 = VectorDistanceSpec(matrix_id=0, metric=DistanceMetric.l2_euclidean(), is_matrix_preprocessed=True)
 
@@ -23,20 +23,20 @@ L2 = VectorDistanceSpec(matrix_id=0, metric=DistanceMetric.l2_euclidean(), is_ma
     "diversity_objectives, expected_distance_specs, expected_tracker_specs, expected_positions",
     [
         pytest.param(
-            [DiversityObjectiveSimple(DiversityMetric.GEOMEAN_SEPARATION, OWN)],
-            (OWN,),
-            (DiversityTrackerSpec(OWN, SEPARATION),),
+            [DiversityObjectiveSimple(DiversityMetric.GEOMEAN_SEPARATION, USER_DISTANCES)],
+            (USER_DISTANCES,),
+            (DiversityTrackerSpec(USER_DISTANCES, SEPARATION),),
             ((0,),),
             id="one_simple_objective_over_the_users_distances",
         ),
         pytest.param(
             [
-                DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, OWN),
-                DiversityObjectiveSimple(DiversityMetric.APPROX_GEOMEAN_SEPARATION, OWN),
-                DiversityObjectiveSimple(DiversityMetric.MEAN_PAIRWISE_DISTANCE, OWN),
+                DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, USER_DISTANCES),
+                DiversityObjectiveSimple(DiversityMetric.APPROX_GEOMEAN_SEPARATION, USER_DISTANCES),
+                DiversityObjectiveSimple(DiversityMetric.MEAN_PAIRWISE_DISTANCE, USER_DISTANCES),
             ],
-            (OWN,),
-            (DiversityTrackerSpec(OWN, SEPARATION), DiversityTrackerSpec(OWN, MEAN_DISTANCE)),
+            (USER_DISTANCES,),
+            (DiversityTrackerSpec(USER_DISTANCES, SEPARATION), DiversityTrackerSpec(USER_DISTANCES, MEAN_DISTANCE)),
             ((0,), (0,), (1,)),
             id="tie_breakers_sharing_the_primary_spec_add_no_tracker",
         ),

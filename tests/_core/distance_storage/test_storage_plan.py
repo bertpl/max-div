@@ -28,6 +28,7 @@ from max_div._core.metrics._distance import (
 )
 from max_div._core.problem import MaxDivProblem
 from max_div._core.solver import MaxDivSolverBuilder, SolverPreset, Verbosity
+from max_div._core.solver._diversity_contribution import DiversityObjectiveBindings
 from max_div._core.solver._duration import iterations
 from tests._core.metrics._distance.helpers import all_pair_distances
 
@@ -96,9 +97,7 @@ def _decide_over_problem(
 
 def _resolved_specs(plan: DistanceStoragePlan) -> list[DistanceSpec]:
     """Return the distinct distance specs of the plan's objectives, in store order."""
-    return list(
-        dict.fromkeys(spec for objective in plan.diversity_objectives for spec in objective.distinct_distance_specs())
-    )
+    return list(DiversityObjectiveBindings.for_objectives(plan.diversity_objectives).distance_specs)
 
 
 def _stores(plan: DistanceStoragePlan, data_matrix_reader: DataMatrixReader | None = None) -> list[DistanceStore]:
@@ -459,7 +458,7 @@ def test_published_stores_match_the_in_process_stores(plan: DistanceStoragePlan)
 # ==================================================================================================
 # A storage type guarantees that it solves the same problem as well, not that it picks the
 # same items: distances may differ in their last bits between storage types, the search is chaotic,
-# and one comparison that resolves the other way makes it select different items with an equally
+# and one comparison that resolves the other way makes the solver select different items with an equally
 # good score.
 #
 # These tests therefore assert quality, and feasibility on constrained problems.

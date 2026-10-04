@@ -109,7 +109,7 @@ def test_a_hybrid_resolves_to_a_hybrid_objective_with_its_aggregation(factory, w
 
 
 def test_a_hybrid_asks_for_the_distance_spec_of_each_terms_distance_metric_none_included() -> None:
-    """The hybrid passes each term's distance metric on unread, in term order, and `None` for a bare term."""
+    """The hybrid passes on each term's distance metric without inspecting it, in term order, `None` for a bare term."""
     # --- arrange ----------------------
     asked: list[DistanceMetric | None] = []
 

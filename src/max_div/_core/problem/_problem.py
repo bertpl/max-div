@@ -98,10 +98,6 @@ class MaxDivProblem(ABC):
     def diversity_objective(self) -> DiversityObjective:
         """Return the objective that the solver maximizes, declared over the user's data matrix.
 
-        A `DiversityMetric` becomes a simple objective over the problem's own distance; a
-        `HybridDiversityMetric` becomes a hybrid objective, each term over the distance that it reads.
-        `_distance_spec_of` gives the distance spec in both cases.
-
         The returned objective's vector distance specs name the vectors as given, so
         `DistanceStoragePlan.decide` must resolve them before a distance store can be built over them.
         """
@@ -181,7 +177,8 @@ class MaxDivProblem(ABC):
         vectors = np.ascontiguousarray(vectors, dtype=np.float32)  # the form every distance function expects
         # Validate k before the metrics, so a k out of range is reported as such, not as a mismatch with a metric's k
         cls._validate_k(k, vectors.shape[0])
-        # the problem computes its own distance metric, which `full_matrix()` reads, and each one that a term names
+        # validate the problem's own distance metric, which `full_matrix()` reads, and every distance metric that
+        # a hybrid term names
         distance_metrics = [distance_metric]
         if isinstance(diversity_metric, HybridDiversityMetric):
             distance_metrics.extend(diversity_metric.named_distance_metrics)
@@ -249,7 +246,8 @@ class MaxDivProblem(ABC):
             diversity_metric=diversity_metric,
             constraints=constraints,
         )
-        # declaring the objective raises for a hybrid term that names a distance metric (`_distance_spec_of`)
+        # reading `diversity_objective` calls `_distance_spec_of`, which raises for a hybrid term that names a
+        # distance metric
         _ = problem.diversity_objective
         return problem
 
@@ -317,9 +315,8 @@ class VectorMaxDivProblem(MaxDivProblem):
     def _distance_spec_of(self, distance_metric: DistanceMetric | None) -> DistanceSpec:
         """Return the spec of the distances under `distance_metric`, over the vectors as given.
 
-        `None` reads the problem's own `distance_metric`.
+        `None` reads the problem's own `distance_metric`, so a term need not repeat the problem's metric.
         """
-        # the user's convenience: a term that names no distance metric reads the problem's own
         metric = self.distance_metric if distance_metric is None else distance_metric
         return VectorDistanceSpec(matrix_id=USER_MATRIX_ID, metric=metric, is_matrix_preprocessed=False)
 
@@ -358,7 +355,9 @@ class DistanceMaxDivProblem(MaxDivProblem):
         return expand_condensed(self.distances, self.n)
 
     def _distance_spec_of(self, distance_metric: DistanceMetric | None) -> DistanceSpec:
-        """Return the spec of the given distances, as a full matrix, which a term that names no distance metric reads.
+        """Return the full-matrix spec of the given distances.
+
+        A term that names no distance metric reads these distances.
 
         Raises:
             ValueError: If `distance_metric` is not None: the problem has no vectors to compute it from.

@@ -26,7 +26,8 @@ class DistanceStorageType(StrEnum):
 class DistanceStorageTypes:
     """Record how each of a solve's distance stores was stored: its label paired with the resolved storage type.
 
-    `per_store` has one entry per store, in store order.  The label is the store's distance spec label: a metric's
+    `per_store` has one entry per store, in the order in which the distance specs first appear across the
+    objectives, starting with the primary objective.  The label is the store's distance spec label: a metric's
     label such as `L2`, or `user distances` for the distances that a distance-input problem was given.
     """
 

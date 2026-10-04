@@ -25,28 +25,30 @@ def test_prepare_returns_the_storage_plan_and_a_config_over_its_resolved_objecti
     builder = _builder().with_seed(99).with_distance_storage(DistanceStorageType.FULL_MATRIX)
 
     # --- act --------------------------
-    storage_plan, config = builder.prepare_storage_and_config()
+    distance_storage_plan, config = builder.prepare_storage_and_config()
 
     # --- assert -----------------------
-    assert isinstance(storage_plan, DistanceStoragePlan)
+    assert isinstance(distance_storage_plan, DistanceStoragePlan)
     assert config.seed == 99
     assert config.k == 4
-    assert config.diversity_objectives == storage_plan.diversity_objectives
+    assert config.diversity_objectives == distance_storage_plan.diversity_objectives
     assert config.diversity_objectives[0] == DiversityObjectiveSimple(
         DiversityMetric.GEOMEAN_SEPARATION,
         FullMatrixDistanceSpec(matrix_id=1, label=DistanceMetric.l2_euclidean().label),
     )  # the problem's own metric, over the full matrix that the plan adds
-    assert config.distance_storage == storage_plan.distance_storage
+    assert config.distance_storage == distance_storage_plan.distance_storage
 
 
 def test_a_config_builds_a_solver_over_a_data_matrix_reader():
     """A config plus a reader of its data matrices is a solver."""
     # --- arrange ----------------------
     builder = _builder()
-    storage_plan, config = builder.prepare_storage_and_config()
+    distance_storage_plan, config = builder.prepare_storage_and_config()
 
     # --- act --------------------------
-    solver = config.build_solver(data_matrix_reader=InProcessDataMatrixReader(storage_plan.data_matrix_producers))
+    solver = config.build_solver(
+        data_matrix_reader=InProcessDataMatrixReader(distance_storage_plan.data_matrix_producers)
+    )
 
     # --- assert -----------------------
     assert isinstance(solver, MaxDivSolver)
@@ -57,13 +59,13 @@ def test_a_config_builds_a_solver_that_defers_its_data_matrices():
     """Given a provider instead of a reader, the provider is called at solve time, not before."""
     # --- arrange ----------------------
     builder = _builder()
-    storage_plan, config = builder.prepare_storage_and_config()
+    distance_storage_plan, config = builder.prepare_storage_and_config()
     calls = 0
 
     def provide_reader():
         nonlocal calls
         calls += 1
-        return InProcessDataMatrixReader(storage_plan.data_matrix_producers)
+        return InProcessDataMatrixReader(distance_storage_plan.data_matrix_producers)
 
     # --- act --------------------------
     solver = config.build_solver(data_matrix_reader_provider=provide_reader)

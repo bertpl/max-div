@@ -47,8 +47,8 @@ def _builder() -> MaxDivSolverBuilder:
 def parallel_results():
     """Run one set of spawned workers, and hand back their results with the builder used."""
     builder = _builder()
-    storage_plan, config = builder.prepare_storage_and_config()
-    with SharedMemoryDataMatrixPublisher(storage_plan.data_matrix_producers) as published_matrix_records:
+    distance_storage_plan, config = builder.prepare_storage_and_config()
+    with SharedMemoryDataMatrixPublisher(distance_storage_plan.data_matrix_producers) as published_matrix_records:
         results, failures = run_workers(
             [config.with_seed(seed) for seed in _SEEDS],
             published_matrix_records,
@@ -115,11 +115,11 @@ def test_one_coordinator_per_worker_is_required():
     """A coordinator count that does not match the worker count is rejected before any worker spawns."""
     # --- arrange ----------------------
     builder = _builder()
-    storage_plan, config = builder.prepare_storage_and_config()
+    distance_storage_plan, config = builder.prepare_storage_and_config()
 
     # --- act & assert -----------------
     with (
-        SharedMemoryDataMatrixPublisher(storage_plan.data_matrix_producers) as published_matrix_records,
+        SharedMemoryDataMatrixPublisher(distance_storage_plan.data_matrix_producers) as published_matrix_records,
         pytest.raises(ValueError),
     ):
         run_workers(
@@ -133,7 +133,7 @@ def test_a_group_of_cooperative_workers_solves_and_exchanges():
     """Spawned workers sharing one exchange slot all report results, and the slot was published to."""
     # --- arrange ----------------------
     builder = _builder()
-    storage_plan, config = builder.prepare_storage_and_config()
+    distance_storage_plan, config = builder.prepare_storage_and_config()
     group_state = WorkerGroupState(
         multiprocessing.get_context("spawn"),
         group_sizes=[len(_SEEDS)],
@@ -144,7 +144,7 @@ def test_a_group_of_cooperative_workers_solves_and_exchanges():
     coordinators = [group_state.coordinator_for(index) for index in range(len(_SEEDS))]
 
     # --- act --------------------------
-    with SharedMemoryDataMatrixPublisher(storage_plan.data_matrix_producers) as published_matrix_records:
+    with SharedMemoryDataMatrixPublisher(distance_storage_plan.data_matrix_producers) as published_matrix_records:
         results, _failures = run_workers(
             [config.with_seed(seed) for seed in _SEEDS], published_matrix_records, coordinators
         )
@@ -159,11 +159,11 @@ def test_parallel_solve_renders_coherent_progress(capsys):
     """A rendered parallel solve prints one non-interleaved table and still collects every result."""
     # --- arrange ----------------------
     builder = _builder()
-    storage_plan, config = builder.prepare_storage_and_config()
+    distance_storage_plan, config = builder.prepare_storage_and_config()
     reporter = ProgressReporter.from_verbosity(Verbosity.TABULAR, worker_columns=True)
 
     # --- act --------------------------
-    with SharedMemoryDataMatrixPublisher(storage_plan.data_matrix_producers) as published_matrix_records:
+    with SharedMemoryDataMatrixPublisher(distance_storage_plan.data_matrix_producers) as published_matrix_records:
         results, _failures = run_workers(
             [config.with_seed(seed) for seed in _SEEDS],
             published_matrix_records,
@@ -185,12 +185,12 @@ def test_solve_in_worker_runs_in_process():
     """The worker entry point solves and reports, with and without a forwarding reporter."""
     # --- arrange ----------------------
     builder = _builder()
-    storage_plan, config = builder.prepare_storage_and_config()
+    distance_storage_plan, config = builder.prepare_storage_and_config()
     messages = queue.Queue()
     requirements = SnapshotRequirements(debug_info=False, selection_hash=True)
 
     # --- act --------------------------
-    with SharedMemoryDataMatrixPublisher(storage_plan.data_matrix_producers) as published_matrix_records:
+    with SharedMemoryDataMatrixPublisher(distance_storage_plan.data_matrix_producers) as published_matrix_records:
         solve_in_worker(
             0,
             config.with_seed(1),
@@ -233,9 +233,9 @@ def test_drain_collects_in_flight_results_of_dead_workers():
     """Results still in the queue after every worker exited are collected, not lost."""
     # --- arrange ----------------------
     builder = _builder()
-    storage_plan, config = builder.prepare_storage_and_config()
+    distance_storage_plan, config = builder.prepare_storage_and_config()
     messages = queue.Queue()
-    with SharedMemoryDataMatrixPublisher(storage_plan.data_matrix_producers) as published_matrix_records:
+    with SharedMemoryDataMatrixPublisher(distance_storage_plan.data_matrix_producers) as published_matrix_records:
         solve_in_worker(
             0,
             config.with_seed(1),
@@ -283,11 +283,11 @@ def test_a_failing_worker_is_reported_with_its_traceback():
     """A worker whose solve raises reports a WorkerFailure carrying the traceback; the rest still report results."""
     # --- arrange ----------------------
     builder = _builder()
-    storage_plan, config = builder.prepare_storage_and_config()
+    distance_storage_plan, config = builder.prepare_storage_and_config()
     configs = [config.with_seed(1), _FailingConfig(), config.with_seed(2)]
 
     # --- act --------------------------
-    with SharedMemoryDataMatrixPublisher(storage_plan.data_matrix_producers) as published_matrix_records:
+    with SharedMemoryDataMatrixPublisher(distance_storage_plan.data_matrix_producers) as published_matrix_records:
         results, failures = run_workers(
             configs, published_matrix_records, _independent_coordinators(config, len(configs))
         )
@@ -303,11 +303,11 @@ def test_all_workers_failing_raises_with_the_first_traceback():
     """When every worker fails, `WorkerResult.best` raises and the error carries the first failure's traceback."""
     # --- arrange ----------------------
     builder = _builder()
-    storage_plan, config = builder.prepare_storage_and_config()
+    distance_storage_plan, config = builder.prepare_storage_and_config()
     configs = [_FailingConfig(seed=1), _FailingConfig(seed=2)]
 
     # --- act --------------------------
-    with SharedMemoryDataMatrixPublisher(storage_plan.data_matrix_producers) as published_matrix_records:
+    with SharedMemoryDataMatrixPublisher(distance_storage_plan.data_matrix_producers) as published_matrix_records:
         results, failures = run_workers(
             configs, published_matrix_records, _independent_coordinators(config, len(configs))
         )

@@ -6,7 +6,7 @@ its first parallel call.
 
 Each worker is a process rather than a thread because the search is Python-level and would contend
 on the interpreter lock.  Only the data matrices are shared; every worker allocates its own
-bookkeeping, which is small next to the distances.
+bookkeeping, which is small next to the data matrices.
 
 One queue carries everything the workers send — progress snapshots while they solve, a result each
 when they finish — and the parent drains it in a render loop that runs *while* the workers solve.
@@ -122,7 +122,8 @@ def solve_in_worker(
         reporter = ProgressReporter.silent()
     try:
         with SharedMemoryDataMatrixReader(published_matrix_records) as data_matrix_reader:
-            # the distance specs of the config's objectives name the matrix ids that the records locate
+            # each distance spec of the config's objectives names a matrix id, and `published_matrix_records`
+            # gives the shared-memory segment of each matrix id
             solver = config.build_solver(data_matrix_reader=data_matrix_reader)
             t_start = time.monotonic()
             solution = solver.solve(coordinator=coordinator, progress_reporter=reporter)

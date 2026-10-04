@@ -201,11 +201,11 @@ class SolverBuilderBase:
         else:
             return hot_start_strategy
 
-    def _decide_storage_plan(self, are_adopted_arrays_copied: bool) -> DistanceStoragePlan:
+    def _decide_distance_storage_plan(self, are_adopted_arrays_copied: bool) -> DistanceStoragePlan:
         """Return the distance storage plan of this configuration's diversity objectives.
 
         Args:
-            are_adopted_arrays_copied: whether the solve copies the arrays that it adopts, such as
+            are_adopted_arrays_copied: whether the solve copies the arrays that already exist, such as
                 the user's vectors, as a parallel solve does into shared memory.
 
         Raises:

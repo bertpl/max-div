@@ -36,7 +36,7 @@ class DiversityObjectiveBindings:
     # use, in first-seen order.
     distance_specs: tuple[DistanceSpec, ...]
     # `tracker_specs` has one entry per contribution tracker: the distinct tracker specs (distance spec,
-    # contribution family) that the objectives' contributions are tracked under, in first-seen order;
+    # contribution family) of the objectives, in first-seen order;
     # this is also the order of the score's contribution arrays.
     tracker_specs: tuple[DiversityTrackerSpec, ...]
     # one entry per objective, in objective order: the positions in `tracker_specs` of the specs that
