@@ -18,11 +18,6 @@ def data_matrix_bytes(shape: tuple[int, ...]) -> int:
     return int(np.prod(shape, dtype=np.int64)) * np.dtype(np.float32).itemsize
 
 
-def full_matrix_bytes(n: int) -> int:
-    """Return the bytes a full float32 distance matrix claims for n items."""
-    return data_matrix_bytes((n, n))
-
-
 def total_physical_memory_bytes() -> int | None:
     """Return total physical RAM in bytes via the stdlib, or None when it cannot be determined."""
     # --- POSIX ----------------------------------

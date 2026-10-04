@@ -176,7 +176,7 @@ def test_max_div_solver_builder_refuses_custom_tie_breakers_for_a_hybrid_metric(
 #  MaxDivSolverBuilder - Data matrices produced in solve(), not build()
 # ==================================================================================================
 def test_the_data_matrices_are_produced_by_solve_not_by_build(dummy_problem, monkeypatch):
-    """build() only assembles the solver; each solve() produces the data matrices, so their cost sits in solve()."""
+    """build() only assembles the solver; each solve() produces the data matrices, so their cost is part of solve()."""
     # --- arrange ----------------------
     from max_div._core.distance_storage import InProcessDataMatrixReader
 

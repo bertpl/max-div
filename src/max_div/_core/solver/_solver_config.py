@@ -21,12 +21,12 @@ from ._solver_step import REPORTING_BATCH_SECONDS, SolverStep
 
 @dataclass(frozen=True)
 class SolverConfig:
-    """A config holds everything a solver needs apart from the data matrices that its distance stores read."""
+    """A config holds everything that a solver needs apart from the data matrices that its distance stores read."""
 
     n: int
     k: int
-    # the primary objective first, then the tie-breakers in order; each distance spec names the data
-    # matrix that its distance store reads
+    # The primary objective comes first, then the tie-breakers in order; each distance spec names the data
+    # matrix that its distance store reads.
     diversity_objectives: list[DiversityObjective]
     constraints: list[Constraint]
     solver_steps: list[SolverStep]

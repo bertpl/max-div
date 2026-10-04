@@ -408,7 +408,7 @@ def test_preprocess_returns_the_layout_reads_expect(metric: DistanceMetric, vect
 
 
 def test_preprocess_into_writes_what_preprocess_returns(metric: DistanceMetric, vectors: np.ndarray):
-    """A buffer of the shape that the metric states before preprocessing receives exactly what `preprocess` returns."""
+    """A buffer of the shape from `preprocessed_n_dims` receives exactly what `preprocess` returns."""
     # --- arrange ----------------------
     n, n_dims = vectors.shape
     out = np.empty((n, metric.preprocessed_n_dims(n_dims)), dtype=np.float32)

@@ -28,7 +28,7 @@ from max_div._core.metrics._distance import (
 )
 
 from .data_matrix_producer import AdoptingDataMatrixProducer, ComputingDataMatrixProducer, DataMatrixProducer
-from .memory_budget import AUTO_MEMORY_FRACTION, full_matrix_bytes
+from .memory_budget import AUTO_MEMORY_FRACTION, data_matrix_bytes
 from .storage import DistanceStorageType, DistanceStorageTypes
 
 # The user's data matrix, the vectors or the given distances of a problem, has this matrix id.
@@ -49,7 +49,7 @@ class DistanceStoragePlan:
     data_matrix_producers: dict[int, DataMatrixProducer]
     # Each distinct distance spec has its label and storage type here, in first-seen order with the
     # primary objective first.
-    distance_storage_types: DistanceStorageTypes
+    distance_storage: DistanceStorageTypes
 
     def __post_init__(self) -> None:
         """Reject an objective with a vector distance spec whose data matrix is not marked as preprocessed.
@@ -73,7 +73,9 @@ class DistanceStoragePlan:
         storage_type: DistanceStorageType,
         total_memory_bytes: int | None,
     ) -> list[DistanceStorageType]:
-        """Return the storage type of each declared spec; an explicit choice passes through, AUTO is decided here.
+        """Return the storage type of each declared spec; AUTO is decided here.
+
+        An explicit choice applies to every vector spec.
 
         A full-matrix spec reads distances that exist already, so it is always stored as a full
         matrix.  The distances of a vector spec are computed from the vectors and never seen by the
@@ -85,7 +87,8 @@ class DistanceStoragePlan:
           to the specs whose distances are most expensive to compute
           (`DistanceMetric.estimated_lazy_cost_ns`), and among equal estimates to the spec earlier
           in store order;
-        - when the total RAM is unknown, every vector spec is lazy, the one storage type that cannot page.
+        - when the total RAM is unknown, every vector spec is lazy, because a lazy store allocates no
+          full matrix that could exceed RAM.
 
         Raises:
             ValueError: For the LAZY storage type when no objective reads a vector distance spec (a
@@ -105,7 +108,7 @@ class DistanceStoragePlan:
             n_full_matrices = len(vector_spec_by_index)
         elif storage_type == DistanceStorageType.AUTO and total_memory_bytes is not None:
             budget_bytes = total_memory_bytes * AUTO_MEMORY_FRACTION
-            n_full_matrices = int(budget_bytes // full_matrix_bytes(user_matrix_shape[0]))
+            n_full_matrices = int(budget_bytes // data_matrix_bytes((user_matrix_shape[0], user_matrix_shape[0])))
         else:
             n_full_matrices = 0
 
@@ -122,17 +125,17 @@ class DistanceStoragePlan:
         ]
 
     @staticmethod
-    def _check_fits_physical_memory(bytes_needed: int, total_memory_bytes: int | None, lazy_available: bool) -> None:
+    def _check_fits_physical_memory(bytes_needed: int, total_memory_bytes: int | None, is_lazy_available: bool) -> None:
         """Raise early, with the remedy named, when a solve's data matrices cannot fit in physical RAM at all.
 
         Args:
-            bytes_needed: the bytes the allocations will claim together.
+            bytes_needed: the bytes that the allocations will claim together.
             total_memory_bytes: the total physical RAM of the machine, or None when it is unknown; None
                 skips the check.
-            lazy_available: whether the problem has vectors, so the lazy storage type can be named as the remedy.
+            is_lazy_available: whether the problem has vectors, so the lazy storage type can be named as the remedy.
         """
         if total_memory_bytes is not None and bytes_needed > total_memory_bytes:
-            lazy_hint = " or DistanceStorageType.LAZY (no O(n²) memory)" if lazy_available else ""
+            lazy_hint = " or DistanceStorageType.LAZY (no O(n²) memory)" if is_lazy_available else ""
             raise ValueError(
                 f"Distance storage needs ~{bytes_needed / 2**30:.1f} GiB, but this machine "
                 f"has {total_memory_bytes / 2**30:.1f} GiB of physical memory; choose a smaller problem{lazy_hint}."
@@ -153,9 +156,11 @@ class DistanceStoragePlan:
         """Decide how each distance of the declared objectives is stored, and return the plan.
 
         The distinct distance specs of the objectives, in first-seen order with the primary objective
-        first, are the distance stores of the solve, in store order.  In that order, each spec gets a
-        storage type and is then replaced by a resolved spec that names the data matrix its store
-        reads, so the matrix ids of the data matrices that the plan adds are deterministic:
+        first, are the distance stores of the solve, in store order.
+
+        In that order, each spec gets a storage type and is then replaced by a resolved spec that names
+        the data matrix that its store reads, so the matrix ids of the data matrices that the plan adds
+        are deterministic:
 
         - a full-matrix spec stays as it is;
         - a vector spec stored as a full matrix becomes a full-matrix spec over a new data matrix,
@@ -164,19 +169,20 @@ class DistanceStoragePlan:
           preprocessed vectors;
         - any other lazy vector spec reads the user's vectors as they are.
 
-        The memory check runs last, over the data matrices that some resolved spec reads, which are
-        the only ones that the plan keeps.
+        Last, the plan checks that the data matrices that some resolved spec reads fit in physical
+        memory; the plan keeps only those data matrices.
 
         Args:
             declared_objectives: the primary objective first, then the tie-breakers, as the problem
                 declares them: each distance spec names the user's data matrix, and no vector
                 distance spec is preprocessed.
-            user_data_matrix_producer: the producer of the user's data matrix.
+            user_data_matrix_producer: the producer of the user's data matrix, `USER_MATRIX_ID`; for a
+                vector problem, an `AdoptingDataMatrixProducer` of the vectors.
             storage_type: the user's choice of storage type, possibly AUTO.
             total_memory_bytes: the total physical RAM of the machine, or None when it is unknown.
             are_adopted_arrays_copied: whether the data matrices are produced through an allocator
-                that copies the arrays it adopts, as a parallel solve's shared memory does; the
-                memory check then counts those copies.
+                that copies the arrays that it adopts, as a parallel solve's shared memory does; the
+                check that the data matrices fit in physical memory then counts those copies.
 
         Raises:
             ValueError: For the LAZY storage type when no objective reads a vector distance spec (a
@@ -237,7 +243,7 @@ class DistanceStoragePlan:
         cls._check_fits_physical_memory(
             sum(producer.bytes_to_allocate(are_adopted_arrays_copied) for producer in data_matrix_producers.values()),
             total_memory_bytes,
-            lazy_available=any(isinstance(spec, VectorDistanceSpec) for spec in declared_specs),
+            is_lazy_available=any(isinstance(spec, VectorDistanceSpec) for spec in declared_specs),
         )
 
         return cls(
@@ -245,7 +251,7 @@ class DistanceStoragePlan:
                 objective.with_distance_specs(resolved_spec_by_declared_spec) for objective in declared_objectives
             ],
             data_matrix_producers=data_matrix_producers,
-            distance_storage_types=DistanceStorageTypes(
+            distance_storage=DistanceStorageTypes(
                 tuple(zip((spec.label for spec in resolved_specs), storage_types, strict=True))
             ),
         )

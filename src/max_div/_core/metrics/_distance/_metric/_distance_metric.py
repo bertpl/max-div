@@ -309,7 +309,7 @@ class DistanceMetric:
         A metric that does not preprocess writes a copy of the vectors.  The input is never written.
 
         Args:
-            vectors: the vectors to preprocess, in the form `preprocess` accepts.
+            vectors: the vectors to preprocess, in the form that `preprocess` accepts.
             out: a float32 buffer of shape `(n, preprocessed_n_dims(d))`, where `(n, d)` is the shape of
                 `vectors`.
 
@@ -329,10 +329,12 @@ class DistanceMetric:
         return n_dims
 
     def _preprocess_checked_vectors_into(self, vectors: NDArray[np.float32], out: NDArray[np.float32]) -> None:
-        """Write the array that the pairwise distance function reads into `out`; by default a copy of `vectors`.
+        """Write into `out` the array that the pairwise distance function reads; by default a copy of `vectors`.
 
         `preprocess` and `preprocess_into` check `vectors` and then call this method, so a subclass overrides it
-        to transform the vectors without repeating the checks.
+        to transform the vectors without repeating the checks.  A subclass that overrides it also sets
+        `needs_preprocessed_vectors` to True, or `preprocess` returns the input untransformed, and overrides
+        `preprocessed_n_dims` when the transform changes the dimension count.
         """
         out[:] = vectors
 

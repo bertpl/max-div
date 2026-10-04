@@ -62,7 +62,7 @@ class DiversityObjective(ABC):
     """A diversity objective the solver maximizes, or a tie-breaker it ranks ties by.
 
     Each subclass holds the fields its kind needs and computes its own diversity score. From the
-    tracker specs a subclass declares, the base derives the distinct tracker specs and the distinct
+    tracker specs that a subclass declares, the base derives the distinct tracker specs and the distinct
     distance specs.
     """
 
@@ -150,7 +150,7 @@ class DiversityObjective(ABC):
 
     @abstractmethod
     def with_distance_specs(self, replacement_specs: Mapping[DistanceSpec, DistanceSpec]) -> DiversityObjective:
-        """Return a copy of this objective with each distance spec replaced by the spec it maps to.
+        """Return a copy of this objective with each distance spec replaced by its entry in `replacement_specs`.
 
         Args:
             replacement_specs: a replacement for every distance spec of this objective.
@@ -171,7 +171,7 @@ class DiversityObjective(ABC):
 # ==================================================================================================
 @dataclass(frozen=True)
 class DiversityObjectiveSimple(DiversityObjective):
-    """One diversity metric over the distances that one distance spec names."""
+    """A simple objective applies one diversity metric to the distances that one distance spec names."""
 
     diversity_metric: DiversityMetric
     distance_spec: DistanceSpec
@@ -182,7 +182,7 @@ class DiversityObjectiveSimple(DiversityObjective):
         return f"{self.diversity_metric.value} over {self.distance_spec.label}"
 
     def with_distance_specs(self, replacement_specs: Mapping[DistanceSpec, DistanceSpec]) -> DiversityObjectiveSimple:
-        """Return a copy of this objective over the spec that its distance spec maps to."""
+        """Return a copy of this objective with its distance spec replaced by its entry in `replacement_specs`."""
         return replace(self, distance_spec=replacement_specs[self.distance_spec])
 
     def compute(self, contributions: Sequence[NDArray[np.float32]]) -> float:
@@ -262,7 +262,7 @@ class DiversityObjectiveHybrid(DiversityObjective):
         return self.aggregation.aggregate_rows(stacked)
 
     def with_distance_specs(self, replacement_specs: Mapping[DistanceSpec, DistanceSpec]) -> DiversityObjectiveHybrid:
-        """Return a copy of this objective with each term over the spec that its distance spec maps to."""
+        """Return a copy of this objective with each term's distance spec replaced by its replacement spec."""
         return replace(self, terms=tuple(term.with_distance_specs(replacement_specs) for term in self.terms))
 
     def default_tie_breakers(self) -> list[DiversityObjective]:

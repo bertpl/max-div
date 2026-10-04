@@ -96,7 +96,7 @@ def test_computing_producer_requires_its_shape():
 def test_bytes_to_allocate_counts_a_computed_matrix_and_an_adopted_one_only_when_copied(
     producer: DataMatrixProducer, is_adopted_array_copied: bool, expected_bytes: int
 ):
-    """Producing allocates the buffer that a matrix is computed into, and the copy of an adopted array, if made."""
+    """Producing allocates the output buffer of a computed matrix, and the copy of an adopted array, if made."""
     # --- act / assert -----------------
     assert producer.bytes_to_allocate(is_adopted_array_copied) == expected_bytes
 

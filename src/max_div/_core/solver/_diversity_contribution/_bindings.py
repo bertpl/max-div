@@ -20,18 +20,24 @@ class DiversityObjectiveBindings:
     """The bindings map a solve's diversity objectives to a store per distance spec and a tracker per tracker spec.
 
     The score reads one contribution array per tracker, in the trackers' order; the bindings also
-    record where each objective's own arrays sit in that order. The bindings are a function of the objective
-    list alone, so the distance stores, the trackers and the score's contribution arrays all follow
-    the one order that `for_objectives` returns.
+    record where each objective's own arrays sit in that order.
+
+    The bindings are a function of the objective list alone, so each of these follows the one order
+    that `for_objectives` returns:
+
+    - the distance stores;
+    - the contribution trackers;
+    - the score's contribution arrays.
 
     No layer derives an order of its own.
     """
 
-    # one entry per distance store: the distinct distance specs that the objectives use, in first-seen order
+    # `distance_specs` has one entry per distance store: the distinct distance specs that the objectives
+    # use, in first-seen order.
     distance_specs: tuple[DistanceSpec, ...]
-    # one entry per contribution tracker: the distinct tracker specs (distance spec, contribution family)
-    # that the objectives' contributions are tracked under, in first-seen order; this is also the
-    # order of the score's contribution arrays
+    # `tracker_specs` has one entry per contribution tracker: the distinct tracker specs (distance spec,
+    # contribution family) that the objectives' contributions are tracked under, in first-seen order;
+    # this is also the order of the score's contribution arrays.
     tracker_specs: tuple[DiversityTrackerSpec, ...]
     # one entry per objective, in objective order: the positions in `tracker_specs` of the specs that
     # the objective's score reads, in that objective's own spec order

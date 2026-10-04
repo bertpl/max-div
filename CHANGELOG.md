@@ -20,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `MaxDivProblem.default_distance_metric`; a problem built from vectors holds its metric in `distance_metric`
 
 ### Fixed
-- A hybrid diversity metric that reads the problem's own distance both as a bare term and through `.over(...)` stores that distance once, where before it stored it twice
+- A hybrid diversity metric whose bare `DiversityMetric` term and `.over(...)` term read the same distance stores that distance once, where before it stored it twice
 
 ### Security
 

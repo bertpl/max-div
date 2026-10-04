@@ -585,8 +585,9 @@ class SolverState:
     ) -> SolverState:
         """Build an empty-selection state, with one distance store per distinct distance spec of the objectives.
 
-        `diversity_objectives` lists the primary objective first, then the tie-breakers.  Each distance
-        spec builds its distance store from `data_matrix_reader`.
+        `diversity_objectives` lists the primary objective first, then the tie-breakers, with resolved
+        distance specs as `DistanceStoragePlan.decide` returns them.  Each distance spec builds its
+        distance store from `data_matrix_reader`, which must hold every data matrix that a spec names.
         """
         # --- diversity contributions ------------
         n_np = np.int32(n)

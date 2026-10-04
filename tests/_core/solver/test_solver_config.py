@@ -36,7 +36,7 @@ def test_prepare_returns_the_storage_plan_and_a_config_over_its_resolved_objecti
         DiversityMetric.GEOMEAN_SEPARATION,
         FullMatrixDistanceSpec(matrix_id=1, label=DistanceMetric.l2_euclidean().label),
     )  # the problem's own metric, over the full matrix that the plan adds
-    assert config.distance_storage == storage_plan.distance_storage_types
+    assert config.distance_storage == storage_plan.distance_storage
 
 
 def test_a_config_builds_a_solver_over_a_data_matrix_reader():

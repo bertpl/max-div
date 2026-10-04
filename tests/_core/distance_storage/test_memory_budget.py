@@ -2,17 +2,10 @@ import pytest
 
 from max_div._core.distance_storage.memory_budget import (
     data_matrix_bytes,
-    full_matrix_bytes,
     total_physical_memory_bytes,
 )
 
 GIB = 2**30
-
-
-def test_full_matrix_bytes_is_four_per_pair_including_the_diagonal():
-    """Each (i, j) cell costs four bytes, the diagonal included."""
-    # --- act / assert -----------------
-    assert full_matrix_bytes(1_000) == 4_000_000
 
 
 @pytest.mark.parametrize(

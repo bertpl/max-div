@@ -7,8 +7,10 @@ from enum import StrEnum
 class DistanceStorageType(StrEnum):
     """A `DistanceStorageType` names how the solver stores pairwise distances during search.
 
-    `AUTO` (the default) lets max-div decide; `DistanceStoragePlan._decide_storage_types` states the
-    policy.  The resolved storage type is reported in the solution summary.
+    `AUTO` (the default) lets max-div decide: the distances that are most expensive to compute get a
+    full matrix while the matrices fit in `AUTO_MEMORY_FRACTION` of physical RAM, and the rest are
+    computed on demand; `DistanceStoragePlan._decide_storage_types` holds the policy.  The resolved
+    storage type is reported in the solution summary.
 
     Pinning a storage type overrides the policy — `LAZY` requires vectors, so it is unavailable for
     distance-input problems.  A condensed distance input is expanded to the full matrix, at twice its
@@ -24,7 +26,7 @@ class DistanceStorageType(StrEnum):
 class DistanceStorageTypes:
     """Record how each of a solve's distance stores was stored: its label paired with the resolved storage type.
 
-    One entry per store, in store order.  The label is the store's distance spec label: a metric's
+    `per_store` has one entry per store, in store order.  The label is the store's distance spec label: a metric's
     label such as `L2`, or `user distances` for the distances that a distance-input problem was given.
     """
 

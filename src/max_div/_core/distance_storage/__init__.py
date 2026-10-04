@@ -1,7 +1,7 @@
 """This package stores a solve's pairwise distances, following the storage type that the user chose.
 
 "Storage type" names a `DistanceStorageType` value throughout this package; "kind" is reserved for
-`DistanceStore.kind`, the compiled selector that a distance store carries.
+`DistanceStore.kind`, the integer by which the compiled functions tell a full-matrix store from a lazy one.
 
 - `storage` holds the public choice.
 - `memory_budget` sizes a data matrix in bytes and probes the machine's RAM.

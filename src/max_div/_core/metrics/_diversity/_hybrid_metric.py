@@ -196,6 +196,9 @@ class HybridDiversityMetric:
             [term.value if isinstance(term, DiversityMetric) else term.label for term in self._terms]
         )
 
+    # --------------------------------------------------------------------------
+    #  Conversion to an objective
+    # --------------------------------------------------------------------------
     def _distance_metrics_of_terms(self, own_distance_metric: DistanceMetric) -> tuple[DistanceMetric, ...]:
         """Return the distance metric that each term reads, in term order.
 

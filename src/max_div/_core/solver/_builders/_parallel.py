@@ -148,16 +148,20 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
     #  Build
     # --------------------------------------------------------------------------
     def build(self) -> ParallelMaxDivSolver:
-        """Build the parallel solver: one solver configuration per worker over data matrices they will share.
+        """Build the parallel solver: one solver configuration per worker over data matrices that they will share.
 
-        The memory check of the distance storage plan also counts the arrays that already exist,
-        such as the user's vectors or distances, because publishing them into shared memory copies
-        them.
+        When the distance storage plan checks that the data matrices fit in physical memory, it also
+        counts the arrays that already exist, such as the user's vectors or distances, because
+        publishing them into shared memory copies them.
 
         Raises:
-            ValueError: If no workers were configured, `with_initial_selection` was combined with
-                a `WorkerConfig` that sets its own `init_strategy`, or the distance storage plan
-                rejects the configuration (see `DistanceStoragePlan.decide`).
+            ValueError: If any of these holds:
+
+                - no workers were configured;
+                - `with_initial_selection` was combined with a `WorkerConfig` that sets its own
+                  `init_strategy`;
+                - the storage type is LAZY on a distance-input problem;
+                - the data matrices cannot fit in physical memory at all.
         """
         if self._target_duration is None or not self._worker_configs:
             raise ValueError("A parallel solver needs workers; call with_workers or with_custom_worker_groups first.")
@@ -236,7 +240,7 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
             solver_steps=[InitializationStep(worker.init_strategy or init_strategy), *optim_steps],
             seed=int(deterministic_hash_int64(("parallel_worker_seed", self._seed, index))),
             constraint_penalty=self._constraint_penalty,
-            distance_storage=storage_plan.distance_storage_types,
+            distance_storage=storage_plan.distance_storage,
             batch_seconds=batch_seconds,
             e2e_budget=e2e_budget,
             intermediate_selections_enabled=self._intermediate_selections_enabled,

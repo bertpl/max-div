@@ -116,8 +116,8 @@ class MaxDivSolverBuilder(SolverBuilderBase):
 
         Raises:
             ValueError: If `with_initial_selection` was used and `set_initialization_strategy` was called
-                with no `with_preset` call after it, or the distance storage plan rejects the
-                configuration (see `DistanceStoragePlan.decide`).
+                with no `with_preset` call after it, the storage type is LAZY on a distance-input
+                problem, or the data matrices cannot fit in physical memory at all.
         """
         storage_plan, config = self.prepare_storage_and_config()
         return config.build_solver(
@@ -127,14 +127,14 @@ class MaxDivSolverBuilder(SolverBuilderBase):
     def prepare_storage_and_config(self) -> tuple[DistanceStoragePlan, SolverConfig]:
         """Return the distance storage plan of a single solve, and the solver config over its resolved objectives.
 
-        The plan's memory check assumes a single solve, which produces the data matrices in this
-        process and does not copy the user's array; a caller that publishes them into shared memory
-        needs a plan that counts that copy.
+        When the plan checks that the data matrices fit in physical memory, it assumes a single solve,
+        which produces the data matrices in this process and does not copy the user's array; a caller
+        that publishes the data matrices into shared memory needs a plan that counts that copy.
 
         Raises:
             ValueError: If `with_initial_selection` was used and `set_initialization_strategy` was called
-                with no `with_preset` call after it, or the distance storage plan rejects the
-                configuration (see `DistanceStoragePlan.decide`).
+                with no `with_preset` call after it, the storage type is LAZY on a distance-input
+                problem, or the data matrices cannot fit in physical memory at all.
         """
         storage_plan = self._decide_storage_plan(are_adopted_arrays_copied=False)
         return storage_plan, SolverConfig(
@@ -145,7 +145,7 @@ class MaxDivSolverBuilder(SolverBuilderBase):
             solver_steps=self._resolve_solver_steps(),
             seed=self._seed,
             constraint_penalty=self._constraint_penalty,
-            distance_storage=storage_plan.distance_storage_types,
+            distance_storage=storage_plan.distance_storage,
             e2e_budget=self._resolve_e2e_budget(),
             intermediate_selections_enabled=self._intermediate_selections_enabled,
         )

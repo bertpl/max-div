@@ -26,6 +26,6 @@ def test_storage_values_are_the_labels_users_see():
     ids=["grouped-by-type", "given-distances", "empty"],
 )
 def test_summary_groups_labels_by_storage_type(per_store, expected):
-    """Group the store labels by storage type; empty renders nothing."""
+    """Group the store labels by storage type; a record with no stores renders as an empty string."""
     # --- act / assert -----------------
     assert str(DistanceStorageTypes(per_store)) == expected

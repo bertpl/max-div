@@ -14,7 +14,7 @@ from max_div._core.distance_storage import (
     SharedMemoryDataMatrixPublisher,
     SharedMemoryDataMatrixReader,
 )
-from max_div._core.distance_storage.memory_budget import AUTO_MEMORY_FRACTION, full_matrix_bytes
+from max_div._core.distance_storage.memory_budget import AUTO_MEMORY_FRACTION, data_matrix_bytes
 from max_div._core.metrics import DistanceMetric, DiversityMetric, DiversityObjectiveSimple
 from max_div._core.metrics._distance import (
     KIND_FULL_MATRIX,
@@ -110,7 +110,7 @@ def _stores(plan: DistanceStoragePlan, data_matrix_reader: DataMatrixReader | No
 
 def _storage_types(plan: DistanceStoragePlan) -> list[str]:
     """Return the storage type of each store, in store order."""
-    return [storage_type.value for _, storage_type in plan.distance_storage_types.per_store]
+    return [storage_type.value for _, storage_type in plan.distance_storage.per_store]
 
 
 # ==================================================================================================
@@ -124,7 +124,7 @@ def test_plan_rejects_an_objective_over_vectors_as_given():
     # --- act / assert -----------------
     with pytest.raises(ValueError, match="only resolved distance specs"):
         DistanceStoragePlan(
-            diversity_objectives=[objective], data_matrix_producers={}, distance_storage_types=DistanceStorageTypes()
+            diversity_objectives=[objective], data_matrix_producers={}, distance_storage=DistanceStorageTypes()
         )
 
 
@@ -142,7 +142,7 @@ def test_report_names_each_store_by_the_label_of_its_spec(problem: MaxDivProblem
     plan = _decide_over_problem(problem, DistanceStorageType.AUTO)
 
     # --- assert -----------------------
-    assert plan.distance_storage_types.per_store == expected
+    assert plan.distance_storage.per_store == expected
 
 
 def test_equal_declared_specs_get_one_store():
@@ -169,7 +169,7 @@ def test_explicit_choice_passes_through(storage_type: DistanceStorageType):
     "n, total_memory_bytes, expected",
     [
         (10, 64 * GIB, "full_matrix"),  # tiny problem: matrix always fits
-        (10, None, "lazy"),  # probe failed: the one storage type that cannot page
+        (10, None, "lazy"),  # probe failed: lazy allocates no full matrix, so it cannot exceed RAM
         (50_000, 32 * GIB, "full_matrix"),  # 9.3 GiB matrix <= half of 32 GiB
         (50_000, 16 * GIB, "lazy"),  # matrix over budget
     ],
@@ -205,7 +205,7 @@ def test_auto_gives_the_full_matrices_that_fit_to_the_distances_most_expensive_t
 ):
     """When only some full matrices fit the memory budget, the costliest distances get them and the rest stay lazy."""
     # --- arrange ----------------------
-    total_memory_bytes = int(n_matrices_in_budget * full_matrix_bytes(50_000) / AUTO_MEMORY_FRACTION) + GIB
+    total_memory_bytes = int(n_matrices_in_budget * data_matrix_bytes((50_000, 50_000)) / AUTO_MEMORY_FRACTION) + GIB
 
     # --- act --------------------------
     plan = _decide_over_vectors(metrics, DistanceStorageType.AUTO, _vectors(n=50_000, d=2), total_memory_bytes)
@@ -288,20 +288,24 @@ def test_a_vector_spec_over_computed_data_raises():
 # ==================================================================================================
 #  Memory check
 # ==================================================================================================
-@pytest.mark.parametrize("lazy_available", [True, False], ids=["vectors", "distances"])
-def test_check_fits_physical_memory_rejects_a_matrix_larger_than_ram_and_names_the_remedy(lazy_available: bool):
+@pytest.mark.parametrize("is_lazy_available", [True, False], ids=["vectors", "distances"])
+def test_check_fits_physical_memory_rejects_a_matrix_larger_than_ram_and_names_the_remedy(is_lazy_available: bool):
     """A matrix larger than all physical RAM is refused early; the lazy remedy is named only when it exists."""
     # --- act / assert -----------------
     with pytest.raises(ValueError, match="physical memory") as excinfo:
-        DistanceStoragePlan._check_fits_physical_memory(full_matrix_bytes(2_000_000), 64 * GIB, lazy_available)
-    assert ("LAZY" in str(excinfo.value)) is lazy_available
+        DistanceStoragePlan._check_fits_physical_memory(
+            data_matrix_bytes((2_000_000, 2_000_000)), 64 * GIB, is_lazy_available
+        )
+    assert ("LAZY" in str(excinfo.value)) is is_lazy_available
 
 
 @pytest.mark.parametrize("total_memory_bytes", [64 * GIB, None], ids=["fits", "unknown-ram"])
 def test_check_fits_physical_memory_accepts_a_matrix_that_fits_or_unknown_ram(total_memory_bytes: int | None):
     """A matrix that fits passes silently, and so does any matrix when the total RAM is unknown."""
     # --- act / assert -----------------
-    DistanceStoragePlan._check_fits_physical_memory(full_matrix_bytes(10), total_memory_bytes, lazy_available=True)
+    DistanceStoragePlan._check_fits_physical_memory(
+        data_matrix_bytes((10, 10)), total_memory_bytes, is_lazy_available=True
+    )
 
 
 def test_infeasible_full_matrix_raises_early():
@@ -323,13 +327,13 @@ def test_infeasible_full_matrix_raises_early():
         ("condensed", True, True),
     ],
 )
-def test_memory_check_counts_the_copies_of_adopted_arrays_only_when_they_are_copied(
+def test_fitting_in_memory_counts_the_copies_of_adopted_arrays_only_when_they_are_copied(
     form: str, are_adopted_arrays_copied: bool, is_rejected: bool
 ):
     """The memory check counts a matrix that the solve fills, and an adopted one only when the solve copies it."""
     # --- arrange ----------------------
     problem = _distance_problem(form)
-    total_memory_bytes = full_matrix_bytes(problem.n) - 1  # one byte short of the full matrix
+    total_memory_bytes = data_matrix_bytes((problem.n, problem.n)) - 1  # one byte short of the full matrix
 
     # --- act / assert -----------------
     if is_rejected:
@@ -385,7 +389,7 @@ def test_lazy_store_over_a_preprocessing_metric_reads_a_preprocessed_copy():
 
 @pytest.mark.parametrize("metric", [L2, COSINE], ids=["non-preprocessing", "preprocessing"])
 def test_full_matrix_and_lazy_stores_agree(metric: DistanceMetric):
-    """The two kinds read bit-identical distances, preprocessing metric included."""
+    """Full-matrix and lazy stores read bit-identical distances, for a preprocessing metric too."""
     # --- act --------------------------
     (full,) = _stores(_decide_over_vectors([metric], DistanceStorageType.FULL_MATRIX))
     (lazy,) = _stores(_decide_over_vectors([metric], DistanceStorageType.LAZY))
@@ -453,7 +457,7 @@ def test_published_stores_match_the_in_process_stores(plan: DistanceStoragePlan)
 # ==================================================================================================
 #  Per-storage-type solve behavior
 # ==================================================================================================
-# What a storage type guarantees is that it solves the same problem as well, not that it picks the
+# A storage type guarantees that it solves the same problem as well, not that it picks the
 # same items: distances may differ in their last bits between storage types, the search is chaotic,
 # and one comparison that resolves the other way makes it select different items with an equally
 # good score.

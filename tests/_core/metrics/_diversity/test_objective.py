@@ -56,7 +56,7 @@ def _f32(values: list[float]) -> np.ndarray:
     ids=["simple", "hybrid"],
 )
 def test_with_distance_specs_replaces_each_spec_through_the_mapping(objective, expected) -> None:
-    """A copy with distance specs replaced keeps the diversity metrics and the aggregation; a hybrid maps each term."""
+    """A copy with replaced specs keeps the diversity metrics and aggregation; a hybrid replaces each term's spec."""
     # --- act / assert -----------------
     assert objective.with_distance_specs({L1: OWN, L2: L1}) == expected
 
