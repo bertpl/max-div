@@ -50,7 +50,10 @@ def _vectors(n: int = 10, d: int = 3) -> np.ndarray:
 def _distance_problem(form: str) -> MaxDivProblem:
     """Return the L2 distances of the small vectors as a square or condensed input."""
     matrix = compute_full_matrix(_vectors(), L2)
-    distances = matrix if form == "square" else squareform(matrix, checks=False)
+    if form == "square":
+        distances = matrix
+    else:
+        distances = squareform(matrix, checks=False)
     return MaxDivProblem.from_distances(distances, k=3)
 
 
