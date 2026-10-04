@@ -1,8 +1,9 @@
 """A single-solver builder configures and builds one solver over a problem."""
 
+from functools import partial
 from typing import Self
 
-from max_div._core.distance_storage import DistanceStoreFactory
+from max_div._core.distance_storage import DistanceStoragePlan, InProcessDataMatrixReader
 from max_div._core.problem import MaxDivProblem
 from max_div._core.solver._duration import TargetDuration
 from max_div._core.solver._presets import SolverPreset, get_preset_strategies
@@ -107,38 +108,43 @@ class MaxDivSolverBuilder(SolverBuilderBase):
     #  Build
     # --------------------------------------------------------------------------
     def build(self) -> MaxDivSolver:
-        """Return a solver that builds its distance store when it solves.
+        """Return a solver that produces its data matrices when it solves.
 
-        The store is not built here: `solve` builds it, so its cost is part of the solve and a
-        large store is not held between building the solver and running it.
-
-        Raises:
-            ValueError: If `with_initial_selection` was used and `set_initialization_strategy` was called
-                with no `with_preset` call after it.
-        """
-        factory, config = self.prepare_storage_and_config()
-        return config.build_solver(stores_by_distance_provider=factory.create_stores_by_distance)
-
-    def prepare_storage_and_config(self) -> tuple[DistanceStoreFactory, SolverConfig]:
-        """Return the factory building this configuration's stores, and the solver config over them.
-
-        Keeping the factory and the config apart lets a caller build the distances once and
-        assemble a solver per worker over them, which is how the parallel solver shares one store.
+        How each distance is stored is decided here, but no data matrix is produced: `solve`
+        produces them, so their cost is part of the solve and a large matrix is not held between
+        building the solver and running it.
 
         Raises:
             ValueError: If `with_initial_selection` was used and `set_initialization_strategy` was called
-                with no `with_preset` call after it.
+                with no `with_preset` call after it, or the distance storage plan rejects the
+                configuration (see `DistanceStoragePlan.decide`).
         """
-        factory, distance_storage = self._store_factory()
-        return factory, SolverConfig(
+        storage_plan, config = self.prepare_storage_and_config()
+        return config.build_solver(
+            data_matrix_reader_provider=partial(InProcessDataMatrixReader, storage_plan.data_matrix_producers)
+        )
+
+    def prepare_storage_and_config(self) -> tuple[DistanceStoragePlan, SolverConfig]:
+        """Return the distance storage plan of a single solve, and the solver config over its resolved objectives.
+
+        Keeping the plan and the config apart lets a caller produce the data matrices in a place of
+        its choosing, such as shared memory, and assemble a solver over them.
+
+        Raises:
+            ValueError: If `with_initial_selection` was used and `set_initialization_strategy` was called
+                with no `with_preset` call after it, or the distance storage plan rejects the
+                configuration (see `DistanceStoragePlan.decide`).
+        """
+        storage_plan = self._decide_storage_plan(are_adopted_arrays_copied=False)
+        return storage_plan, SolverConfig(
             n=self._n,
             k=self._k,
-            diversity_objectives=self._determine_diversity_objectives(),
+            diversity_objectives=storage_plan.diversity_objectives,
             constraints=self._constraints,
             solver_steps=self._resolve_solver_steps(),
             seed=self._seed,
             constraint_penalty=self._constraint_penalty,
-            distance_storage=distance_storage,
+            distance_storage=storage_plan.distance_storage_types,
             e2e_budget=self._resolve_e2e_budget(),
             intermediate_selections_enabled=self._intermediate_selections_enabled,
         )

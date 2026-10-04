@@ -24,7 +24,7 @@ from ._objective import DiversityObjectiveHybrid, DiversityObjectiveSimple
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    from max_div._core.metrics._distance import DistanceMetric
+    from max_div._core.metrics._distance import DistanceMetric, DistanceSpec
 
 
 # ==================================================================================================
@@ -196,14 +196,26 @@ class HybridDiversityMetric:
             [term.value if isinstance(term, DiversityMetric) else term.label for term in self._terms]
         )
 
-    def _to_objective(self) -> DiversityObjectiveHybrid:
-        """Return the objective the solver maximizes for this hybrid."""
+    def _distance_metrics_of_terms(self, own_distance_metric: DistanceMetric) -> tuple[DistanceMetric, ...]:
+        """Return the distance metric that each term reads, in term order.
+
+        Args:
+            own_distance_metric: the problem's own distance metric, which a bare `DiversityMetric` term reads.
+        """
+        return tuple(
+            own_distance_metric if isinstance(term, DiversityMetric) else term.distance_metric for term in self._terms
+        )
+
+    def _to_objective(self, distance_specs: Sequence[DistanceSpec]) -> DiversityObjectiveHybrid:
+        """Return the objective the solver maximizes for this hybrid, each term over its distance spec.
+
+        Args:
+            distance_specs: the distance spec of each term, in term order.
+        """
         return DiversityObjectiveHybrid(
             tuple(
-                DiversityObjectiveSimple(term)
-                if isinstance(term, DiversityMetric)
-                else DiversityObjectiveSimple(term.diversity_metric, term.distance_metric)
-                for term in self._terms
+                DiversityObjectiveSimple(term if isinstance(term, DiversityMetric) else term.diversity_metric, spec)
+                for term, spec in zip(self._terms, distance_specs, strict=True)
             ),
             self._aggregation,
         )

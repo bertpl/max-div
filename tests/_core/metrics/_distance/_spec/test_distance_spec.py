@@ -136,6 +136,13 @@ def test_one_spec_per_kind_covers_every_kind():
     }
 
 
+def test_a_full_matrix_spec_requires_its_label():
+    """The label is a required field, although it implements the abstract `label` property of the base class."""
+    # --- act / assert -----------------
+    with pytest.raises(TypeError, match="label"):
+        FullMatrixDistanceSpec(matrix_id=0)  # ty: ignore[missing-argument]
+
+
 def test_the_base_spec_cannot_be_created():
     """Only the subclasses of `DistanceSpec` build a distance store, so the base class itself cannot be created."""
     # --- act / assert -----------------

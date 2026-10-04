@@ -12,12 +12,20 @@ from max_div._core.metrics import (
     HybridAggregationGeometricMean,
     HybridAggregationMinimum,
 )
+from max_div._core.metrics._distance import FullMatrixDistanceSpec, VectorDistanceSpec
 from tests.helpers import hybrid_objective
+
+
+def _spec(metric: DistanceMetric) -> VectorDistanceSpec:
+    """Return the spec of the distances under `metric`, over vectors preprocessed for it."""
+    return VectorDistanceSpec(matrix_id=0, metric=metric, is_matrix_preprocessed=True)
+
 
 SEPARATION = DiversityContributionFamily.SEPARATION
 MEAN_DISTANCE = DiversityContributionFamily.MEAN_DISTANCE
-L1 = DistanceMetric.l1_manhattan()
-L2 = DistanceMetric.l2_euclidean()
+OWN = FullMatrixDistanceSpec(matrix_id=0, label="user distances")
+L1 = _spec(DistanceMetric.l1_manhattan())
+L2 = _spec(DistanceMetric.l2_euclidean())
 
 
 def _f32(values: list[float]) -> np.ndarray:
@@ -27,17 +35,37 @@ def _f32(values: list[float]) -> np.ndarray:
 # ==================================================================================================
 #  Construction
 # ==================================================================================================
-def test_a_simple_objective_defaults_its_distance_to_the_problems_own() -> None:
-    """A simple objective built without a distance reads the problem's own distance (`None`)."""
+@pytest.mark.parametrize(
+    "objective, expected",
+    [
+        (
+            DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L1),
+            DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, OWN),
+        ),
+        (
+            hybrid_objective(
+                DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L1),
+                DiversityObjectiveSimple(DiversityMetric.MEAN_PAIRWISE_DISTANCE, L2),
+            ),
+            hybrid_objective(
+                DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, OWN),
+                DiversityObjectiveSimple(DiversityMetric.MEAN_PAIRWISE_DISTANCE, L1),
+            ),
+        ),
+    ],
+    ids=["simple", "hybrid"],
+)
+def test_with_distance_specs_replaces_each_spec_through_the_mapping(objective, expected) -> None:
+    """A copy with distance specs replaced keeps the diversity metrics and the aggregation; a hybrid maps each term."""
     # --- act / assert -----------------
-    assert DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION).distance_metric is None
+    assert objective.with_distance_specs({L1: OWN, L2: L1}) == expected
 
 
 def test_a_hybrid_needs_at_least_two_terms() -> None:
     """One term is a `DiversityObjectiveSimple`, so a hybrid rejects fewer than two."""
     # --- act / assert -----------------
     with pytest.raises(ValueError, match="at least two terms"):
-        hybrid_objective(DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION))
+        hybrid_objective(DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, OWN))
 
 
 def test_a_hybrid_rejects_a_term_that_is_not_a_simple_objective() -> None:
@@ -71,23 +99,23 @@ def test_a_hybrid_needs_one_weight_per_term() -> None:
     "objective, expected_specs, expected_distinct_specs",
     [
         pytest.param(
-            DiversityObjectiveSimple(DiversityMetric.MEAN_PAIRWISE_DISTANCE),
-            (DiversityTrackerSpec(None, MEAN_DISTANCE),),
-            (DiversityTrackerSpec(None, MEAN_DISTANCE),),
+            DiversityObjectiveSimple(DiversityMetric.MEAN_PAIRWISE_DISTANCE, OWN),
+            (DiversityTrackerSpec(OWN, MEAN_DISTANCE),),
+            (DiversityTrackerSpec(OWN, MEAN_DISTANCE),),
             id="simple",
         ),
         pytest.param(
             hybrid_objective(
-                DiversityObjectiveSimple(DiversityMetric.MEAN_PAIRWISE_DISTANCE),  # (None, MEAN_DISTANCE)
+                DiversityObjectiveSimple(DiversityMetric.MEAN_PAIRWISE_DISTANCE, OWN),  # (OWN, MEAN_DISTANCE)
                 DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L1),  # (L1, SEPARATION)
                 DiversityObjectiveSimple(DiversityMetric.GEOMEAN_SEPARATION, L1),  # repeat: (L1, SEPARATION)
             ),
             (
-                DiversityTrackerSpec(None, MEAN_DISTANCE),
+                DiversityTrackerSpec(OWN, MEAN_DISTANCE),
                 DiversityTrackerSpec(L1, SEPARATION),
                 DiversityTrackerSpec(L1, SEPARATION),
             ),
-            (DiversityTrackerSpec(None, MEAN_DISTANCE), DiversityTrackerSpec(L1, SEPARATION)),
+            (DiversityTrackerSpec(OWN, MEAN_DISTANCE), DiversityTrackerSpec(L1, SEPARATION)),
             id="hybrid_keeps_repeats_and_dedups_in_first_seen_order",
         ),
     ],
@@ -110,7 +138,7 @@ def test_a_simple_objectives_tracker_spec_is_its_one_spec() -> None:
 @pytest.mark.parametrize(
     "objective, expected",
     [
-        (DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION), (None,)),
+        (DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, OWN), (OWN,)),
         (
             hybrid_objective(
                 DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L1),
@@ -121,10 +149,10 @@ def test_a_simple_objectives_tracker_spec_is_its_one_spec() -> None:
         ),
     ],
 )
-def test_distinct_distance_metrics(objective, expected) -> None:
-    """The distinct distance metrics an objective reads, in first-seen order."""
+def test_distinct_distance_specs(objective, expected) -> None:
+    """The distinct distance specs an objective reads, in first-seen order."""
     # --- act / assert -----------------
-    assert objective.distinct_distance_metrics() == expected
+    assert objective.distinct_distance_specs() == expected
 
 
 # ==================================================================================================
@@ -133,7 +161,7 @@ def test_distinct_distance_metrics(objective, expected) -> None:
 def test_simple_computes_its_metric_over_its_one_spec() -> None:
     """A simple objective reduces its one spec's contribution array with its diversity metric."""
     # --- arrange ----------------------
-    objective = DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION)
+    objective = DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, OWN)
     contributions = (_f32([4.0, 2.0, 6.0]),)
 
     # --- act / assert -----------------
@@ -432,22 +460,22 @@ def test_a_hybrids_per_item_contribution_aggregates_its_terms_arrays_elementwise
 @pytest.mark.parametrize(
     "objective, expected",
     [
-        (DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION), "MIN_SEPARATION"),
+        (DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, OWN), "MIN_SEPARATION over user distances"),
         (
-            DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, DistanceMetric.along_axis(0)),
+            DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, _spec(DistanceMetric.along_axis(0))),
             "MIN_SEPARATION over axis 0",
         ),
         (
             hybrid_objective(
-                DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, DistanceMetric.l2_euclidean()),
-                DiversityObjectiveSimple(DiversityMetric.MEAN_PAIRWISE_DISTANCE, DistanceMetric.along_axis(1)),
+                DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, _spec(DistanceMetric.l2_euclidean())),
+                DiversityObjectiveSimple(DiversityMetric.MEAN_PAIRWISE_DISTANCE, _spec(DistanceMetric.along_axis(1))),
             ),
             "geomean(MIN_SEPARATION over L2, MEAN_PAIRWISE_DISTANCE over axis 1)",
         ),
         (
             hybrid_objective(
-                DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, DistanceMetric.l2_euclidean()),
-                DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, DistanceMetric.along_axis(1)),
+                DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, _spec(DistanceMetric.l2_euclidean())),
+                DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, _spec(DistanceMetric.along_axis(1))),
                 aggregation_type=HybridAggregationArithmeticMean,
             ),
             "mean(MIN_SEPARATION over L2, MIN_SEPARATION over axis 1)",
@@ -455,8 +483,8 @@ def test_a_hybrids_per_item_contribution_aggregates_its_terms_arrays_elementwise
         (
             DiversityObjectiveHybrid(
                 (
-                    DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, DistanceMetric.l2_euclidean()),
-                    DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, DistanceMetric.along_axis(1)),
+                    DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, _spec(DistanceMetric.l2_euclidean())),
+                    DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, _spec(DistanceMetric.along_axis(1))),
                 ),
                 HybridAggregationGeometricMean((31.6227766, 1000.0)),
             ),

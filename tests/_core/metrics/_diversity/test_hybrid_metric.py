@@ -12,8 +12,11 @@ from max_div._core.metrics import (
     HybridAggregationMinimum,
     HybridDiversityMetric,
 )
+from max_div._core.metrics._distance import FullMatrixDistanceSpec
 
 _AXIS_0 = DistanceMetric.along_axis(0)
+_SPEC_A = FullMatrixDistanceSpec(matrix_id=0, label="a")
+_SPEC_B = FullMatrixDistanceSpec(matrix_id=1, label="b")
 
 
 def _two_term_hybrid(factory, **kwargs) -> HybridDiversityMetric:
@@ -78,16 +81,32 @@ def test_a_hybrid_resolves_to_a_hybrid_objective_with_its_aggregation(factory, w
     hybrid = _two_term_hybrid(factory, weights=weights)
 
     # --- act --------------------------
-    objective = hybrid._to_objective()
+    objective = hybrid._to_objective((_SPEC_A, _SPEC_B))
 
     # --- assert -----------------------
     assert objective == DiversityObjectiveHybrid(
         (
-            DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION),
-            DiversityObjectiveSimple(DiversityMetric.GEOMEAN_SEPARATION, _AXIS_0),
+            DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, _SPEC_A),
+            DiversityObjectiveSimple(DiversityMetric.GEOMEAN_SEPARATION, _SPEC_B),
         ),
         aggregation,
     )
+
+
+def test_a_hybrid_needs_one_distance_spec_per_term() -> None:
+    """Each term reads exactly one distance spec, so a spec list of another length is rejected."""
+    # --- act / assert -----------------
+    with pytest.raises(ValueError):
+        _two_term_hybrid(HybridDiversityMetric.geomean_of)._to_objective((_SPEC_A,))
+
+
+def test_a_bare_term_reads_the_problems_own_distance_metric_and_a_named_term_its_own() -> None:
+    """The distance metric of each term, in term order: the given own metric for a bare term."""
+    # --- arrange ----------------------
+    own = DistanceMetric.l2_euclidean()
+
+    # --- act / assert -----------------
+    assert _two_term_hybrid(HybridDiversityMetric.geomean_of)._distance_metrics_of_terms(own) == (own, _AXIS_0)
 
 
 def test_a_hybrid_keeps_its_terms_as_given_and_lists_the_distinct_distance_metrics() -> None:
@@ -105,7 +124,9 @@ def test_a_repeated_term_counts_once_per_repeat() -> None:
     axis_term = DiversityMetric.MIN_SEPARATION.over(_AXIS_0)
 
     # --- act --------------------------
-    objective = HybridDiversityMetric.mean_of(DiversityMetric.MIN_SEPARATION, axis_term, axis_term)._to_objective()
+    objective = HybridDiversityMetric.mean_of(DiversityMetric.MIN_SEPARATION, axis_term, axis_term)._to_objective(
+        (_SPEC_A, _SPEC_B, _SPEC_B)
+    )
 
     # --- assert -----------------------
     assert len(objective.terms) == 3
@@ -119,7 +140,9 @@ def test_every_aggregation_has_a_factory_named_after_it() -> None:
     # --- act --------------------------
     built = {
         aggregation_type: type(
-            _two_term_hybrid(getattr(HybridDiversityMetric, f"{aggregation_type.name}_of"))._to_objective().aggregation
+            _two_term_hybrid(getattr(HybridDiversityMetric, f"{aggregation_type.name}_of"))
+            ._to_objective((_SPEC_A, _SPEC_B))
+            .aggregation
         )
         for aggregation_type in aggregation_types
     }

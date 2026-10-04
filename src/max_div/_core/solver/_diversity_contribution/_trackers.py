@@ -13,8 +13,8 @@ if TYPE_CHECKING:
     import numpy as np
     from numpy.typing import NDArray
 
-    from max_div._core.metrics import DistanceMetric, DiversityObjective, DiversityTrackerSpec
-    from max_div._core.metrics._distance import DistanceStore
+    from max_div._core.metrics import DiversityObjective, DiversityTrackerSpec
+    from max_div._core.metrics._distance import DistanceSpec, DistanceStore
 
     from ._base import DiversityContributionTracker, PerItemContributionSource
 
@@ -48,18 +48,18 @@ class DiversityContributionTrackers:
     def for_specs(
         cls,
         tracker_specs: Sequence[DiversityTrackerSpec],
-        stores_by_distance: Mapping[DistanceMetric | None, DistanceStore],
+        stores_by_distance_spec: Mapping[DistanceSpec, DistanceStore],
     ) -> DiversityContributionTrackers:
-        """Build one tracker per spec, in the given order, each over the store of its distance.
+        """Build one tracker per tracker spec, in the given order, each over the store of its distance spec.
 
         `tracker_specs` is the bindings' spec order (see `DiversityObjectiveBindings`).
-        `stores_by_distance` maps a spec's distance metric (`None` for the problem's own) to the store
-        the spec's tracker reads.
+        `stores_by_distance_spec` maps the distance spec of each tracker spec to the store that its
+        tracker reads.
         """
         return cls(
             trackers_by_spec={
                 spec: build_diversity_contribution_tracker(
-                    spec.contribution_family, stores_by_distance[spec.distance_metric]
+                    spec.contribution_family, stores_by_distance_spec[spec.distance_spec]
                 )
                 for spec in tracker_specs
             }

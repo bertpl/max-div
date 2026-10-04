@@ -8,33 +8,35 @@ from max_div._core.metrics import (
     DiversityTrackerSpec,
     HybridAggregationArithmeticMean,
 )
+from max_div._core.metrics._distance import FullMatrixDistanceSpec, VectorDistanceSpec
 from max_div._core.solver._diversity_contribution import DiversityObjectiveBindings
 from tests.helpers import hybrid_objective
 
 SEPARATION = DiversityContributionFamily.SEPARATION
 MEAN_DISTANCE = DiversityContributionFamily.MEAN_DISTANCE
-L1 = DistanceMetric.l1_manhattan()
-L2 = DistanceMetric.l2_euclidean()
+OWN = FullMatrixDistanceSpec(matrix_id=0, label="user distances")
+L1 = VectorDistanceSpec(matrix_id=0, metric=DistanceMetric.l1_manhattan(), is_matrix_preprocessed=True)
+L2 = VectorDistanceSpec(matrix_id=0, metric=DistanceMetric.l2_euclidean(), is_matrix_preprocessed=True)
 
 
 @pytest.mark.parametrize(
-    "diversity_objectives, expected_distance_metrics, expected_tracker_specs, expected_positions",
+    "diversity_objectives, expected_distance_specs, expected_tracker_specs, expected_positions",
     [
         pytest.param(
-            [DiversityObjectiveSimple(DiversityMetric.GEOMEAN_SEPARATION)],
-            (None,),
-            (DiversityTrackerSpec(None, SEPARATION),),
+            [DiversityObjectiveSimple(DiversityMetric.GEOMEAN_SEPARATION, OWN)],
+            (OWN,),
+            (DiversityTrackerSpec(OWN, SEPARATION),),
             ((0,),),
-            id="one_simple_objective_over_the_problems_own_distance",
+            id="one_simple_objective_over_the_users_distances",
         ),
         pytest.param(
             [
-                DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION),
-                DiversityObjectiveSimple(DiversityMetric.APPROX_GEOMEAN_SEPARATION),
-                DiversityObjectiveSimple(DiversityMetric.MEAN_PAIRWISE_DISTANCE),
+                DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, OWN),
+                DiversityObjectiveSimple(DiversityMetric.APPROX_GEOMEAN_SEPARATION, OWN),
+                DiversityObjectiveSimple(DiversityMetric.MEAN_PAIRWISE_DISTANCE, OWN),
             ],
-            (None,),
-            (DiversityTrackerSpec(None, SEPARATION), DiversityTrackerSpec(None, MEAN_DISTANCE)),
+            (OWN,),
+            (DiversityTrackerSpec(OWN, SEPARATION), DiversityTrackerSpec(OWN, MEAN_DISTANCE)),
             ((0,), (0,), (1,)),
             id="tie_breakers_sharing_the_primary_spec_add_no_tracker",
         ),
@@ -63,12 +65,12 @@ L2 = DistanceMetric.l2_euclidean()
         ),
     ],
 )
-def test_for_objectives(diversity_objectives, expected_distance_metrics, expected_tracker_specs, expected_positions):
-    """Distance metrics and specs are distinct in first-seen order; each objective's positions follow its spec order."""
+def test_for_objectives(diversity_objectives, expected_distance_specs, expected_tracker_specs, expected_positions):
+    """Distance and tracker specs are distinct in first-seen order; each objective's positions follow its spec order."""
     # --- act --------------------------
     bindings = DiversityObjectiveBindings.for_objectives(diversity_objectives)
 
     # --- assert -----------------------
-    assert bindings.distance_metrics == expected_distance_metrics
+    assert bindings.distance_specs == expected_distance_specs
     assert bindings.tracker_specs == expected_tracker_specs
     assert bindings.objective_spec_positions == expected_positions

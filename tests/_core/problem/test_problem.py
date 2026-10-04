@@ -7,6 +7,7 @@ from scipy.spatial.distance import squareform
 
 from max_div._core._warnings import DistanceInputWarning
 from max_div._core.constraints import Constraint
+from max_div._core.distance_storage import AdoptingDataMatrixProducer, ComputingDataMatrixProducer
 from max_div._core.feasibility import FeasibilityStatus
 from max_div._core.metrics import (
     DistanceMetric,
@@ -15,7 +16,7 @@ from max_div._core.metrics import (
     DiversityObjectiveSimple,
     HybridDiversityMetric,
 )
-from max_div._core.metrics._distance import compute_full_matrix
+from max_div._core.metrics._distance import FullMatrixDistanceSpec, VectorDistanceSpec, compute_full_matrix
 from max_div._core.problem import DistanceMaxDivProblem, MaxDivProblem, VectorMaxDivProblem
 
 
@@ -216,17 +217,30 @@ def test_problem_new_along_axis_within_the_dimension_count_ok():
     assert problem.distance_metric == DistanceMetric.along_axis(2)
 
 
-def test_default_distance_metric_is_the_vector_metric_or_none():
-    """A vector problem's default distance is its own metric; a distance-input problem has none."""
+@pytest.mark.parametrize("form", ["vectors", "square", "condensed"])
+def test_user_data_matrix_producer_hands_out_the_problems_own_data(form: str):
+    """Vectors and a square input are adopted as they are; a condensed input is expanded into an (n, n) buffer."""
     # --- arrange ----------------------
     vectors = np.random.default_rng(0).random((5, 3)).astype(np.float32)
     matrix = compute_full_matrix(vectors, DistanceMetric.l2_euclidean())
+    if form == "vectors":
+        problem = MaxDivProblem.new(vectors, k=3)
+    else:
+        problem = MaxDivProblem.from_distances(matrix if form == "square" else squareform(matrix), k=3)
 
-    # --- act / assert -----------------
-    vector_problem = MaxDivProblem.new(vectors, k=3, distance_metric=DistanceMetric.l1_manhattan())
-    distance_problem = MaxDivProblem.from_distances(squareform(matrix), k=3)
-    assert vector_problem.default_distance_metric == DistanceMetric.l1_manhattan()
-    assert distance_problem.default_distance_metric is None
+    # --- act --------------------------
+    producer = problem._user_data_matrix_producer()
+
+    # --- assert -----------------------
+    if form == "condensed":
+        assert isinstance(producer, ComputingDataMatrixProducer)
+        assert producer.shape == (5, 5)
+        buffer = np.empty((5, 5), dtype=np.float32)
+        producer.compute_into(buffer)
+        np.testing.assert_array_equal(buffer, matrix)
+    else:
+        assert isinstance(producer, AdoptingDataMatrixProducer)
+        assert producer.array is (problem.vectors if form == "vectors" else problem.distances)  # ty: ignore[unresolved-attribute]
 
 
 # -------------------------------------------------------------------------
@@ -598,27 +612,67 @@ _HYBRID = HybridDiversityMetric.geomean_of(
 )
 
 
-def test_problem_diversity_objective_is_simple_for_a_bare_metric():
-    # --- arrange ----------------------
-    problem = MaxDivProblem.new(np.ones((5, 3), dtype=np.float32), k=2, diversity_metric=DiversityMetric.MIN_SEPARATION)
+_USER_DISTANCES = FullMatrixDistanceSpec(matrix_id=0, label="user distances")
 
-    # --- assert -----------------------
-    assert problem.diversity_objective == DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION)
+
+def _declared_spec(metric: DistanceMetric) -> VectorDistanceSpec:
+    """Return the declared spec of the distances under `metric`, over the user's vectors as given."""
+    return VectorDistanceSpec(matrix_id=0, metric=metric, is_matrix_preprocessed=False)
+
+
+@pytest.mark.parametrize("flavor", ["vectors", "distances"])
+def test_problem_diversity_objective_is_simple_for_a_bare_metric(flavor: str):
+    """A bare metric reads the problem's own distance: its metric over the vectors, or the given distances."""
+    # --- arrange ----------------------
+    if flavor == "vectors":
+        problem = MaxDivProblem.new(
+            np.ones((5, 3), dtype=np.float32),
+            k=2,
+            distance_metric=DistanceMetric.l1_manhattan(),
+            diversity_metric=DiversityMetric.MIN_SEPARATION,
+        )
+        expected_spec = _declared_spec(DistanceMetric.l1_manhattan())
+    else:
+        problem = MaxDivProblem.from_distances(
+            np.ones((5, 5)) - np.eye(5), k=2, diversity_metric=DiversityMetric.MIN_SEPARATION
+        )
+        expected_spec = _USER_DISTANCES
+
+    # --- act / assert -----------------
+    assert problem.diversity_objective == DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, expected_spec)
 
 
 @pytest.mark.parametrize("flavor", ["vectors", "distances"])
 def test_problem_diversity_objective_is_a_hybrid_for_a_hybrid_metric(flavor: str):
+    """Each hybrid term reads the problem's own distance, or the metric that the term names."""
     # --- arrange ----------------------
-    hybrid = HybridDiversityMetric.mean_of(DiversityMetric.MIN_SEPARATION, DiversityMetric.GEOMEAN_SEPARATION)
     if flavor == "vectors":
+        hybrid = HybridDiversityMetric.mean_of(
+            DiversityMetric.MIN_SEPARATION, DiversityMetric.GEOMEAN_SEPARATION.over(DistanceMetric.along_axis(1))
+        )
         problem = MaxDivProblem.new(np.ones((5, 3), dtype=np.float32), k=2, diversity_metric=hybrid)
+        expected_specs = (_declared_spec(DistanceMetric.l2_euclidean()), _declared_spec(DistanceMetric.along_axis(1)))
     else:
+        hybrid = HybridDiversityMetric.mean_of(DiversityMetric.MIN_SEPARATION, DiversityMetric.GEOMEAN_SEPARATION)
         problem = MaxDivProblem.from_distances(np.ones((5, 5)) - np.eye(5), k=2, diversity_metric=hybrid)
+        expected_specs = (_USER_DISTANCES, _USER_DISTANCES)
 
-    # --- assert -----------------------
+    # --- act / assert -----------------
     assert problem.diversity_metric is hybrid
     assert isinstance(problem.diversity_objective, DiversityObjectiveHybrid)
-    assert problem.diversity_objective == hybrid._to_objective()
+    assert problem.diversity_objective == hybrid._to_objective(expected_specs)
+
+
+def test_a_bare_term_and_a_term_over_the_problems_own_metric_read_one_distance_spec():
+    """A hybrid that names the problem's own metric beside a bare term declares 1 distance spec for both."""
+    # --- arrange ----------------------
+    hybrid = HybridDiversityMetric.geomean_of(
+        DiversityMetric.MIN_SEPARATION, DiversityMetric.MEAN_SEPARATION.over(DistanceMetric.l2_euclidean())
+    )
+    problem = MaxDivProblem.new(np.ones((5, 3), dtype=np.float32), k=2, diversity_metric=hybrid)
+
+    # --- act / assert -----------------
+    assert problem.diversity_objective.distinct_distance_specs() == (_declared_spec(DistanceMetric.l2_euclidean()),)
 
 
 def test_problem_new_hybrid_term_along_axis_beyond_the_dimension_count_raises():

@@ -296,15 +296,45 @@ class DistanceMetric:
         """
         validate_vector_array_layout(vectors)
         self.validate(vectors)
-        return self._transform_checked_vectors(vectors)
+        if self.needs_preprocessed_vectors:
+            out = np.empty((vectors.shape[0], self.preprocessed_n_dims(vectors.shape[1])), dtype=np.float32)
+            self._preprocess_checked_vectors_into(vectors, out)
+            return out
+        else:
+            return vectors
 
-    def _transform_checked_vectors(self, vectors: NDArray[np.float32]) -> NDArray[np.float32]:
-        """Return the array that the pairwise distance function reads; by default `vectors` itself.
+    def preprocess_into(self, vectors: NDArray[np.float32], out: NDArray[np.float32]) -> None:
+        """Write the vectors, in the form that this metric's pairwise distance function reads, into `out`.
 
-        `preprocess` checks `vectors` and then calls this method, so a subclass overrides it to transform
-        the vectors without repeating the checks.
+        A metric that does not preprocess writes a copy of the vectors.  The input is never written.
+
+        Args:
+            vectors: the vectors to preprocess, in the form `preprocess` accepts.
+            out: a float32 buffer of shape `(n, preprocessed_n_dims(d))`, where `(n, d)` is the shape of
+                `vectors`.
+
+        Raises:
+            ValueError: If `preprocess` would reject `vectors`, or `out` does not have the shape above.
         """
-        return vectors
+        validate_vector_array_layout(vectors)
+        self.validate(vectors)
+        n, n_dims = vectors.shape
+        expected_shape = (n, self.preprocessed_n_dims(n_dims))
+        if out.shape != expected_shape:
+            raise ValueError(f"{self!r} preprocesses into a buffer of shape {expected_shape}; got {out.shape}.")
+        self._preprocess_checked_vectors_into(vectors, out)
+
+    def preprocessed_n_dims(self, n_dims: int) -> int:
+        """Return the dimension count of the preprocessed vectors, for vectors of `n_dims` dimensions."""
+        return n_dims
+
+    def _preprocess_checked_vectors_into(self, vectors: NDArray[np.float32], out: NDArray[np.float32]) -> None:
+        """Write the array that the pairwise distance function reads into `out`; by default a copy of `vectors`.
+
+        `preprocess` and `preprocess_into` check `vectors` and then call this method, so a subclass overrides it
+        to transform the vectors without repeating the checks.
+        """
+        out[:] = vectors
 
     # --------------------------------------------------------------------------
     #  Cost of computing a distance
@@ -462,9 +492,9 @@ class CosineDistanceMetric(DistanceMetric):
                 f"Cosine distance is undefined for zero vectors; found an all-zero vector at row {zero_rows[0]}."
             )
 
-    def _transform_checked_vectors(self, vectors: NDArray[np.float32]) -> NDArray[np.float32]:
-        """Return a fresh float32 array with each row scaled to unit L2 norm."""
-        return _normalize_rows(vectors)
+    def _preprocess_checked_vectors_into(self, vectors: NDArray[np.float32], out: NDArray[np.float32]) -> None:
+        """Write each row, scaled to unit L2 norm, into `out`."""
+        _normalize_rows_into(vectors, out)
 
 
 # ==================================================================================================
@@ -524,9 +554,13 @@ class AlongAxisDistanceMetric(DistanceMetric):
         if self.axis >= n_dims:
             raise ValueError(f"{self!r} reads a coordinate that {n_dims}-dimensional vectors do not have.")
 
-    def _transform_checked_vectors(self, vectors: NDArray[np.float32]) -> NDArray[np.float32]:
-        """Return a fresh (n, 1) float32 array holding the coordinate along `axis`."""
-        return vectors[:, self.axis : self.axis + 1].copy()
+    def preprocessed_n_dims(self, n_dims: int) -> int:
+        """Return 1: the preprocessed vectors hold only the coordinate along `axis`."""
+        return 1
+
+    def _preprocess_checked_vectors_into(self, vectors: NDArray[np.float32], out: NDArray[np.float32]) -> None:
+        """Write the coordinate along `axis` into the single column of `out`."""
+        out[:, 0] = vectors[:, self.axis]
 
     def _factory_arg_reprs(self) -> tuple[str, ...]:
         """Return the axis."""
@@ -628,22 +662,23 @@ class L2AndProjectionsForKDistanceMetric(L2AndProjectionsDistanceMetric):
 # ==================================================================================================
 #  Helpers
 # ==================================================================================================
-# `_normalize_rows` serves only the cosine metric class, but stays module-level because numba compiles it.
-@lazy_njit(numba.float32[:, ::1](numba.types.Array(numba.float32, 2, "C", readonly=True)), cache=True)
-def _normalize_rows(vectors: NDArray[np.float32]) -> NDArray[np.float32]:
-    """Scale each row to unit L2 norm into a fresh float32 array.
+# `_normalize_rows_into` serves only the cosine metric class, but stays module-level because numba compiles it.
+@lazy_njit(
+    numba.void(numba.types.Array(numba.float32, 2, "C", readonly=True), numba.float32[:, ::1]),
+    cache=True,
+)
+def _normalize_rows_into(vectors: NDArray[np.float32], out: NDArray[np.float32]) -> None:
+    """Write each row of `vectors`, scaled to unit L2 norm, into the same row of `out`, which has the same shape.
 
     Norms accumulate in float64 and each element narrows to float32 on store, so the result is the
     exact normalization the cosine pairwise distance functions operate on.  Rows must not be all-zero.
     """
     n = vectors.shape[0]
     d = vectors.shape[1]
-    normalized = np.empty((n, d), dtype=np.float32)
     for i in range(n):
         acc = np.float64(0.0)
         for c in range(d):
             acc += np.float64(vectors[i, c]) * np.float64(vectors[i, c])
         norm = np.sqrt(acc)
         for c in range(d):
-            normalized[i, c] = np.float32(np.float64(vectors[i, c]) / norm)
-    return normalized
+            out[i, c] = np.float32(np.float64(vectors[i, c]) / norm)

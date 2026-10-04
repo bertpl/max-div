@@ -2,7 +2,7 @@
 
 A `DiversityObjective` is one of two kinds, each holding only the fields that kind of objective needs:
 
-- `DiversityObjectiveSimple` — one diversity metric over one distance metric.
+- `DiversityObjectiveSimple` — one diversity metric over one set of distances, named by a `DistanceSpec`.
 - `DiversityObjectiveHybrid` — several simple objectives (its terms) combined by a weighted aggregation,
   a `HybridAggregationBase`.
 
@@ -20,7 +20,7 @@ simple objective counting as a single term):
 - the approximate geomean is needed when a term is min-separation;
 - the non-zero fraction is needed when a term is min-separation or goes to zero when one pair coincides.
 
-Each tie-breaker is computed over every distinct distance metric of the objective, as a hybrid when there are several.
+Each tie-breaker is computed over every distinct distance spec of the objective, as a hybrid when there are several.
 A hybrid gets one more tie-breaker, ranked before these, when its aggregation returns a tie-breaker
 aggregation over the hybrid's own terms (`HybridAggregationBase.tie_breaker_aggregation_over_terms`).
 """
@@ -28,7 +28,7 @@ aggregation over the hybrid's own terms (`HybridAggregationBase.tie_breaker_aggr
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from functools import cached_property
 from typing import TYPE_CHECKING, NamedTuple
 
@@ -38,20 +38,20 @@ from ._aggregation import HybridAggregationArithmeticMean, HybridAggregationBase
 from ._enum import DiversityContributionFamily, DiversityMetric
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
+    from collections.abc import Mapping, Sequence
 
     from numpy.typing import NDArray
 
-    from max_div._core.metrics._distance import DistanceMetric
+    from max_div._core.metrics._distance import DistanceSpec
 
 
 class DiversityTrackerSpec(NamedTuple):
-    """The distance metric and the contribution family to which the diversity metric belongs.
+    """The distance spec that a diversity metric reads, and the contribution family to which the metric belongs.
 
-    The solver builds one contribution tracker for each distinct spec.
+    The solver builds one contribution tracker for each distinct tracker spec.
     """
 
-    distance_metric: DistanceMetric | None  # None → the problem's own distance
+    distance_spec: DistanceSpec
     contribution_family: DiversityContributionFamily
 
 
@@ -62,7 +62,8 @@ class DiversityObjective(ABC):
     """A diversity objective the solver maximizes, or a tie-breaker it ranks ties by.
 
     Each subclass holds the fields its kind needs and computes its own diversity score. From the
-    specs a subclass declares, the base derives the distinct specs and the distinct distance metrics.
+    tracker specs a subclass declares, the base derives the distinct tracker specs and the distinct
+    distance specs.
     """
 
     @property
@@ -105,7 +106,7 @@ class DiversityObjective(ABC):
         """Return the tie-breaker objectives to rank ties by when the caller sets none of its own.
 
         The rule in the module docstring, applied to this objective's diversity metrics; each
-        tie-breaker is built over this objective's distinct distance metrics.
+        tie-breaker is built over this objective's distinct distance specs.
         """
         # --- which tie-breakers the metrics need ----
         # min-separation depends on the closest pair alone, so a swap that spreads the other items
@@ -137,24 +138,32 @@ class DiversityObjective(ABC):
             tie_breaker_metrics.append((DiversityMetric.NON_ZERO_SEPARATION_FRAC, HybridAggregationArithmeticMean))
 
         # --- each over every distinct distance ------
-        distance_metrics = self.distinct_distance_metrics()
+        distance_specs = self.distinct_distance_specs()
         tie_breakers: list[DiversityObjective] = []
         for metric, aggregation_type in tie_breaker_metrics:
-            if len(distance_metrics) == 1:
-                tie_breakers.append(DiversityObjectiveSimple(metric, distance_metrics[0]))
+            if len(distance_specs) == 1:
+                tie_breakers.append(DiversityObjectiveSimple(metric, distance_specs[0]))
             else:
-                terms = tuple(DiversityObjectiveSimple(metric, distance_metric) for distance_metric in distance_metrics)
+                terms = tuple(DiversityObjectiveSimple(metric, distance_spec) for distance_spec in distance_specs)
                 tie_breakers.append(DiversityObjectiveHybrid(terms, aggregation_type.with_unit_weights(len(terms))))
         return tie_breakers
+
+    @abstractmethod
+    def with_distance_specs(self, distance_specs: Mapping[DistanceSpec, DistanceSpec]) -> DiversityObjective:
+        """Return a copy of this objective with each distance spec replaced by the spec it maps to.
+
+        Args:
+            distance_specs: a replacement for every distance spec of this objective.
+        """
 
     @cached_property
     def distinct_tracker_specs(self) -> tuple[DiversityTrackerSpec, ...]:
         """Return the distinct specs of this objective, in first-seen order."""
         return tuple(dict.fromkeys(self.tracker_specs))
 
-    def distinct_distance_metrics(self) -> tuple[DistanceMetric | None, ...]:
-        """Return the distinct distance metrics of this objective's specs, in first-seen order."""
-        return tuple(dict.fromkeys(spec.distance_metric for spec in self.tracker_specs))
+    def distinct_distance_specs(self) -> tuple[DistanceSpec, ...]:
+        """Return the distinct distance specs of this objective's tracker specs, in first-seen order."""
+        return tuple(dict.fromkeys(spec.distance_spec for spec in self.tracker_specs))
 
 
 # ==================================================================================================
@@ -162,18 +171,19 @@ class DiversityObjective(ABC):
 # ==================================================================================================
 @dataclass(frozen=True)
 class DiversityObjectiveSimple(DiversityObjective):
-    """One diversity metric over one distance metric; `distance_metric` is `None` for the problem's own distance."""
+    """One diversity metric over the distances that one distance spec names."""
 
     diversity_metric: DiversityMetric
-    distance_metric: DistanceMetric | None = None
+    distance_spec: DistanceSpec
 
     @property
     def label(self) -> str:
-        """Return e.g. `MIN_SEPARATION over L2`, or just the metric name over the problem's own distance."""
-        if self.distance_metric is None:
-            return self.diversity_metric.value
-        else:
-            return f"{self.diversity_metric.value} over {self.distance_metric.label}"
+        """Return e.g. `MIN_SEPARATION over L2`, or `MIN_SEPARATION over user distances`."""
+        return f"{self.diversity_metric.value} over {self.distance_spec.label}"
+
+    def with_distance_specs(self, distance_specs: Mapping[DistanceSpec, DistanceSpec]) -> DiversityObjectiveSimple:
+        """Return a copy of this objective over the spec that its distance spec maps to."""
+        return replace(self, distance_spec=distance_specs[self.distance_spec])
 
     def compute(self, contributions: Sequence[NDArray[np.float32]]) -> float:
         """Reduce this objective's one contribution array with its diversity metric."""
@@ -186,7 +196,7 @@ class DiversityObjectiveSimple(DiversityObjective):
     @cached_property
     def tracker_spec(self) -> DiversityTrackerSpec:
         """Return the one spec of this objective: the single entry of `tracker_specs`, as a shorthand."""
-        return DiversityTrackerSpec(self.distance_metric, self.diversity_metric.contribution_family)
+        return DiversityTrackerSpec(self.distance_spec, self.diversity_metric.contribution_family)
 
     @cached_property
     def tracker_specs(self) -> tuple[DiversityTrackerSpec, ...]:
@@ -250,6 +260,10 @@ class DiversityObjectiveHybrid(DiversityObjective):
         # one row per item, one column per term, so each item's values are contiguous
         stacked = np.stack(contributions, axis=1).astype(np.float32, copy=False)
         return self.aggregation.aggregate_rows(stacked)
+
+    def with_distance_specs(self, distance_specs: Mapping[DistanceSpec, DistanceSpec]) -> DiversityObjectiveHybrid:
+        """Return a copy of this objective with each term over the spec that its distance spec maps to."""
+        return replace(self, terms=tuple(term.with_distance_specs(distance_specs) for term in self.terms))
 
     def default_tie_breakers(self) -> list[DiversityObjective]:
         """Return the aggregation's extra tie-breaker over the terms, if any, then the default tie-breakers.

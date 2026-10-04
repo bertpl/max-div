@@ -407,6 +407,29 @@ def test_preprocess_returns_the_layout_reads_expect(metric: DistanceMetric, vect
     validate_vector_array_layout(preprocessed)  # raises on violation
 
 
+def test_preprocess_into_writes_what_preprocess_returns(metric: DistanceMetric, vectors: np.ndarray):
+    """A buffer of the shape that the metric states before preprocessing receives exactly what `preprocess` returns."""
+    # --- arrange ----------------------
+    n, n_dims = vectors.shape
+    out = np.empty((n, metric.preprocessed_n_dims(n_dims)), dtype=np.float32)
+
+    # --- act --------------------------
+    metric.preprocess_into(vectors, out)
+
+    # --- assert -----------------------
+    np.testing.assert_array_equal(out, metric.preprocess(vectors))
+
+
+def test_preprocess_into_rejects_a_buffer_of_another_shape(vectors: np.ndarray):
+    """A buffer without the preprocessed shape is refused, because the compiled normalization does not check bounds."""
+    # --- arrange ----------------------
+    out = np.empty((vectors.shape[0], vectors.shape[1] + 1), dtype=np.float32)
+
+    # --- act / assert -----------------
+    with pytest.raises(ValueError, match="preprocesses into a buffer of shape"):
+        DistanceMetric.cosine().preprocess_into(vectors, out)
+
+
 # ==================================================================================================
 #  Cosine
 # ==================================================================================================

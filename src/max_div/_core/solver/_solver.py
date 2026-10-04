@@ -1,4 +1,4 @@
-from collections.abc import Callable, Mapping
+from collections.abc import Callable
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -7,8 +7,8 @@ from max_div._core._utils import Timer, deterministic_hash
 from max_div._core.constraints import Constraint
 from max_div._core.constraints.constraints import _np_con_count_satisfied
 from max_div._core.distance_storage import DistanceStorageTypes
-from max_div._core.metrics import DistanceMetric, DiversityObjective
-from max_div._core.metrics._distance import DistanceStore
+from max_div._core.metrics import DiversityObjective
+from max_div._core.metrics._distance import DataMatrixReader
 
 from ._constraint_penalty import ConstraintPenalty
 from ._duration import E2eBudget, Elapsed
@@ -40,7 +40,7 @@ class MaxDivSolver:
     def __init__(
         self,
         n: int,
-        stores_by_distance_provider: Callable[[], Mapping[DistanceMetric | None, DistanceStore]],
+        data_matrix_reader_provider: Callable[[], DataMatrixReader],
         k: int,
         diversity_objectives: list[DiversityObjective],
         constraints: list[Constraint],
@@ -56,19 +56,19 @@ class MaxDivSolver:
 
         Args:
             n: (int) The number of items in the problem ('universe').
-            stores_by_distance_provider: called at the start of each `solve` to obtain the
-                distance -> store mapping to read from, so `build` stays lean and the stores are
-                built inside `solve`.
+            data_matrix_reader_provider: called at the start of each `solve` to obtain the reader
+                that the distance stores are built from, so `build` stays lean and the data
+                matrices are produced inside `solve`.
             k: (int) The number of items to be selected from the input set ('universe').
             diversity_objectives: the primary objective first, then the tie-breakers, scored in
-                that order.
+                that order; each distance spec names the data matrix that its distance store reads.
             constraints: (list[Constraint]) A list of m constraints to try to satisfy during solving.
             solver_steps: (list[SolverStep]) A list of solver steps to execute,
                 the first of which needs to be an InitializationStep,
                 while all latter ones need to be OptimizationSteps.
             seed: (int) Random seed for the solver.
             constraint_penalty: (ConstraintPenalty) How constraint violations are penalized (default: LINEAR).
-            distance_storage: (DistanceStorageTypes) Each store's distance and its resolved storage type.
+            distance_storage: (DistanceStorageTypes) Each store's label and its resolved storage type.
             batch_seconds: (float) Targeted wall-clock size of one optimization batch.
             e2e_budget: (E2eBudget | None) Wall-clock budget for the whole solve — distance
                 computation and initialization included; each optimization step receives whatever
@@ -80,7 +80,7 @@ class MaxDivSolver:
         """
         # --- problem description ----------------
         self._n = n
-        self._stores_by_distance_provider = stores_by_distance_provider
+        self._data_matrix_reader_provider = data_matrix_reader_provider
         self._distance_storage = distance_storage
         self._k = k
         self._diversity_objectives = diversity_objectives
@@ -136,10 +136,9 @@ class MaxDivSolver:
         solve_timeline.record_step_start()
         with Timer() as timer:
             progress_reporter.solver_step_started(init_step_identity)
-            stores_by_distance = self._stores_by_distance_provider()
             state = SolverState.new(
                 n=self._n,
-                stores_by_distance=stores_by_distance,
+                data_matrix_reader=self._data_matrix_reader_provider(),
                 k=self._k,
                 diversity_objectives=self._diversity_objectives,
                 constraints=self._constraints,

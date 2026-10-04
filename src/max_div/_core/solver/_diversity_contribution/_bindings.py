@@ -8,7 +8,8 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    from max_div._core.metrics import DistanceMetric, DiversityObjective, DiversityTrackerSpec
+    from max_div._core.metrics import DiversityObjective, DiversityTrackerSpec
+    from max_div._core.metrics._distance import DistanceSpec
 
 
 # ==================================================================================================
@@ -16,23 +17,20 @@ if TYPE_CHECKING:
 # ==================================================================================================
 @dataclass(frozen=True)
 class DiversityObjectiveBindings:
-    """The bindings map one solve's diversity objectives to one store per distance metric and one tracker per spec.
+    """The bindings map a solve's diversity objectives to a store per distance spec and a tracker per tracker spec.
 
     The score reads one contribution array per tracker, in the trackers' order; the bindings also
     record where each objective's own arrays sit in that order. The bindings are a function of the objective
-    list alone, so every place that needs an order calls `for_objectives` and gets the same one:
-
-    - the builder, for the stores it builds;
-    - a worker, for the stores it attaches;
-    - the solver state, for the trackers it builds and the arrays it scores.
+    list alone, so every place that needs an order calls `for_objectives` and gets the same one: the
+    solver state, for the stores and trackers it builds and the arrays it scores, and the score
+    generator, for the arrays it reads.
 
     No layer derives an order of its own.
     """
 
-    # one entry per distance store: the distinct distance metrics that the objectives use, in
-    # first-seen order (`None` is the problem's own distance metric)
-    distance_metrics: tuple[DistanceMetric | None, ...]
-    # one entry per contribution tracker: the distinct specs (distance metric, contribution family)
+    # one entry per distance store: the distinct distance specs that the objectives use, in first-seen order
+    distance_specs: tuple[DistanceSpec, ...]
+    # one entry per contribution tracker: the distinct tracker specs (distance spec, contribution family)
     # that the objectives' contributions are tracked under, in first-seen order; this is also the
     # order of the score's contribution arrays
     tracker_specs: tuple[DiversityTrackerSpec, ...]
@@ -46,9 +44,9 @@ class DiversityObjectiveBindings:
         tracker_specs = tuple(
             dict.fromkeys(spec for objective in diversity_objectives for spec in objective.tracker_specs)
         )
-        distance_metrics = tuple(dict.fromkeys(spec.distance_metric for spec in tracker_specs))
+        distance_specs = tuple(dict.fromkeys(spec.distance_spec for spec in tracker_specs))
         position_of_spec = {spec: position for position, spec in enumerate(tracker_specs)}
         objective_spec_positions = tuple(
             tuple(position_of_spec[spec] for spec in objective.tracker_specs) for objective in diversity_objectives
         )
-        return cls(distance_metrics, tracker_specs, objective_spec_positions)
+        return cls(distance_specs, tracker_specs, objective_spec_positions)

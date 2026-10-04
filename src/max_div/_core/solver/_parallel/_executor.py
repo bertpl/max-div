@@ -1,12 +1,12 @@
-"""One solver runs per worker process over a single shared store, and the executor collects the results.
+"""One solver runs per worker process over shared data matrices, and the executor collects the results.
 
-Workers are **spawned, never forked**.  The parent runs numba parallel code while building the
-distance store, and numba's threading layer does not survive a fork — a forked child deadlocks on
+Workers are **spawned, never forked**.  The parent runs numba parallel code while computing the
+data matrices, and numba's threading layer does not survive a fork — a forked child deadlocks on
 its first parallel call.
 
 Each worker is a process rather than a thread because the search is Python-level and would contend
-on the interpreter lock.  Only the distances are shared; every worker allocates its own bookkeeping,
-which is small next to the distances.
+on the interpreter lock.  Only the data matrices are shared; every worker allocates its own
+bookkeeping, which is small next to the distances.
 
 One queue carries everything the workers send — progress snapshots while they solve, a result each
 when they finish — and the parent drains it in a render loop that runs *while* the workers solve.
@@ -22,8 +22,7 @@ from collections.abc import Sequence
 from multiprocessing.process import BaseProcess
 from multiprocessing.queues import Queue
 
-from max_div._core.distance_storage import PublishedDistanceStoresRecord, stores_by_distance
-from max_div._core.solver._diversity_contribution import DiversityObjectiveBindings
+from max_div._core.distance_storage import PublishedDataMatrixRecords, SharedMemoryDataMatrixReader
 from max_div._core.solver._progress_reporting import ProgressReporter, ProgressSnapshot, SnapshotRequirements
 from max_div._core.solver._solver_config import SolverConfig
 
@@ -46,19 +45,19 @@ _JOIN_SECONDS = 30.0
 
 def run_workers(
     configs: list[SolverConfig],
-    published_distance_stores_record: PublishedDistanceStoresRecord,
+    published_matrix_records: PublishedDataMatrixRecords,
     coordinators: Sequence[WorkerCoordinator],
     progress_reporter: ProgressReporter | None = None,
 ) -> tuple[list[WorkerResult], list[WorkerFailure]]:
-    """Solve one configuration per worker over the published store, and return what each reported.
+    """Solve one configuration per worker over the published data matrices, and return what each reported.
 
     Deciding what a failure means — warn, raise — is the caller's policy; `WorkerResult.best`
     raises when no result came back at all.
 
     Args:
         configs: one solver configuration per worker, in worker order.
-        published_distance_stores_record: the distance stores that this process published; every worker
-            builds its distance stores from them.
+        published_matrix_records: the records of the data matrices that this process published in
+            shared memory; every worker builds its distance stores over them.
         coordinators: one coordinator per worker, in worker order; `_coordinator` documents
             the topology this list wires up.
         progress_reporter: renders the workers' combined progress from this (parent) process; a
@@ -83,7 +82,7 @@ def run_workers(
     workers = [
         context.Process(
             target=solve_in_worker,
-            args=(index, config, published_distance_stores_record, coordinators[index], messages, requirements),
+            args=(index, config, published_matrix_records, coordinators[index], messages, requirements),
             daemon=True,
         )
         for index, config in enumerate(configs)
@@ -107,12 +106,12 @@ def run_workers(
 def solve_in_worker(
     worker_index: int,
     config: SolverConfig,
-    published_distance_stores_record: PublishedDistanceStoresRecord,
+    published_matrix_records: PublishedDataMatrixRecords,
     coordinator: WorkerCoordinator,
     messages: Queue,
     requirements: SnapshotRequirements | None,
 ) -> None:
-    """Solve one configuration in this process and report the result, then release the store.
+    """Solve one configuration in this process and report the result, then release the shared data matrices.
 
     This function is the entry point of a spawned worker, so it must stay importable by name — a
     spawned child reconstructs the function from its module path rather than inheriting it.
@@ -122,12 +121,9 @@ def solve_in_worker(
     else:
         reporter = ProgressReporter.silent()
     try:
-        with published_distance_stores_record.attached_distance_stores() as stores:
-            # the stores were published in the bindings' store order, which the worker derives from
-            # the same objectives, so it rebuilds the same distance -> store mapping
-            bindings = DiversityObjectiveBindings.for_objectives(config.diversity_objectives)
-            mapping = stores_by_distance(bindings.distance_metrics, stores)
-            solver = config.build_solver(stores_by_distance=mapping)
+        with SharedMemoryDataMatrixReader(published_matrix_records) as data_matrix_reader:
+            # the distance specs of the config's objectives name the matrix ids that the records locate
+            solver = config.build_solver(data_matrix_reader=data_matrix_reader)
             t_start = time.monotonic()
             solution = solver.solve(coordinator=coordinator, progress_reporter=reporter)
             messages.put(

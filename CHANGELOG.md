@@ -10,12 +10,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+- The labels of a solution's diversity objectives always name the distance they read: `MIN_SEPARATION over L2` for a problem built from vectors, `MIN_SEPARATION over user distances` for one built from distances
+- A solver's `build()` raises for a distance storage that cannot work, such as `LAZY` on a problem built from distances, where before `solve()` raised
+- A parallel solve over a square distance matrix raises when the matrix's copy into shared memory cannot fit in physical memory, where before it could page
 
 ### Deprecated
 
 ### Removed
+- `MaxDivProblem.default_distance_metric`; a problem built from vectors holds its metric in `distance_metric`
 
 ### Fixed
+- A hybrid diversity metric that reads the problem's own distance both as a bare term and through `.over(...)` stores that distance once, where before it stored it twice
 
 ### Security
 

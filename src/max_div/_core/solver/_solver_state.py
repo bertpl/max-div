@@ -18,12 +18,10 @@ from ._diversity_contribution import (
 from ._score import Score, ScoreGenerator
 
 if TYPE_CHECKING:
-    from collections.abc import Mapping
-
     from numpy.typing import NDArray
 
-    from max_div._core.metrics import DistanceMetric, DiversityObjective
-    from max_div._core.metrics._distance import DistanceStore
+    from max_div._core.metrics import DiversityObjective
+    from max_div._core.metrics._distance import DataMatrixReader, DistanceStore
 
 
 # ==================================================================================================
@@ -579,21 +577,25 @@ class SolverState:
     def new(
         cls,
         n: int,
-        stores_by_distance: Mapping[DistanceMetric | None, DistanceStore],
+        data_matrix_reader: DataMatrixReader,
         k: int,
         diversity_objectives: list[DiversityObjective],
         constraints: list[Constraint],
         penalty_quadratic: bool = False,
     ) -> SolverState:
-        """Build an empty-selection state.
+        """Build an empty-selection state, with one distance store per distinct distance spec of the objectives.
 
-        `diversity_objectives` lists the primary objective first, then the tie-breakers.
+        `diversity_objectives` lists the primary objective first, then the tie-breakers.  Each distance
+        spec builds its distance store from `data_matrix_reader`.
         """
         # --- diversity contributions ------------
         n_np = np.int32(n)
         primary_objective = diversity_objectives[0]
         bindings = DiversityObjectiveBindings.for_objectives(diversity_objectives)
-        contribution_trackers = DiversityContributionTrackers.for_specs(bindings.tracker_specs, stores_by_distance)
+        stores_by_distance_spec = {
+            spec: spec.build_distance_store(data_matrix_reader) for spec in bindings.distance_specs
+        }
+        contribution_trackers = DiversityContributionTrackers.for_specs(bindings.tracker_specs, stores_by_distance_spec)
 
         # --- selection --------------------------
         selected = np.full(n_np, False, dtype=np.bool)
@@ -623,7 +625,7 @@ class SolverState:
             ),
             primary_objective=primary_objective,
             distance_store=(
-                stores_by_distance[primary_objective.distinct_tracker_specs[0].distance_metric]
+                stores_by_distance_spec[primary_objective.distinct_tracker_specs[0].distance_spec]
                 if len(primary_objective.distinct_tracker_specs) == 1
                 else None
             ),

@@ -6,13 +6,14 @@ import pytest
 from numpy import random
 
 from max_div._core.constraints import Constraint
+from max_div._core.distance_storage import AdoptingDataMatrixProducer, InProcessDataMatrixReader
 from max_div._core.metrics import DistanceMetric, DiversityMetric, DiversityObjectiveSimple
-from max_div._core.metrics._distance import DistanceStore
+from max_div._core.metrics._distance import FullMatrixDistanceSpec, VectorDistanceSpec, compute_full_matrix
 from max_div._core.solver._diversity_contribution import MeanDistanceTracker, SeparationTracker
 from max_div._core.solver._solver_state import Savepoint, SolverState
 from tests.helpers import hybrid_objective
 
-from .objectives import simple_objective, tie_breaker_objectives
+from .objectives import TEST_DISTANCE_SPEC, full_matrix_reader, simple_objective, tie_breaker_objectives
 
 # ==================================================================================================
 #  Fixtures
@@ -28,7 +29,7 @@ def _new_solver_state(constraints: list[Constraint]) -> SolverState:
     """Build an empty-selection solver state with a geomean-separation objective and the given constraints."""
     return SolverState.new(
         n=_VECTORS.shape[0],
-        stores_by_distance={None: DistanceStore.full_matrix_from_vectors(_VECTORS, DistanceMetric.l1_manhattan())},
+        data_matrix_reader=full_matrix_reader(_VECTORS, DistanceMetric.l1_manhattan()),
         k=3,
         diversity_objectives=[
             simple_objective(DiversityMetric.GEOMEAN_SEPARATION),
@@ -79,7 +80,7 @@ def test_solver_state_primary_objective_excludes_the_tie_breakers():
     # --- act --------------------------
     state = SolverState.new(
         n=_VECTORS.shape[0],
-        stores_by_distance={None: DistanceStore.full_matrix_from_vectors(_VECTORS, DistanceMetric.l1_manhattan())},
+        data_matrix_reader=full_matrix_reader(_VECTORS, DistanceMetric.l1_manhattan()),
         k=3,
         diversity_objectives=objectives,
         constraints=[],
@@ -95,15 +96,21 @@ def test_solver_state_distance_store_raises_for_an_objective_over_several_distan
     l1, l2 = DistanceMetric.l1_manhattan(), DistanceMetric.l2_euclidean()
     state = SolverState.new(
         n=_VECTORS.shape[0],
-        stores_by_distance={
-            l1: DistanceStore.full_matrix_from_vectors(_VECTORS, l1),
-            l2: DistanceStore.full_matrix_from_vectors(_VECTORS, l2),
-        },
+        data_matrix_reader=InProcessDataMatrixReader(
+            {
+                0: AdoptingDataMatrixProducer(compute_full_matrix(_VECTORS, l1)),
+                1: AdoptingDataMatrixProducer(compute_full_matrix(_VECTORS, l2)),
+            }
+        ),
         k=3,
         diversity_objectives=[
             hybrid_objective(
-                DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, l1),
-                DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, l2),
+                DiversityObjectiveSimple(
+                    DiversityMetric.MIN_SEPARATION, FullMatrixDistanceSpec(matrix_id=0, label="L1")
+                ),
+                DiversityObjectiveSimple(
+                    DiversityMetric.MIN_SEPARATION, FullMatrixDistanceSpec(matrix_id=1, label="L2")
+                ),
             )
         ],
         constraints=[],
@@ -122,7 +129,7 @@ def test_solver_state_con_weights_reach_the_state():
     # --- act --------------------------
     state = SolverState.new(
         n=vectors.shape[0],
-        stores_by_distance={None: DistanceStore.full_matrix_from_vectors(vectors, DistanceMetric.l1_manhattan())},
+        data_matrix_reader=full_matrix_reader(vectors, DistanceMetric.l1_manhattan()),
         k=3,
         diversity_objectives=[simple_objective(DiversityMetric.GEOMEAN_SEPARATION)],
         constraints=[
@@ -396,19 +403,19 @@ def test_solver_state_tracker_set_mean_distance(new_solver_state):
     """A mean-distance main metric constructs only a MeanDistanceTracker; mixed metrics construct both."""
     # --- arrange ----------------------
     vectors = np.array([[0.0], [1.0], [2.0], [3.0]], dtype=np.float32)
-    store = DistanceStore.full_matrix_from_vectors(vectors, DistanceMetric.l1_manhattan())
+    data_matrix_reader = full_matrix_reader(vectors, DistanceMetric.l1_manhattan())
 
     # --- act --------------------------
     state_pure = SolverState.new(
         n=4,
-        stores_by_distance={None: store},
+        data_matrix_reader=data_matrix_reader,
         k=2,
         diversity_objectives=[simple_objective(DiversityMetric.MEAN_PAIRWISE_DISTANCE)],
         constraints=[],
     )
     state_mixed = SolverState.new(
         n=4,
-        stores_by_distance={None: store},
+        data_matrix_reader=data_matrix_reader,
         k=2,
         diversity_objectives=[
             simple_objective(DiversityMetric.MEAN_PAIRWISE_DISTANCE),
@@ -432,7 +439,7 @@ def test_solver_state_mean_pairwise_distance_score():
     vectors = np.array([[0.0], [1.0], [3.0], [7.0]], dtype=np.float32)
     state = SolverState.new(
         n=4,
-        stores_by_distance={None: DistanceStore.full_matrix_from_vectors(vectors, DistanceMetric.l1_manhattan())},
+        data_matrix_reader=full_matrix_reader(vectors, DistanceMetric.l1_manhattan()),
         k=3,
         diversity_objectives=[simple_objective(DiversityMetric.MEAN_PAIRWISE_DISTANCE)],
         constraints=[],
@@ -473,7 +480,7 @@ def _make_reference_state() -> SolverState:
     vectors = rng.random((30, 3)).astype(np.float32)
     return SolverState.new(
         n=vectors.shape[0],
-        stores_by_distance={None: DistanceStore.full_matrix_from_vectors(vectors, DistanceMetric.l2_euclidean())},
+        data_matrix_reader=full_matrix_reader(vectors, DistanceMetric.l2_euclidean()),
         k=8,
         diversity_objectives=[
             simple_objective(DiversityMetric.GEOMEAN_SEPARATION),
@@ -620,7 +627,7 @@ def test_selected_index_list_survives_random_mutation_sequences(seed: int):
     def fresh() -> SolverState:
         return SolverState.new(
             n=n,
-            stores_by_distance={None: DistanceStore.full_matrix_from_vectors(vectors, DistanceMetric.l1_manhattan())},
+            data_matrix_reader=full_matrix_reader(vectors, DistanceMetric.l1_manhattan()),
             k=8,
             diversity_objectives=[simple_objective(DiversityMetric.GEOMEAN_SEPARATION)],
             constraints=[],
@@ -679,7 +686,7 @@ def _make_adoption_state(
     vectors = np.array([[0.0], [1.0], [3.0], [6.0], [10.0], [15.0], [21.0], [28.0]], dtype=np.float32)
     return SolverState.new(
         n=vectors.shape[0],
-        stores_by_distance={None: DistanceStore.full_matrix_from_vectors(vectors, DistanceMetric.l1_manhattan())},
+        data_matrix_reader=full_matrix_reader(vectors, DistanceMetric.l1_manhattan()),
         k=4,
         diversity_objectives=[simple_objective(diversity_metric), *tie_breaker_objectives(diversity_tie_breakers)],
         constraints=[
@@ -839,17 +846,18 @@ def test_distance_store_property_exposes_the_trackers_store(new_solver_state_unc
 # ==================================================================================================
 def _state_over(vectors: np.ndarray, layout: str, diversity_metric: DiversityMetric, k: int) -> SolverState:
     """Build an unconstrained state over `vectors` with the given store layout and diversity metric."""
-    n = vectors.shape[0]
     metric = DistanceMetric.l2_euclidean()
-    store = {
-        "full_matrix": DistanceStore.full_matrix_from_vectors(vectors, metric),
-        "lazy": DistanceStore.lazy(vectors, metric),
-    }[layout]
+    if layout == "full_matrix":
+        data_matrix_reader = full_matrix_reader(vectors, metric)
+        distance_spec = TEST_DISTANCE_SPEC
+    else:
+        data_matrix_reader = InProcessDataMatrixReader({0: AdoptingDataMatrixProducer(vectors)})
+        distance_spec = VectorDistanceSpec(matrix_id=0, metric=metric, is_matrix_preprocessed=True)
     return SolverState.new(
-        n=n,
-        stores_by_distance={None: store},
+        n=vectors.shape[0],
+        data_matrix_reader=data_matrix_reader,
         k=k,
-        diversity_objectives=[simple_objective(diversity_metric)],
+        diversity_objectives=[DiversityObjectiveSimple(diversity_metric, distance_spec)],
         constraints=[],
     )
 
@@ -922,7 +930,7 @@ def _make_standalone_state() -> SolverState:
     vectors = np.array([[0.0], [1.0], [2.0], [3.0], [4.0], [5.0]], dtype=np.float32)
     return SolverState.new(
         n=vectors.shape[0],
-        stores_by_distance={None: DistanceStore.full_matrix_from_vectors(vectors, DistanceMetric.l1_manhattan())},
+        data_matrix_reader=full_matrix_reader(vectors, DistanceMetric.l1_manhattan()),
         k=3,
         diversity_objectives=[simple_objective(DiversityMetric.GEOMEAN_SEPARATION)],
         constraints=[],

@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 
 from max_div._core.distance_storage.allocation import InProcessDataMatrixAllocator, SharedMemoryDataMatrixAllocator
 from max_div._core.distance_storage.data_matrix_producer import (
@@ -70,6 +71,41 @@ def test_computing_producer_computes_into_the_buffer_that_the_allocator_allocate
     assert len(filled_buffers) == 1
     assert filled_buffers[0] is matrix
     np.testing.assert_array_equal(matrix, np.full((2, 3), 7.0, dtype=np.float32))
+
+
+def test_computing_producer_requires_its_shape():
+    """The shape is a required field, although it implements the abstract `shape` property of the base class."""
+    # --- act / assert -----------------
+    with pytest.raises(TypeError, match="shape"):
+        ComputingDataMatrixProducer(compute_into=print)  # ty: ignore[missing-argument]
+
+
+# ==================================================================================================
+#  Shape and size
+# ==================================================================================================
+@pytest.mark.parametrize(
+    "producer, is_adopted_array_copied, expected_bytes",
+    [
+        (AdoptingDataMatrixProducer(np.zeros((4, 3), dtype=np.float32)), False, 0),
+        (AdoptingDataMatrixProducer(np.zeros((4, 3), dtype=np.float32)), True, 48),
+        (ComputingDataMatrixProducer((5, 5), print), False, 100),
+        (ComputingDataMatrixProducer((5, 5), print), True, 100),
+    ],
+    ids=["adopted-in-place", "adopted-copied", "computed", "computed-adopted-copied"],
+)
+def test_bytes_allocated_counts_a_computed_matrix_and_an_adopted_one_only_when_copied(
+    producer: DataMatrixProducer, is_adopted_array_copied: bool, expected_bytes: int
+):
+    """Producing allocates the buffer that a matrix is computed into, and the copy of an adopted array, if made."""
+    # --- act / assert -----------------
+    assert producer.bytes_allocated(is_adopted_array_copied) == expected_bytes
+
+
+def test_every_producer_states_the_shape_of_its_matrix():
+    """An adopting producer states its array's shape; a computing producer states its buffer's."""
+    # --- act / assert -----------------
+    assert AdoptingDataMatrixProducer(_vectors()).shape == (4, 3)
+    assert ComputingDataMatrixProducer((2, 3), print).shape == (2, 3)
 
 
 # ==================================================================================================

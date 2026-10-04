@@ -10,11 +10,12 @@ from max_div._core.metrics import (
     DiversityTrackerSpec,
     HybridAggregationArithmeticMean,
 )
+from max_div._core.metrics._distance import VectorDistanceSpec
 from max_div._core.solver._diversity_contribution import DiversityObjectiveBindings
 from max_div._core.solver._score import Score, ScoreGenerator, _con_norm_constant
 from tests.helpers import hybrid_objective
 
-from .objectives import simple_objective, tie_breaker_objectives
+from .objectives import TEST_DISTANCE_SPEC, simple_objective, tie_breaker_objectives
 
 SEPARATION = DiversityContributionFamily.SEPARATION
 MEAN_DISTANCE = DiversityContributionFamily.MEAN_DISTANCE
@@ -418,7 +419,10 @@ def test_score_str(score: Score, expected_str: str):
     assert result == expected_str
 
 
-_L1, _L2, _L3 = DistanceMetric.l1_manhattan(), DistanceMetric.l2_euclidean(), DistanceMetric.linf_chebyshev()
+_L1, _L2, _L3 = (
+    VectorDistanceSpec(matrix_id=0, metric=metric, is_matrix_preprocessed=True)
+    for metric in (DistanceMetric.l1_manhattan(), DistanceMetric.l2_euclidean(), DistanceMetric.linf_chebyshev())
+)
 
 
 @pytest.mark.parametrize(
@@ -427,8 +431,11 @@ _L1, _L2, _L3 = DistanceMetric.l1_manhattan(), DistanceMetric.l2_euclidean(), Di
         pytest.param(
             3,
             simple_objective(DiversityMetric.MEAN_SEPARATION),
-            DiversityObjectiveSimple(DiversityMetric.MEAN_PAIRWISE_DISTANCE),
-            (DiversityTrackerSpec(None, SEPARATION), DiversityTrackerSpec(None, MEAN_DISTANCE)),
+            DiversityObjectiveSimple(DiversityMetric.MEAN_PAIRWISE_DISTANCE, TEST_DISTANCE_SPEC),
+            (
+                DiversityTrackerSpec(TEST_DISTANCE_SPEC, SEPARATION),
+                DiversityTrackerSpec(TEST_DISTANCE_SPEC, MEAN_DISTANCE),
+            ),
             [
                 np.array([2.0, 4.0, 6.0], dtype=np.float32),  # the separation spec
                 np.array([100.0, 100.0, 100.0], dtype=np.float32),  # the mean-distance spec
@@ -440,13 +447,13 @@ _L1, _L2, _L3 = DistanceMetric.l1_manhattan(), DistanceMetric.l2_euclidean(), Di
         pytest.param(
             2,
             hybrid_objective(
-                *(DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, metric) for metric in (_L1, _L2, _L3))
+                *(DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, spec) for spec in (_L1, _L2, _L3))
             ),
             hybrid_objective(
-                *(DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, metric) for metric in (_L1, _L3)),
+                *(DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, spec) for spec in (_L1, _L3)),
                 aggregation_type=HybridAggregationArithmeticMean,
             ),
-            tuple(DiversityTrackerSpec(metric, SEPARATION) for metric in (_L1, _L2, _L3)),
+            tuple(DiversityTrackerSpec(spec, SEPARATION) for spec in (_L1, _L2, _L3)),
             [
                 np.array([5.0, 9.0], dtype=np.float32),  # L1
                 np.array(

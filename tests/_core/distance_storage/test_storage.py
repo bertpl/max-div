@@ -1,7 +1,6 @@
 import pytest
 
 from max_div._core.distance_storage import DistanceStorageType, DistanceStorageTypes
-from max_div._core.metrics import DistanceMetric
 
 
 def test_storage_values_are_the_labels_users_see():
@@ -15,18 +14,18 @@ def test_storage_values_are_the_labels_users_see():
     [
         (
             (
-                (DistanceMetric.l1_manhattan(), DistanceStorageType.FULL_MATRIX),
-                (DistanceMetric.l2_euclidean(), DistanceStorageType.FULL_MATRIX),
-                (DistanceMetric.geometric_mean(), DistanceStorageType.LAZY),
+                ("L1", DistanceStorageType.FULL_MATRIX),
+                ("L2", DistanceStorageType.FULL_MATRIX),
+                ("geomean", DistanceStorageType.LAZY),
             ),
             "full_matrix (L1, L2), lazy (geomean)",
         ),
-        (((None, DistanceStorageType.FULL_MATRIX),), "full_matrix"),
+        ((("user distances", DistanceStorageType.FULL_MATRIX),), "full_matrix (user distances)"),
         ((), ""),
     ],
-    ids=["grouped-by-type", "given-distances-omit-metric", "empty"],
+    ids=["grouped-by-type", "given-distances", "empty"],
 )
-def test_summary_groups_distances_by_storage_type(per_store, expected):
-    """Group distances by storage type; a distance-input store shows its type alone; empty renders nothing."""
+def test_summary_groups_labels_by_storage_type(per_store, expected):
+    """Group the store labels by storage type; empty renders nothing."""
     # --- act / assert -----------------
     assert str(DistanceStorageTypes(per_store)) == expected
