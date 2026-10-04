@@ -1,7 +1,7 @@
 import numpy as np
 
 from max_div._core.distance_storage.allocation import InProcessDataMatrixAllocator, SharedMemoryDataMatrixAllocator
-from max_div._core.distance_storage.shared_memory import SharedMemoryDataMatrixReader
+from max_div._core.distance_storage.data_matrix_readers import SharedMemoryDataMatrixReader
 
 
 def _vectors() -> np.ndarray:

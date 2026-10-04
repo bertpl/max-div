@@ -3,38 +3,43 @@
 A data matrix is an array that a distance store reads: a full distance matrix, or the vectors of
 a lazy distance store.  Each data matrix of a solve has a matrix id.
 
-A `DataMatrixSource` decides what a data matrix contains; the allocator decides only where it
+A `DataMatrixProducer` decides what a data matrix contains; the allocator decides only where it
 lives: in this process, or in a shared-memory segment that worker processes can read.  There is
-one allocator class per placement, and a data matrix source produces its data matrix the same way
+one allocator class per placement, and a data matrix producer produces its data matrix the same way
 whichever allocator it is given.
 
-A data matrix source asks an allocator for one of 2 things:
+A data matrix producer asks an allocator for one of 2 things:
 
-- `allocate` returns an empty, writable buffer that the data matrix source then fills, for example a full
-  distance matrix that is computed straight into its final place.
+- `allocate` returns an empty, writable buffer that the data matrix producer then fills, for example
+  a full distance matrix that is computed straight into its final place.
 - `adopt` takes an array that already exists in its final form, for example the user's own vectors,
   and returns the array that a distance store will read from.
+
+The shared-memory allocator records a `PublishedDataMatrixRecord` for each data matrix that it
+places, which tells another process where to find that data matrix.
 """
 
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, NamedTuple
 
 import numpy as np
-from numpy.typing import NDArray
 
 from max_div._core._utils import create_shared_memory_segment, destroy_shared_memory_segment
 
-from .shared_memory import PublishedDataMatrixRecord, PublishedDataMatrixRecords
-
 if TYPE_CHECKING:
     from multiprocessing.shared_memory import SharedMemory
+
+    from numpy.typing import NDArray
 
 
 # ==================================================================================================
 #  DataMatrixAllocator
 # ==================================================================================================
 class DataMatrixAllocator(ABC):
-    """A data matrix allocator is the interface through which a data matrix source places its data matrix."""
+    """A data matrix allocator is the interface through which a data matrix producer places its data matrix."""
 
     @abstractmethod
     def allocate(self, matrix_id: int, shape: tuple[int, ...]) -> NDArray[np.float32]:
@@ -135,3 +140,29 @@ class SharedMemoryDataMatrixAllocator(DataMatrixAllocator):
         published_matrix_record = PublishedDataMatrixRecord(segment_name=segment.name, shape=tuple(shape))
         self._published_matrix_records[matrix_id] = published_matrix_record
         return published_matrix_record.array_over(segment)
+
+
+# ==================================================================================================
+#  Published data matrix records
+# ==================================================================================================
+class PublishedDataMatrixRecord(NamedTuple):
+    """A published data matrix record says which shared-memory segment holds one data matrix, and its shape."""
+
+    segment_name: str  # the operating-system name of the segment, which is how another process finds it
+    shape: tuple[int, ...]  # the shape of the float32 array in the segment; its first axis is the item count
+
+    def array_over(self, segment: SharedMemory) -> NDArray[np.float32]:
+        """Return the float32 array of this data matrix's shape over the segment's bytes."""
+        return np.ndarray(self.shape, dtype=np.float32, buffer=segment.buf)
+
+    @staticmethod
+    def nbytes_for(shape: tuple[int, ...]) -> int:
+        """Return the size in bytes of a float32 array of the given shape, which its segment must hold."""
+        return int(np.prod(shape, dtype=np.int64)) * np.dtype(np.float32).itemsize
+
+
+@dataclass(frozen=True)
+class PublishedDataMatrixRecords:
+    """Published data matrix records hold, by matrix id, what another process needs to find a solve's data matrices."""
+
+    records: dict[int, PublishedDataMatrixRecord]

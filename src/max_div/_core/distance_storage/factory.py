@@ -5,8 +5,8 @@ output is one distance store per distance metric, in that order.  The factory ow
 
 - the policy that picks a storage type (full matrix or lazy) for each distance metric;
 - one distance spec per distance store, which names the data matrix that the store reads, together
-  with one source per data matrix; `DataMatrixRegistry` produces the data matrices from those
-  sources, in this process or in shared memory;
+  with one producer per data matrix; an `InProcessDataMatrixReader` or a
+  `SharedMemoryDataMatrixPublisher` runs those producers;
 - the rule for which distance stores share one data matrix: every lazy distance store whose metric
   does not preprocess the vectors reads the data matrix of the user's vectors, so those stores share one
   array and one shared-memory segment; a metric that preprocesses gets a data matrix of its own.
@@ -18,6 +18,7 @@ vectors itself.
 import itertools
 from collections.abc import Iterator, Sequence
 from contextlib import contextmanager
+from dataclasses import dataclass
 from functools import partial
 from typing import ClassVar
 
@@ -32,10 +33,11 @@ from max_div._core.metrics._distance import (
 )
 from max_div._core.problem import DistanceMaxDivProblem, MaxDivProblem, VectorMaxDivProblem
 
-from .data_matrix_registry import DataMatrixRegistry
-from .data_matrix_source import ComputedDataMatrixSource, DataMatrixSource, ExistingDataMatrixSource
+from .allocation import PublishedDataMatrixRecords
+from .data_matrix_producer import AdoptingDataMatrixProducer, ComputingDataMatrixProducer, DataMatrixProducer
+from .data_matrix_publisher import SharedMemoryDataMatrixPublisher
+from .data_matrix_readers import InProcessDataMatrixReader, SharedMemoryDataMatrixReader
 from .memory_budget import AUTO_MEMORY_FRACTION, check_fits_physical_memory, full_matrix_bytes
-from .shared_memory import PublishedDistanceStoresRecord
 from .storage import DistanceStorageType, DistanceStorageTypes
 
 
@@ -166,8 +168,8 @@ class DistanceStoreFactory:
                 to compute distances from, or when the full matrices cannot fit in physical memory
                 at all.
         """
-        sources, distance_specs = self._data_matrix_sources_and_distance_specs()
-        data_matrix_reader = DataMatrixRegistry.in_process(sources)
+        producers, distance_specs = self._data_matrix_producers_and_distance_specs()
+        data_matrix_reader = InProcessDataMatrixReader(producers)
         return [spec.build_distance_store(data_matrix_reader) for spec in distance_specs]
 
     def create_stores_by_distance(self) -> dict[DistanceMetric | None, DistanceStore]:
@@ -175,7 +177,7 @@ class DistanceStoreFactory:
         return stores_by_distance(self._distances, self.create_stores())
 
     @contextmanager
-    def publish_distance_stores(self) -> Iterator[PublishedDistanceStoresRecord]:
+    def publish_distance_stores(self) -> Iterator["PublishedDistanceStoresRecord"]:
         """Build the data matrices in shared memory and yield the published distance stores, for the block's duration.
 
         Inside the block the shared-memory segments exist, and a worker process builds the distance
@@ -185,21 +187,23 @@ class DistanceStoreFactory:
         Raises:
             ValueError: as `create_stores`.
         """
-        sources, distance_specs = self._data_matrix_sources_and_distance_specs()
-        with DataMatrixRegistry.publish_to_shared_memory(sources) as published_matrix_records:
+        producers, distance_specs = self._data_matrix_producers_and_distance_specs()
+        with SharedMemoryDataMatrixPublisher(producers) as published_matrix_records:
             yield PublishedDistanceStoresRecord(published_matrix_records, distance_specs)
 
     # --------------------------------------------------------------------------
     #  Helpers
     # --------------------------------------------------------------------------
-    def _data_matrix_sources_and_distance_specs(self) -> tuple[dict[int, DataMatrixSource], tuple[DistanceSpec, ...]]:
-        """Return the source of each data matrix that a store reads, by matrix id, and each store's distance spec.
+    def _data_matrix_producers_and_distance_specs(
+        self,
+    ) -> tuple[dict[int, DataMatrixProducer], tuple[DistanceSpec, ...]]:
+        """Return the producer of each data matrix that a store reads, by matrix id, and each store's distance spec.
 
         Matrix id `_USER_MATRIX_ID` is the problem's own array.  Every other data matrix is derived from
         the vectors, one per store that needs one, numbered in store order: a full distance matrix, or
         the vectors preprocessed for a lazy store's metric.
 
-        Only a data matrix that some store reads has a source, and the memory check runs here, before
+        Only a data matrix that some store reads has a producer, and the memory check runs here, before
         any data matrix is produced.
 
         Raises:
@@ -219,7 +223,7 @@ class DistanceStoreFactory:
             if not problem.has_full_matrix:
                 check_fits_physical_memory(len(store_types) * full_matrix_bytes(n), lazy_available=False)
             spec = FullMatrixDistanceSpec(matrix_id=self._USER_MATRIX_ID, label=self._USER_DISTANCES_LABEL)
-            return {self._USER_MATRIX_ID: self._given_distances_source(problem)}, (spec,) * len(store_types)
+            return {self._USER_MATRIX_ID: self._given_distances_producer(problem)}, (spec,) * len(store_types)
         if not isinstance(problem, VectorMaxDivProblem):  # pragma: no cover -- the two flavors above are the only ones
             raise TypeError(f"Unknown problem flavor {type(problem).__name__}.")
 
@@ -227,39 +231,62 @@ class DistanceStoreFactory:
         n_full = sum(store_type == DistanceStorageType.FULL_MATRIX for store_type in store_types)
         if n_full:
             check_fits_physical_memory(n_full * full_matrix_bytes(n), lazy_available=True)
-        sources: dict[int, DataMatrixSource] = {}
+        producers: dict[int, DataMatrixProducer] = {}
         distance_specs: list[DistanceSpec] = []
         derived_matrix_ids = itertools.count(self._USER_MATRIX_ID + 1)
         for distance, store_type in zip(self._resolved_distances(), store_types, strict=True):
             assert distance is not None  # noqa: S101 -- a vector problem always resolves to a metric
             if store_type == DistanceStorageType.FULL_MATRIX:
                 matrix_id = next(derived_matrix_ids)
-                sources[matrix_id] = ComputedDataMatrixSource(
+                producers[matrix_id] = ComputingDataMatrixProducer(
                     (n, n), partial(compute_full_matrix, problem.vectors, distance)
                 )
                 distance_specs.append(FullMatrixDistanceSpec(matrix_id=matrix_id, label=distance.label))
             else:
                 if distance.needs_preprocessed_vectors:
                     matrix_id = next(derived_matrix_ids)
-                    sources[matrix_id] = ExistingDataMatrixSource(distance.preprocess(problem.vectors))
+                    producers[matrix_id] = AdoptingDataMatrixProducer(distance.preprocess(problem.vectors))
                 else:
                     matrix_id = self._USER_MATRIX_ID
-                    sources[matrix_id] = ExistingDataMatrixSource(problem.vectors)
+                    producers[matrix_id] = AdoptingDataMatrixProducer(problem.vectors)
                 # every data matrix of a lazy store is already preprocessed for its metric: the factory
                 # preprocessed it above, or the metric does not preprocess and reads the user's vectors as they are
                 distance_specs.append(
                     VectorDistanceSpec(matrix_id=matrix_id, metric=distance, is_matrix_preprocessed=True)
                 )
-        return sources, tuple(distance_specs)
+        return producers, tuple(distance_specs)
 
     @staticmethod
-    def _given_distances_source(problem: DistanceMaxDivProblem) -> DataMatrixSource:
-        """Return the source of the given distances as a full matrix; a condensed input is expanded into it."""
+    def _given_distances_producer(problem: DistanceMaxDivProblem) -> DataMatrixProducer:
+        """Return the producer of the given distances as a full matrix; a condensed input is expanded into it."""
         if problem.has_full_matrix:
-            return ExistingDataMatrixSource(problem.distances)
+            return AdoptingDataMatrixProducer(problem.distances)
         else:
             n = problem.n
-            return ComputedDataMatrixSource((n, n), partial(expand_condensed, problem.distances, n))
+            return ComputingDataMatrixProducer((n, n), partial(expand_condensed, problem.distances, n))
+
+
+# ==================================================================================================
+#  PublishedDistanceStoresRecord
+# ==================================================================================================
+@dataclass(frozen=True)
+class PublishedDistanceStoresRecord:
+    """A published distance stores record locates a solve's data matrices in shared memory and holds each store's spec.
+
+    `DistanceStoreFactory.publish_distance_stores` yields this record.  A
+    `PublishedDistanceStoresRecord` is small enough to pass to a worker process as an ordinary pickled
+    argument, and the worker builds from it the same distance stores that `create_stores` builds in a
+    single process.
+    """
+
+    published_matrix_records: PublishedDataMatrixRecords
+    distance_specs: tuple[DistanceSpec, ...]  # there is one distance spec per distance store, in store order
+
+    @contextmanager
+    def attached_distance_stores(self) -> Iterator[list[DistanceStore]]:
+        """Yield the distance stores, in store order, over the attached data matrices, for the duration of the block."""
+        with SharedMemoryDataMatrixReader(self.published_matrix_records) as data_matrix_reader:
+            yield [spec.build_distance_store(data_matrix_reader) for spec in self.distance_specs]
 
 
 # ==================================================================================================

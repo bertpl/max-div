@@ -1,11 +1,13 @@
+import pickle
+
 import numpy as np
 import pytest
 from scipy.spatial.distance import squareform
 
 from max_div._core.constraints import Constraint
 from max_div._core.distance_storage import DistanceStorageType, DistanceStoreFactory
+from max_div._core.distance_storage.data_matrix_readers import SharedMemoryDataMatrixReader
 from max_div._core.distance_storage.memory_budget import AUTO_MEMORY_FRACTION, full_matrix_bytes
-from max_div._core.distance_storage.shared_memory import SharedMemoryDataMatrixReader
 from max_div._core.metrics import DistanceMetric, DiversityMetric
 from max_div._core.metrics._distance import (
     KIND_FULL_MATRIX,
@@ -433,3 +435,14 @@ def test_leaving_the_publish_block_destroys_the_segments():
     # --- act / assert -----------------
     with pytest.raises(FileNotFoundError), SharedMemoryDataMatrixReader(stale):
         pass
+
+
+def test_published_distance_stores_record_survives_pickling():
+    """The published record is picklable, which lets it reach a spawned worker as an argument."""
+    # --- arrange / act ----------------
+    factory = _factory(_vector_problem(), DistanceStorageType.LAZY)
+    with factory.publish_distance_stores() as published_distance_stores_record:
+        restored = pickle.loads(pickle.dumps(published_distance_stores_record))  # noqa: S301 -- our own record
+
+    # --- assert -----------------------
+    assert restored == published_distance_stores_record
