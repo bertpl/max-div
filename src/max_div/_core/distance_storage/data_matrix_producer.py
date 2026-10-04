@@ -1,0 +1,65 @@
+"""A data matrix producer says how a solve's data matrix is produced: as an existing array, or computed into a buffer.
+
+The producer decides the contents of the data matrix, and the data matrix allocator that it is
+given decides where the matrix lives; see `allocation`.
+
+A producer produces its matrix only when a data matrix reader or publisher runs it, so the distance
+store factory can describe every data matrix, and check that the matrices fit in memory, before any
+of them is computed.
+"""
+
+from abc import ABC, abstractmethod
+from collections.abc import Callable, Mapping
+from dataclasses import dataclass
+
+import numpy as np
+from numpy.typing import NDArray
+
+from .allocation import DataMatrixAllocator
+
+
+# ==================================================================================================
+#  DataMatrixProducer
+# ==================================================================================================
+class DataMatrixProducer(ABC):
+    """A data matrix producer produces one data matrix through an allocator, which decides where the matrix lives."""
+
+    @abstractmethod
+    def produce(self, matrix_id: int, allocator: DataMatrixAllocator) -> NDArray[np.float32]:
+        """Return the data matrix, placed by the allocator under the given matrix id."""
+
+    @staticmethod
+    def produce_all(
+        producers: Mapping[int, "DataMatrixProducer"], allocator: DataMatrixAllocator
+    ) -> dict[int, NDArray[np.float32]]:
+        """Return every data matrix by matrix id, each produced once by its producer through the allocator."""
+        return {matrix_id: producer.produce(matrix_id, allocator) for matrix_id, producer in producers.items()}
+
+
+# ==================================================================================================
+#  Kinds of producer
+# ==================================================================================================
+@dataclass(frozen=True, eq=False)
+class AdoptingDataMatrixProducer(DataMatrixProducer):
+    """An adopting data matrix producer hands an existing array, such as the user's vectors, to the allocator."""
+
+    array: NDArray[np.float32]
+
+    def produce(self, matrix_id: int, allocator: DataMatrixAllocator) -> NDArray[np.float32]:
+        """Return the array as the allocator adopts it."""
+        return allocator.adopt(matrix_id, self.array)
+
+
+@dataclass(frozen=True, eq=False)
+class ComputingDataMatrixProducer(DataMatrixProducer):
+    """A computing data matrix producer computes its matrix into a buffer from the allocator, so it is never copied."""
+
+    shape: tuple[int, ...]
+    # compute_into writes the whole matrix into its buffer argument
+    compute_into: Callable[[NDArray[np.float32]], object]
+
+    def produce(self, matrix_id: int, allocator: DataMatrixAllocator) -> NDArray[np.float32]:
+        """Allocate a buffer of this producer's shape, compute the matrix into it, and return it."""
+        buffer = allocator.allocate(matrix_id, self.shape)
+        self.compute_into(buffer)
+        return buffer
