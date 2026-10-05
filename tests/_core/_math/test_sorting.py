@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from max_div._core._math.sorting import _RADIX_SORT_MIN_SIZE, sorted_copy_f32
+from max_div._core._math.sorting import sorted_copy_f32
 
 
 def _values(kind: str, n: int) -> np.ndarray:
@@ -26,11 +26,9 @@ def _values(kind: str, n: int) -> np.ndarray:
 
 
 @pytest.mark.parametrize("kind", ["narrow", "wide", "ties", "mixed_signs_and_specials", "all_equal"])
-@pytest.mark.parametrize(
-    "n", [0, 1, 2, _RADIX_SORT_MIN_SIZE - 1, _RADIX_SORT_MIN_SIZE, _RADIX_SORT_MIN_SIZE + 1, 1000, 5000]
-)
+@pytest.mark.parametrize("n", [0, 1, 2, 3, 100, 1000, 5000])
 def test_sorted_copy_f32_equals_np_sort_bit_for_bit(kind: str, n: int):
-    """Without -0.0 or NaN, the copy equals `np.sort` bit for bit around the threshold, and the input is unchanged."""
+    """Without -0.0 or NaN, the copy equals `np.sort` bit for bit at every size, and the input is unchanged."""
     # --- arrange ----------------------
     values = _values(kind, n)
     original = values.copy()
@@ -46,7 +44,7 @@ def test_sorted_copy_f32_equals_np_sort_bit_for_bit(kind: str, n: int):
 def test_sorted_copy_f32_puts_negative_zero_before_positive_zero():
     """The radix sort orders -0.0 before +0.0, which `np.sort` treats as equal."""
     # --- arrange ----------------------
-    values = np.ones(_RADIX_SORT_MIN_SIZE, dtype=np.float32)
+    values = np.ones(10, dtype=np.float32)
     values[:2] = [0.0, -0.0]
 
     # --- act --------------------------

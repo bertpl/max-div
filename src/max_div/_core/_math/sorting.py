@@ -1,4 +1,4 @@
-"""Return a sorted copy of a float32 array, by a radix sort at the sizes where a radix sort beats `np.sort`.
+"""Return a sorted copy of a float32 array, by a radix sort.
 
 An LSD radix sort orders fixed-width integer keys by one digit at a time, least significant digit first.
 Each pass:
@@ -24,10 +24,6 @@ from numpy.typing import NDArray
 
 from max_div._core.jit import lazy_njit
 
-# Below this size `np.sort` is as fast as the radix sort or faster: the radix sort spends a fixed time on
-# clearing its digit-value counts and setting up each pass, and at small sizes that time dominates.
-_RADIX_SORT_MIN_SIZE = 200
-
 # The keys are sorted 1 digit per pass; a digit this narrow keeps the count table of each pass cheap to clear.
 _DIGIT_BITS = 8
 _N_DIGITS = 4
@@ -40,41 +36,40 @@ _SIGN_BIT = np.uint32(0x80000000)
 def sorted_copy_f32(values: NDArray[np.float32]) -> NDArray[np.float32]:
     """Return the values in ascending order, as a new array; `values` is left unchanged.
 
-    Below `_RADIX_SORT_MIN_SIZE` values the result is `np.sort(values)`. From that size on, it equals
-    `np.sort(values)` except in 2 cases:
+    The result equals `np.sort(values)` except in 2 cases:
 
     - -0.0 comes before +0.0, which `np.sort` treats as equal;
     - a NaN sorts by its bit pattern, so one with its sign bit set comes first, where `np.sort` puts every
       NaN last.
+
+    Below about 200 values `np.sort` is faster: the radix sort spends a fixed time of a few tenths of a
+    microsecond on clearing its digit-value counts and setting up each pass.
     """
     n = values.shape[0]
-    if n < _RADIX_SORT_MIN_SIZE:
-        return np.sort(values)
-    else:
-        keys, counts = _keys_and_digit_counts(values)
+    keys, counts = _keys_and_digit_counts(values)
 
-        # --- 1 pass per digit -------------------
-        source = keys
-        destination = np.empty(n, dtype=np.uint32)
-        next_positions = np.empty(_N_DIGIT_VALUES, dtype=np.int32)
-        for digit_position in range(_N_DIGITS):
-            shift = np.uint32(digit_position * _DIGIT_BITS)
-            # When every key has the same digit at this position, the pass would leave the keys in place, so
-            # it is skipped. Every key has the same most significant digit when the values share their sign
-            # and most of their exponent.
-            if counts[digit_position, (source[0] >> shift) & _DIGIT_MASK] == n:
-                continue
-            start = 0
-            for digit_value in range(_N_DIGIT_VALUES):
-                next_positions[digit_value] = start
-                start += counts[digit_position, digit_value]
-            for i in range(n):
-                digit_value = (source[i] >> shift) & _DIGIT_MASK
-                destination[next_positions[digit_value]] = source[i]
-                next_positions[digit_value] += 1
-            source, destination = destination, source
+    # --- 1 pass per digit -----------------------
+    source = keys
+    destination = np.empty(n, dtype=np.uint32)
+    next_positions = np.empty(_N_DIGIT_VALUES, dtype=np.int32)
+    for digit_position in range(_N_DIGITS):
+        shift = np.uint32(digit_position * _DIGIT_BITS)
+        # When every key has the same digit at this position, the pass would leave the keys in place, so
+        # it is skipped; with no keys there is nothing to move either. Every key has the same most
+        # significant digit when the values share their sign and most of their exponent.
+        if n == 0 or counts[digit_position, (source[0] >> shift) & _DIGIT_MASK] == n:
+            continue
+        start = 0
+        for digit_value in range(_N_DIGIT_VALUES):
+            next_positions[digit_value] = start
+            start += counts[digit_position, digit_value]
+        for i in range(n):
+            digit_value = (source[i] >> shift) & _DIGIT_MASK
+            destination[next_positions[digit_value]] = source[i]
+            next_positions[digit_value] += 1
+        source, destination = destination, source
 
-        return _values_from_keys(source)
+    return _values_from_keys(source)
 
 
 # ==================================================================================================
