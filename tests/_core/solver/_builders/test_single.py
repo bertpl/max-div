@@ -40,7 +40,7 @@ def dummy_problem() -> MaxDivProblem:
     return MaxDivProblem.new(
         vectors=np.random.rand(10, 5).astype(np.float32),
         k=3,
-        diversity_metric=DiversityMetric.GEOMEAN_SEPARATION,
+        diversity_metric=DiversityMetric.geomean_separation(),
     )
 
 
@@ -101,13 +101,13 @@ def test_solver_builder_add_solver_steps(dummy_problem, strategies: list, expect
     "diversity_metric, expected_tie_breakers",
     [
         (
-            DiversityMetric.MIN_SEPARATION,
-            [DiversityMetric.APPROX_GEOMEAN_SEPARATION, DiversityMetric.NON_ZERO_SEPARATION_FRAC],
+            DiversityMetric.min_separation(),
+            [DiversityMetric.approx_geomean_separation(), DiversityMetric.non_zero_separation_frac()],
         ),
-        (DiversityMetric.GEOMEAN_SEPARATION, [DiversityMetric.NON_ZERO_SEPARATION_FRAC]),
-        (DiversityMetric.APPROX_GEOMEAN_SEPARATION, [DiversityMetric.NON_ZERO_SEPARATION_FRAC]),
-        (DiversityMetric.HARMONIC_MEAN_SEPARATION, [DiversityMetric.NON_ZERO_SEPARATION_FRAC]),
-        (DiversityMetric.MEAN_SEPARATION, []),
+        (DiversityMetric.geomean_separation(), [DiversityMetric.non_zero_separation_frac()]),
+        (DiversityMetric.approx_geomean_separation(), [DiversityMetric.non_zero_separation_frac()]),
+        (DiversityMetric.harmonic_mean_separation(), [DiversityMetric.non_zero_separation_frac()]),
+        (DiversityMetric.mean_separation(), []),
     ],
 )
 def test_max_div_solver_builder_tie_breaker_metrics_defaults(
@@ -137,9 +137,9 @@ def test_max_div_solver_builder_tie_breaker_metrics_custom(dummy_problem):
     # --- arrange ----------------------
     builder = MaxDivSolverBuilder(dummy_problem).with_diversity_tie_breakers(
         [
-            DiversityMetric.APPROX_GEOMEAN_SEPARATION,
-            DiversityMetric.NON_ZERO_SEPARATION_FRAC,
-            DiversityMetric.MEAN_SEPARATION,
+            DiversityMetric.approx_geomean_separation(),
+            DiversityMetric.non_zero_separation_frac(),
+            DiversityMetric.mean_separation(),
         ]
     )
 
@@ -148,11 +148,11 @@ def test_max_div_solver_builder_tie_breaker_metrics_custom(dummy_problem):
 
     # --- assert -----------------------
     main_objective, *tie_breakers = solver._diversity_objectives
-    assert main_objective.diversity_metric == DiversityMetric.GEOMEAN_SEPARATION
+    assert main_objective.diversity_metric == DiversityMetric.geomean_separation()
     assert [tb.diversity_metric for tb in tie_breakers] == [
-        DiversityMetric.APPROX_GEOMEAN_SEPARATION,
-        DiversityMetric.NON_ZERO_SEPARATION_FRAC,
-        DiversityMetric.MEAN_SEPARATION,
+        DiversityMetric.approx_geomean_separation(),
+        DiversityMetric.non_zero_separation_frac(),
+        DiversityMetric.mean_separation(),
     ]
     assert all(isinstance(tb, DiversityObjectiveSimple) for tb in tie_breakers)
 
@@ -163,13 +163,13 @@ def test_max_div_solver_builder_refuses_custom_tie_breakers_for_a_hybrid_metric(
         np.random.default_rng(0).random((20, 3)).astype(np.float32),
         k=4,
         diversity_metric=HybridDiversityMetric.geomean_of(
-            DiversityMetric.MIN_SEPARATION, DiversityMetric.MIN_SEPARATION.over(DistanceMetric.along_axis(0))
+            DiversityMetric.min_separation(), DiversityMetric.min_separation().over(DistanceMetric.along_axis(0))
         ),
     )
 
     # --- act / assert -----------------
     with pytest.raises(ValueError, match="not supported for a hybrid"):
-        MaxDivSolverBuilder(problem).with_diversity_tie_breakers([DiversityMetric.MEAN_SEPARATION])
+        MaxDivSolverBuilder(problem).with_diversity_tie_breakers([DiversityMetric.mean_separation()])
 
 
 # ==================================================================================================
@@ -223,7 +223,7 @@ def test_max_div_solver_builder_end_to_end():
                 vectors=vectors,
                 k=k,
                 distance_metric=DistanceMetric.l1_manhattan(),
-                diversity_metric=DiversityMetric.MIN_SEPARATION,
+                diversity_metric=DiversityMetric.min_separation(),
                 constraints=constraints,
             )
         )
@@ -245,7 +245,7 @@ def test_max_div_solver_builder_end_to_end():
     assert solver._solver_steps[0].name() == init_strategy.name
     assert solver._solver_steps[1].name() == solver_steps[0].name()
     assert solver._solver_steps[2].name() == solver_steps[1].name()
-    assert solver._diversity_objectives[0].diversity_metric == DiversityMetric.MIN_SEPARATION
+    assert solver._diversity_objectives[0].diversity_metric == DiversityMetric.min_separation()
     assert solver._constraints == constraints
     assert solver._seed == 123
 
@@ -274,7 +274,7 @@ def test_max_div_solver_quadratic_penalty_end_to_end():
     problem = MaxDivProblem.new(
         vectors=np.random.rand(20, 5).astype(np.float32),
         k=5,
-        diversity_metric=DiversityMetric.MIN_SEPARATION,
+        diversity_metric=DiversityMetric.min_separation(),
         constraints=[Constraint(set(range(10)), min_count=2, max_count=3)],
     )
     solver = (
@@ -311,7 +311,7 @@ def test_max_div_solver_builder_preset(problem_name: str, n: int, preset: Solver
     problem: MaxDivProblem = BenchmarkProblemFactory.construct_problem(
         name=problem_name,
         n=n,
-        diversity_metric=DiversityMetric.APPROX_GEOMEAN_SEPARATION,
+        diversity_metric=DiversityMetric.approx_geomean_separation(),
     )
 
     # --- act --------------------------
@@ -352,7 +352,7 @@ def test_with_preset_switches_init_on_constraints(
     problem = MaxDivProblem.new(
         vectors=np.random.rand(20, 5).astype(np.float32),
         k=5,
-        diversity_metric=DiversityMetric.MIN_SEPARATION,
+        diversity_metric=DiversityMetric.min_separation(),
         constraints=constraints,
     )
 

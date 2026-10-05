@@ -39,7 +39,7 @@ def gap_pct(value: float, reference: float) -> float:
 def gap_records(records: list[RunRecord], references: dict[tuple[str, int], BestKnown]) -> list[RunRecord]:
     """Re-express every record's min separation as its gap to the pairing's best-known value."""
     return [
-        replace(r, quality={GAP_METRIC: gap_pct(r.quality[METRIC.name], references[(r.problem, r.size)].best_known)})
+        replace(r, quality={GAP_METRIC: gap_pct(r.quality[METRIC.label], references[(r.problem, r.size)].best_known)})
         for r in records
         if (r.problem, r.size) in references
     ]
@@ -57,7 +57,7 @@ def group_pairings(rows: list[BestKnown]) -> dict[tuple[str, int, int], list[Bes
 def best_value(records: list[RunRecord], instance: str, k: int, budget_tag: str | None = None) -> float | None:
     """Return the best min separation over seeds (and both series) for one pairing, at one budget or over all budgets."""
     values = [
-        r.quality[METRIC.name]
+        r.quality[METRIC.label]
         for r in records
         if r.problem == instance and r.size == k and (budget_tag is None or r.budget == budget_tag)
     ]

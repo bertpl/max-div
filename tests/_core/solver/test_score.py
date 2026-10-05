@@ -126,7 +126,7 @@ def test_score_generator_size():
     generator = _score_generator(
         n=20,
         k=3,
-        diversity_objectives=[simple_objective(DiversityMetric.MIN_SEPARATION)],
+        diversity_objectives=[simple_objective(DiversityMetric.min_separation())],
         constraints=[],
     )
 
@@ -153,7 +153,7 @@ def test_score_generator_constraints():
     generator = _score_generator(
         n=100,
         k=8,
-        diversity_objectives=[simple_objective(DiversityMetric.MIN_SEPARATION)],
+        diversity_objectives=[simple_objective(DiversityMetric.min_separation())],
         constraints=[
             Constraint(int_set={0, 1, 2, 3, 4}, min_count=2, max_count=3),
             Constraint(int_set={5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}, min_count=2, max_count=3),
@@ -223,7 +223,7 @@ def test_constraints_score_for_violation(violation: float, expected: float):
     generator = _score_generator(
         n=11,
         k=8,
-        diversity_objectives=[simple_objective(DiversityMetric.GEOMEAN_SEPARATION)],
+        diversity_objectives=[simple_objective(DiversityMetric.geomean_separation())],
         constraints=constraints,
     )
 
@@ -240,7 +240,7 @@ def test_constraints_score_for_violation_rejects_quadratic():
     generator = _score_generator(
         n=3,
         k=3,
-        diversity_objectives=[simple_objective(DiversityMetric.GEOMEAN_SEPARATION)],
+        diversity_objectives=[simple_objective(DiversityMetric.geomean_separation())],
         constraints=[Constraint(int_set={0, 1, 2}, min_count=2, max_count=3)],
         penalty_quadratic=True,
     )
@@ -260,7 +260,7 @@ def test_score_generator_constraints_linear_vs_quadratic():
     kwargs = {
         "n": 100,
         "k": 8,
-        "diversity_objectives": [simple_objective(DiversityMetric.MIN_SEPARATION)],
+        "diversity_objectives": [simple_objective(DiversityMetric.min_separation())],
     }
     gen_linear = _score_generator(constraints=constraints, **kwargs)
     gen_quad = _score_generator(constraints=constraints, penalty_quadratic=True, **kwargs)
@@ -287,7 +287,7 @@ def test_score_generator_constraints_weighted():
     gen = _score_generator(
         n=100,
         k=8,
-        diversity_objectives=[simple_objective(DiversityMetric.MIN_SEPARATION)],
+        diversity_objectives=[simple_objective(DiversityMetric.min_separation())],
         constraints=constraints,
     )
     sep = _as_contributions(np.ones(5, dtype=np.float32))
@@ -311,7 +311,7 @@ def test_score_generator_constraints_no_constraints():
     generator = _score_generator(
         n=100,
         k=8,
-        diversity_objectives=[simple_objective(DiversityMetric.MIN_SEPARATION)],
+        diversity_objectives=[simple_objective(DiversityMetric.min_separation())],
         constraints=[],
     )
 
@@ -330,8 +330,8 @@ def test_score_generator_diversity_scores():
         n=100,
         k=5,
         diversity_objectives=[
-            simple_objective(DiversityMetric.MIN_SEPARATION),
-            *tie_breaker_objectives([DiversityMetric.MEAN_SEPARATION, DiversityMetric.NON_ZERO_SEPARATION_FRAC]),
+            simple_objective(DiversityMetric.min_separation()),
+            *tie_breaker_objectives([DiversityMetric.mean_separation(), DiversityMetric.non_zero_separation_frac()]),
         ],
         constraints=[],
     )
@@ -430,8 +430,8 @@ _L1, _L2, _L3 = (
     [
         pytest.param(
             3,
-            simple_objective(DiversityMetric.MEAN_SEPARATION),
-            DiversityObjectiveSimple(DiversityMetric.MEAN_PAIRWISE_DISTANCE, TEST_DISTANCE_SPEC),
+            simple_objective(DiversityMetric.mean_separation()),
+            DiversityObjectiveSimple(DiversityMetric.mean_pairwise_distance(), TEST_DISTANCE_SPEC),
             (
                 DiversityTrackerSpec(TEST_DISTANCE_SPEC, SEPARATION),
                 DiversityTrackerSpec(TEST_DISTANCE_SPEC, MEAN_DISTANCE),
@@ -447,10 +447,10 @@ _L1, _L2, _L3 = (
         pytest.param(
             2,
             hybrid_objective(
-                *(DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, spec) for spec in (_L1, _L2, _L3))
+                *(DiversityObjectiveSimple(DiversityMetric.min_separation(), spec) for spec in (_L1, _L2, _L3))
             ),
             hybrid_objective(
-                *(DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, spec) for spec in (_L1, _L3)),
+                *(DiversityObjectiveSimple(DiversityMetric.min_separation(), spec) for spec in (_L1, _L3)),
                 aggregation_type=HybridAggregationArithmeticMean,
             ),
             tuple(DiversityTrackerSpec(spec, SEPARATION) for spec in (_L1, _L2, _L3)),

@@ -153,7 +153,7 @@ class MaxDivProblem(ABC):
         vectors: np.ndarray,
         k: int,
         distance_metric: DistanceMetric = DistanceMetric.l2_euclidean(),  # noqa: B008 -- immutable frozen dataclass, safe as a default
-        diversity_metric: DiversityMetric | HybridDiversityMetric = DiversityMetric.GEOMEAN_SEPARATION,
+        diversity_metric: DiversityMetric | HybridDiversityMetric = DiversityMetric.geomean_separation(),  # noqa: B008 -- immutable frozen dataclass, safe as a default
         constraints: list[Constraint] | None = None,
     ) -> "VectorMaxDivProblem":
         """Create a new VectorMaxDivProblem with validation.
@@ -203,7 +203,7 @@ class MaxDivProblem(ABC):
         cls,
         distances: np.ndarray,
         k: int,
-        diversity_metric: DiversityMetric | HybridDiversityMetric = DiversityMetric.GEOMEAN_SEPARATION,
+        diversity_metric: DiversityMetric | HybridDiversityMetric = DiversityMetric.geomean_separation(),  # noqa: B008 -- immutable frozen dataclass, safe as a default
         constraints: list[Constraint] | None = None,
     ) -> "DistanceMaxDivProblem":
         """Create a new DistanceMaxDivProblem from precomputed pairwise distances, with validation.

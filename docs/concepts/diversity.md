@@ -21,7 +21,7 @@ Items  ──>  Pairwise Distances  ──>  Contributions  ──>  Diversity S
       *nearest neighbor* within the current selection. An item with high separation is
       well-spread from the rest of the selection; an item with low separation is close to at
       least one other selected item.
-    - **Mean-distance family** (`MEAN_PAIRWISE_DISTANCE`): the item's *mean distance to the
+    - **Mean-distance family** (`mean_pairwise_distance()`): the item's *mean distance to the
       other selected items* -- exactly how much the item contributes to the total spread
       of the selection.
 
@@ -36,20 +36,20 @@ The distance metric determines how the distance between two vectors is measured.
 |--------|---------|-------|
 | `l2_euclidean()` | $d = \sqrt{\sum_i (x_i - y_i)^2}$ | Standard Euclidean distance. Default. |
 | `l1_manhattan()` | $d = \sum_i \lvert x_i - y_i \rvert$ | Less sensitive to outlier dimensions. |
-| `l2s_euclidean_squared()` | $d = \sum_i (x_i - y_i)^2$ | Avoids the square root. Produces identical solutions to `l2_euclidean()` when used with `GEOMEAN_SEPARATION`, since the geometric mean preserves distance ordering regardless of squaring. |
+| `l2s_euclidean_squared()` | $d = \sum_i (x_i - y_i)^2$ | Avoids the square root. Produces identical solutions to `l2_euclidean()` when used with `geomean_separation()`, since the geometric mean preserves distance ordering regardless of squaring. |
 | `linf_chebyshev()` | $d = \max_i \lvert x_i - y_i \rvert$ | Chebyshev distance: set by the single largest per-dimension gap, so no dimension's difference is averaged away by the others. |
 | `l_minus_inf()` | $d = \min_i \lvert x_i - y_i \rvert$ | The L−∞ distance: the smallest per-dimension gap, the $p \to -\infty$ end of the power-mean family whose $p \to +\infty$ end is `linf_chebyshev()`. The distance between two points is the gap in the coordinate projection where they are closest, so a selection kept apart under it is spread in every coordinate projection; `geometric_mean()` is its smoothed form. A shared coordinate makes the distance zero. |
 | `cosine()` | $d = 1 - (x \cdot y) \,/\, (\lVert x \rVert \, \lVert y \rVert)$ | Angular distance in $[0, 2]$, invariant to vector magnitude -- the natural choice for embedding-style vectors. Undefined for zero vectors, which are rejected at problem construction. |
 | `minkowski(p, root=True)` | $d = \Big( \sum_i \lvert x_i - y_i \rvert^p \Big)^{1/p}$ | The general family behind `l1_manhattan()` ($p=1$), `l2_euclidean()` ($p=2$) and `linf_chebyshev()` ($p=\infty$); any $p > 0$ is accepted, and those special values resolve to the dedicated metrics. |
 | `geometric_mean()` | $d = \Big( \prod_i \lvert x_i - y_i \rvert \Big)^{1/d}$ | The geometric mean of the per-dimension gaps, the $p \to 0$ limit of the power-mean family. A shared coordinate makes the distance zero, so a selection that keeps every pair apart under this metric is spread in every coordinate projection as well as in the full space -- the pair distance behind *maximum projection designs* (Joseph, Gul & Ba, 2015). |
 | `along_axis(axis)` | $d = \lvert x_{\text{axis}} - y_{\text{axis}} \rvert$ | The distance along one coordinate axis, every other coordinate ignored. A selection kept apart under it is spread along that single coordinate. |
-| `l2_and_projections(l2_scale=1.0, k=None)` | $d = \min\Big( \min_i \lvert a_i - b_i \rvert,\; s \, \lVert a - b \rVert_2^{\,d} \Big)$, or with $k$: $d = \min\Big( \min_i \lvert a_i - b_i \rvert,\; s \, r \, \lVert a - b \rVert_2 \Big)$ with $r = (k^{1/d} - 1) / (k - 1)$ | For vectors $a$ and $b$ of dimension $d$, with $s$ = `l2_scale`: the smaller of the `l_minus_inf()` distance and the L2 part. The L2 part is $s$ times the L2 distance raised to the power $d$, or, given $k$ selected items, $s \, r$ times the L2 distance. Under `MIN_SEPARATION` a selection is spread in its projection onto every coordinate axis and in the full space at once. Pass $k$ to give the spread along the axes and the spread in the full space equal weight, each measured as a fraction of the spacing of $k$ items on a regular grid. |
+| `l2_and_projections(l2_scale=1.0, k=None)` | $d = \min\Big( \min_i \lvert a_i - b_i \rvert,\; s \, \lVert a - b \rVert_2^{\,d} \Big)$, or with $k$: $d = \min\Big( \min_i \lvert a_i - b_i \rvert,\; s \, r \, \lVert a - b \rVert_2 \Big)$ with $r = (k^{1/d} - 1) / (k - 1)$ | For vectors $a$ and $b$ of dimension $d$, with $s$ = `l2_scale`: the smaller of the `l_minus_inf()` distance and the L2 part. The L2 part is $s$ times the L2 distance raised to the power $d$, or, given $k$ selected items, $s \, r$ times the L2 distance. Under `min_separation()` a selection is spread in its projection onto every coordinate axis and in the full space at once. Pass $k$ to give the spread along the axes and the spread in the full space equal weight, each measured as a fraction of the spacing of $k$ items on a regular grid. |
 
 - **Speed depends on `p`.** The values $p \in \{1, 2, \infty, 0.5, 0.25, 0.125\}$ compute with hardware arithmetic; every other $p$ pays a `pow` call per dimension, well over an order of magnitude more per term.
 - **`root=False` skips the outer $1/p$ root**, exactly as `l2s_euclidean_squared()` does for `l2_euclidean()` -- see that row above.
 - **For $0 < p < 1$ the `root=True` form violates the triangle inequality** and is not a strict metric, while the `root=False` form is one -- the solver never relies on the triangle inequality, so both are usable.
 - **`l2_and_projections()` assumes vectors scaled into the unit cube $[0,1]^d$**, the only population for which its 2 parts are comparable, and at least 2 dimensions: in 1 it only rescales the one coordinate gap.
-- **`l2_and_projections()` weighs the spread along the axes against the spread in the full space, equally only when `k` is passed.** A solve under `MIN_SEPARATION` ends with the 2 parts about equal for its closest selected pairs.
+- **`l2_and_projections()` weighs the spread along the axes against the spread in the full space, equally only when `k` is passed.** A solve under `min_separation()` ends with the 2 parts about equal for its closest selected pairs.
     - **With `k`**:
         - requires the selection size $k$; a problem rejects a $k$ that differs from its own;
         - uses $k$ to weigh the spread along the axes and in the full space equally: the solve reaches the same fraction of the grid spacing along the axes and in the full space, where $k$ items on a regular grid in the unit cube are spaced $1/(k-1)$ along an axis and $1/(k^{1/d}-1)$ in the full space.
@@ -102,28 +102,28 @@ see [Objectives & the diversity-problem landscape](objectives.md).)
 
 | Metric | Formula | Characteristics |
 |--------|---------|-----------------|
-| `GEOMEAN_SEPARATION` | $\exp\!\left(\frac{1}{k}\sum_{v \in S} \ln(\text{sep}(v))\right)$ | **Default.** Balances all separations. Sensitive to any item with low separation -- a single poorly-placed item drags down the score. |
-| `MIN_SEPARATION` | $\min_{v \in S} \text{sep}(v)$ | Only considers the worst-off item (the closest pair). Equivalent to the *p-dispersion* problem. Many swaps produce tied scores. |
-| `MEAN_SEPARATION` | $\frac{1}{k}\sum_{v \in S} \text{sep}(v)$ | Averages all separations. Less sensitive to individual outliers than geomean, but can be dominated by a few very high separations. |
-| `APPROX_GEOMEAN_SEPARATION` | Same as geomean but using fast log/exp approximations | Slightly less accurate but faster per iteration. Useful for large-scale problems where iteration speed matters more than per-iteration precision. |
-| `HARMONIC_MEAN_SEPARATION` | $k \,/\, \sum_{v \in S} \big(1 / \text{sep}(v)\big)$ | Between the geometric mean and the minimum: every item still counts, but a close pair lowers the score more than under the geomean. Zero as soon as one separation is zero. Computed exactly, without logarithm or exponential. |
-| `MEAN_PAIRWISE_DISTANCE` | $\frac{2}{k(k-1)}\sum_{\{u,v\} \subseteq S} d(u, v)$ | Mean distance over all selected *pairs* -- the classical **max-sum diversity** objective (MaxSum MDP, also known as *remote-clique*). Maximizes total spread: selections gravitate to the outer regions of the data, and near-duplicates are tolerated if both sit far from everything else. |
+| `geomean_separation()` | $\exp\!\left(\frac{1}{k}\sum_{v \in S} \ln(\text{sep}(v))\right)$ | **Default.** Balances all separations. Sensitive to any item with low separation -- a single poorly-placed item lowers the score sharply. |
+| `min_separation()` | $\min_{v \in S} \text{sep}(v)$ | Only considers the worst-off item (the closest pair). Equivalent to the *p-dispersion* problem. Many swaps produce tied scores. |
+| `mean_separation()` | $\frac{1}{k}\sum_{v \in S} \text{sep}(v)$ | Averages all separations. Less sensitive to individual outliers than geomean, but can be dominated by a few very high separations. |
+| `approx_geomean_separation()` | Same as geomean but using fast log/exp approximations | Slightly less accurate but faster per iteration. Useful for large-scale problems where iteration speed matters more than per-iteration precision. |
+| `harmonic_mean_separation()` | $k \,/\, \sum_{v \in S} \big(1 / \text{sep}(v)\big)$ | Between the geometric mean and the minimum: every item still counts, but a close pair lowers the score more than under the geomean. Zero as soon as one separation is zero. Computed exactly, without logarithm or exponential. |
+| `mean_pairwise_distance()` | $\frac{2}{k(k-1)}\sum_{\{u,v\} \subseteq S} d(u, v)$ | Mean distance over all selected *pairs* -- the classical **max-sum diversity** objective (MaxSum MDP, also known as *remote-clique*). Maximizes total spread: selections tend to lie in the outer regions of the data, and near-duplicates are tolerated if both sit far from everything else. |
 
 ### V.A. Which metric to choose? { #which-metric-to-choose }
 
-- **`GEOMEAN_SEPARATION`** is the best default. It naturally penalizes any clustering in the
+- **`geomean_separation()`** is the best default. It naturally penalizes any clustering in the
   selection while remaining smooth and differentiable in most of the search space.
-- **`MIN_SEPARATION`** is appropriate when you specifically care about the worst-case nearest
+- **`min_separation()`** is appropriate when you specifically care about the worst-case nearest
   neighbor distance (e.g., facility placement where minimum coverage radius matters).
   Expect slower convergence due to many tied scores.
-- **`MEAN_SEPARATION`** maximizes total spread. It may tolerate some clustering as long as
+- **`mean_separation()`** maximizes total spread. It may tolerate some clustering as long as
   other items compensate with large separations.
-- **`APPROX_GEOMEAN_SEPARATION`** is a drop-in replacement for `GEOMEAN_SEPARATION` when
+- **`approx_geomean_separation()`** is a drop-in replacement for `geomean_separation()` when
   you want to trade a small amount of precision for more iterations per second.
-- **`HARMONIC_MEAN_SEPARATION`** sits between `GEOMEAN_SEPARATION` and `MIN_SEPARATION`: pick it
+- **`harmonic_mean_separation()`** sits between `geomean_separation()` and `min_separation()`: pick it
   when a close pair should weigh more than the geomean gives it, without the tied scores of the
   minimum.
-- **`MEAN_PAIRWISE_DISTANCE`** is the objective to pick when you want classical max-sum
+- **`mean_pairwise_distance()`** is the objective to pick when you want classical max-sum
   diversity semantics ("maximize total spread") or want results comparable with the MaxSum
   MDP literature. Unlike every separation metric it does *not* penalize near-duplicates per
   se -- two nearly identical items at the data's boundary can both be kept. Note that the
@@ -144,8 +144,8 @@ A hybrid is for selections that must be diverse in more than one sense at once: 
 
 A term is a diversity metric over one distance metric:
 
-- `DiversityMetric.MIN_SEPARATION.over(DistanceMetric.along_axis(0))` reads the distance along axis 0;
-- a bare `DiversityMetric.MIN_SEPARATION` reads the problem's own distance metric.
+- `DiversityMetric.min_separation().over(DistanceMetric.along_axis(0))` reads the distance along axis 0;
+- a bare `DiversityMetric.min_separation()` reads the problem's own distance metric.
 
 The distances under each term's distance metric are computed and stored in the same way as the distances under the problem's own distance metric, and every term adds work to each iteration. A hybrid needs at least 2 terms, and a hybrid cannot be a term of another hybrid.
 
@@ -165,9 +165,9 @@ Each factory below combines the terms' values into the hybrid's score:
 from max_div.metrics import DistanceMetric, DiversityMetric, HybridDiversityMetric
 
 objective = HybridDiversityMetric.geomean_of(
-    DiversityMetric.MIN_SEPARATION.over(DistanceMetric.l2_euclidean()),
-    DiversityMetric.MIN_SEPARATION.over(DistanceMetric.along_axis(0)),
-    DiversityMetric.MIN_SEPARATION.over(DistanceMetric.along_axis(1)),
+    DiversityMetric.min_separation().over(DistanceMetric.l2_euclidean()),
+    DiversityMetric.min_separation().over(DistanceMetric.along_axis(0)),
+    DiversityMetric.min_separation().over(DistanceMetric.along_axis(1)),
 )
 problem = MaxDivProblem.new(vectors, k=100, diversity_metric=objective)
 ```
@@ -192,8 +192,8 @@ x_range = vectors[:, 0].max() - vectors[:, 0].min()
 y_range = vectors[:, 1].max() - vectors[:, 1].min()
 
 objective = HybridDiversityMetric.min_of(
-    DiversityMetric.MIN_SEPARATION.over(DistanceMetric.along_axis(0)),
-    DiversityMetric.MIN_SEPARATION.over(DistanceMetric.along_axis(1)),
+    DiversityMetric.min_separation().over(DistanceMetric.along_axis(0)),
+    DiversityMetric.min_separation().over(DistanceMetric.along_axis(1)),
     weights=(1 / x_range, 1 / y_range),
 )
 ```
@@ -204,7 +204,7 @@ A `min_of` hybrid whose terms all use min-separation scores a selection exactly 
 
 `l2_and_projections(k=...)` with `l2_scale` = 1 is the minimum of $k - 1$ times the `l_minus_inf()` distance and $k^{1/d} - 1$ times the `l2_euclidean()` distance, divided by $k - 1$.
 
-A solve under `MIN_SEPARATION` over it therefore gives a selection the score of a `min_of` hybrid with those weights, divided by $k - 1$, but computes that score from 1 set of pairwise distances, where the hybrid needs 2 sets.
+A solve under `min_separation()` over it therefore gives a selection the score of a `min_of` hybrid with those weights, divided by $k - 1$, but computes that score from 1 set of pairwise distances, where the hybrid needs 2 sets.
 
 ### VI.D. Tie-breakers { #hybrid-tie-breakers }
 

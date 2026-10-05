@@ -32,7 +32,7 @@ def example_solver() -> MaxDivSolver:
                 vectors=vectors,
                 k=selection_size,
                 distance_metric=DistanceMetric.l1_manhattan(),
-                diversity_metric=DiversityMetric.MIN_SEPARATION,
+                diversity_metric=DiversityMetric.min_separation(),
                 constraints=constraints,
             )
         )

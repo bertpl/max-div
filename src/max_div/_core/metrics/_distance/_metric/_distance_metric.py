@@ -92,7 +92,7 @@ class DistanceMetric:
         """Return the squared L2 (Euclidean squared) distance metric: ``sum_i (x_i - y_i)^2``.
 
         The squared form avoids the square root and produces identical solutions under the
-        GEOMEAN_SEPARATION diversity metric.
+        `geomean_separation()` diversity metric.
         """
         return L2sEuclideanSquaredDistanceMetric()
 

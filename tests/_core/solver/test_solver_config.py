@@ -33,7 +33,7 @@ def test_prepare_returns_the_storage_plan_and_a_config_over_its_resolved_objecti
     assert config.k == 4
     assert config.diversity_objectives == distance_storage_plan.diversity_objectives
     assert config.diversity_objectives[0] == DiversityObjectiveSimple(
-        DiversityMetric.GEOMEAN_SEPARATION,
+        DiversityMetric.geomean_separation(),
         FullMatrixDistanceSpec(matrix_id=1, label=DistanceMetric.l2_euclidean().label),
     )  # the problem's own metric, over the full matrix that the plan adds
     assert config.distance_storage == distance_storage_plan.distance_storage

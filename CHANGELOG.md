@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+- **Breaking:** Turn `DiversityMetric` from an enum into a class with factory methods, such as `DiversityMetric.min_separation()` for `DiversityMetric.MIN_SEPARATION`
 
 ### Deprecated
 

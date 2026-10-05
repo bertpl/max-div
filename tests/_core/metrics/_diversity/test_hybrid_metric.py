@@ -21,7 +21,7 @@ _SPEC_B = FullMatrixDistanceSpec(matrix_id=1, label="b")
 
 def _two_term_hybrid(factory, **kwargs) -> HybridDiversityMetric:
     """Return a hybrid built by `factory` from a bare min-separation term and a geomean term along axis 0."""
-    return factory(DiversityMetric.MIN_SEPARATION, DiversityMetric.GEOMEAN_SEPARATION.over(_AXIS_0), **kwargs)
+    return factory(DiversityMetric.min_separation(), DiversityMetric.geomean_separation().over(_AXIS_0), **kwargs)
 
 
 def _distance_spec_of(distance_metric: DistanceMetric | None) -> FullMatrixDistanceSpec:
@@ -34,38 +34,38 @@ def _distance_spec_of(distance_metric: DistanceMetric | None) -> FullMatrixDista
 # ==================================================================================================
 def test_over_pairs_the_diversity_metric_with_the_distance_metric() -> None:
     # --- act --------------------------
-    term = DiversityMetric.MIN_SEPARATION.over(_AXIS_0)
+    term = DiversityMetric.min_separation().over(_AXIS_0)
 
     # --- assert -----------------------
     assert isinstance(term, DiversityTerm)
-    assert term.diversity_metric == DiversityMetric.MIN_SEPARATION
+    assert term.diversity_metric == DiversityMetric.min_separation()
     assert term.distance_metric == _AXIS_0
 
 
 def test_terms_compare_and_hash_by_value() -> None:
     # --- arrange ----------------------
-    term = DiversityMetric.MIN_SEPARATION.over(_AXIS_0)
-    same = DiversityMetric.MIN_SEPARATION.over(DistanceMetric.along_axis(0))
-    other_distance = DiversityMetric.MIN_SEPARATION.over(DistanceMetric.l2_euclidean())
-    other_diversity = DiversityMetric.MEAN_SEPARATION.over(_AXIS_0)
+    term = DiversityMetric.min_separation().over(_AXIS_0)
+    same = DiversityMetric.min_separation().over(DistanceMetric.along_axis(0))
+    other_distance = DiversityMetric.min_separation().over(DistanceMetric.l2_euclidean())
+    other_diversity = DiversityMetric.mean_separation().over(_AXIS_0)
 
     # --- assert -----------------------
     assert term == same
     assert hash(term) == hash(same)
     assert term != other_distance
     assert term != other_diversity
-    assert term != DiversityMetric.MIN_SEPARATION
+    assert term != DiversityMetric.min_separation()
 
 
 @pytest.mark.parametrize(
     "term, expected_label, expected_repr",
     [
         (
-            DiversityMetric.MIN_SEPARATION.over(_AXIS_0),
+            DiversityMetric.min_separation().over(_AXIS_0),
             "MIN_SEPARATION over axis 0",
-            "DiversityMetric.MIN_SEPARATION.over(DistanceMetric.along_axis(0))",
+            "DiversityMetric.min_separation().over(DistanceMetric.along_axis(0))",
         ),
-        (DiversityTerm(DiversityMetric.MIN_SEPARATION), "MIN_SEPARATION", "DiversityMetric.MIN_SEPARATION"),
+        (DiversityTerm(DiversityMetric.min_separation()), "MIN_SEPARATION", "DiversityMetric.min_separation()"),
     ],
     ids=["named_distance_metric", "no_distance_metric"],
 )
@@ -101,8 +101,8 @@ def test_a_hybrid_resolves_to_a_hybrid_objective_with_its_aggregation(factory, w
     # --- assert -----------------------
     assert objective == DiversityObjectiveHybrid(
         (
-            DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, _SPEC_A),
-            DiversityObjectiveSimple(DiversityMetric.GEOMEAN_SEPARATION, _SPEC_B),
+            DiversityObjectiveSimple(DiversityMetric.min_separation(), _SPEC_A),
+            DiversityObjectiveSimple(DiversityMetric.geomean_separation(), _SPEC_B),
         ),
         aggregation,
     )
@@ -127,20 +127,20 @@ def test_a_hybrid_asks_for_the_distance_spec_of_each_terms_distance_metric_none_
 
 def test_a_hybrid_holds_a_bare_metric_as_a_term_without_a_distance_metric_and_lists_the_named_ones() -> None:
     # --- arrange ----------------------
-    axis_term = DiversityMetric.MIN_SEPARATION.over(_AXIS_0)
-    hybrid = HybridDiversityMetric.geomean_of(DiversityMetric.MIN_SEPARATION, axis_term, axis_term)
+    axis_term = DiversityMetric.min_separation().over(_AXIS_0)
+    hybrid = HybridDiversityMetric.geomean_of(DiversityMetric.min_separation(), axis_term, axis_term)
 
     # --- assert -----------------------
-    assert hybrid.terms == (DiversityTerm(DiversityMetric.MIN_SEPARATION), axis_term, axis_term)
+    assert hybrid.terms == (DiversityTerm(DiversityMetric.min_separation()), axis_term, axis_term)
     assert hybrid.named_distance_metrics == (_AXIS_0,)
 
 
 def test_a_repeated_term_counts_once_per_repeat() -> None:
     # --- arrange ----------------------
-    axis_term = DiversityMetric.MIN_SEPARATION.over(_AXIS_0)
+    axis_term = DiversityMetric.min_separation().over(_AXIS_0)
 
     # --- act --------------------------
-    objective = HybridDiversityMetric.mean_of(DiversityMetric.MIN_SEPARATION, axis_term, axis_term)._to_objective(
+    objective = HybridDiversityMetric.mean_of(DiversityMetric.min_separation(), axis_term, axis_term)._to_objective(
         _distance_spec_of
     )
 
@@ -191,7 +191,7 @@ def test_a_hybrid_rejects_weights_that_are_not_one_positive_finite_number_per_te
 
 def test_a_hybrid_needs_at_least_two_terms() -> None:
     with pytest.raises(ValueError, match="at least two terms"):
-        HybridDiversityMetric.geomean_of(DiversityMetric.MIN_SEPARATION)
+        HybridDiversityMetric.geomean_of(DiversityMetric.min_separation())
 
 
 def test_a_hybrid_does_not_nest() -> None:
@@ -200,7 +200,7 @@ def test_a_hybrid_does_not_nest() -> None:
 
     # --- act / assert -----------------
     with pytest.raises(TypeError, match="got HybridDiversityMetric"):
-        HybridDiversityMetric.mean_of(inner, DiversityMetric.MIN_SEPARATION)
+        HybridDiversityMetric.mean_of(inner, DiversityMetric.min_separation())
 
 
 def test_hybrids_compare_and_hash_by_terms_aggregation_and_weights() -> None:
@@ -216,7 +216,7 @@ def test_hybrids_compare_and_hash_by_terms_aggregation_and_weights() -> None:
     assert hash(geomean) == hash(geomean_with_unit_weights)
     assert geomean != mean
     assert geomean != weighted
-    assert geomean != DiversityMetric.MIN_SEPARATION
+    assert geomean != DiversityMetric.min_separation()
 
 
 @pytest.mark.parametrize(
@@ -226,29 +226,29 @@ def test_hybrids_compare_and_hash_by_terms_aggregation_and_weights() -> None:
             HybridDiversityMetric.geomean_of,
             None,
             "geomean(MIN_SEPARATION, GEOMEAN_SEPARATION over axis 0)",
-            "HybridDiversityMetric.geomean_of(DiversityMetric.MIN_SEPARATION, "
-            "DiversityMetric.GEOMEAN_SEPARATION.over(DistanceMetric.along_axis(0)))",
+            "HybridDiversityMetric.geomean_of(DiversityMetric.min_separation(), "
+            "DiversityMetric.geomean_separation().over(DistanceMetric.along_axis(0)))",
         ),
         (
             HybridDiversityMetric.mean_of,
             (1.0, 1.0),
             "mean(MIN_SEPARATION, GEOMEAN_SEPARATION over axis 0)",
-            "HybridDiversityMetric.mean_of(DiversityMetric.MIN_SEPARATION, "
-            "DiversityMetric.GEOMEAN_SEPARATION.over(DistanceMetric.along_axis(0)))",
+            "HybridDiversityMetric.mean_of(DiversityMetric.min_separation(), "
+            "DiversityMetric.geomean_separation().over(DistanceMetric.along_axis(0)))",
         ),
         (
             HybridDiversityMetric.geomean_of,
             (31.6227766, 1000),
             "geomean(MIN_SEPARATION, GEOMEAN_SEPARATION over axis 0; weights 31.62, 1000)",
-            "HybridDiversityMetric.geomean_of(DiversityMetric.MIN_SEPARATION, "
-            "DiversityMetric.GEOMEAN_SEPARATION.over(DistanceMetric.along_axis(0)), weights=(31.6227766, 1000.0))",
+            "HybridDiversityMetric.geomean_of(DiversityMetric.min_separation(), "
+            "DiversityMetric.geomean_separation().over(DistanceMetric.along_axis(0)), weights=(31.6227766, 1000.0))",
         ),
         (
             HybridDiversityMetric.min_of,
             (31.6227766, 1000),
             "min(MIN_SEPARATION, GEOMEAN_SEPARATION over axis 0; weights 31.62, 1000)",
-            "HybridDiversityMetric.min_of(DiversityMetric.MIN_SEPARATION, "
-            "DiversityMetric.GEOMEAN_SEPARATION.over(DistanceMetric.along_axis(0)), weights=(31.6227766, 1000.0))",
+            "HybridDiversityMetric.min_of(DiversityMetric.min_separation(), "
+            "DiversityMetric.geomean_separation().over(DistanceMetric.along_axis(0)), weights=(31.6227766, 1000.0))",
         ),
     ],
     ids=["geomean", "mean_at_equal_weights", "weighted_geomean", "weighted_min"],

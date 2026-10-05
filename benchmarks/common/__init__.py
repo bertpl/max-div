@@ -2,10 +2,11 @@
 
 from .budget_series import grid_budget_series, iteration_budget_series, time_budget_series
 from .problems import build_problem
-from .quality import evaluate_selection, n_constraints_satisfied
+from .quality import EVALUATED_METRIC_BY_LABEL, evaluate_selection, n_constraints_satisfied
 from .records import RunRecord, load_records, save_records
 
 __all__ = [
+    "EVALUATED_METRIC_BY_LABEL",
     "RunRecord",
     "build_problem",
     "evaluate_selection",

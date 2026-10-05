@@ -68,7 +68,7 @@ def solve(
             BenchmarkProblemFactory.construct_problem(
                 name=test_problem,
                 n=n,
-                diversity_metric=DiversityMetric.APPROX_GEOMEAN_SEPARATION,
+                diversity_metric=DiversityMetric.approx_geomean_separation(),
             ),
         )
         .with_preset(target_duration=duration, preset=SolverPreset(preset))

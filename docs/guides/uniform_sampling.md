@@ -131,9 +131,9 @@ Each objective below combines a part for the L2 goal with parts for the marginal
 from max_div.metrics import DistanceMetric, DiversityMetric, HybridDiversityMetric
 
 objective = HybridDiversityMetric.geomean_of(
-    DiversityMetric.MIN_SEPARATION.over(DistanceMetric.l2_euclidean()),
-    DiversityMetric.MIN_SEPARATION.over(DistanceMetric.along_axis(0)),
-    DiversityMetric.MIN_SEPARATION.over(DistanceMetric.along_axis(1)),
+    DiversityMetric.min_separation().over(DistanceMetric.l2_euclidean()),
+    DiversityMetric.min_separation().over(DistanceMetric.along_axis(0)),
+    DiversityMetric.min_separation().over(DistanceMetric.along_axis(1)),
 )
 ```
 
@@ -242,8 +242,8 @@ from max_div.metrics import DistanceMetric, DiversityMetric, HybridDiversityMetr
 
 k = 100
 objective = HybridDiversityMetric.min_of(
-    DiversityMetric.MIN_SEPARATION.over(DistanceMetric.l_minus_inf()),
-    DiversityMetric.MIN_SEPARATION.over(DistanceMetric.l2_euclidean()),
+    DiversityMetric.min_separation().over(DistanceMetric.l_minus_inf()),
+    DiversityMetric.min_separation().over(DistanceMetric.l2_euclidean()),
     weights=(k, math.sqrt(k)),
 )
 ```
@@ -284,7 +284,7 @@ problem = MaxDivProblem.new(
     vectors=vectors,
     k=100,
     distance_metric=DistanceMetric.l2_and_projections(),
-    diversity_metric=DiversityMetric.MIN_SEPARATION,
+    diversity_metric=DiversityMetric.min_separation(),
 )
 ```
 
@@ -327,7 +327,7 @@ problem = MaxDivProblem.new(
     vectors=vectors,
     k=100,
     distance_metric=DistanceMetric.l2_and_projections(k=100),
-    diversity_metric=DiversityMetric.MIN_SEPARATION,
+    diversity_metric=DiversityMetric.min_separation(),
 )
 ```
 

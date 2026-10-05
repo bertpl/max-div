@@ -131,7 +131,7 @@ def test_solver_vector_and_distance_input_bit_identical(form: str):
     # --- arrange ----------------------
     rng = np.random.default_rng(20260713)
     vectors = rng.random((40, 4)).astype(np.float32)
-    kwargs: dict = {"k": 8, "diversity_metric": DiversityMetric.GEOMEAN_SEPARATION}
+    kwargs: dict = {"k": 8, "diversity_metric": DiversityMetric.geomean_separation()}
     problem_vec = MaxDivProblem.new(vectors, distance_metric=DistanceMetric.l2_euclidean(), **kwargs)
     condensed = condensed_distances(vectors, DistanceMetric.l2_euclidean())
     distances = np.ascontiguousarray(squareform(condensed)) if form == "square" else condensed
@@ -154,7 +154,7 @@ def test_solver_deterministic_above_candidate_cap():
     # --- arrange ----------------------
     rng = np.random.default_rng(20260802)
     vectors = rng.random((600, 3)).astype(np.float32)  # pool of ~590 non-selected items exceeds the initial cap
-    problem = MaxDivProblem.new(vectors, k=10, diversity_metric=DiversityMetric.GEOMEAN_SEPARATION)
+    problem = MaxDivProblem.new(vectors, k=10, diversity_metric=DiversityMetric.geomean_separation())
 
     # --- act --------------------------
     solution_1 = (
@@ -193,7 +193,7 @@ def test_solver_lazy_backend_bit_identical_selection(distance_metric: DistanceMe
     rng = np.random.default_rng(20260731)
     vectors = rng.random((40, 4)).astype(np.float32)
     problem = MaxDivProblem.new(
-        vectors, k=8, distance_metric=distance_metric, diversity_metric=DiversityMetric.GEOMEAN_SEPARATION
+        vectors, k=8, distance_metric=distance_metric, diversity_metric=DiversityMetric.geomean_separation()
     )
     solver_full_matrix = (
         MaxDivSolverBuilder(problem)
@@ -240,7 +240,7 @@ def _make_mean_pairwise_distance_problem(n: int = 60, k: int = 8) -> tuple[MaxDi
         vectors=vectors,
         k=k,
         distance_metric=DistanceMetric.l2_euclidean(),
-        diversity_metric=DiversityMetric.MEAN_PAIRWISE_DISTANCE,
+        diversity_metric=DiversityMetric.mean_pairwise_distance(),
     )
     return problem, vectors
 
@@ -449,7 +449,9 @@ def _hybrid_problem(factory) -> tuple[MaxDivProblem, np.ndarray]:
     Random coordinates keep every axis separation non-zero.
     """
     vectors = np.random.default_rng(20260913).random((50, 3)).astype(np.float32)
-    hybrid = factory(DiversityMetric.MIN_SEPARATION, DiversityMetric.MIN_SEPARATION.over(DistanceMetric.along_axis(0)))
+    hybrid = factory(
+        DiversityMetric.min_separation(), DiversityMetric.min_separation().over(DistanceMetric.along_axis(0))
+    )
     return MaxDivProblem.new(vectors, k=8, diversity_metric=hybrid), vectors
 
 
@@ -528,7 +530,7 @@ def test_min_separation_over_l2_and_projections_is_the_smallest_pair_distance_of
         vectors,
         k=10,
         distance_metric=DistanceMetric.l2_and_projections(k=k),
-        diversity_metric=DiversityMetric.MIN_SEPARATION,
+        diversity_metric=DiversityMetric.min_separation(),
     )
 
     # --- act --------------------------
@@ -554,7 +556,7 @@ def test_min_separation_over_l2_and_projections_with_k_solves_in_parallel_from_l
         vectors,
         k=k,
         distance_metric=DistanceMetric.l2_and_projections(k=k),
-        diversity_metric=DiversityMetric.MIN_SEPARATION,
+        diversity_metric=DiversityMetric.min_separation(),
     )
     builder = ParallelMaxDivSolverBuilder(problem).with_seed(3).with_distance_storage(DistanceStorageType.LAZY)
 
@@ -648,7 +650,7 @@ def test_a_solution_records_the_labels_of_its_diversity_objectives():
     """The solution names the primary objective first, then the builder's tie-breakers."""
     # --- arrange ----------------------
     vectors = np.random.default_rng(0).random((60, 2)).astype(np.float32)
-    problem = MaxDivProblem.new(vectors=vectors, k=6, diversity_metric=DiversityMetric.MIN_SEPARATION)
+    problem = MaxDivProblem.new(vectors=vectors, k=6, diversity_metric=DiversityMetric.min_separation())
 
     # --- act --------------------------
     solution = (

@@ -17,8 +17,10 @@ terms is not a single diversity metric.
 The default tie-breakers follow one rule for both kinds, over the diversity metrics of the terms (a
 simple objective counting as a single term):
 
-- the approximate geomean is needed when a term is min-separation;
-- the non-zero fraction is needed when a term is min-separation or goes to zero when one pair coincides.
+- the approximate geomean is needed when a term's score is set by its smallest separations, as
+  min-separation's is (`DiversityMetric.needs_approx_geomean_tie_breaker`);
+- the non-zero fraction is needed when a term's score is zero, or near zero, as soon as one pair coincides
+  (`DiversityMetric.needs_non_zero_separation_frac_tie_breaker`).
 
 Each tie-breaker is computed over every distinct distance spec of the objective, as a hybrid when there are several.
 A hybrid gets one more tie-breaker, ranked before these, when its aggregation returns a tie-breaker
@@ -35,7 +37,7 @@ from typing import TYPE_CHECKING, NamedTuple
 import numpy as np
 
 from ._aggregation import HybridAggregationArithmeticMean, HybridAggregationBase, HybridAggregationGeometricMean
-from ._enum import DiversityContributionFamily, DiversityMetric
+from ._diversity_metric import DiversityMetric
 
 if TYPE_CHECKING:
     from collections.abc import Mapping, Sequence
@@ -43,6 +45,8 @@ if TYPE_CHECKING:
     from numpy.typing import NDArray
 
     from max_div._core.metrics._distance import DistanceSpec
+
+    from ._contribution_family import DiversityContributionFamily
 
 
 class DiversityTrackerSpec(NamedTuple):
@@ -109,22 +113,18 @@ class DiversityObjective(ABC):
         tie-breaker is built over this objective's distinct distance specs.
         """
         # --- which tie-breakers the metrics need ----
-        # min-separation depends on the closest pair alone, so a swap that spreads the other items
-        # leaves the score unchanged; such a swap has value, though: it frees room around the closest
-        # pair and makes a later swap that moves one of its items apart more likely. The approximate
-        # geomean rewards it.
-        needs_approx_geomean = DiversityMetric.MIN_SEPARATION in self.diversity_metrics
-        # the geometric and harmonic means are zero as soon as one pair coincides, so once two pairs
-        # coincide no single swap moves the score off zero; the non-zero fraction counts the coincident
-        # pairs down. A min-separation objective needs it too, for when the approximate geomean has
-        # underflowed to zero.
-        zero_pinned_metrics = {
-            DiversityMetric.GEOMEAN_SEPARATION,
-            DiversityMetric.APPROX_GEOMEAN_SEPARATION,
-            DiversityMetric.HARMONIC_MEAN_SEPARATION,
-        }
-        needs_non_zero_frac = needs_approx_geomean or any(
-            metric in zero_pinned_metrics for metric in self.diversity_metrics
+        # A score set by the smallest separations, such as min-separation, stays unchanged under a swap that
+        # spreads only the items outside the closest pairs.
+        #
+        # Such a swap still has value: it moves those items away from the items of the closest pairs, and makes
+        # a later swap that moves the 2 items of a closest pair further apart more likely. The approximate
+        # geomean rewards such a swap.
+        needs_approx_geomean = any(metric.needs_approx_geomean_tie_breaker for metric in self.diversity_metrics)
+        # A score that is zero, or near zero, as soon as one pair coincides stays there under any one swap once
+        # 2 pairs coincide; the non-zero fraction breaks the tie, because it rises with each coincident pair
+        # that a swap separates.
+        needs_non_zero_frac = any(
+            metric.needs_non_zero_separation_frac_tie_breaker for metric in self.diversity_metrics
         )
 
         # --- the tie-breaker metrics, in rank order --
@@ -133,9 +133,9 @@ class DiversityObjective(ABC):
         # no non-zero separation lowers the tie-breaker without making it zero
         tie_breaker_metrics: list[tuple[DiversityMetric, type[HybridAggregationBase]]] = []
         if needs_approx_geomean:
-            tie_breaker_metrics.append((DiversityMetric.APPROX_GEOMEAN_SEPARATION, HybridAggregationGeometricMean))
+            tie_breaker_metrics.append((DiversityMetric.approx_geomean_separation(), HybridAggregationGeometricMean))
         if needs_non_zero_frac:
-            tie_breaker_metrics.append((DiversityMetric.NON_ZERO_SEPARATION_FRAC, HybridAggregationArithmeticMean))
+            tie_breaker_metrics.append((DiversityMetric.non_zero_separation_frac(), HybridAggregationArithmeticMean))
 
         # --- each over every distinct distance ------
         distance_specs = self.distinct_distance_specs()
@@ -179,7 +179,7 @@ class DiversityObjectiveSimple(DiversityObjective):
     @property
     def label(self) -> str:
         """Return e.g. `MIN_SEPARATION over L2`, or `MIN_SEPARATION over user distances`."""
-        return f"{self.diversity_metric.value} over {self.distance_spec.label}"
+        return f"{self.diversity_metric.label} over {self.distance_spec.label}"
 
     def with_distance_specs(self, replacement_by_spec: Mapping[DistanceSpec, DistanceSpec]) -> DiversityObjectiveSimple:
         """Return a copy of this objective with its distance spec replaced by its entry in `replacement_by_spec`."""

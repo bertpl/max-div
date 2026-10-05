@@ -23,7 +23,7 @@ L2 = VectorDistanceSpec(matrix_id=0, metric=DistanceMetric.l2_euclidean(), is_ma
     "diversity_objectives, expected_distance_specs, expected_tracker_specs, expected_positions",
     [
         pytest.param(
-            [DiversityObjectiveSimple(DiversityMetric.GEOMEAN_SEPARATION, USER_DISTANCES)],
+            [DiversityObjectiveSimple(DiversityMetric.geomean_separation(), USER_DISTANCES)],
             (USER_DISTANCES,),
             (DiversityTrackerSpec(USER_DISTANCES, SEPARATION),),
             ((0,),),
@@ -31,9 +31,9 @@ L2 = VectorDistanceSpec(matrix_id=0, metric=DistanceMetric.l2_euclidean(), is_ma
         ),
         pytest.param(
             [
-                DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, USER_DISTANCES),
-                DiversityObjectiveSimple(DiversityMetric.APPROX_GEOMEAN_SEPARATION, USER_DISTANCES),
-                DiversityObjectiveSimple(DiversityMetric.MEAN_PAIRWISE_DISTANCE, USER_DISTANCES),
+                DiversityObjectiveSimple(DiversityMetric.min_separation(), USER_DISTANCES),
+                DiversityObjectiveSimple(DiversityMetric.approx_geomean_separation(), USER_DISTANCES),
+                DiversityObjectiveSimple(DiversityMetric.mean_pairwise_distance(), USER_DISTANCES),
             ],
             (USER_DISTANCES,),
             (DiversityTrackerSpec(USER_DISTANCES, SEPARATION), DiversityTrackerSpec(USER_DISTANCES, MEAN_DISTANCE)),
@@ -43,16 +43,16 @@ L2 = VectorDistanceSpec(matrix_id=0, metric=DistanceMetric.l2_euclidean(), is_ma
         pytest.param(
             [
                 hybrid_objective(
-                    DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L2),
-                    DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L1),
-                    DiversityObjectiveSimple(DiversityMetric.GEOMEAN_SEPARATION, L2),  # this term repeats the L2 spec
+                    DiversityObjectiveSimple(DiversityMetric.min_separation(), L2),
+                    DiversityObjectiveSimple(DiversityMetric.min_separation(), L1),
+                    DiversityObjectiveSimple(DiversityMetric.geomean_separation(), L2),  # this term repeats the L2 spec
                 ),
                 hybrid_objective(
-                    DiversityObjectiveSimple(DiversityMetric.NON_ZERO_SEPARATION_FRAC, L1),
-                    DiversityObjectiveSimple(DiversityMetric.NON_ZERO_SEPARATION_FRAC, L2),
+                    DiversityObjectiveSimple(DiversityMetric.non_zero_separation_frac(), L1),
+                    DiversityObjectiveSimple(DiversityMetric.non_zero_separation_frac(), L2),
                     aggregation_type=HybridAggregationArithmeticMean,
                 ),
-                DiversityObjectiveSimple(DiversityMetric.MEAN_PAIRWISE_DISTANCE, L1),
+                DiversityObjectiveSimple(DiversityMetric.mean_pairwise_distance(), L1),
             ],
             (L2, L1),
             (

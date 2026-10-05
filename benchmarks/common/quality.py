@@ -14,6 +14,7 @@ from numpy.typing import NDArray
 # The library-internal distance build is used on purpose: selections must be scored under
 # exactly the distance semantics the solver itself uses (incl. float32 behavior), and the
 # public API only exposes distances via whole problems.
+from max_div._core.metrics import DiversityContributionFamily
 from max_div._core.metrics._distance import compute_full_matrix
 from max_div.metrics import DiversityMetric
 from max_div.problem import MaxDivProblem, VectorMaxDivProblem
@@ -21,11 +22,14 @@ from max_div.problem import MaxDivProblem, VectorMaxDivProblem
 # The four canonical metrics every selection is scored under (APPROX_GEOMEAN is a speed
 # variant of GEOMEAN, not a distinct objective, so it is not evaluated separately).
 EVALUATED_METRICS: tuple[DiversityMetric, ...] = (
-    DiversityMetric.MIN_SEPARATION,
-    DiversityMetric.MEAN_SEPARATION,
-    DiversityMetric.GEOMEAN_SEPARATION,
-    DiversityMetric.MEAN_PAIRWISE_DISTANCE,
+    DiversityMetric.min_separation(),
+    DiversityMetric.mean_separation(),
+    DiversityMetric.geomean_separation(),
+    DiversityMetric.mean_pairwise_distance(),
 )
+# Map each evaluated metric's label to the metric; the label is also the key of `evaluate_selection`'s result and
+# of the run records.
+EVALUATED_METRIC_BY_LABEL: dict[str, DiversityMetric] = {metric.label: metric for metric in EVALUATED_METRICS}
 
 
 def evaluate_selection(problem: MaxDivProblem, i_selected: NDArray[np.integer]) -> dict[str, float]:
@@ -36,7 +40,7 @@ def evaluate_selection(problem: MaxDivProblem, i_selected: NDArray[np.integer]) 
         i_selected: Indices of the selected items (length k, unique).
 
     Returns:
-        Mapping of diversity-metric name to its value for this selection.
+        Mapping of diversity-metric label to its value for this selection.
     """
     dist = _selection_distance_matrix(problem, i_selected)
     k = dist.shape[0]
@@ -46,8 +50,11 @@ def evaluate_selection(problem: MaxDivProblem, i_selected: NDArray[np.integer]) 
 
     values: dict[str, float] = {}
     for metric in EVALUATED_METRICS:
-        contributions = mean_dists if metric == DiversityMetric.MEAN_PAIRWISE_DISTANCE else separations
-        values[metric.name] = float(metric.compute(contributions))
+        if metric.contribution_family == DiversityContributionFamily.MEAN_DISTANCE:
+            contributions = mean_dists
+        else:
+            contributions = separations
+        values[metric.label] = float(metric.compute(contributions))
     return values
 
 

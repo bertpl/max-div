@@ -22,7 +22,7 @@ def small_constrained_problem() -> VectorMaxDivProblem:
     return MaxDivProblem.new(
         vectors=rng.random((30, 3)).astype(np.float32),
         k=6,
-        diversity_metric=DiversityMetric.MIN_SEPARATION,
+        diversity_metric=DiversityMetric.min_separation(),
         constraints=[
             Constraint(int_set=set(range(15)), min_count=2, max_count=3),
             Constraint(int_set=set(range(15, 30)), min_count=2, max_count=4),

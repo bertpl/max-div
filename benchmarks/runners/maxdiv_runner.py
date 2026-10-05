@@ -102,7 +102,7 @@ def run_maxdiv_budget_series(
             size=size,
             n=problem.n,
             k=problem.k,
-            diversity_metric=problem.diversity_metric.name,
+            diversity_metric=problem.diversity_metric.label,
             seed=job.seed,
             budget=job.budget_tag,
             measured_sec=outcome.measured_sec,

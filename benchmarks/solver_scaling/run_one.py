@@ -28,7 +28,7 @@ def execute(spec: dict) -> dict:
     from .configs import resolve
 
     vectors = np.load(spec["vectors_path"])
-    problem = MaxDivProblem.new(vectors=vectors, k=spec["k"], diversity_metric=DiversityMetric.MIN_SEPARATION)
+    problem = MaxDivProblem.new(vectors=vectors, k=spec["k"], diversity_metric=DiversityMetric.min_separation())
     config = resolve(spec["tool"], spec["config"])
 
     # Warm-up on a tiny slice of the same vectors, before the clock: it forces the solver's library
@@ -38,7 +38,7 @@ def execute(spec: dict) -> dict:
     # imports inside the timed section while max-div never does.
     if spec["tool"] != "_test_sleep":
         try:
-            warmup = MaxDivProblem.new(vectors=vectors[:20], k=2, diversity_metric=DiversityMetric.MIN_SEPARATION)
+            warmup = MaxDivProblem.new(vectors=vectors[:20], k=2, diversity_metric=DiversityMetric.min_separation())
             config.select(warmup, 0, 5.0)
         except Exception:  # noqa: BLE001, S110 -- a failed warm-up must not fail the run it serves
             pass

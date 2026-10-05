@@ -17,7 +17,7 @@ class BenchmarkSolverConstructor_Optimization(BenchmarkSolverConstructor):
     def __init__(
         self,
         problem_name: str,
-        diversity_metric: DiversityMetric = DiversityMetric.GEOMEAN_SEPARATION,
+        diversity_metric: DiversityMetric = DiversityMetric.geomean_separation(),  # noqa: B008 -- immutable frozen dataclass, safe as a default
         n_iterations: int = 1000,
     ) -> None:
         super().__init__(

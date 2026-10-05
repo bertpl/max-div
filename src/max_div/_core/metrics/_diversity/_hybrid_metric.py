@@ -20,7 +20,7 @@ from ._aggregation import (
     HybridAggregationGeometricMean,
     HybridAggregationMinimum,
 )
-from ._enum import DiversityMetric
+from ._diversity_metric import DiversityMetric
 from ._objective import DiversityObjectiveHybrid, DiversityObjectiveSimple
 
 if TYPE_CHECKING:
@@ -47,16 +47,16 @@ class DiversityTerm:
     def label(self) -> str:
         """Return a short label, e.g. `MIN_SEPARATION over axis 2`, or `MIN_SEPARATION` without a distance metric."""
         if self.distance_metric is None:
-            return self.diversity_metric.value
+            return self.diversity_metric.label
         else:
-            return f"{self.diversity_metric.value} over {self.distance_metric.label}"
+            return f"{self.diversity_metric.label} over {self.distance_metric.label}"
 
     def __repr__(self) -> str:
         """Return the expression for this term that the factory methods of `HybridDiversityMetric` accept."""
         if self.distance_metric is None:
-            return f"DiversityMetric.{self.diversity_metric.name}"
+            return repr(self.diversity_metric)
         else:
-            return f"DiversityMetric.{self.diversity_metric.name}.over({self.distance_metric!r})"
+            return f"{self.diversity_metric!r}.over({self.distance_metric!r})"
 
 
 # ==================================================================================================
@@ -106,6 +106,75 @@ class HybridDiversityMetric:
         # a bare DiversityMetric becomes a term that names no distance metric, so the hybrid holds 1 type of term
         self._terms = tuple(DiversityTerm(term) if isinstance(term, DiversityMetric) else term for term in terms)
         self._aggregation = aggregation
+
+    # --------------------------------------------------------------------------
+    #  Properties
+    # --------------------------------------------------------------------------
+    @property
+    def terms(self) -> tuple[DiversityTerm, ...]:
+        """Return the terms; a bare `DiversityMetric` given as a term is a term whose `distance_metric` is `None`."""
+        return self._terms
+
+    @property
+    def weights(self) -> tuple[float, ...]:
+        """Return one weight per term, in term order; each is 1 unless given."""
+        return self._aggregation.weights
+
+    @property
+    def named_distance_metrics(self) -> tuple[DistanceMetric, ...]:
+        """Return the distinct distance metrics that the terms name, in first-seen order."""
+        return tuple(dict.fromkeys(term.distance_metric for term in self._terms if term.distance_metric is not None))
+
+    @property
+    def label(self) -> str:
+        """Return a short label, e.g. `geomean(GEOMEAN_SEPARATION, MIN_SEPARATION over axis 0)`.
+
+        When any weight differs from 1, all weights follow the terms: `geomean(...; weights 2, 1)`.
+        """
+        return self._aggregation.format_label([term.label for term in self._terms])
+
+    # --------------------------------------------------------------------------
+    #  Conversion to an objective
+    # --------------------------------------------------------------------------
+    def _to_objective(
+        self, distance_spec_of: Callable[[DistanceMetric | None], DistanceSpec]
+    ) -> DiversityObjectiveHybrid:
+        """Return the objective that the solver maximizes for this hybrid, each term over the distances that it reads.
+
+        The hybrid passes each term's `distance_metric` to `distance_spec_of` without inspecting it, `None`
+        included, so the problem alone decides what a term without a distance metric reads.
+
+        Args:
+            distance_spec_of: the problem's `_distance_spec_of`, which returns the distance spec of a
+                term's distance metric.
+        """
+        return DiversityObjectiveHybrid(
+            tuple(
+                DiversityObjectiveSimple(term.diversity_metric, distance_spec_of(term.distance_metric))
+                for term in self._terms
+            ),
+            self._aggregation,
+        )
+
+    # --------------------------------------------------------------------------
+    #  Representation
+    # --------------------------------------------------------------------------
+    def __eq__(self, other: object) -> bool:
+        """Return whether `other` is a hybrid with equal terms and an equal aggregation."""
+        if not isinstance(other, HybridDiversityMetric):
+            return NotImplemented
+        else:
+            return self._terms == other._terms and self._aggregation == other._aggregation
+
+    def __hash__(self) -> int:
+        """Return a hash of the terms and the aggregation, consistent with `__eq__`."""
+        return hash((self._terms, self._aggregation))
+
+    def __repr__(self) -> str:
+        """Return the factory call that constructs this hybrid."""
+        term_reprs = ", ".join(repr(term) for term in self._terms)
+        weights_suffix = f", weights={self._aggregation.weights!r}" if self._aggregation.has_non_unit_weights else ""
+        return f"HybridDiversityMetric.{self._aggregation.name}_of({term_reprs}{weights_suffix})"
 
     # --------------------------------------------------------------------------
     #  Factory methods
@@ -178,69 +247,3 @@ class HybridDiversityMetric:
                 positive, finite number.
         """
         return cls(terms, HybridAggregationMinimum.from_weights(weights, len(terms)))
-
-    # --------------------------------------------------------------------------
-    #  Properties
-    # --------------------------------------------------------------------------
-    @property
-    def terms(self) -> tuple[DiversityTerm, ...]:
-        """Return the terms; a bare `DiversityMetric` given as a term is a term whose `distance_metric` is `None`."""
-        return self._terms
-
-    @property
-    def weights(self) -> tuple[float, ...]:
-        """Return one weight per term, in term order; each is 1 unless given."""
-        return self._aggregation.weights
-
-    @property
-    def named_distance_metrics(self) -> tuple[DistanceMetric, ...]:
-        """Return the distinct distance metrics that the terms name, in first-seen order."""
-        return tuple(dict.fromkeys(term.distance_metric for term in self._terms if term.distance_metric is not None))
-
-    @property
-    def label(self) -> str:
-        """Return a short label, e.g. `geomean(GEOMEAN_SEPARATION, MIN_SEPARATION over axis 0)`.
-
-        When any weight differs from 1, all weights follow the terms: `geomean(...; weights 2, 1)`.
-        """
-        return self._aggregation.format_label([term.label for term in self._terms])
-
-    # --------------------------------------------------------------------------
-    #  Conversion to an objective
-    # --------------------------------------------------------------------------
-    def _to_objective(
-        self, distance_spec_of: Callable[[DistanceMetric | None], DistanceSpec]
-    ) -> DiversityObjectiveHybrid:
-        """Return the objective that the solver maximizes for this hybrid, each term over the distances that it reads.
-
-        The hybrid passes each term's `distance_metric` to `distance_spec_of` without inspecting it, `None`
-        included, so the problem alone decides what a term without a distance metric reads.
-
-        Args:
-            distance_spec_of: the problem's `_distance_spec_of`, which returns the distance spec of a
-                term's distance metric.
-        """
-        return DiversityObjectiveHybrid(
-            tuple(
-                DiversityObjectiveSimple(term.diversity_metric, distance_spec_of(term.distance_metric))
-                for term in self._terms
-            ),
-            self._aggregation,
-        )
-
-    # --------------------------------------------------------------------------
-    #  Representation
-    # --------------------------------------------------------------------------
-    def __eq__(self, other: object) -> bool:
-        if not isinstance(other, HybridDiversityMetric):
-            return NotImplemented
-        return self._terms == other._terms and self._aggregation == other._aggregation
-
-    def __hash__(self) -> int:
-        return hash((self._terms, self._aggregation))
-
-    def __repr__(self) -> str:
-        """Return the factory call that constructs this hybrid."""
-        term_reprs = ", ".join(repr(term) for term in self._terms)
-        weights_suffix = f", weights={self._aggregation.weights!r}" if self._aggregation.has_non_unit_weights else ""
-        return f"HybridDiversityMetric.{self._aggregation.name}_of({term_reprs}{weights_suffix})"

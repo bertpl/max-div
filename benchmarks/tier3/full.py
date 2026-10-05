@@ -45,7 +45,7 @@ DATA_DIR = Path(__file__).parent / "data"
 ENTRANT_FILE = "third_party_mdplib.jsonl"
 MAXDIV_FILE = "maxdiv_mdplib.jsonl"
 
-METRIC = DiversityMetric.MIN_SEPARATION  # the published MMDP values are max-min
+METRIC = DiversityMetric.min_separation()  # the published MMDP values are max-min
 CHARTED_FAMILIES = ("Geo", "Ran")
 GLOVER_BUDGETS_SEC = grid_budget_series(0.001, 1.0)
 

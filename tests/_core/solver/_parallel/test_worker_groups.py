@@ -43,7 +43,7 @@ def _state_with(indices: list[int]) -> SolverState:
         n=vectors.shape[0],
         data_matrix_reader=full_matrix_reader(vectors, DistanceMetric.l1_manhattan()),
         k=3,
-        diversity_objectives=[simple_objective(DiversityMetric.MIN_SEPARATION)],
+        diversity_objectives=[simple_objective(DiversityMetric.min_separation())],
         constraints=[],
     )
     state.add_many(np.array(indices, dtype=np.int32))

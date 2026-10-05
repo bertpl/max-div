@@ -342,11 +342,14 @@ class Experiment:
     def diversity_metric(self, k: int) -> DiversityMetric | HybridDiversityMetric:
         """Return the objective the solver maximizes when it selects k items."""
         if len(self.distance_keys) == 1:
-            return DiversityMetric.MIN_SEPARATION
+            return DiversityMetric.min_separation()
         else:
             weights = None if self.k_weight_exponents is None else tuple(k**e for e in self.k_weight_exponents)
             return self.hybrid_factory(
-                *(DiversityMetric.MIN_SEPARATION.over(DISTANCE_METRIC_FACTORIES[key](k)) for key in self.distance_keys),
+                *(
+                    DiversityMetric.min_separation().over(DISTANCE_METRIC_FACTORIES[key](k))
+                    for key in self.distance_keys
+                ),
                 weights=weights,
             )
 

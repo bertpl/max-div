@@ -36,7 +36,7 @@ def _hybrid(*distance_metrics: DistanceMetric) -> DiversityObjectiveHybrid:
     return hybrid_objective(
         *(
             DiversityObjectiveSimple(
-                DiversityMetric.MIN_SEPARATION,
+                DiversityMetric.min_separation(),
                 VectorDistanceSpec(matrix_id=0, metric=metric, is_matrix_preprocessed=True),
             )
             for metric in distance_metrics

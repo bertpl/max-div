@@ -10,7 +10,7 @@ work (and to other tools, which typically implement exactly one of these familie
 In the OR literature, the unqualified term **Maximum Diversity Problem (MDP)** conventionally
 refers to one specific objective: maximize the *sum of pairwise distances* among the selected
 points (also called *MaxSum diversity* or *remote-clique*). max-div covers that objective with
-`MEAN_PAIRWISE_DISTANCE` -- but its separation-based metrics optimize a different family:
+`mean_pairwise_distance()` -- but its separation-based metrics optimize a different family:
 functions of each selected point's *nearest-neighbor distance within the selection*. If you come
 from the MDP literature, read "maximum diversity" here in its broad sense (the whole family of
 diversity-maximizing subset-selection problems), not as a pointer to the MaxSum objective alone.
@@ -19,20 +19,20 @@ diversity-maximizing subset-selection problems), not as a pointer to the MaxSum 
 
 | max-div metric | Literature name(s) | Family |
 |---|---|---|
-| `MIN_SEPARATION` | **p-dispersion**, Max-Min diversity, *remote-edge* | NN-separation |
-| `MEAN_SEPARATION` | **Max-SumMin** dispersion, *remote-pseudoforest*, "p-defense-sum" | NN-separation |
-| `GEOMEAN_SEPARATION` (and its `APPROX_` variant) | no established name -- see below | NN-separation |
-| `HARMONIC_MEAN_SEPARATION` | no established name; the harmonic-mean counterpart of `GEOMEAN_SEPARATION` | NN-separation |
-| `MEAN_PAIRWISE_DISTANCE` | **MaxSum diversity / classical MDP**, *remote-clique* | all-pairs |
+| `min_separation()` | **p-dispersion**, Max-Min diversity, *remote-edge* | NN-separation |
+| `mean_separation()` | **Max-SumMin** dispersion, *remote-pseudoforest*, "p-defense-sum" | NN-separation |
+| `geomean_separation()` (and `approx_geomean_separation()`) | no established name -- see below | NN-separation |
+| `harmonic_mean_separation()` | no established name; the harmonic-mean counterpart of `geomean_separation()` | NN-separation |
+| `mean_pairwise_distance()` | **MaxSum diversity / classical MDP**, *remote-clique* | all-pairs |
 
-### II.A. `MIN_SEPARATION` -- p-dispersion (Max-Min) { #min_separation-p-dispersion-max-min }
+### II.A. `min_separation()` -- p-dispersion (Max-Min) { #min_separation-p-dispersion-max-min }
 
 The classical **p-dispersion problem**: maximize the minimum distance between any two selected
 points. One of the oldest and best-studied dispersion objectives (Erkut, 1990), with a rich exact
 and heuristic literature. The greedy farthest-point construction carries a 2-approximation
 guarantee (Ravi, Rosenkrantz & Tayi, 1994) -- the best possible unless P = NP.
 
-### II.B. `MEAN_SEPARATION` -- Max-SumMin dispersion { #mean_separation-max-summin-dispersion }
+### II.B. `mean_separation()` -- Max-SumMin dispersion { #mean_separation-max-summin-dispersion }
 
 Maximize the *sum (equivalently, mean) of each selected point's nearest-neighbor distance* within
 the selection. Known as **Max-SumMin** dispersion or *remote-pseudoforest*, and as "p-defense-sum"
@@ -44,7 +44,7 @@ Beware a naming trap when searching the literature: **Max-MinSum** dispersion (a
 "MaxMinSum", *remote-star*) is a *different* objective -- the minimum over selected points of the
 *sum* of distances to all other selected points -- despite the confusingly similar name.
 
-### II.C. `GEOMEAN_SEPARATION` -- Nash social welfare over separations { #geomean_separation-nash-social-welfare-over-separations }
+### II.C. `geomean_separation()` -- Nash social welfare over separations { #geomean_separation-nash-social-welfare-over-separations }
 
 Maximize the *geometric mean* of the selected points' nearest-neighbor separations. We have found
 no established name -- nor any implementation -- for this objective in the dispersion literature;
@@ -56,12 +56,12 @@ It can be understood two ways:
   transform, so structurally it inherits the Max-SumMin family.
 - **Nash social welfare** over separations: maximizing a product of per-point "utilities" is the
   Nash social-welfare rule from fair-division theory -- the canonical compromise between the
-  egalitarian rule (`MIN_SEPARATION`: only the worst-off point matters) and the utilitarian rule
-  (`MEAN_SEPARATION`: only the total matters, tolerating poorly-off points). Proportional
+  egalitarian rule (`min_separation()`: only the worst-off point matters) and the utilitarian rule
+  (`mean_separation()`: only the total matters, tolerating poorly-off points). Proportional
   fairness, applied to spread: every point's separation matters, and a near-duplicate (separation
   near zero) collapses the whole score, while no single huge separation can buy that back.
 
-### II.D. `MEAN_PAIRWISE_DISTANCE` -- classical MaxSum diversity { #mean_pairwise_distance-classical-maxsum-diversity }
+### II.D. `mean_pairwise_distance()` -- classical MaxSum diversity { #mean_pairwise_distance-classical-maxsum-diversity }
 
 Maximize the mean (equivalently, sum) of distances over all selected *pairs* -- the objective the
 OR literature calls **the** Maximum Diversity Problem (*remote-clique*). This is the largest body
