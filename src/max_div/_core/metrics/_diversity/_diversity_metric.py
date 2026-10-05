@@ -6,6 +6,8 @@ contribution value. Each diversity metric is a subclass of `DiversityMetric`, cr
 factory method of `DiversityMetric`.
 """
 
+import functools
+import numbers
 from collections.abc import Callable
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, ClassVar
@@ -17,6 +19,7 @@ from ._contribution_family import DiversityContributionFamily
 from ._numba import (
     approx_geomean_separation,
     geomean_separation,
+    gpq_separation,
     harmonic_mean_separation,
     mean_pairwise_distance,
     mean_separation,
@@ -103,7 +106,11 @@ class DiversityMetric:
 
     def __repr__(self) -> str:
         """Return the factory call that constructs this metric."""
-        return f"DiversityMetric.{self._factory_name}()"
+        return f"DiversityMetric.{self._factory_name}({', '.join(self._factory_arg_reprs())})"
+
+    def _factory_arg_reprs(self) -> tuple[str, ...]:
+        """Return the reprs of the factory method's arguments; a metric without arguments has none."""
+        return ()
 
     # --------------------------------------------------------------------------
     #  Factory methods
@@ -146,6 +153,41 @@ class DiversityMetric:
         - is computed exactly, with no logarithm or exponential.
         """
         return HarmonicMeanSeparationDiversityMetric()
+
+    @classmethod
+    def gpq_separation(cls, q: float) -> "DiversityMetric":
+        """Return the metric that scores a selection by the geometric pseudo-quantile of its separations at level `q`.
+
+        The geometric pseudo-quantile is a geometric mean of the k separations in which each separation
+        is weighted by its rank. The i-th smallest separation, for i = 0, ..., k - 1, has the weight
+        ``(1 - u_i) ** (1 / q - 2)`` with ``u_i = (i + 0.5) / k``, so the lower `q`, the more weight
+        moves onto the smallest separations:
+
+        - at `q = 0` the score is the minimum separation, and the factory returns `min_separation()`;
+        - at `q = 0.5` every weight is 1, so the score is the geometric mean separation, and the
+          factory returns `geomean_separation()`;
+        - for any `q` in between, the score lies between those 2 and is zero as soon as one separation
+          is zero.
+
+        Each score sorts the separations, so it costs several times a `geomean_separation()` score.
+        The solver breaks its ties as for `min_separation()`: in float32, the weights of the largest
+        separations round to nothing, so a swap that only spreads the items with large separations
+        can leave the score unchanged.
+
+        Args:
+            q: The quantile level, a number between 0 and 0.5 inclusive.
+
+        Raises:
+            ValueError: If `q` is not a number between 0 and 0.5 inclusive.
+        """
+        if isinstance(q, bool) or not isinstance(q, numbers.Real) or not 0.0 <= q <= 0.5:
+            raise ValueError(f"gpq_separation requires a number q with 0 <= q <= 0.5; here: {q!r}.")
+        if q == 0.0:
+            return cls.min_separation()
+        elif q == 0.5:
+            return cls.geomean_separation()
+        else:
+            return GpqSeparationDiversityMetric(q=float(q))
 
     @classmethod
     def non_zero_separation_frac(cls) -> "DiversityMetric":
@@ -204,6 +246,50 @@ class HarmonicMeanSeparationDiversityMetric(DiversityMetric):
     _factory_name = "harmonic_mean_separation"
     _reduce = staticmethod(harmonic_mean_separation)
     needs_non_zero_separation_frac_tie_breaker = True
+
+
+@dataclass(frozen=True, repr=False)
+class GpqSeparationDiversityMetric(DiversityMetric):
+    """This metric is the geometric pseudo-quantile of the separations; see `DiversityMetric.gpq_separation`.
+
+    The factory returns this class only for a `q` strictly between 0 and 0.5.
+    """
+
+    q: float
+
+    _factory_name = "gpq_separation"
+    needs_approx_geomean_tie_breaker = True
+    needs_non_zero_separation_frac_tie_breaker = True
+
+    @property
+    def label(self) -> str:
+        """Return e.g. `GPQ_SEPARATION(q=0.25)`."""
+        return f"{super().label}(q={self.q:g})"
+
+    def _reduce(self, contribution_values: NDArray[np.float32]) -> np.float32:
+        """Return the rank-weighted geometric mean of the separations, with this metric's weights for their count."""
+        return gpq_separation(contribution_values, self._rank_weights(contribution_values.size, self.q))
+
+    def _factory_arg_reprs(self) -> tuple[str, ...]:
+        """Return `q`."""
+        return (f"q={self.q!r}",)
+
+    @staticmethod
+    @functools.lru_cache(maxsize=8)
+    def _rank_weights(n_values: int, q: float) -> NDArray[np.float32]:
+        """Return the weight of each of `n_values` separations in ascending order, the first weight being 1.
+
+        The weights are computed in float64 log space and divided by the first, largest one before the
+        cast to float32, so a small `q` cannot round every weight to 0; a weight below the float32
+        range becomes exactly 0, which the compiled function skips.
+
+        A solve scores selections of k items and, in trial removals, of k - 1 items, so a small cache
+        keeps both weight arrays while an initialization that grows the selection one item at a time
+        evicts them.
+        """
+        rank_fractions = (np.arange(n_values) + 0.5) / n_values
+        log_weights = (1.0 / q - 2.0) * np.log1p(-rank_fractions)
+        return np.exp(log_weights - log_weights[0]).astype(np.float32)
 
 
 @dataclass(frozen=True, repr=False)

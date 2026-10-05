@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+- Add `DiversityMetric.gpq_separation(q)`, which weighs the smallest separations most: it equals `min_separation()` at `q=0` and `geomean_separation()` at `q=0.5`
 
 ### Changed
 - **Breaking:** Turn `DiversityMetric` from an enum into a class with factory methods, such as `DiversityMetric.min_separation()` for `DiversityMetric.MIN_SEPARATION`

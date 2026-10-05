@@ -23,6 +23,7 @@ diversity-maximizing subset-selection problems), not as a pointer to the MaxSum 
 | `mean_separation()` | **Max-SumMin** dispersion, *remote-pseudoforest*, "p-defense-sum" | NN-separation |
 | `geomean_separation()` (and `approx_geomean_separation()`) | no established name -- see below | NN-separation |
 | `harmonic_mean_separation()` | no established name; the harmonic-mean counterpart of `geomean_separation()` | NN-separation |
+| `gpq_separation(q)` | no established name; an **ordered weighted geometric mean** of the separations -- see below | NN-separation |
 | `mean_pairwise_distance()` | **MaxSum diversity / classical MDP**, *remote-clique* | all-pairs |
 
 ### II.A. `min_separation()` -- p-dispersion (Max-Min) { #min_separation-p-dispersion-max-min }
@@ -70,6 +71,23 @@ comparability with that literature. Its behavior differs from the separation fam
 important way: it maximizes *total* spread and does not penalize near-duplicates per se -- see
 [Diversity & distance](diversity.md) for the practical guidance.
 
+### II.E. `gpq_separation(q)` -- between p-dispersion and Nash social welfare { #gpq_separation-between-p-dispersion-and-nash-social-welfare }
+
+The geometric mean of the selected points' nearest-neighbor separations, each weighted by its rank:
+the $i$-th smallest of $k$ separations, $i = 0, \dots, k-1$, gets the weight
+$(1 - u_i)^{1/q - 2}$ with $u_i = (i + 1/2)/k$. Weights that depend on rank make it an **ordered
+weighted geometric** (OWG) operator (Xu & Da, 2002), the geometric counterpart of Yager's ordered
+weighted averaging (Yager, 1988). The level $q$ moves it between the 2 rules of the previous
+subsection:
+
+- at $q = 0$ all weight sits on the smallest separation: p-dispersion, `min_separation()`;
+- at $q = 0.5$ every weight is 1: Nash social welfare, `geomean_separation()`;
+- in between, the lower $q$, the more the smallest separations count.
+
+For large $k$ the weights have their center of mass at rank fraction $q$, so the score behaves like
+a smoothed $q$-quantile of the separations on a log scale; hence the name **geometric
+pseudo-quantile**.
+
 ## III. References { #references }
 
 - Erkut, E. (1990). [The discrete p-dispersion problem](https://doi.org/10.1016/0377-2217%2890%2990297-O).
@@ -92,3 +110,9 @@ important way: it maximizes *total* spread and does not penalize near-duplicates
 - Martí, R., Martínez-Gavara, A., Pérez-Peló, S., & Sánchez-Oro, J. (2022). [A review on discrete
   diversity and dispersion maximization from an OR perspective](https://doi.org/10.1016/j.ejor.2021.07.044).
   *European Journal of Operational Research*, 299(3), 795-813. (MDPLIB 2.0.)
+- Yager, R. R. (1988). [On ordered weighted averaging aggregation operators in multicriteria
+  decisionmaking](https://doi.org/10.1109/21.87068). *IEEE Transactions on Systems, Man, and
+  Cybernetics*, 18(1), 183-190.
+- Xu, Z. S., & Da, Q. L. (2002). [The ordered weighted geometric averaging
+  operators](https://doi.org/10.1002/int.10045). *International Journal of Intelligent Systems*,
+  17(7), 709-716.

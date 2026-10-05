@@ -15,6 +15,7 @@ SEPARATION_FAMILY_METRICS = (
     DiversityMetric.geomean_separation(),
     DiversityMetric.approx_geomean_separation(),
     DiversityMetric.harmonic_mean_separation(),
+    DiversityMetric.gpq_separation(0.25),
     DiversityMetric.non_zero_separation_frac(),
 )
 
