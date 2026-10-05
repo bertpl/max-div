@@ -30,7 +30,7 @@ def _values(kind: str, n: int) -> np.ndarray:
     "n", [0, 1, 2, _RADIX_SORT_MIN_SIZE - 1, _RADIX_SORT_MIN_SIZE, _RADIX_SORT_MIN_SIZE + 1, 1000, 5000]
 )
 def test_sorted_copy_f32_equals_np_sort_bit_for_bit(kind: str, n: int):
-    """The sorted copy equals the result of `np.sort` bit for bit, on both sides of the radix-sort threshold."""
+    """Without -0.0 or NaN, the copy equals `np.sort` bit for bit around the threshold, and the input is unchanged."""
     # --- arrange ----------------------
     values = _values(kind, n)
     original = values.copy()
