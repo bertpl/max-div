@@ -75,16 +75,18 @@ important way: it maximizes *total* spread and does not penalize near-duplicates
 
 The geometric mean of the selected points' nearest-neighbor separations, each weighted by its rank:
 the $i$-th smallest of $k$ separations, $i = 0, \dots, k-1$, gets the weight
-$(1 - u_i)^{1/q - 2}$ with $u_i = (i + 1/2)/k$. Weights that depend on rank make it an **ordered
-weighted geometric** (OWG) operator (Xu & Da, 2002), the geometric counterpart of Yager's ordered
-weighted averaging (Yager, 1988). The level $q$ moves it between the 2 rules of the previous
-subsection:
+$(1 - u_i)^{1/q - 2}$ with $u_i = (i + 1/2)/k$.
+
+Weights that depend on rank make it an **ordered weighted geometric** (OWG) operator (Xu & Da,
+2002), the geometric counterpart of Yager's ordered weighted averaging (Yager, 1988).
+
+The level $q$ moves it between p-dispersion and Nash social welfare:
 
 - at $q = 0$ all weight sits on the smallest separation: p-dispersion, `min_separation()`;
 - at $q = 0.5$ every weight is 1: Nash social welfare, `geomean_separation()`;
 - in between, the lower $q$, the more the smallest separations count.
 
-For large $k$ the weights have their center of mass at rank fraction $q$, so the score behaves like
+For large $k$ the weights have their center of mass at $u = q$, so the score behaves like
 a smoothed $q$-quantile of the separations on a log scale; hence the name **geometric
 pseudo-quantile**.
 

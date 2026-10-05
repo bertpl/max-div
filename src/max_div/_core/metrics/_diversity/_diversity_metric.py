@@ -109,7 +109,10 @@ class DiversityMetric:
         return f"DiversityMetric.{self._factory_name}({', '.join(self._factory_arg_reprs())})"
 
     def _factory_arg_reprs(self) -> tuple[str, ...]:
-        """Return the reprs of the factory method's arguments; a metric without arguments has none."""
+        """Return the factory method's arguments as `name=value` strings for `__repr__`; the base returns none.
+
+        A subclass whose factory method takes arguments overrides this.
+        """
         return ()
 
     # --------------------------------------------------------------------------
@@ -169,10 +172,8 @@ class DiversityMetric:
         - for any `q` in between, the score lies between those 2 and is zero as soon as one separation
           is zero.
 
-        Each score sorts the separations, so it costs several times a `geomean_separation()` score.
-        The solver breaks its ties as for `min_separation()`: in float32, the weights of the largest
-        separations round to nothing, so a swap that only spreads the items with large separations
-        can leave the score unchanged.
+        Computing a score sorts the separations, so it takes several times as long as computing a
+        `geomean_separation()` score. The solver adds the same tie-breakers as for `min_separation()`.
 
         Args:
             q: The quantile level, a number between 0 and 0.5 inclusive.
@@ -258,6 +259,8 @@ class GpqSeparationDiversityMetric(DiversityMetric):
     q: float
 
     _factory_name = "gpq_separation"
+    # Once the selection is large, the weighted terms of the largest separations are too small to change the
+    # float32 sum, so a swap that only spreads the items with large separations can leave the score unchanged.
     needs_approx_geomean_tie_breaker = True
     needs_non_zero_separation_frac_tie_breaker = True
 
@@ -267,13 +270,16 @@ class GpqSeparationDiversityMetric(DiversityMetric):
         return f"{super().label}(q={self.q:g})"
 
     def _reduce(self, contribution_values: NDArray[np.float32]) -> np.float32:
-        """Return the rank-weighted geometric mean of the separations, with this metric's weights for their count."""
+        """Return the rank-weighted geometric mean of the separations, using this metric's weights for their number."""
         return gpq_separation(contribution_values, self._rank_weights(contribution_values.size, self.q))
 
     def _factory_arg_reprs(self) -> tuple[str, ...]:
-        """Return `q`."""
+        """Return `q` as the keyword argument `q=...`."""
         return (f"q={self.q!r}",)
 
+    # --------------------------------------------------------------------------
+    #  Helpers
+    # --------------------------------------------------------------------------
     @staticmethod
     @functools.lru_cache(maxsize=8)
     def _rank_weights(n_values: int, q: float) -> NDArray[np.float32]:
@@ -281,11 +287,12 @@ class GpqSeparationDiversityMetric(DiversityMetric):
 
         The weights are computed in float64 log space and divided by the first, largest one before the
         cast to float32, so a small `q` cannot round every weight to 0; a weight below the float32
-        range becomes exactly 0, which the compiled function skips.
+        range becomes exactly 0, which the compiled `gpq_separation` function skips.
 
-        A solve scores selections of k items and, in trial removals, of k - 1 items, so a small cache
-        keeps both weight arrays while an initialization that grows the selection one item at a time
-        evicts them.
+        A solve scores selections of k items and, when it tries removing an item, of k - 1 items, so a
+        small cache keeps both weight arrays. An initialization that grows the selection one item at a
+        time needs a new array for each size, so it evicts the older arrays from the cache. The returned
+        array is cached and shared between calls, so a caller must not modify it.
         """
         rank_fractions = (np.arange(n_values) + 0.5) / n_values
         log_weights = (1.0 / q - 2.0) * np.log1p(-rank_fractions)

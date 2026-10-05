@@ -107,7 +107,7 @@ see [Objectives & the diversity-problem landscape](objectives.md).)
 | `mean_separation()` | $\frac{1}{k}\sum_{v \in S} \text{sep}(v)$ | Averages all separations. Less sensitive to individual outliers than geomean, but can be dominated by a few very high separations. |
 | `approx_geomean_separation()` | Same as geomean but using fast log/exp approximations | Slightly less accurate but faster per iteration. Useful for large-scale problems where iteration speed matters more than per-iteration precision. |
 | `harmonic_mean_separation()` | $k \,/\, \sum_{v \in S} \big(1 / \text{sep}(v)\big)$ | Between the geometric mean and the minimum: every item still counts, but a close pair lowers the score more than under the geomean. Zero as soon as one separation is zero. Computed exactly, without logarithm or exponential. |
-| `gpq_separation(q)` | $\exp\!\left(\sum_{i} w_i \ln s_{(i)} \,/\, \sum_{i} w_i\right)$ with $s_{(i)}$ the $i$-th smallest separation, $i = 0, \dots, k-1$, and $w_i = \big(1 - \tfrac{i + 1/2}{k}\big)^{1/q - 2}$ | Between `min_separation()` ($q = 0$) and `geomean_separation()` ($q = 0.5$): the lower $q$, the more weight the smallest separations get. Zero as soon as one separation is zero. Sorts the separations for every score: with 20,000 points under the SMART preset, a solve at k = 1000 ran about 30% fewer iterations per second than under `geomean_separation()`, and at k = 100 about as many. |
+| `gpq_separation(q)` | $\exp\!\left(\sum_{i} w_i \ln s_{(i)} \,/\, \sum_{i} w_i\right)$ with $s_{(i)}$ the $i$-th smallest separation, $i = 0, \dots, k-1$, and $w_i = \big(1 - \tfrac{i + 1/2}{k}\big)^{1/q - 2}$ | Between `min_separation()` ($q = 0$) and `geomean_separation()` ($q = 0.5$): the lower $q$, the more weight the smallest separations get. Zero as soon as one separation is zero. Sorts the separations for every score, so a solve runs fewer iterations per second than under `geomean_separation()`, and more so the larger $k$. |
 | `mean_pairwise_distance()` | $\frac{2}{k(k-1)}\sum_{\{u,v\} \subseteq S} d(u, v)$ | Mean distance over all selected *pairs* -- the classical **max-sum diversity** objective (MaxSum MDP, also known as *remote-clique*). Maximizes total spread: selections tend to lie in the outer regions of the data, and near-duplicates are tolerated if both sit far from everything else. |
 
 ### V.A. Which metric to choose? { #which-metric-to-choose }
@@ -124,8 +124,9 @@ see [Objectives & the diversity-problem landscape](objectives.md).)
 - **`harmonic_mean_separation()`** sits between `geomean_separation()` and `min_separation()`: pick it
   when a close pair should weigh more than the geomean gives it, without the tied scores of the
   minimum.
-- **`gpq_separation(q)`** sits between `min_separation()` and `geomean_separation()` too, with
-  `q` setting where: at `q=0` it is the minimum, at `q=0.5` the geometric mean. Pick it when the
+- **`gpq_separation(q)`** sits between `min_separation()` and `geomean_separation()` too; `q`
+  sets its position: at `q=0` the score is the minimum separation, at `q=0.5` the geometric mean.
+  Pick it when the
   closest pairs should count more than the geomean gives them, by an amount that you set.
 - **`mean_pairwise_distance()`** is the objective to pick when you want classical max-sum
   diversity semantics ("maximize total spread") or want results comparable with the MaxSum

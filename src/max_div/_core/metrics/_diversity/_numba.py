@@ -106,10 +106,10 @@ def harmonic_mean_separation(sep: NDArray[np.float32]) -> np.float32:
 
 @lazy_njit("float32(float32[::1], float32[::1])", fastmath={"reassoc", "contract"}, cache=True)
 def gpq_separation(sep: NDArray[np.float32], rank_weights: NDArray[np.float32]) -> np.float32:
-    """Geometric mean of the separations, each weighted by its rank: the i-th smallest by `rank_weights[i]`.
+    """Return the geometric mean of the separations, each weighted by its rank: the i-th smallest by `rank_weights[i]`.
 
     A weight of exactly 0 skips its separation, so that a zero separation with a zero weight adds
-    nothing, where 0 * log(0) would give nan. A zero separation with a positive weight makes the
+    nothing; computing 0 * log(0) would give nan. A zero separation with a positive weight makes the
     result zero.
 
     Args:

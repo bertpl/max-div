@@ -176,8 +176,8 @@ def test_needs_non_zero_separation_frac_tie_breaker_matches_the_score(metric: Di
 def test_a_metric_that_needs_the_approx_geomean_tie_breaker_ignores_a_larger_separation(metric: DiversityMetric):
     """A metric needing the approximate geomean tie-breaker keeps its score when a non-smallest separation grows.
 
-    The selection is large, because for `gpq_separation` only the float32 rounding of the largest
-    separations' weights makes the score ignore them.
+    The selection is large, because `gpq_separation` ignores a large separation only when its weighted
+    term is too small to change the float32 sum, which happens only in a large selection.
     """
     # --- arrange ----------------------
     before = np.linspace(0.1, 1.0, 10_000, dtype=np.float32)
@@ -192,11 +192,14 @@ def test_a_metric_that_needs_the_approx_geomean_tie_breaker_ignores_a_larger_sep
 #  gpq_separation
 # ==================================================================================================
 def _gpq_reference(separations: np.ndarray, q: float) -> float:
-    """Return the geometric pseudo-quantile in float64, weighting the separations in descending order."""
-    descending = np.sort(separations.astype(np.float64))[::-1]
-    rank_fractions = (np.arange(descending.size) + 0.5) / descending.size
+    """Return the geometric pseudo-quantile in float64 from the equivalent weights `u_i ** (1 / q - 2)`.
+
+    It weights the separations in descending order, so it does not reuse the production weight formula.
+    """
+    descending_separations = np.sort(separations.astype(np.float64))[::-1]
+    rank_fractions = (np.arange(descending_separations.size) + 0.5) / descending_separations.size
     weights = rank_fractions ** (1.0 / q - 2.0)
-    return float(np.exp(np.sum(weights * np.log(descending)) / np.sum(weights)))
+    return float(np.exp(np.sum(weights * np.log(descending_separations)) / np.sum(weights)))
 
 
 @pytest.mark.parametrize(
@@ -262,7 +265,7 @@ def test_gpq_separation_lies_between_the_minimum_and_the_geometric_mean_and_rise
 
 
 def test_gpq_separation_at_a_tiny_q_is_the_minimum():
-    """At a q so small that unscaled weights would all round to 0, the score is the minimum separation."""
+    """At a q so small that every weight would round to 0 unless divided by the largest, the score is the minimum."""
     # --- arrange ----------------------
     separations = (np.random.default_rng(1).random(100) + 0.01).astype(np.float32)
 
