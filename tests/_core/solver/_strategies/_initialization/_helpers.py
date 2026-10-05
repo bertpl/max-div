@@ -22,13 +22,15 @@ def new_solver_state(has_constraints: bool) -> SolverState:
         n=vectors.shape[0],
         data_matrix_reader=full_matrix_reader(vectors, DistanceMetric.l2_euclidean()),
         k=50,
-        diversity_objectives=[simple_objective(DiversityMetric.GEOMEAN_SEPARATION)],
+        diversity_objectives=[simple_objective(DiversityMetric.geomean_separation())],
         constraints=constraints,
     )
 
 
 def new_solver_state_unconstrained(
-    n: int = 300, k: int = 30, metric: DiversityMetric = DiversityMetric.MIN_SEPARATION
+    n: int = 300,
+    k: int = 30,
+    metric: DiversityMetric = DiversityMetric.min_separation(),  # noqa: B008 -- immutable frozen dataclass, safe as a default
 ) -> SolverState:
     """Build a small unconstrained state over precomputed distances, with `metric` as its objective."""
     vectors = np.random.default_rng(20260901).random((n, 3)).astype(np.float32)

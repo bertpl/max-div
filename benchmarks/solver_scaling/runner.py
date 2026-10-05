@@ -171,5 +171,5 @@ def _save_problem_vectors(n: int, path: Path) -> None:
     from benchmarks.common.problems import build_problem
     from max_div.metrics import DiversityMetric
 
-    problem = build_problem("U1", n=n, diversity_metric=DiversityMetric.MIN_SEPARATION)
+    problem = build_problem("U1", n=n, diversity_metric=DiversityMetric.min_separation())
     np.save(path, np.ascontiguousarray(problem.vectors))

@@ -28,7 +28,7 @@ def run_adapter(
                 size=size,
                 n=problem.n,
                 k=problem.k,
-                diversity_metric=problem.diversity_metric.name,
+                diversity_metric=problem.diversity_metric.label,
                 seed=seed,
                 budget="single-shot",
                 measured_sec=measured_sec,

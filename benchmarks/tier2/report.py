@@ -39,7 +39,7 @@ def entrant_means(records: list[RunRecord]) -> dict[str, tuple[float, float]]:
         if is_entrant(r):
             by_tool[r.tool].append(r)
     return {
-        tool: (statistics.mean(r.quality[METRIC.name] for r in rows), statistics.mean(r.measured_sec for r in rows))
+        tool: (statistics.mean(r.quality[METRIC.label] for r in rows), statistics.mean(r.measured_sec for r in rows))
         for tool, rows in by_tool.items()
     }
 
@@ -58,7 +58,7 @@ def median_by_budget(records: list[RunRecord], tool: str) -> dict[float, float]:
     by_budget: dict[float, list[float]] = defaultdict(list)
     for r in records:
         if r.tool == tool and (budget := budget_sec(r.budget)) is not None:
-            by_budget[budget].append(r.quality[METRIC.name])
+            by_budget[budget].append(r.quality[METRIC.label])
     return {budget: statistics.median(values) for budget, values in sorted(by_budget.items())}
 
 
@@ -75,7 +75,7 @@ def series_medians(records: list[RunRecord], tool: str) -> dict[float, tuple[flo
             by_budget[budget].append(r)
     return {
         budget: (
-            statistics.median(r.quality[METRIC.name] for r in rows),
+            statistics.median(r.quality[METRIC.label] for r in rows),
             statistics.median(r.measured_sec for r in rows),
         )
         for budget, rows in sorted(by_budget.items())
@@ -129,7 +129,7 @@ def build_size_table(records: list[RunRecord], n: int) -> str:
 
 def chart_name(n: int) -> str:
     """Return the image file name of one size's chart."""
-    return f"tier2_{PROBLEM}_{n}_{METRIC.name.lower()}.webp"
+    return f"tier2_{PROBLEM}_{n}_{METRIC.label.lower()}.webp"
 
 
 def render_charts(records: list[RunRecord], sizes: list[int], images_dir: Path) -> list[str]:
@@ -148,9 +148,9 @@ def render_charts(records: list[RunRecord], sizes: list[int], images_dir: Path) 
         name = chart_name(n)
         plot_anytime_curve(
             size_records,
-            metric_name=METRIC.name,
+            metric_name=METRIC.label,
             path=images_dir / name,
-            title=f"{PROBLEM} (n={n:,}) — {METRIC.name}",
+            title=f"{PROBLEM} (n={n:,}) — {METRIC.label}",
             reference_lines=lines,
         )
         names.append(name)

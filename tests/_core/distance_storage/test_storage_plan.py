@@ -71,7 +71,7 @@ def _decide_over_vectors(
     """Return the plan of one min-separation objective per metric, over the given vectors (small ones by default)."""
     vectors = _vectors() if vectors is None else vectors
     objectives = [
-        DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, _declared_spec(metric)) for metric in metrics
+        DiversityObjectiveSimple(DiversityMetric.min_separation(), _declared_spec(metric)) for metric in metrics
     ]
     return DistanceStoragePlan.decide(
         objectives,
@@ -121,7 +121,7 @@ def _storage_types(plan: DistanceStoragePlan) -> list[str]:
 def test_plan_rejects_an_objective_over_vectors_as_given():
     """A plan holds only resolved specs: a vector spec over the vectors as given has no store."""
     # --- arrange ----------------------
-    objective = DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, _declared_spec(L2))
+    objective = DiversityObjectiveSimple(DiversityMetric.min_separation(), _declared_spec(L2))
 
     # --- act / assert -----------------
     with pytest.raises(ValueError, match="only resolved distance specs"):
@@ -277,7 +277,7 @@ def test_resolution_numbers_the_derived_matrices_in_store_order_and_keeps_the_re
 def test_a_vector_spec_over_computed_data_raises():
     """A vector spec reads existing vectors, so a data matrix that a producer computes cannot serve it."""
     # --- arrange ----------------------
-    objective = DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, _declared_spec(L2))
+    objective = DiversityObjectiveSimple(DiversityMetric.min_separation(), _declared_spec(L2))
     producer = ComputingDataMatrixProducer((10, 3), lambda buffer: buffer.fill(0.0))
 
     # --- act / assert -----------------
@@ -471,7 +471,7 @@ def test_every_storage_type_reaches_equivalent_quality(storage_type: DistanceSto
     # --- arrange ----------------------
     rng = np.random.default_rng(20260804)
     vectors = rng.random((120, 5), dtype=np.float32)
-    problem = MaxDivProblem.new(vectors=vectors, k=12, diversity_metric=DiversityMetric.MIN_SEPARATION)
+    problem = MaxDivProblem.new(vectors=vectors, k=12, diversity_metric=DiversityMetric.min_separation())
 
     # --- act --------------------------
     solution = (
@@ -499,7 +499,7 @@ def test_every_storage_type_reaches_feasibility(storage_type: DistanceStorageTyp
     problem = MaxDivProblem.new(
         vectors=vectors,
         k=12,
-        diversity_metric=DiversityMetric.MIN_SEPARATION,
+        diversity_metric=DiversityMetric.min_separation(),
         constraints=[Constraint(int_set=set(first_half), min_count=6, max_count=6)],
     )
 

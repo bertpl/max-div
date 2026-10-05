@@ -19,7 +19,7 @@ from numpy.typing import NDArray
 from max_div.metrics import DiversityMetric
 from max_div.problem import MaxDivProblem
 
-SUPPORTED_METRICS = (DiversityMetric.MEAN_SEPARATION, DiversityMetric.GEOMEAN_SEPARATION)
+SUPPORTED_METRICS = (DiversityMetric.mean_separation(), DiversityMetric.geomean_separation())
 
 
 @dataclass
@@ -59,7 +59,7 @@ def solve_nn_separation_scip(
     t_start = time.perf_counter()
     distances = problem.full_matrix().astype(np.float64)
     n, k = problem.n, problem.k
-    weights = np.log(np.maximum(distances, 1e-12)) if metric == DiversityMetric.GEOMEAN_SEPARATION else distances
+    weights = np.log(np.maximum(distances, 1e-12)) if metric == DiversityMetric.geomean_separation() else distances
 
     model = Model("nn-separation")
     model.hideOutput()
@@ -84,7 +84,7 @@ def solve_nn_separation_scip(
 
     selection = np.asarray([j for j in range(n) if model.getVal(x[j]) > 0.5], dtype=np.int64)
     obj = model.getObjVal() / k  # mean of NN contributions (log-domain for geomean)
-    if metric == DiversityMetric.GEOMEAN_SEPARATION:
+    if metric == DiversityMetric.geomean_separation():
         obj = math.exp(obj)
 
     return ScipNnSeparationResult(

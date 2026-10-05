@@ -148,14 +148,14 @@ problem = MaxDivProblem.new(
 |--------|-------------|
 | `l2_euclidean()` | Standard Euclidean distance (default) |
 | `l1_manhattan()` | Sum of absolute differences |
-| `l2s_euclidean_squared()` | Squared Euclidean -- avoids the square root, produces identical solutions when used with `GEOMEAN_SEPARATION` |
+| `l2s_euclidean_squared()` | Squared Euclidean -- avoids the square root, produces identical solutions when used with `geomean_separation()` |
 | `linf_chebyshev()` | Chebyshev distance -- the largest per-dimension difference |
 | `cosine()` | Cosine distance (1 &minus; cosine similarity) -- angular, magnitude-invariant, for embedding-style vectors; zero vectors are rejected |
 | `minkowski(p, root=True)` | Minkowski distance with caller-chosen power `p` > 0; `p` = 1, 2, inf resolve to the dedicated metrics above |
 | `geometric_mean()` | Geometric mean of the per-dimension differences -- spreads a selection in every coordinate projection as well as in the full space; a shared coordinate gives distance zero |
 | `l_minus_inf()` | L−∞ distance -- the smallest per-dimension difference; a shared coordinate gives distance zero |
 | `along_axis(axis)` | Distance along one coordinate axis -- the absolute difference of that coordinate, every other coordinate ignored |
-| `l2_and_projections(l2_scale=1.0, k=None)` | The smaller of the L−∞ distance and an L2 part: `l2_scale` times the L2 distance raised to the power of the number of dimensions, or, given `k`, `l2_scale` times the L2 distance times a factor set by `k` and the number of dimensions -- under `MIN_SEPARATION`, spreads a selection along every axis and in the full space at once; pass `k` to give the spread along the axes and the spread in the full space equal weight; assumes vectors in the unit cube |
+| `l2_and_projections(l2_scale=1.0, k=None)` | The smaller of the L−∞ distance and an L2 part: `l2_scale` times the L2 distance raised to the power of the number of dimensions, or, given `k`, `l2_scale` times the L2 distance times a factor set by `k` and the number of dimensions -- under `min_separation()`, spreads a selection along every axis and in the full space at once; pass `k` to give the spread along the axes and the spread in the full space equal weight; assumes vectors in the unit cube |
 
 #### Precomputed distances
 
@@ -183,20 +183,20 @@ from max_div import DiversityMetric
 
 problem = MaxDivProblem.new(
     vectors, k=20,
-    diversity_metric=DiversityMetric.GEOMEAN_SEPARATION,   # default
-    # diversity_metric=DiversityMetric.MIN_SEPARATION,
-    # diversity_metric=DiversityMetric.MEAN_SEPARATION,
-    # diversity_metric=DiversityMetric.APPROX_GEOMEAN_SEPARATION,
+    diversity_metric=DiversityMetric.geomean_separation(),   # default
+    # diversity_metric=DiversityMetric.min_separation(),
+    # diversity_metric=DiversityMetric.mean_separation(),
+    # diversity_metric=DiversityMetric.approx_geomean_separation(),
 )
 ```
 
 | Metric | Description | Best for |
 |--------|-------------|----------|
-| `GEOMEAN_SEPARATION` | Geometric mean of all separations (default) | General use -- balances spread across all selected items |
-| `MIN_SEPARATION` | Minimum separation (= p-dispersion) | When the closest pair matters most |
-| `MEAN_SEPARATION` | Arithmetic mean of all separations | When total spread is the objective |
-| `APPROX_GEOMEAN_SEPARATION` | Fast approximation of `GEOMEAN_SEPARATION` | Large-scale problems where speed matters |
-| `HARMONIC_MEAN_SEPARATION` | Harmonic mean of all separations | When a close pair should weigh more than under the geomean, without the many equal scores that the minimum produces |
+| `geomean_separation()` | Geometric mean of all separations (default) | General use -- balances spread across all selected items |
+| `min_separation()` | Minimum separation (= p-dispersion) | When the closest pair matters most |
+| `mean_separation()` | Arithmetic mean of all separations | When total spread is the objective |
+| `approx_geomean_separation()` | Fast approximation of `geomean_separation()` | Large-scale problems where speed matters |
+| `harmonic_mean_separation()` | Harmonic mean of all separations | When a close pair should weigh more than under the geomean, without the many equal scores that the minimum produces |
 
 To spread a selection in several senses at once, for example in the full space and along each coordinate, combine several diversity metrics into a [hybrid diversity metric](concepts/diversity.md#hybrid-diversity-metrics).
 

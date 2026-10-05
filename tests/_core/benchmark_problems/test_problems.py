@@ -14,7 +14,7 @@ from max_div._core.metrics import DiversityMetric
 
 ODD_N_VALUES = [20, 21, 37, 55, 101, 137, 149, 314]
 
-METRIC = DiversityMetric.MIN_SEPARATION
+METRIC = DiversityMetric.min_separation()
 
 
 @pytest.mark.parametrize("n", [20, 137, 1000])

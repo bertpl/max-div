@@ -31,7 +31,7 @@ def main() -> None:
     best = best_entrant(records)
     plot_anytime_curve(
         records,
-        metric_name=METRIC.name,
+        metric_name=METRIC.label,
         path=OUTPUT_DIR / "anytime_u1_200.webp",
         title="smoke: U1 n=200 (validation only, not a published result)",
         reference_lines=(ReferenceLine(best[1], f"best one-shot result ({best[0]})"),) if best else (),

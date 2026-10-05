@@ -74,7 +74,7 @@ def _build_report(problem_name: str, sizes: list[int]) -> Report:
     for n in sizes:
         d, _, k, m, _ = BenchmarkProblemFactory.get_problem_dimensions(problem_name, n)
         problem = BenchmarkProblemFactory.construct_problem(
-            name=problem_name, n=n, diversity_metric=DiversityMetric.GEOMEAN_SEPARATION
+            name=problem_name, n=n, diversity_metric=DiversityMetric.geomean_separation()
         )
         result = problem.check_feasibility(thorough=True)
         table.add_row([str(n), str(d), str(k), str(m), _verdict_cell(result.status), _ceiling_cell(problem, result)])

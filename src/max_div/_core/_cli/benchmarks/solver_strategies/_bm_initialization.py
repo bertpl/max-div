@@ -11,7 +11,9 @@ from .presets import InitPreset
 # ==================================================================================================
 class BenchmarkSolverConstructor_Initialization(BenchmarkSolverConstructor):
     def __init__(
-        self, problem_name: str, diversity_metric: DiversityMetric = DiversityMetric.GEOMEAN_SEPARATION
+        self,
+        problem_name: str,
+        diversity_metric: DiversityMetric = DiversityMetric.geomean_separation(),  # noqa: B008 -- immutable frozen dataclass, safe as a default
     ) -> None:
         super().__init__(
             benchmark_type="initialization",

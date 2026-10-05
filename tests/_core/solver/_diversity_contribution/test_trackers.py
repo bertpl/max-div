@@ -57,7 +57,7 @@ def test_source_for_one_spec_is_that_spec_tracker_itself(store: DistanceStore):
     # --- arrange ----------------------
     specs = (DiversityTrackerSpec(USER_DISTANCES, SEPARATION), DiversityTrackerSpec(USER_DISTANCES, MEAN_DISTANCE))
     trackers = DiversityContributionTrackers.for_specs(specs, {USER_DISTANCES: store})
-    objective = DiversityObjectiveSimple(DiversityMetric.MEAN_PAIRWISE_DISTANCE, USER_DISTANCES)
+    objective = DiversityObjectiveSimple(DiversityMetric.mean_pairwise_distance(), USER_DISTANCES)
 
     # --- act --------------------------
     source = trackers.per_item_contribution_source_for(objective, (1,))
@@ -72,9 +72,9 @@ def test_source_for_several_specs_combines_the_trackers_at_the_positions(store: 
     specs = (DiversityTrackerSpec(USER_DISTANCES, SEPARATION), DiversityTrackerSpec(USER_DISTANCES, MEAN_DISTANCE))
     trackers = DiversityContributionTrackers.for_specs(specs, {USER_DISTANCES: store})
     objective = hybrid_objective(
-        DiversityObjectiveSimple(DiversityMetric.MEAN_PAIRWISE_DISTANCE, USER_DISTANCES),
-        DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, USER_DISTANCES),
-        DiversityObjectiveSimple(DiversityMetric.GEOMEAN_SEPARATION, USER_DISTANCES),
+        DiversityObjectiveSimple(DiversityMetric.mean_pairwise_distance(), USER_DISTANCES),
+        DiversityObjectiveSimple(DiversityMetric.min_separation(), USER_DISTANCES),
+        DiversityObjectiveSimple(DiversityMetric.geomean_separation(), USER_DISTANCES),
     )
 
     # --- act --------------------------

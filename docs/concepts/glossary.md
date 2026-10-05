@@ -112,7 +112,7 @@ least-violating selection the solver can find, which is often the useful answer 
 Whether a fully satisfying selection exists at all can be settled separately with
 `check_feasibility` -- see [Infeasible Constraints](constraints.md#infeasible-constraints).
 
-## Geometric-mean separation (`GEOMEAN_SEPARATION`) { #geometric-mean-separation }
+## Geometric-mean separation (`geomean_separation()`) { #geometric-mean-separation }
 
 Maximize the *geometric mean* of the selected items' [separations](#separation) — max-div's
 default, and the objective for which we have found no established name or other implementation in
@@ -126,7 +126,7 @@ single large separation can buy that back. The guide
 [Why geometric-mean separation is the default objective](../guides/geomean_separation.md) shows
 this on four small examples.
 
-## Harmonic-mean separation (`HARMONIC_MEAN_SEPARATION`) { #harmonic-mean-separation }
+## Harmonic-mean separation (`harmonic_mean_separation()`) { #harmonic-mean-separation }
 
 Maximize the *harmonic mean* of the selected items' [separations](#separation): their count over
 the sum of their reciprocals. It sits between [geometric-mean separation](#geometric-mean-separation)
@@ -161,8 +161,8 @@ along each coordinate. See [Hybrid diversity metrics](diversity.md#hybrid-divers
 
 One component of a [hybrid diversity metric](#hybrid-diversity-metric): a
 [diversity metric](#diversity-metric) over one [distance metric](#distance-metric), written
-`DiversityMetric.MIN_SEPARATION.over(DistanceMetric.along_axis(0))`, or a bare `DiversityMetric`
-such as `DiversityMetric.MIN_SEPARATION`, which uses the problem's own distance metric.
+`DiversityMetric.min_separation().over(DistanceMetric.along_axis(0))`, or a bare `DiversityMetric`
+such as `DiversityMetric.min_separation()`, which uses the problem's own distance metric.
 
 ## Item { #item }
 
@@ -180,7 +180,7 @@ guarantee of finding the best possible selection — the [guarantee type](#guara
 *heuristic* — but it improves steadily with the budget it is given, which is what makes the solver
 [anytime](#anytime-algorithm). Each modification is a [swap](#swap).
 
-## Max-min (`MIN_SEPARATION`) { #max-min }
+## Max-min (`min_separation()`) { #max-min }
 
 Maximize the smallest [separation](#separation) in the selection — equivalently, push the two
 closest selected items as far apart as possible. Classically the **p-dispersion** problem, and the
@@ -188,7 +188,7 @@ oldest and best-studied objective in the family. Its characteristic difficulty i
 depends on one pair only, so most [swaps](#swap) leave it unchanged and the solver needs
 tie-breakers to make progress.
 
-## Max-sum (`MEAN_PAIRWISE_DISTANCE`) { #max-sum }
+## Max-sum (`mean_pairwise_distance()`) { #max-sum }
 
 Maximize the mean (equivalently, total) distance over all selected *pairs* — the objective the
 literature calls **the** Maximum Diversity Problem, and the one with the largest body of published

@@ -34,7 +34,7 @@ def test_certification_stops_at_the_first_size_not_certified(tmp_path: Path, mon
     path = tmp_path / "exact.json"
 
     # --- act --------------------------
-    full._certify_increasing_sizes(rows, path, "U1", full.DiversityMetric.MIN_SEPARATION, "scip", fake_certify)
+    full._certify_increasing_sizes(rows, path, "U1", full.DiversityMetric.min_separation(), "scip", fake_certify)
 
     # --- assert -----------------------
     assert calls == [20, 50, 100]
@@ -54,7 +54,7 @@ def test_certification_resumes_after_the_rows_on_file(tmp_path: Path, monkeypatc
     rows = [_exact_row("U1", "MIN_SEPARATION", "scip", 20, True), _exact_row("U1", "MIN_SEPARATION", "scip", 50, True)]
 
     # --- act --------------------------
-    full._certify_increasing_sizes(rows, tmp_path / "exact.json", "U1", full.DiversityMetric.MIN_SEPARATION, "scip", fake_certify)
+    full._certify_increasing_sizes(rows, tmp_path / "exact.json", "U1", full.DiversityMetric.min_separation(), "scip", fake_certify)
 
     # --- assert -----------------------
     assert calls == [100]

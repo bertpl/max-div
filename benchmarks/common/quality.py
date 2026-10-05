@@ -21,11 +21,13 @@ from max_div.problem import MaxDivProblem, VectorMaxDivProblem
 # The four canonical metrics every selection is scored under (APPROX_GEOMEAN is a speed
 # variant of GEOMEAN, not a distinct objective, so it is not evaluated separately).
 EVALUATED_METRICS: tuple[DiversityMetric, ...] = (
-    DiversityMetric.MIN_SEPARATION,
-    DiversityMetric.MEAN_SEPARATION,
-    DiversityMetric.GEOMEAN_SEPARATION,
-    DiversityMetric.MEAN_PAIRWISE_DISTANCE,
+    DiversityMetric.min_separation(),
+    DiversityMetric.mean_separation(),
+    DiversityMetric.geomean_separation(),
+    DiversityMetric.mean_pairwise_distance(),
 )
+# Each evaluated metric under its label, the key of `evaluate_selection`'s result and of the run records.
+METRIC_BY_LABEL: dict[str, DiversityMetric] = {metric.label: metric for metric in EVALUATED_METRICS}
 
 
 def evaluate_selection(problem: MaxDivProblem, i_selected: NDArray[np.integer]) -> dict[str, float]:
@@ -36,7 +38,7 @@ def evaluate_selection(problem: MaxDivProblem, i_selected: NDArray[np.integer]) 
         i_selected: Indices of the selected items (length k, unique).
 
     Returns:
-        Mapping of diversity-metric name to its value for this selection.
+        Mapping of diversity-metric label to its value for this selection.
     """
     dist = _selection_distance_matrix(problem, i_selected)
     k = dist.shape[0]
@@ -46,8 +48,8 @@ def evaluate_selection(problem: MaxDivProblem, i_selected: NDArray[np.integer]) 
 
     values: dict[str, float] = {}
     for metric in EVALUATED_METRICS:
-        contributions = mean_dists if metric == DiversityMetric.MEAN_PAIRWISE_DISTANCE else separations
-        values[metric.name] = float(metric.compute(contributions))
+        contributions = mean_dists if metric == DiversityMetric.mean_pairwise_distance() else separations
+        values[metric.label] = float(metric.compute(contributions))
     return values
 
 

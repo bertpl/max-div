@@ -67,7 +67,7 @@ def test_optim_guided_swaps(
     problem: MaxDivProblem = BenchmarkProblemFactory.construct_problem(
         name=problem_name,
         n=n,
-        diversity_metric=DiversityMetric.APPROX_GEOMEAN_SEPARATION,
+        diversity_metric=DiversityMetric.approx_geomean_separation(),
     )
     solver_state = SolverState.new(
         n=problem.n,

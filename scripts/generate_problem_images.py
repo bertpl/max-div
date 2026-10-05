@@ -152,7 +152,7 @@ def _draw_band_constraints(ax: plt.Axes, name: str, n: int) -> None:
 def render_geometry(name: str, with_solution: bool) -> None:
     """Render the GEOMETRY_N geometry scatter, optionally with a DEFAULT-preset example solution."""
     problem = BenchmarkProblemFactory.construct_problem(
-        name, n=GEOMETRY_N, diversity_metric=DiversityMetric.GEOMEAN_SEPARATION
+        name, n=GEOMETRY_N, diversity_metric=DiversityMetric.geomean_separation()
     )
     _, _, k, m, _ = BenchmarkProblemFactory.get_problem_dimensions(name, n=GEOMETRY_N)
     subtitle = f"(select {k} of {GEOMETRY_N}"

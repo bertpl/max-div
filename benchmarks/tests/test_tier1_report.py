@@ -53,7 +53,7 @@ def test_gap_table_quotes_both_series_at_both_budgets():
     ]
 
     # --- act --------------------------
-    table = report.build_gap_table(exact, records, DiversityMetric.MIN_SEPARATION)
+    table = report.build_gap_table(exact, records, DiversityMetric.min_separation())
 
     # --- assert -----------------------
     row = next(line for line in table.splitlines() if line.startswith("| U1 |"))

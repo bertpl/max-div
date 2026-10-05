@@ -26,7 +26,7 @@ def test_problem_properties():
         vectors=np.ones((13, 7), dtype=np.float32),
         k=5,
         distance_metric=DistanceMetric.l2_euclidean(),
-        diversity_metric=DiversityMetric.GEOMEAN_SEPARATION,
+        diversity_metric=DiversityMetric.geomean_separation(),
         constraints=[],
     )
 
@@ -57,7 +57,7 @@ def test_problem_new_happy_path(con_type: str):
         vectors=np.ones((13, 7), dtype=np.float64),
         k=5,
         distance_metric=DistanceMetric.l1_manhattan(),
-        diversity_metric=DiversityMetric.APPROX_GEOMEAN_SEPARATION,
+        diversity_metric=DiversityMetric.approx_geomean_separation(),
         constraints=constraints,
     )
 
@@ -66,7 +66,7 @@ def test_problem_new_happy_path(con_type: str):
     assert np.array_equal(problem.vectors, np.ones((13, 7), dtype=np.float64))
     assert problem.k == 5
     assert problem.distance_metric == DistanceMetric.l1_manhattan()
-    assert problem.diversity_metric == DiversityMetric.APPROX_GEOMEAN_SEPARATION
+    assert problem.diversity_metric == DiversityMetric.approx_geomean_separation()
     if constraints is not None:
         assert problem.m == 2
         assert problem.constraints[0] == Constraint(int_set={1, 2, 3}, min_count=1, max_count=2)
@@ -172,8 +172,8 @@ def test_problem_new_accepts_an_l2_and_projections_k_equal_to_its_own():
     # --- arrange ----------------------
     vectors = np.random.default_rng(0).random((5, 2)).astype(np.float32)
     hybrid = HybridDiversityMetric.geomean_of(
-        DiversityMetric.MIN_SEPARATION.over(DistanceMetric.l2_and_projections(k=3)),
-        DiversityMetric.MIN_SEPARATION.over(DistanceMetric.l2_euclidean()),
+        DiversityMetric.min_separation().over(DistanceMetric.l2_and_projections(k=3)),
+        DiversityMetric.min_separation().over(DistanceMetric.l2_euclidean()),
     )
 
     # --- act --------------------------
@@ -193,8 +193,8 @@ def test_problem_new_rejects_an_l2_and_projections_k_that_differs_from_its_own(i
     metric = DistanceMetric.l2_and_projections(k=4)
     if is_hybrid_term:
         hybrid = HybridDiversityMetric.geomean_of(
-            DiversityMetric.MIN_SEPARATION.over(metric),
-            DiversityMetric.MIN_SEPARATION.over(DistanceMetric.l2_euclidean()),
+            DiversityMetric.min_separation().over(metric),
+            DiversityMetric.min_separation().over(DistanceMetric.l2_euclidean()),
         )
         kwargs = {"diversity_metric": hybrid}
     else:
@@ -610,7 +610,7 @@ def test_problem_new_makes_the_vectors_c_contiguous():
 #  Hybrid diversity metric
 # ==================================================================================================
 _HYBRID = HybridDiversityMetric.geomean_of(
-    DiversityMetric.MIN_SEPARATION, DiversityMetric.MIN_SEPARATION.over(DistanceMetric.along_axis(1))
+    DiversityMetric.min_separation(), DiversityMetric.min_separation().over(DistanceMetric.along_axis(1))
 )
 
 
@@ -631,17 +631,17 @@ def test_problem_diversity_objective_is_simple_for_a_bare_metric(flavor: str):
             np.ones((5, 3), dtype=np.float32),
             k=2,
             distance_metric=DistanceMetric.l1_manhattan(),
-            diversity_metric=DiversityMetric.MIN_SEPARATION,
+            diversity_metric=DiversityMetric.min_separation(),
         )
         expected_spec = _declared_spec(DistanceMetric.l1_manhattan())
     else:
         problem = MaxDivProblem.from_distances(
-            np.ones((5, 5)) - np.eye(5), k=2, diversity_metric=DiversityMetric.MIN_SEPARATION
+            np.ones((5, 5)) - np.eye(5), k=2, diversity_metric=DiversityMetric.min_separation()
         )
         expected_spec = _USER_DISTANCES
 
     # --- act / assert -----------------
-    assert problem.diversity_objective == DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, expected_spec)
+    assert problem.diversity_objective == DiversityObjectiveSimple(DiversityMetric.min_separation(), expected_spec)
 
 
 @pytest.mark.parametrize("flavor", ["vectors", "distances"])
@@ -650,12 +650,12 @@ def test_problem_diversity_objective_is_a_hybrid_for_a_hybrid_metric(flavor: str
     # --- arrange ----------------------
     if flavor == "vectors":
         hybrid = HybridDiversityMetric.mean_of(
-            DiversityMetric.MIN_SEPARATION, DiversityMetric.GEOMEAN_SEPARATION.over(DistanceMetric.along_axis(1))
+            DiversityMetric.min_separation(), DiversityMetric.geomean_separation().over(DistanceMetric.along_axis(1))
         )
         problem = MaxDivProblem.new(np.ones((5, 3), dtype=np.float32), k=2, diversity_metric=hybrid)
         expected_specs = (_declared_spec(DistanceMetric.l2_euclidean()), _declared_spec(DistanceMetric.along_axis(1)))
     else:
-        hybrid = HybridDiversityMetric.mean_of(DiversityMetric.MIN_SEPARATION, DiversityMetric.GEOMEAN_SEPARATION)
+        hybrid = HybridDiversityMetric.mean_of(DiversityMetric.min_separation(), DiversityMetric.geomean_separation())
         problem = MaxDivProblem.from_distances(np.ones((5, 5)) - np.eye(5), k=2, diversity_metric=hybrid)
         expected_specs = (_USER_DISTANCES, _USER_DISTANCES)
 
@@ -672,7 +672,7 @@ def test_a_bare_term_and_a_term_over_the_problems_own_metric_read_one_distance_s
     """A hybrid that names the problem's own metric beside a bare term declares 1 distance spec for both."""
     # --- arrange ----------------------
     hybrid = HybridDiversityMetric.geomean_of(
-        DiversityMetric.MIN_SEPARATION, DiversityMetric.MEAN_SEPARATION.over(DistanceMetric.l2_euclidean())
+        DiversityMetric.min_separation(), DiversityMetric.mean_separation().over(DistanceMetric.l2_euclidean())
     )
     problem = MaxDivProblem.new(np.ones((5, 3), dtype=np.float32), k=2, diversity_metric=hybrid)
 
@@ -690,7 +690,7 @@ def test_problem_new_hybrid_term_over_cosine_rejects_a_zero_vector():
     vectors = np.ones((5, 3), dtype=np.float32)
     vectors[2] = 0.0
     hybrid = HybridDiversityMetric.geomean_of(
-        DiversityMetric.MIN_SEPARATION, DiversityMetric.MIN_SEPARATION.over(DistanceMetric.cosine())
+        DiversityMetric.min_separation(), DiversityMetric.min_separation().over(DistanceMetric.cosine())
     )
 
     # --- act / assert -----------------

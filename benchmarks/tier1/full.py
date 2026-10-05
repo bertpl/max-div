@@ -28,7 +28,7 @@ from multiprocessing import get_context
 from multiprocessing.connection import Connection
 from pathlib import Path
 
-from benchmarks.common import build_problem, load_records, save_records
+from benchmarks.common import METRIC_BY_LABEL, build_problem, load_records, save_records
 from benchmarks.common.protocol import (
     CERTIFICATION_CAP_SEC,
     MULTI_WORKER_BUDGETS_SEC,
@@ -52,7 +52,7 @@ EXACT_NN_FILE = "exact_nn.json"
 PROBLEMS = ("U1", "C1")
 # The grid is walked until a solver stops certifying; this bound only guards against a solver that never stops.
 GRID_BOUND = 5000
-NN_OBJECTIVES = (DiversityMetric.MEAN_SEPARATION, DiversityMetric.GEOMEAN_SEPARATION)
+NN_OBJECTIVES = (DiversityMetric.mean_separation(), DiversityMetric.geomean_separation())
 
 
 @dataclass(frozen=True)
@@ -98,8 +98,8 @@ MAXMIN_SOLVERS: dict[str, ExactSolve] = {"ortools-cpsat": _cpsat_maxmin, "scip":
 
 # Every certifier a child process can be asked to run, by (solver key, objective).
 CERTIFIERS: dict[tuple[str, str], ExactSolve] = {
-    **{(key, DiversityMetric.MIN_SEPARATION.name): solve for key, solve in MAXMIN_SOLVERS.items()},
-    **{("ortools-cpsat", metric.name): _cpsat_nn for metric in NN_OBJECTIVES},
+    **{(key, DiversityMetric.min_separation().label): solve for key, solve in MAXMIN_SOLVERS.items()},
+    **{("ortools-cpsat", metric.label): _cpsat_nn for metric in NN_OBJECTIVES},
 }
 
 
@@ -117,7 +117,7 @@ def _resolve_certifier(solver_key: str, objective: str) -> ExactSolve:
 
 def _certify_in_child(connection: Connection, solver_key: str, problem_name: str, objective: str, n: int) -> None:
     """Child-process body: build the problem, run the certifier, and send the outcome back."""
-    problem = build_problem(problem_name, n=n, diversity_metric=DiversityMetric[objective])
+    problem = build_problem(problem_name, n=n, diversity_metric=METRIC_BY_LABEL[objective])
     try:
         outcome = _resolve_certifier(solver_key, objective)(problem)
     except RuntimeError as error:  # no solution at all within the cap
@@ -178,15 +178,15 @@ def _certify_increasing_sizes(
     """
     done = {(r["problem"], r["objective"], r["solver"], r["n"]): r for r in rows}
     for n in size_grid(GRID_BOUND):
-        row = done.get((problem_name, metric.name, solver_key, n))
+        row = done.get((problem_name, metric.label, solver_key, n))
         if row is None:
             problem = build_problem(problem_name, n=n, diversity_metric=metric)
-            certified = certify(solver_key, problem_name, metric.name, n)
+            certified = certify(solver_key, problem_name, metric.label, n)
             if certified.note:
-                print(f"  {solver_key} {problem_name} {metric.name} n={n}: {certified.note}", flush=True)
+                print(f"  {solver_key} {problem_name} {metric.label} n={n}: {certified.note}", flush=True)
             row = {
                 "problem": problem_name,
-                "objective": metric.name,
+                "objective": metric.label,
                 "solver": solver_key,
                 "n": n,
                 "k": problem.k,
@@ -197,7 +197,7 @@ def _certify_increasing_sizes(
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(json.dumps(rows, indent=2))
         print(
-            f"  {solver_key} {problem_name} {metric.name} n={n}: "
+            f"  {solver_key} {problem_name} {metric.label} n={n}: "
             f"{'certified' if row['proven_optimal'] else 'not certified'} in {row['measured_sec']:.1f} s",
             flush=True,
         )
@@ -210,7 +210,7 @@ def run_exact_maxmin(out_path: Path = OUTPUT_DIR / EXACT_MAXMIN_FILE) -> list[di
     rows = _load_rows(out_path)
     for problem_name in PROBLEMS:
         for solver_key in MAXMIN_SOLVERS:
-            _certify_increasing_sizes(rows, out_path, problem_name, DiversityMetric.MIN_SEPARATION, solver_key)
+            _certify_increasing_sizes(rows, out_path, problem_name, DiversityMetric.min_separation(), solver_key)
     return rows
 
 
@@ -234,7 +234,7 @@ def certified_sizes(exact_rows: list[dict]) -> dict[tuple[str, str], list[int]]:
 
 def maxdiv_records_path(metric: DiversityMetric, records_dir: Path = OUTPUT_DIR) -> Path:
     """Return the JSONL file holding max-div's records for one objective."""
-    return records_dir / f"maxdiv_{metric.name.lower()}.jsonl"
+    return records_dir / f"maxdiv_{metric.label.lower()}.jsonl"
 
 
 def run_maxdiv(
@@ -251,7 +251,7 @@ def run_maxdiv(
     whose records are already on file are skipped.
     """
     for (problem_name, objective), sizes in sorted(certified_sizes(exact_rows).items()):
-        metric = DiversityMetric[objective]
+        metric = METRIC_BY_LABEL[objective]
         path = maxdiv_records_path(metric, records_dir)
         records: list[RunRecord] = load_records(path) if path.exists() else []
         done = {(r.problem, r.n, r.tool) for r in records}

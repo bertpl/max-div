@@ -49,7 +49,7 @@ MAXDIV_FILE = "maxdiv_u1.jsonl"
 
 PROBLEM = "U1"
 SIZES = (100, 1000, 10000, 100000)
-METRIC = DiversityMetric.MIN_SEPARATION
+METRIC = DiversityMetric.min_separation()
 # At the largest sizes the default distance store takes a large share of the time budget to
 # build; lazy storage skips that build.
 DISTANCE_STORAGE = DistanceStorageType.LAZY

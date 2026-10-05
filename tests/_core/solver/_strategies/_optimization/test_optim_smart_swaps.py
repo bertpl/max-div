@@ -18,7 +18,7 @@ def test_smart_preset_survives_tiny_problem_full_swap():
         Constraint(int_set=set(range(20, 40)), min_count=2, max_count=4),
     ]
     problem = MaxDivProblem.new(
-        vectors=vectors, k=6, diversity_metric=DiversityMetric.MEAN_SEPARATION, constraints=constraints
+        vectors=vectors, k=6, diversity_metric=DiversityMetric.mean_separation(), constraints=constraints
     )
     solver = MaxDivSolverBuilder(problem).with_preset(iterations(800), SolverPreset.SMART).with_seed(0).build()
 

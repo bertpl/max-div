@@ -20,7 +20,7 @@ def _state(constraints: list[Constraint], n: int = 20, k: int = 8) -> SolverStat
         n=n,
         data_matrix_reader=full_matrix_reader(vectors, DistanceMetric.l2_euclidean()),
         k=k,
-        diversity_objectives=[simple_objective(DiversityMetric.GEOMEAN_SEPARATION)],
+        diversity_objectives=[simple_objective(DiversityMetric.geomean_separation())],
         constraints=constraints,
     )
 

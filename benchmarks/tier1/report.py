@@ -18,6 +18,7 @@ from collections import defaultdict
 from pathlib import Path
 
 from benchmarks.common.protocol import QUOTED_BUDGETS_SEC
+from benchmarks.common.quality import METRIC_BY_LABEL
 from benchmarks.common.records import RunRecord, budget_tag, load_records
 from benchmarks.common.registry import display_name
 from benchmarks.figures import ReferenceLine, ReferenceMarker, plot_anytime_curve
@@ -28,8 +29,8 @@ from max_div.metrics import DiversityMetric
 
 RECORDS_DIR = OUTPUT_DIR
 DOCS_DIR = Path("docs/benchmarks/third_party/head_to_head")
-OBJECTIVES = (DiversityMetric.MIN_SEPARATION, DiversityMetric.MEAN_SEPARATION, DiversityMetric.GEOMEAN_SEPARATION)
-FULL_WIDTH_OBJECTIVE = DiversityMetric.MIN_SEPARATION  # the other objectives get thumbnail galleries
+OBJECTIVES = (DiversityMetric.min_separation(), DiversityMetric.mean_separation(), DiversityMetric.geomean_separation())
+FULL_WIDTH_OBJECTIVE = DiversityMetric.min_separation()  # the other objectives get thumbnail galleries
 
 
 def median_quality(records: list[RunRecord], tool: str, metric_name: str, budget_sec: float) -> float | None:
@@ -77,13 +78,13 @@ def build_gap_table(exact_rows: list[dict], records: list[RunRecord], metric: Di
         "|---" * 9 + "|",
     ]
     for (problem, objective, n), rows in sorted(certified_optima(exact_rows).items()):
-        if objective != metric.name:
+        if objective != metric.label:
             continue
         optimum = rows[0]["optimum"]
         cell_records = [r for r in records if r.problem == problem and r.n == n]
         certifiers = ", ".join(f"{display_name(r['solver'])} ({r['measured_sec']:.1f} s)" for r in rows)
         gaps = [
-            gap_pct(median_quality(cell_records, tool, metric.name, budget), optimum)
+            gap_pct(median_quality(cell_records, tool, metric.label, budget), optimum)
             for tool in (single, multi)
             for budget in (lo, hi)
         ]
@@ -109,7 +110,7 @@ def build_certification_table(exact_rows: list[dict]) -> str:
 
 def chart_name(problem: str, n: int, metric: DiversityMetric) -> str:
     """Return the image file name of one cell's chart."""
-    return f"tier1_{problem}_{n}_{metric.name.lower()}.webp"
+    return f"tier1_{problem}_{n}_{metric.label.lower()}.webp"
 
 
 def render_charts(
@@ -118,7 +119,7 @@ def render_charts(
     """Render one chart per certified cell and return the written image names per (objective, problem)."""
     written: dict[tuple[str, str], list[str]] = defaultdict(list)
     for (problem, objective, n), rows in sorted(certified_optima(exact_rows).items()):
-        metric = DiversityMetric[objective]
+        metric = METRIC_BY_LABEL[objective]
         cell_records = [r for r in records_by_metric.get(objective, []) if r.problem == problem and r.n == n]
         if not cell_records:
             continue
@@ -130,9 +131,9 @@ def render_charts(
         name = chart_name(problem, n, metric)
         plot_anytime_curve(
             cell_records,
-            metric_name=metric.name,
+            metric_name=metric.label,
             path=images_dir / name,
-            title=f"{problem} (n={n}) — {metric.name}",
+            title=f"{problem} (n={n}) — {metric.label}",
             reference_lines=(ReferenceLine(optimum, "certified optimum"),),
             reference_markers=markers,
         )
@@ -148,7 +149,7 @@ def full_width_snippet(names: list[str]) -> str:
 def gallery_snippet(names: list[str], metric: DiversityMetric) -> str:
     """Return an HTML thumbnail gallery, two per row, each linking to its full-size chart (the page dir sits one level below `images/`)."""
     thumbnails = [
-        f'<a href="../images/{name}"><img src="../images/{name}" alt="{metric.name} anytime chart {name}" width="49%"></a>'
+        f'<a href="../images/{name}"><img src="../images/{name}" alt="{metric.label} anytime chart {name}" width="49%"></a>'
         for name in names
     ]
     return " ".join(thumbnails) + "\n"
@@ -158,7 +159,7 @@ def main(records_dir: Path = RECORDS_DIR, docs_dir: Path = DOCS_DIR, data_dir: P
     """Emit every tier-1 docs artifact from the merged result sources."""
     exact_rows = json.loads((data_dir / EXACT_MAXMIN_FILE).read_text()) + json.loads((data_dir / EXACT_NN_FILE).read_text())
     records_by_metric = {
-        metric.name: load_records(maxdiv_records_path(metric, records_dir))
+        metric.label: load_records(maxdiv_records_path(metric, records_dir))
         for metric in OBJECTIVES
         if maxdiv_records_path(metric, records_dir).exists()
     }
@@ -167,8 +168,8 @@ def main(records_dir: Path = RECORDS_DIR, docs_dir: Path = DOCS_DIR, data_dir: P
     images_dir = docs_dir / "images"
 
     for metric in OBJECTIVES:
-        table = build_gap_table(exact_rows, records_by_metric.get(metric.name, []), metric)
-        (results_dir / f"tier1_gap_{metric.name.lower()}.md").write_text(table)
+        table = build_gap_table(exact_rows, records_by_metric.get(metric.label, []), metric)
+        (results_dir / f"tier1_gap_{metric.label.lower()}.md").write_text(table)
     (results_dir / "tier1_certification.md").write_text(build_certification_table(exact_rows))
 
     written = render_charts(exact_rows, records_by_metric, images_dir)
@@ -176,12 +177,12 @@ def main(records_dir: Path = RECORDS_DIR, docs_dir: Path = DOCS_DIR, data_dir: P
         if metric == FULL_WIDTH_OBJECTIVE:
             # one snippet per problem: the page gives each problem its own section
             for problem in PROBLEMS:
-                names = written.get((metric.name, problem), [])
-                snippet = results_dir / f"tier1_charts_{metric.name.lower()}_{problem.lower()}.md"
+                names = written.get((metric.label, problem), [])
+                snippet = results_dir / f"tier1_charts_{metric.label.lower()}_{problem.lower()}.md"
                 snippet.write_text(full_width_snippet(names))
         else:
-            names = [name for problem in PROBLEMS for name in written.get((metric.name, problem), [])]
-            (results_dir / f"tier1_gallery_{metric.name.lower()}.md").write_text(gallery_snippet(names, metric))
+            names = [name for problem in PROBLEMS for name in written.get((metric.label, problem), [])]
+            (results_dir / f"tier1_gallery_{metric.label.lower()}.md").write_text(gallery_snippet(names, metric))
     print(f"tier-1 report emitted into {docs_dir}", flush=True)
 
 

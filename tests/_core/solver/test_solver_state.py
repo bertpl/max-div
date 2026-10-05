@@ -32,8 +32,8 @@ def _new_solver_state(constraints: list[Constraint]) -> SolverState:
         data_matrix_reader=full_matrix_reader(_VECTORS, DistanceMetric.l1_manhattan()),
         k=3,
         diversity_objectives=[
-            simple_objective(DiversityMetric.GEOMEAN_SEPARATION),
-            *tie_breaker_objectives([DiversityMetric.NON_ZERO_SEPARATION_FRAC]),
+            simple_objective(DiversityMetric.geomean_separation()),
+            *tie_breaker_objectives([DiversityMetric.non_zero_separation_frac()]),
         ],
         constraints=constraints,
     )
@@ -74,8 +74,8 @@ def test_solver_state_properties(new_solver_state, new_solver_state_unconstraine
 def test_solver_state_primary_objective_excludes_the_tie_breakers():
     """The primary objective is the first objective the state was built with."""
     # --- arrange ----------------------
-    primary = simple_objective(DiversityMetric.GEOMEAN_SEPARATION)
-    objectives = [primary, *tie_breaker_objectives([DiversityMetric.NON_ZERO_SEPARATION_FRAC])]
+    primary = simple_objective(DiversityMetric.geomean_separation())
+    objectives = [primary, *tie_breaker_objectives([DiversityMetric.non_zero_separation_frac()])]
 
     # --- act --------------------------
     state = SolverState.new(
@@ -106,10 +106,10 @@ def test_solver_state_distance_store_raises_for_an_objective_over_several_distan
         diversity_objectives=[
             hybrid_objective(
                 DiversityObjectiveSimple(
-                    DiversityMetric.MIN_SEPARATION, FullMatrixDistanceSpec(matrix_id=0, label="L1")
+                    DiversityMetric.min_separation(), FullMatrixDistanceSpec(matrix_id=0, label="L1")
                 ),
                 DiversityObjectiveSimple(
-                    DiversityMetric.MIN_SEPARATION, FullMatrixDistanceSpec(matrix_id=1, label="L2")
+                    DiversityMetric.min_separation(), FullMatrixDistanceSpec(matrix_id=1, label="L2")
                 ),
             )
         ],
@@ -131,7 +131,7 @@ def test_solver_state_con_weights_reach_the_state():
         n=vectors.shape[0],
         data_matrix_reader=full_matrix_reader(vectors, DistanceMetric.l1_manhattan()),
         k=3,
-        diversity_objectives=[simple_objective(DiversityMetric.GEOMEAN_SEPARATION)],
+        diversity_objectives=[simple_objective(DiversityMetric.geomean_separation())],
         constraints=[
             Constraint(int_set={0, 1, 2, 3}, min_count=1, max_count=2, weight=2.5),
             Constraint(int_set={2, 3, 4, 5}, min_count=1, max_count=2),
@@ -410,7 +410,7 @@ def test_solver_state_tracker_set_mean_distance(new_solver_state):
         n=4,
         data_matrix_reader=data_matrix_reader,
         k=2,
-        diversity_objectives=[simple_objective(DiversityMetric.MEAN_PAIRWISE_DISTANCE)],
+        diversity_objectives=[simple_objective(DiversityMetric.mean_pairwise_distance())],
         constraints=[],
     )
     state_mixed = SolverState.new(
@@ -418,8 +418,8 @@ def test_solver_state_tracker_set_mean_distance(new_solver_state):
         data_matrix_reader=data_matrix_reader,
         k=2,
         diversity_objectives=[
-            simple_objective(DiversityMetric.MEAN_PAIRWISE_DISTANCE),
-            *tie_breaker_objectives([DiversityMetric.NON_ZERO_SEPARATION_FRAC]),
+            simple_objective(DiversityMetric.mean_pairwise_distance()),
+            *tie_breaker_objectives([DiversityMetric.non_zero_separation_frac()]),
         ],
         constraints=[],
     )
@@ -441,7 +441,7 @@ def test_solver_state_mean_pairwise_distance_score():
         n=4,
         data_matrix_reader=full_matrix_reader(vectors, DistanceMetric.l1_manhattan()),
         k=3,
-        diversity_objectives=[simple_objective(DiversityMetric.MEAN_PAIRWISE_DISTANCE)],
+        diversity_objectives=[simple_objective(DiversityMetric.mean_pairwise_distance())],
         constraints=[],
     )
 
@@ -483,8 +483,8 @@ def _make_reference_state() -> SolverState:
         data_matrix_reader=full_matrix_reader(vectors, DistanceMetric.l2_euclidean()),
         k=8,
         diversity_objectives=[
-            simple_objective(DiversityMetric.GEOMEAN_SEPARATION),
-            *tie_breaker_objectives([DiversityMetric.NON_ZERO_SEPARATION_FRAC]),
+            simple_objective(DiversityMetric.geomean_separation()),
+            *tie_breaker_objectives([DiversityMetric.non_zero_separation_frac()]),
         ],
         constraints=[
             Constraint(int_set=set(range(12)), min_count=2, max_count=5),
@@ -629,7 +629,7 @@ def test_selected_index_list_survives_random_mutation_sequences(seed: int):
             n=n,
             data_matrix_reader=full_matrix_reader(vectors, DistanceMetric.l1_manhattan()),
             k=8,
-            diversity_objectives=[simple_objective(DiversityMetric.GEOMEAN_SEPARATION)],
+            diversity_objectives=[simple_objective(DiversityMetric.geomean_separation())],
             constraints=[],
         )
 
@@ -706,18 +706,18 @@ def _assert_state_matches_reference(state: SolverState, reference: SolverState) 
 
 
 _METRIC_CONFIGS = [
-    (DiversityMetric.GEOMEAN_SEPARATION, [DiversityMetric.NON_ZERO_SEPARATION_FRAC]),  # separation tracker only
-    (DiversityMetric.MEAN_PAIRWISE_DISTANCE, []),  # mean-distance tracker only
-    (DiversityMetric.MIN_SEPARATION, [DiversityMetric.MEAN_PAIRWISE_DISTANCE]),  # both tracker families
+    (DiversityMetric.geomean_separation(), [DiversityMetric.non_zero_separation_frac()]),  # separation tracker only
+    (DiversityMetric.mean_pairwise_distance(), []),  # mean-distance tracker only
+    (DiversityMetric.min_separation(), [DiversityMetric.mean_pairwise_distance()]),  # both tracker families
 ]
 
 
 def test_reset_returns_the_state_to_empty():
     """A reset state is indistinguishable from a freshly built one, and stays fully usable."""
     # --- arrange ----------------------
-    state = _make_adoption_state(DiversityMetric.MIN_SEPARATION, [DiversityMetric.MEAN_PAIRWISE_DISTANCE])
+    state = _make_adoption_state(DiversityMetric.min_separation(), [DiversityMetric.mean_pairwise_distance()])
     state.add_many(np.array([0, 2, 4, 6], dtype=np.int32))
-    reference = _make_adoption_state(DiversityMetric.MIN_SEPARATION, [DiversityMetric.MEAN_PAIRWISE_DISTANCE])
+    reference = _make_adoption_state(DiversityMetric.min_separation(), [DiversityMetric.mean_pairwise_distance()])
 
     # --- act --------------------------
     state.reset()
@@ -731,7 +731,7 @@ def test_reset_returns_the_state_to_empty():
 def test_reset_inside_a_savepoint_is_rejected():
     """A reset cannot be provisional, so an open savepoint rejects it."""
     # --- arrange ----------------------
-    state = _make_adoption_state(DiversityMetric.GEOMEAN_SEPARATION, [])
+    state = _make_adoption_state(DiversityMetric.geomean_separation(), [])
     state.add_many(np.array([0, 1], dtype=np.int32))
 
     # --- act & assert -----------------
@@ -770,8 +770,8 @@ def test_adopt_selection_matches_fresh_state(diversity_metric, tie_breakers, sta
 def test_adopt_selection_accepts_unordered_input():
     """Adoption sorts its input itself; the caller's ordering carries no meaning."""
     # --- arrange ----------------------
-    state = _make_adoption_state(DiversityMetric.GEOMEAN_SEPARATION, [])
-    reference = _make_adoption_state(DiversityMetric.GEOMEAN_SEPARATION, [])
+    state = _make_adoption_state(DiversityMetric.geomean_separation(), [])
+    reference = _make_adoption_state(DiversityMetric.geomean_separation(), [])
     reference.add_many(np.array([1, 4, 6], dtype=np.int32))
 
     # --- act --------------------------
@@ -784,7 +784,7 @@ def test_adopt_selection_accepts_unordered_input():
 def test_adopt_selection_state_remains_fully_usable():
     """After adoption the state supports mutators and savepoints as usual."""
     # --- arrange ----------------------
-    state = _make_adoption_state(DiversityMetric.MIN_SEPARATION, [DiversityMetric.MEAN_PAIRWISE_DISTANCE])
+    state = _make_adoption_state(DiversityMetric.min_separation(), [DiversityMetric.mean_pairwise_distance()])
     state.add_many(np.array([0, 1, 2, 3], dtype=np.int32))
 
     # --- act --------------------------
@@ -803,7 +803,7 @@ def test_adopt_selection_state_remains_fully_usable():
 def test_adopt_selection_validation():
     """Duplicate, out-of-range, and savepoint-open calls are rejected without touching the state."""
     # --- arrange ----------------------
-    state = _make_adoption_state(DiversityMetric.GEOMEAN_SEPARATION, [])
+    state = _make_adoption_state(DiversityMetric.geomean_separation(), [])
     state.add_many(np.array([0, 1], dtype=np.int32))
 
     # --- act & assert -----------------
@@ -865,7 +865,7 @@ def _state_over(vectors: np.ndarray, layout: str, diversity_metric: DiversityMet
 @pytest.mark.parametrize("layout", ["full_matrix", "lazy"])
 @pytest.mark.parametrize(
     "diversity_metric",
-    [DiversityMetric.MIN_SEPARATION, DiversityMetric.GEOMEAN_SEPARATION, DiversityMetric.MEAN_PAIRWISE_DISTANCE],
+    [DiversityMetric.min_separation(), DiversityMetric.geomean_separation(), DiversityMetric.mean_pairwise_distance()],
 )
 def test_score_after_removal_equals_the_score_of_a_real_removal(layout: str, diversity_metric: DiversityMetric):
     """The returned score equals the score after a real removal, and the state is left as it was."""
@@ -932,7 +932,7 @@ def _make_standalone_state() -> SolverState:
         n=vectors.shape[0],
         data_matrix_reader=full_matrix_reader(vectors, DistanceMetric.l1_manhattan()),
         k=3,
-        diversity_objectives=[simple_objective(DiversityMetric.GEOMEAN_SEPARATION)],
+        diversity_objectives=[simple_objective(DiversityMetric.geomean_separation())],
         constraints=[],
     )
 

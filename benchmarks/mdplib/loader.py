@@ -137,7 +137,7 @@ def load_instance(
     family: str,
     filename: str,
     k: int,
-    diversity_metric: DiversityMetric = DiversityMetric.MIN_SEPARATION,
+    diversity_metric: DiversityMetric = DiversityMetric.min_separation(),
     cache_dir: Path = _CACHE_DIR,
 ) -> MaxDivProblem:
     """Load one MMDP instance as a MaxDivProblem.

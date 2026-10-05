@@ -112,7 +112,7 @@ def _distances_from(vectors: NDArray[np.float32], metric: DistanceMetric) -> NDA
 
 def _solve(problem_name: str, preset: SolverPreset, seed: int) -> MaxDivSolution:
     generated = BenchmarkProblemFactory.construct_problem(
-        problem_name, n=PROBLEM_N, diversity_metric=DiversityMetric.APPROX_GEOMEAN_SEPARATION
+        problem_name, n=PROBLEM_N, diversity_metric=DiversityMetric.approx_geomean_separation()
     )
     # quantize the vectors: problem generation may involve transcendental functions (e.g. a power
     # mapping) whose SIMD implementations differ ~1 ULP across CPU generations; rounding to a coarse

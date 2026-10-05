@@ -4,7 +4,7 @@ from ._aggregation import (
     HybridAggregationGeometricMean,
     HybridAggregationMinimum,
 )
-from ._enum import DiversityContributionFamily, DiversityMetric
+from ._diversity_metric import DiversityContributionFamily, DiversityMetric
 from ._hybrid_metric import DiversityTerm, HybridDiversityMetric
 from ._objective import (
     DiversityObjective,

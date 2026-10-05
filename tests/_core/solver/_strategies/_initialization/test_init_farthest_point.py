@@ -229,9 +229,9 @@ def test_rounds_quality_near_one_item_at_a_time():
 @pytest.mark.parametrize(
     "metric, candidate_pool_size, is_drawing_rounds",
     [
-        (DiversityMetric.MIN_SEPARATION, 16, True),
-        (DiversityMetric.MIN_SEPARATION, None, False),
-        (DiversityMetric.MEAN_PAIRWISE_DISTANCE, 16, False),
+        (DiversityMetric.min_separation(), 16, True),
+        (DiversityMetric.min_separation(), None, False),
+        (DiversityMetric.mean_pairwise_distance(), 16, False),
     ],
 )
 def test_rounds_only_for_a_separation_objective_and_a_candidate_pool_size(
@@ -399,19 +399,19 @@ def test_top_k_one_reproduces_the_one_item_at_a_time_construction_exactly(seed: 
 @pytest.mark.parametrize(
     "objective, expected",
     [
-        (DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L1), True),
-        (DiversityObjectiveSimple(DiversityMetric.MEAN_PAIRWISE_DISTANCE, L1), False),  # mean-distance family
+        (DiversityObjectiveSimple(DiversityMetric.min_separation(), L1), True),
+        (DiversityObjectiveSimple(DiversityMetric.mean_pairwise_distance(), L1), False),  # mean-distance family
         (
             hybrid_objective(
-                DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L1),
-                DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L2),
+                DiversityObjectiveSimple(DiversityMetric.min_separation(), L1),
+                DiversityObjectiveSimple(DiversityMetric.min_separation(), L2),
             ),
             False,  # two distinct specs
         ),
         (
             hybrid_objective(
-                DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L1),
-                DiversityObjectiveSimple(DiversityMetric.GEOMEAN_SEPARATION, L1),
+                DiversityObjectiveSimple(DiversityMetric.min_separation(), L1),
+                DiversityObjectiveSimple(DiversityMetric.geomean_separation(), L1),
             ),
             True,  # two terms over one separation spec
         ),

@@ -132,7 +132,7 @@ def _q_random(n: int) -> float:
     from benchmarks.common.quality import min_separation_nn
     from max_div.metrics import DiversityMetric
 
-    problem = build_problem("U1", n=n, diversity_metric=DiversityMetric.MIN_SEPARATION)
+    problem = build_problem("U1", n=n, diversity_metric=DiversityMetric.min_separation())
     vectors = np.ascontiguousarray(problem.vectors)
     rng = np.random.default_rng(DEFAULT_SEED)
     draws = [min_separation_nn(vectors, rng.choice(n, size=n // 10, replace=False)) for _ in range(N_RANDOM_DRAWS)]

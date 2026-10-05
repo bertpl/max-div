@@ -30,7 +30,7 @@ def test_benchmark_problem_factory_get_all_benchmark_problems():
 def test_benchmark_problem_factory_create_problem(name: str):
     # --- act --------------------------
     problem_instance = BenchmarkProblemFactory.construct_problem(
-        name, n=100, diversity_metric=DiversityMetric.APPROX_GEOMEAN_SEPARATION
+        name, n=100, diversity_metric=DiversityMetric.approx_geomean_separation()
     )
 
     # --- assert -----------------------
@@ -43,7 +43,9 @@ def test_benchmark_problem_factory_create_problem_invalid_name():
 
     # --- act & assert -----------------
     with pytest.raises(ValueError, match="not registered"):
-        BenchmarkProblemFactory.construct_problem(invalid_name, n=100, diversity_metric=DiversityMetric.MIN_SEPARATION)
+        BenchmarkProblemFactory.construct_problem(
+            invalid_name, n=100, diversity_metric=DiversityMetric.min_separation()
+        )
 
 
 @pytest.mark.parametrize("name", ALL_PROBLEM_NAMES)
@@ -51,7 +53,7 @@ def test_benchmark_problem_factory_create_problem_invalid_name():
 def test_benchmark_problem_factory_rejects_n_below_minimum(name: str, n: int):
     """Both entry points refuse n below the supported minimum."""
     with pytest.raises(ValueError, match="n >= 20"):
-        BenchmarkProblemFactory.construct_problem(name, n=n, diversity_metric=DiversityMetric.MIN_SEPARATION)
+        BenchmarkProblemFactory.construct_problem(name, n=n, diversity_metric=DiversityMetric.min_separation())
     with pytest.raises(ValueError, match="n >= 20"):
         BenchmarkProblemFactory.get_problem_dimensions(name, n=n)
 
@@ -64,7 +66,7 @@ def test_benchmark_problem_factory_get_problem_dimensions(name: str, n: int):
     problem = BenchmarkProblemFactory.construct_problem(
         name,
         n=n,
-        diversity_metric=DiversityMetric.MIN_SEPARATION,
+        diversity_metric=DiversityMetric.min_separation(),
     )
     d, n_reported, k, m, n_con_indices = BenchmarkProblemFactory.get_problem_dimensions(name, n=n)
 

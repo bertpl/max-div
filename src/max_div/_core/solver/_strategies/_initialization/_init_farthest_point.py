@@ -23,7 +23,7 @@ class InitFarthestPoint(InitializationStrategy):
 
     - separation-family metrics: the items farthest from their nearest selected neighbor
       (classical farthest-point sampling);
-    - `MEAN_PAIRWISE_DISTANCE`: the items with the highest mean distance to the selection
+    - `mean_pairwise_distance()`: the items with the highest mean distance to the selection
       (the greedy max-sum construction).
 
     How items are added depends on the solve's primary diversity objective:
