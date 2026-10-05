@@ -118,7 +118,8 @@ def gpq_separation(sep: NDArray[np.float32], rank_weights: NDArray[np.float32]) 
         rank_weights: one non-negative weight per separation, for the separations in ascending order,
             with at least one positive weight.
     """
-    # a separate inlined function, so that this call is the one place to swap the sort for `np.sort`
+    # The radix sort orders non-negative, non-NaN separations exactly as `np.sort` does, and is faster on
+    # large selections; it sits in its own inlined function, so going back to `np.sort` changes only this line.
     sorted_sep = sorted_copy_f32(sep)
     log_sum = np.float32(0.0)
     weight_sum = np.float32(0.0)

@@ -5,10 +5,10 @@ from max_div._core._math.sorting import _RADIX_SORT_MIN_SIZE, sorted_copy_f32
 
 
 def _values(kind: str, n: int) -> np.ndarray:
-    """Return `n` float32 values of one kind, from a generator seeded by the kind and the size."""
+    """Return `n` float32 values of one kind, from a fixed seed."""
     rng = np.random.default_rng([n, len(kind)])
     if kind == "narrow":
-        # values that share their sign and most of their exponent, like the separations of one selection
+        # These values share their sign and most of their exponent, like the separations of one selection.
         return (0.05 + 0.25 * rng.random(n)).astype(np.float32)
     elif kind == "wide":
         return (10.0 ** rng.uniform(-3, 3, n)).astype(np.float32)
@@ -19,7 +19,7 @@ def _values(kind: str, n: int) -> np.ndarray:
         values[::7] = 0.0
         values[1::11] = np.inf
         values[2::13] = -np.inf
-        values[3::17] = 1e-45  # the smallest denormal
+        values[3::17] = 1e-45  # 1e-45 rounds to the smallest float32 denormal
         return values
     else:
         return np.full(n, 0.5, dtype=np.float32)
@@ -30,7 +30,7 @@ def _values(kind: str, n: int) -> np.ndarray:
     "n", [0, 1, 2, _RADIX_SORT_MIN_SIZE - 1, _RADIX_SORT_MIN_SIZE, _RADIX_SORT_MIN_SIZE + 1, 1000, 5000]
 )
 def test_sorted_copy_f32_equals_np_sort_bit_for_bit(kind: str, n: int):
-    """The sorted copy holds exactly the bits that `np.sort` returns, on both sides of the radix-sort threshold."""
+    """The sorted copy equals the result of `np.sort` bit for bit, on both sides of the radix-sort threshold."""
     # --- arrange ----------------------
     values = _values(kind, n)
     original = values.copy()
@@ -40,7 +40,7 @@ def test_sorted_copy_f32_equals_np_sort_bit_for_bit(kind: str, n: int):
 
     # --- assert -----------------------
     np.testing.assert_array_equal(result.view(np.uint32), np.sort(values).view(np.uint32))
-    np.testing.assert_array_equal(values, original)  # the input is left unchanged
+    np.testing.assert_array_equal(values, original)
 
 
 def test_sorted_copy_f32_puts_negative_zero_before_positive_zero():
