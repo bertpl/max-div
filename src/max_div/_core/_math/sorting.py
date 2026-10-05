@@ -42,8 +42,8 @@ def sorted_copy_f32(values: NDArray[np.float32]) -> NDArray[np.float32]:
     - a NaN sorts by its bit pattern, so one with its sign bit set comes first, where `np.sort` puts every
       NaN last.
 
-    Below about 200 values `np.sort` is faster: the radix sort spends a fixed time of a few tenths of a
-    microsecond on clearing its digit-value counts and setting up each pass.
+    Below about 200 values this function is slower than `np.sort`: it spends a fixed time of a few tenths
+    of a microsecond on clearing its digit-value counts and setting up each pass.
     """
     n = values.shape[0]
     keys, counts = _keys_and_digit_counts(values)
