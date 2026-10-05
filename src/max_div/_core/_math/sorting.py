@@ -44,18 +44,7 @@ def sorted_copy_f32(values: NDArray[np.float32]) -> NDArray[np.float32]:
     if n < _RADIX_SORT_MIN_SIZE:
         return np.sort(values)
 
-    # --- keys and their digit counts ------------
-    bits = values.view(np.uint32)
-    keys = np.empty(n, dtype=np.uint32)
-    counts = np.zeros((_N_DIGITS, _N_DIGIT_VALUES), dtype=np.int32)
-    for i in range(n):
-        if bits[i] & _SIGN_BIT:
-            key = ~bits[i]
-        else:
-            key = bits[i] | _SIGN_BIT
-        keys[i] = key
-        for digit_position in range(_N_DIGITS):
-            counts[digit_position, (key >> np.uint32(digit_position * _DIGIT_BITS)) & _DIGIT_MASK] += 1
+    keys, counts = _keys_and_digit_counts(values)
 
     # --- 1 pass per digit -----------------------
     source = keys
@@ -77,11 +66,39 @@ def sorted_copy_f32(values: NDArray[np.float32]) -> NDArray[np.float32]:
             starts[digit_value] += 1
         source, destination = destination, source
 
-    # --- from keys back to values ---------------
-    sorted_bits = np.empty(n, dtype=np.uint32)
+    return _values_from_keys(source)
+
+
+# ==================================================================================================
+#  Helpers
+# ==================================================================================================
+# Numba compiles these, so they are module-level functions; each is inlined into `sorted_copy_f32`.
+@lazy_njit("Tuple((uint32[::1], int32[:, ::1]))(float32[::1])", inline="always", cache=True)
+def _keys_and_digit_counts(values: NDArray[np.float32]) -> tuple[NDArray[np.uint32], NDArray[np.int32]]:
+    """Return the sort key of each value, and per digit position the number of keys with each digit value."""
+    n = values.shape[0]
+    bits = values.view(np.uint32)
+    keys = np.empty(n, dtype=np.uint32)
+    counts = np.zeros((_N_DIGITS, _N_DIGIT_VALUES), dtype=np.int32)
     for i in range(n):
-        if source[i] & _SIGN_BIT:
-            sorted_bits[i] = source[i] ^ _SIGN_BIT
+        if bits[i] & _SIGN_BIT:
+            key = ~bits[i]
         else:
-            sorted_bits[i] = ~source[i]
-    return sorted_bits.view(np.float32)
+            key = bits[i] | _SIGN_BIT
+        keys[i] = key
+        for digit_position in range(_N_DIGITS):
+            counts[digit_position, (key >> np.uint32(digit_position * _DIGIT_BITS)) & _DIGIT_MASK] += 1
+    return keys, counts
+
+
+@lazy_njit("float32[::1](uint32[::1])", inline="always", cache=True)
+def _values_from_keys(keys: NDArray[np.uint32]) -> NDArray[np.float32]:
+    """Return the float32 value of each sort key, undoing the order-preserving transform."""
+    n = keys.shape[0]
+    bits = np.empty(n, dtype=np.uint32)
+    for i in range(n):
+        if keys[i] & _SIGN_BIT:
+            bits[i] = keys[i] ^ _SIGN_BIT
+        else:
+            bits[i] = ~keys[i]
+    return bits.view(np.float32)
