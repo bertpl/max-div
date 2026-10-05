@@ -3,11 +3,11 @@
 Command:
 ```bash
 uv tool install max-div
-max-div benchmark --markdown diversity_metrics
+max-div benchmark internal --markdown diversity_metrics
 ```
 or
 ```bash
-uv run max-div benchmark --markdown diversity_metrics
+uv run max-div benchmark internal --markdown diversity_metrics
 ```
 
 We compare speed of computing the different diversity metrics for different vector selection sizes.

@@ -3,11 +3,11 @@
 Command:
 ```bash
 uv tool install max-div
-max-div benchmark --markdown randint_constrained
+max-div benchmark internal --markdown randint_constrained
 ```
 or
 ```bash
-uv run max-div benchmark --markdown randint_constrained
+uv run max-div benchmark internal --markdown randint_constrained
 ```
 
 We compare the following situations:
