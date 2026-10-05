@@ -126,6 +126,16 @@ single large separation can buy that back. The guide
 [Why geometric-mean separation is the default objective](../guides/geomean_separation.md) shows
 this on four small examples.
 
+## Geometric pseudo-quantile separation (`gpq_separation(q)`) { #geometric-pseudo-quantile-separation }
+
+Maximize a geometric mean of the selected items' [separations](#separation) in which the smaller a
+separation, the larger its weight. The quantile level `q`, from 0 to 0.5, sets how much extra weight the
+smaller separations get: `q=0` is [max-min](#max-min), and `q=0.5` is
+[geometric-mean separation](#geometric-mean-separation).
+
+The [objectives page](objectives.md#gpq_separation-between-p-dispersion-and-nash-social-welfare)
+explains the name.
+
 ## Harmonic-mean separation (`harmonic_mean_separation()`) { #harmonic-mean-separation }
 
 Maximize the *harmonic mean* of the selected items' [separations](#separation): their count over

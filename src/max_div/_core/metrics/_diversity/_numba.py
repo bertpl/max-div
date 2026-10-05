@@ -104,6 +104,30 @@ def harmonic_mean_separation(sep: NDArray[np.float32]) -> np.float32:
     return np.float32(n) / reciprocal_sum
 
 
+@lazy_njit("float32(float32[::1], float32[::1])", fastmath={"reassoc", "contract"}, cache=True)
+def gpq_separation(sep: NDArray[np.float32], rank_weights: NDArray[np.float32]) -> np.float32:
+    """Return the geometric mean of the separations, each weighted by its rank: the i-th smallest by `rank_weights[i]`.
+
+    A weight of exactly 0 skips its separation, so that a zero separation with a zero weight adds
+    nothing; computing 0 * log(0) would give nan. A zero separation with a positive weight makes the
+    result zero.
+
+    Args:
+        sep: the separations, in any order; this function sorts a copy.
+        rank_weights: one non-negative weight per separation, for the separations in ascending order,
+            with at least one positive weight.
+    """
+    sorted_sep = np.sort(sep)
+    log_sum = np.float32(0.0)
+    weight_sum = np.float32(0.0)
+    for i in range(sorted_sep.shape[0]):
+        weight = rank_weights[i]
+        if weight > 0.0:
+            log_sum += weight * np.log(sorted_sep[i])
+            weight_sum += weight
+    return np.exp(log_sum / weight_sum)
+
+
 @lazy_njit("float32(float32[::1])", fastmath={"reassoc", "contract"}, inline="always", cache=True)
 def non_zero_separation_frac(sep: NDArray[np.float32]) -> np.float32:
     n = sep.shape[0]

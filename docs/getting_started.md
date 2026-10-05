@@ -197,6 +197,7 @@ problem = MaxDivProblem.new(
 | `mean_separation()` | Arithmetic mean of all separations | When total spread is the objective |
 | `approx_geomean_separation()` | Fast approximation of `geomean_separation()` | Large-scale problems where speed matters |
 | `harmonic_mean_separation()` | Harmonic mean of all separations | When a close pair should weigh more than under the geomean, without the many equal scores that the minimum produces |
+| `gpq_separation(q)` | Geometric mean of the separations with the most weight on the smallest; the minimum at `q=0`, the geometric mean at `q=0.5` | When the closest pairs should weigh more than under the geomean, by an amount that `q` sets |
 
 To spread a selection in several senses at once, for example in the full space and along each coordinate, combine several diversity metrics into a [hybrid diversity metric](concepts/diversity.md#hybrid-diversity-metrics).
 

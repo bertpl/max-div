@@ -12,6 +12,7 @@ _FACTORY_METRICS = (
     DiversityMetric.geomean_separation(),
     DiversityMetric.approx_geomean_separation(),
     DiversityMetric.harmonic_mean_separation(),
+    DiversityMetric.gpq_separation(0.25),
     DiversityMetric.non_zero_separation_frac(),
     DiversityMetric.mean_pairwise_distance(),
 )
@@ -74,14 +75,15 @@ def test_pickle_round_trips(metric: DiversityMetric):
     assert pickle.loads(pickle.dumps(metric)) == metric  # noqa: S301 -- round-trip of our own object
 
 
-def test_labels_are_distinct_upper_case_names():
-    """Each metric's label is a distinct upper-case name, e.g. `MIN_SEPARATION` for `min_separation()`."""
+def test_labels_are_distinct_and_start_with_the_factory_name():
+    """Each metric's label is distinct and starts with its factory method's name in upper case."""
     # --- act --------------------------
     labels = [metric.label for metric in _FACTORY_METRICS]
+    factory_names = [repr(metric).removeprefix("DiversityMetric.").split("(")[0] for metric in _FACTORY_METRICS]
 
     # --- assert -----------------------
     assert len(set(labels)) == len(labels)
-    assert all(label == label.upper() for label in labels)
+    assert all(label.startswith(name.upper()) for label, name in zip(labels, factory_names, strict=True))
     assert DiversityMetric.min_separation().label == "MIN_SEPARATION"
 
 
@@ -172,10 +174,107 @@ def test_needs_non_zero_separation_frac_tie_breaker_matches_the_score(metric: Di
     "metric", [metric for metric in _FACTORY_METRICS if metric.needs_approx_geomean_tie_breaker], ids=repr
 )
 def test_a_metric_that_needs_the_approx_geomean_tie_breaker_ignores_a_larger_separation(metric: DiversityMetric):
-    """A metric needing the approximate geomean tie-breaker keeps its score when a non-smallest separation grows."""
+    """A metric needing the approximate geomean tie-breaker keeps its score when a non-smallest separation grows.
+
+    The selection is large, because `gpq_separation` ignores a large separation only when its weighted
+    term is too small to change the float32 sum, which happens only in a large selection.
+    """
     # --- arrange ----------------------
-    before = np.array([0.1, 0.5, 1.0], dtype=np.float32)
-    after = np.array([0.1, 0.5, 2.0], dtype=np.float32)
+    before = np.linspace(0.1, 1.0, 10_000, dtype=np.float32)
+    after = before.copy()
+    after[-1] *= 2
 
     # --- act / assert -----------------
     assert metric.compute(before) == metric.compute(after)
+
+
+# ==================================================================================================
+#  gpq_separation
+# ==================================================================================================
+def _gpq_reference(separations: np.ndarray, q: float) -> float:
+    """Return the geometric pseudo-quantile in float64, weighting descending separations by `u_i ** (1 / q - 2)`.
+
+    On the descending order these weights equal the production weights `(1 - u_i) ** (1 / q - 2)` on the
+    ascending order, so the reference checks the production weights without reusing their formula.
+    """
+    descending_separations = np.sort(separations.astype(np.float64))[::-1]
+    rank_fractions = (np.arange(descending_separations.size) + 0.5) / descending_separations.size
+    weights = rank_fractions ** (1.0 / q - 2.0)
+    return float(np.exp(np.sum(weights * np.log(descending_separations)) / np.sum(weights)))
+
+
+@pytest.mark.parametrize(
+    "q, expected",
+    [
+        (0, DiversityMetric.min_separation()),
+        (0.0, DiversityMetric.min_separation()),
+        (0.5, DiversityMetric.geomean_separation()),
+    ],
+)
+def test_gpq_separation_returns_the_metric_that_it_equals_at_its_end_points(q: float, expected: DiversityMetric):
+    """At `q = 0` and `q = 0.5` the factory returns the minimum and the geometric mean separation."""
+    # --- act / assert -----------------
+    assert DiversityMetric.gpq_separation(q) == expected
+
+
+@pytest.mark.parametrize("q", [-0.1, 0.6, 1.0, float("nan"), True, "0.25", None])
+def test_gpq_separation_rejects_a_q_that_is_not_a_number_from_0_to_half(q: object):
+    """A q that is not a number between 0 and 0.5 is refused."""
+    # --- act / assert -----------------
+    with pytest.raises(ValueError, match=r"0 <= q <= 0\.5"):
+        DiversityMetric.gpq_separation(q)
+
+
+def test_gpq_separation_label_and_repr_name_q():
+    """The label and the repr carry q, and a numpy q is stored as a plain float."""
+    # --- act --------------------------
+    metric = DiversityMetric.gpq_separation(np.float64(0.25))
+
+    # --- assert -----------------------
+    assert metric.label == "GPQ_SEPARATION(q=0.25)"
+    assert repr(metric) == "DiversityMetric.gpq_separation(q=0.25)"
+    assert metric == DiversityMetric.gpq_separation(0.25)
+
+
+@pytest.mark.parametrize("q", [0.001, 0.01, 0.1, 0.25, 0.4, 0.499])
+@pytest.mark.parametrize("k", [2, 3, 100, 1000])
+def test_gpq_separation_matches_a_float64_reference(q: float, k: int):
+    """The score equals the geometric pseudo-quantile computed in float64, up to float32 rounding."""
+    # --- arrange ----------------------
+    separations = (np.random.default_rng(k).random(k) + 0.01).astype(np.float32)
+
+    # --- act --------------------------
+    score = DiversityMetric.gpq_separation(q).compute(separations)
+
+    # --- assert -----------------------
+    assert score == pytest.approx(_gpq_reference(separations, q), rel=1e-5)
+
+
+def test_gpq_separation_lies_between_the_minimum_and_the_geometric_mean_and_rises_with_q():
+    """The score lies between the minimum and the geometric mean separation, and does not fall as q rises."""
+    # --- arrange ----------------------
+    separations = (np.random.default_rng(0).random(200) + 0.01).astype(np.float32)
+    qs = [0.001, 0.01, 0.1, 0.25, 0.4, 0.499]
+
+    # --- act --------------------------
+    scores = [DiversityMetric.gpq_separation(q).compute(separations) for q in qs]
+
+    # --- assert -----------------------
+    assert scores == sorted(scores)
+    assert DiversityMetric.min_separation().compute(separations) <= scores[0]
+    assert scores[-1] <= DiversityMetric.geomean_separation().compute(separations)
+
+
+def test_gpq_separation_at_a_tiny_q_is_the_minimum():
+    """At a q so small that every weight would round to 0 unless divided by the largest, the score is the minimum.
+
+    Without that division, the weight sum would be 0 and the score nan.
+    """
+    # --- arrange ----------------------
+    separations = (np.random.default_rng(1).random(100) + 0.01).astype(np.float32)
+
+    # --- act --------------------------
+    score = DiversityMetric.gpq_separation(1e-9).compute(separations)
+
+    # --- assert -----------------------
+    assert score == pytest.approx(np.min(separations), rel=1e-6)

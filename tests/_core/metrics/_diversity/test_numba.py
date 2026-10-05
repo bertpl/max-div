@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from max_div._core.metrics._diversity._numba import harmonic_mean_separation, min_separation
+from max_div._core.metrics._diversity._numba import gpq_separation, harmonic_mean_separation, min_separation
 
 
 @pytest.mark.parametrize(
@@ -54,3 +54,28 @@ def test_harmonic_mean_separation_zero_and_inf_limits(sep: list[float], expected
     """A zero separation makes the harmonic mean zero, +inf entries add nothing, and all-+inf gives +inf."""
     # --- act / assert -----------------
     assert harmonic_mean_separation(np.array(sep, dtype=np.float32)) == expected
+
+
+@pytest.mark.parametrize(
+    "sep, rank_weights, expected",
+    [
+        pytest.param([4.0, 1.0, 2.0], [1.0, 1.0, 1.0], 2.0, id="unit_weights_give_the_geometric_mean"),
+        pytest.param([4.0, 1.0, 2.0], [1.0, 0.0, 0.0], 1.0, id="weight_on_the_smallest_gives_the_minimum"),
+        pytest.param([4.0, 1.0, 16.0], [1.0, 1.0, 0.0], 2.0, id="a_zero_weight_skips_its_separation"),
+        pytest.param([0.5, 0.0, 2.0], [1.0, 0.5, 0.25], 0.0, id="a_weighted_zero_gives_zero"),
+    ],
+)
+def test_gpq_separation_weights_the_separations_by_ascending_rank(
+    sep: list[float], rank_weights: list[float], expected: float
+):
+    """The i-th smallest separation gets the i-th weight, whatever order the separations come in."""
+    # --- arrange ----------------------
+    sep_array = np.array(sep, dtype=np.float32)
+    weights = np.array(rank_weights, dtype=np.float32)
+
+    # --- act --------------------------
+    result = gpq_separation(sep_array, weights)
+
+    # --- assert -----------------------
+    assert result == pytest.approx(expected, rel=1e-6)
+    np.testing.assert_array_equal(sep_array, np.array(sep, dtype=np.float32))  # the input stays unsorted

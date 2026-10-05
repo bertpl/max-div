@@ -108,6 +108,10 @@ def test_solver_builder_add_solver_steps(dummy_problem, strategies: list, expect
         (DiversityMetric.approx_geomean_separation(), [DiversityMetric.non_zero_separation_frac()]),
         (DiversityMetric.harmonic_mean_separation(), [DiversityMetric.non_zero_separation_frac()]),
         (DiversityMetric.mean_separation(), []),
+        (
+            DiversityMetric.gpq_separation(0.25),
+            [DiversityMetric.approx_geomean_separation(), DiversityMetric.non_zero_separation_frac()],
+        ),
     ],
 )
 def test_max_div_solver_builder_tie_breaker_metrics_defaults(
