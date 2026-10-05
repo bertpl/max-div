@@ -3,11 +3,11 @@
 Command:
 ```bash
 uv tool install max-div
-max-div benchmark --markdown modify_p_selectivity
+max-div benchmark internal --markdown modify_p_selectivity
 ```
 or
 ```bash
-uv run max-div benchmark --markdown modify_p_selectivity
+uv run max-div benchmark internal --markdown modify_p_selectivity
 ```
 
 --8<-- "docs/benchmarks/internal/results/benchmark_modify_p_selectivity.md"

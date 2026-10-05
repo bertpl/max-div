@@ -3,11 +3,11 @@
 Command:
 ```bash
 uv tool install max-div
-max-div benchmark --markdown randint
+max-div benchmark internal --markdown randint
 ```
 or
 ```bash
-uv run max-div benchmark --markdown randint
+uv run max-div benchmark internal --markdown randint
 ```
 
 --8<-- "docs/benchmarks/internal/results/benchmark_randint_1.md"
