@@ -73,14 +73,15 @@ important way: it maximizes *total* spread and does not penalize near-duplicates
 
 ### II.E. `gpq_separation(q)` -- between p-dispersion and Nash social welfare { #gpq_separation-between-p-dispersion-and-nash-social-welfare }
 
-The geometric mean of the selected points' nearest-neighbor separations, each weighted by its rank:
+`gpq_separation(q)` is the geometric mean of the selected points' nearest-neighbor separations, each
+weighted by its rank:
 the $i$-th smallest of $k$ separations, $i = 0, \dots, k-1$, gets the weight
 $(1 - u_i)^{1/q - 2}$ with $u_i = (i + 1/2)/k$.
 
-Weights that depend on rank make it an **ordered weighted geometric** (OWG) operator (Xu & Da,
+Weights that depend on rank make `gpq_separation(q)` an **ordered weighted geometric** (OWG) operator (Xu & Da,
 2002), the geometric counterpart of Yager's ordered weighted averaging (Yager, 1988).
 
-The level $q$ moves it between p-dispersion and Nash social welfare:
+The quantile level $q$ moves the score between p-dispersion and Nash social welfare:
 
 - at $q = 0$ all weight sits on the smallest separation: p-dispersion, `min_separation()`;
 - at $q = 0.5$ every weight is 1: Nash social welfare, `geomean_separation()`;

@@ -109,7 +109,7 @@ class DiversityMetric:
         return f"DiversityMetric.{self._factory_name}({', '.join(self._factory_arg_reprs())})"
 
     def _factory_arg_reprs(self) -> tuple[str, ...]:
-        """Return the factory method's arguments as `name=value` strings for `__repr__`; the base returns none.
+        """Return the factory method's arguments as the strings that `__repr__` joins; the base class returns none.
 
         A subclass whose factory method takes arguments overrides this.
         """
@@ -173,7 +173,7 @@ class DiversityMetric:
           is zero.
 
         Computing a score sorts the separations, so it takes several times as long as computing a
-        `geomean_separation()` score. The solver adds the same tie-breakers as for `min_separation()`.
+        `geomean_separation()` score.
 
         Args:
             q: The quantile level, a number between 0 and 0.5 inclusive.
@@ -270,7 +270,7 @@ class GpqSeparationDiversityMetric(DiversityMetric):
         return f"{super().label}(q={self.q:g})"
 
     def _reduce(self, contribution_values: NDArray[np.float32]) -> np.float32:
-        """Return the rank-weighted geometric mean of the separations, using this metric's weights for their number."""
+        """Return the rank-weighted geometric mean of the separations, with the weights for that many separations."""
         return gpq_separation(contribution_values, self._rank_weights(contribution_values.size, self.q))
 
     def _factory_arg_reprs(self) -> tuple[str, ...]:
@@ -290,9 +290,12 @@ class GpqSeparationDiversityMetric(DiversityMetric):
         range becomes exactly 0, which the compiled `gpq_separation` function skips.
 
         A solve scores selections of k items and, when it tries removing an item, of k - 1 items, so a
-        small cache keeps both weight arrays. An initialization that grows the selection one item at a
-        time needs a new array for each size, so it evicts the older arrays from the cache. The returned
-        array is cached and shared between calls, so a caller must not modify it.
+        small cache keeps both weight arrays, shared by every metric with the same `q`.
+
+        An initialization that grows the selection one item at a time needs a new array for each size,
+        so it evicts the older arrays from the cache.
+
+        The returned array is cached and shared between calls, so a caller must not modify it.
         """
         rank_fractions = (np.arange(n_values) + 0.5) / n_values
         log_weights = (1.0 / q - 2.0) * np.log1p(-rank_fractions)

@@ -124,10 +124,8 @@ see [Objectives & the diversity-problem landscape](objectives.md).)
 - **`harmonic_mean_separation()`** sits between `geomean_separation()` and `min_separation()`: pick it
   when a close pair should weigh more than the geomean gives it, without the tied scores of the
   minimum.
-- **`gpq_separation(q)`** sits between `min_separation()` and `geomean_separation()` too; `q`
-  sets its position: at `q=0` the score is the minimum separation, at `q=0.5` the geometric mean.
-  Pick it when the
-  closest pairs should count more than the geomean gives them, by an amount that you set.
+- **`gpq_separation(q)`** sits between `min_separation()` and `geomean_separation()` too: pick it
+  when the closest pairs should count more than the geomean gives them, by an amount that `q` sets.
 - **`mean_pairwise_distance()`** is the objective to pick when you want classical max-sum
   diversity semantics ("maximize total spread") or want results comparable with the MaxSum
   MDP literature. Unlike every separation metric it does *not* penalize near-duplicates per

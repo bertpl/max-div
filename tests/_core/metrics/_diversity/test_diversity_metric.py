@@ -192,9 +192,10 @@ def test_a_metric_that_needs_the_approx_geomean_tie_breaker_ignores_a_larger_sep
 #  gpq_separation
 # ==================================================================================================
 def _gpq_reference(separations: np.ndarray, q: float) -> float:
-    """Return the geometric pseudo-quantile in float64 from the equivalent weights `u_i ** (1 / q - 2)`.
+    """Return the geometric pseudo-quantile in float64, weighting descending separations by `u_i ** (1 / q - 2)`.
 
-    It weights the separations in descending order, so it does not reuse the production weight formula.
+    On the descending order these weights equal the production weights `(1 - u_i) ** (1 / q - 2)` on the
+    ascending order, so the reference checks the production weights without reusing their formula.
     """
     descending_separations = np.sort(separations.astype(np.float64))[::-1]
     rank_fractions = (np.arange(descending_separations.size) + 0.5) / descending_separations.size
@@ -217,7 +218,7 @@ def test_gpq_separation_returns_the_metric_that_it_equals_at_its_end_points(q: f
 
 
 @pytest.mark.parametrize("q", [-0.1, 0.6, 1.0, float("nan"), True, "0.25", None])
-def test_gpq_separation_rejects_a_q_outside_0_to_half(q: object):
+def test_gpq_separation_rejects_a_q_that_is_not_a_number_from_0_to_half(q: object):
     """A q that is not a number between 0 and 0.5 is refused."""
     # --- act / assert -----------------
     with pytest.raises(ValueError, match=r"0 <= q <= 0\.5"):
@@ -265,7 +266,10 @@ def test_gpq_separation_lies_between_the_minimum_and_the_geometric_mean_and_rise
 
 
 def test_gpq_separation_at_a_tiny_q_is_the_minimum():
-    """At a q so small that every weight would round to 0 unless divided by the largest, the score is the minimum."""
+    """At a q so small that every weight would round to 0 unless divided by the largest, the score is the minimum.
+
+    Without that division, the weight sum would be 0 and the score nan.
+    """
     # --- arrange ----------------------
     separations = (np.random.default_rng(1).random(100) + 0.01).astype(np.float32)
 
