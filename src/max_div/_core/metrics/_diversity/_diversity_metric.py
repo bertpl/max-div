@@ -109,9 +109,11 @@ class DiversityMetric:
         return f"DiversityMetric.{self._factory_name}({', '.join(self._factory_arg_reprs())})"
 
     def _factory_arg_reprs(self) -> tuple[str, ...]:
-        """Return the factory method's arguments as the strings that `__repr__` joins; the base class returns none.
+        """Return each argument of this metric's factory call as text, e.g. `("q=0.25",)`.
 
-        A subclass whose factory method takes arguments overrides this.
+        `__repr__` puts these between the parentheses of the factory call. Most factory methods take no
+        arguments, so the base class returns an empty tuple; a subclass whose factory method takes
+        arguments overrides this method.
         """
         return ()
 
