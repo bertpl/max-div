@@ -28,7 +28,7 @@ from multiprocessing import get_context
 from multiprocessing.connection import Connection
 from pathlib import Path
 
-from benchmarks.common import METRIC_BY_LABEL, build_problem, load_records, save_records
+from benchmarks.common import EVALUATED_METRIC_BY_LABEL, build_problem, load_records, save_records
 from benchmarks.common.protocol import (
     CERTIFICATION_CAP_SEC,
     MULTI_WORKER_BUDGETS_SEC,
@@ -117,7 +117,7 @@ def _resolve_certifier(solver_key: str, objective: str) -> ExactSolve:
 
 def _certify_in_child(connection: Connection, solver_key: str, problem_name: str, objective: str, n: int) -> None:
     """Child-process body: build the problem, run the certifier, and send the outcome back."""
-    problem = build_problem(problem_name, n=n, diversity_metric=METRIC_BY_LABEL[objective])
+    problem = build_problem(problem_name, n=n, diversity_metric=EVALUATED_METRIC_BY_LABEL[objective])
     try:
         outcome = _resolve_certifier(solver_key, objective)(problem)
     except RuntimeError as error:  # no solution at all within the cap
@@ -251,7 +251,7 @@ def run_maxdiv(
     whose records are already on file are skipped.
     """
     for (problem_name, objective), sizes in sorted(certified_sizes(exact_rows).items()):
-        metric = METRIC_BY_LABEL[objective]
+        metric = EVALUATED_METRIC_BY_LABEL[objective]
         path = maxdiv_records_path(metric, records_dir)
         records: list[RunRecord] = load_records(path) if path.exists() else []
         done = {(r.problem, r.n, r.tool) for r in records}

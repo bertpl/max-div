@@ -17,8 +17,8 @@ terms is not a single diversity metric.
 The default tie-breakers follow one rule for both kinds, over the diversity metrics of the terms (a
 simple objective counting as a single term):
 
-- the approximate geomean is needed when a term's metric is set by the smallest separations, as
-  min-separation is (`DiversityMetric.needs_approx_geomean_tie_breaker`);
+- the approximate geomean is needed when a term's score is set by its smallest separations, as
+  min-separation's is (`DiversityMetric.needs_approx_geomean_tie_breaker`);
 - the non-zero fraction is needed when a term's score is zero as soon as one pair coincides
   (`DiversityMetric.is_zero_at_coincident_pair`).
 
@@ -37,7 +37,7 @@ from typing import TYPE_CHECKING, NamedTuple
 import numpy as np
 
 from ._aggregation import HybridAggregationArithmeticMean, HybridAggregationBase, HybridAggregationGeometricMean
-from ._diversity_metric import DiversityContributionFamily, DiversityMetric
+from ._diversity_metric import DiversityMetric
 
 if TYPE_CHECKING:
     from collections.abc import Mapping, Sequence
@@ -45,6 +45,8 @@ if TYPE_CHECKING:
     from numpy.typing import NDArray
 
     from max_div._core.metrics._distance import DistanceSpec
+
+    from ._contribution_family import DiversityContributionFamily
 
 
 class DiversityTrackerSpec(NamedTuple):
@@ -111,13 +113,13 @@ class DiversityObjective(ABC):
         tie-breaker is built over this objective's distinct distance specs.
         """
         # --- which tie-breakers the metrics need ----
-        # a score set by the smallest separations, such as min-separation, which depends on the closest
-        # pair alone, stays unchanged under a swap that spreads only the other items; such a swap has
-        # value, though: it frees room around the closest pairs and makes a later swap that moves one of
-        # their items apart more likely. The approximate geomean rewards it.
+        # A score set by the smallest separations, such as min-separation, stays unchanged under a swap that
+        # spreads only the other items. Such a swap still has value: it moves other items away from the
+        # items of the closest pairs, and makes a later swap that moves one of those items apart more likely.
+        # The approximate geomean rewards such a swap.
         needs_approx_geomean = any(metric.needs_approx_geomean_tie_breaker for metric in self.diversity_metrics)
-        # a score that is zero as soon as one pair coincides, such as the minimum and the geometric and
-        # harmonic means, stays zero under every single swap once two pairs coincide; the non-zero
+        # A score that is zero as soon as one pair coincides (min-separation, and the geometric and harmonic
+        # mean separations) stays zero under any one swap once 2 pairs coincide; the non-zero
         # fraction counts the coincident pairs down.
         needs_non_zero_frac = any(metric.is_zero_at_coincident_pair for metric in self.diversity_metrics)
 

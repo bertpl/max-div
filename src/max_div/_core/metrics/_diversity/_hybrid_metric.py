@@ -162,7 +162,8 @@ class HybridDiversityMetric:
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, HybridDiversityMetric):
             return NotImplemented
-        return self._terms == other._terms and self._aggregation == other._aggregation
+        else:
+            return self._terms == other._terms and self._aggregation == other._aggregation
 
     def __hash__(self) -> int:
         return hash((self._terms, self._aggregation))

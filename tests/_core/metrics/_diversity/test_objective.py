@@ -355,12 +355,12 @@ def test_a_minimum_hybrid_first_gets_the_geomean_of_its_terms_at_unit_weights(
         pytest.param(
             (DiversityMetric.geomean_separation(), DiversityMetric.harmonic_mean_separation()),
             [DiversityMetric.non_zero_separation_frac()],
-            id="zero_pinned_terms_get_the_non_zero_fraction_only",
+            id="terms_zero_at_a_coincident_pair_get_the_non_zero_fraction_only",
         ),
         pytest.param(
             (DiversityMetric.mean_separation(), DiversityMetric.harmonic_mean_separation()),
             [DiversityMetric.non_zero_separation_frac()],
-            id="one_zero_pinned_term_is_enough",
+            id="one_term_zero_at_a_coincident_pair_is_enough",
         ),
         pytest.param(
             (DiversityMetric.mean_separation(), DiversityMetric.mean_pairwise_distance()),

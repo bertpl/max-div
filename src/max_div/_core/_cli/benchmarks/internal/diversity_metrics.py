@@ -8,6 +8,16 @@ from max_div._core.metrics import DiversityMetric
 
 from .run_settings import N_BENCHMARK, N_WARMUP, TIME_PER_RUN_SEC
 
+# The benchmarked metrics: one per separation-family diversity metric.
+SEPARATION_FAMILY_METRICS = (
+    DiversityMetric.min_separation(),
+    DiversityMetric.mean_separation(),
+    DiversityMetric.geomean_separation(),
+    DiversityMetric.approx_geomean_separation(),
+    DiversityMetric.harmonic_mean_separation(),
+    DiversityMetric.non_zero_separation_frac(),
+)
+
 
 def benchmark_diversity_metrics(speed: float = 0.0, markdown: bool = False, file: bool = False) -> None:
     """Benchmark the separation-family diversity metrics across sizes of the separation vector.
@@ -27,18 +37,8 @@ def benchmark_diversity_metrics(speed: float = 0.0, markdown: bool = False, file
     n_warmup = N_WARMUP.at(speed)
     n_benchmark = N_BENCHMARK.at(speed)
 
-    # --- create diversity metrics ---------------
-    metrics = [
-        DiversityMetric.min_separation(),
-        DiversityMetric.mean_separation(),
-        DiversityMetric.geomean_separation(),
-        DiversityMetric.approx_geomean_separation(),
-        DiversityMetric.harmonic_mean_separation(),
-        DiversityMetric.non_zero_separation_frac(),
-    ]
-
     # --- benchmark ------------------------------
-    table = Table(headers=["`size`", *(f"`{metric.label.lower()}`" for metric in metrics)])
+    table = Table(headers=["`size`", *(f"`{metric.label.lower()}`" for metric in SEPARATION_FAMILY_METRICS)])
     sizes = [10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000]
     sizes = [size for size in sizes if size <= max_size]
 
@@ -50,7 +50,7 @@ def benchmark_diversity_metrics(speed: float = 0.0, markdown: bool = False, file
         np.random.seed(42)
         test_separations = np.random.rand(size).astype(np.float32)
 
-        for metric in metrics:
+        for metric in SEPARATION_FAMILY_METRICS:
 
             def func_to_benchmark() -> None:
                 metric.compute(test_separations)

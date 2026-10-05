@@ -29,7 +29,7 @@ def _tiny_problem(metric: DiversityMetric) -> MaxDivProblem:
     )
 
 
-def _brute_force_optimum(problem: MaxDivProblem, metric_name: str) -> float:
+def _brute_force_optimum(problem: MaxDivProblem, metric_label: str) -> float:
     """Enumerate all feasible selections and return the true optimum (the test oracle)."""
     best = -np.inf
     dist = problem.full_matrix().astype(np.float64)
@@ -37,7 +37,7 @@ def _brute_force_optimum(problem: MaxDivProblem, metric_name: str) -> float:
     for selection in combinations(range(problem.n), problem.k):
         if not 1 <= len(group.intersection(selection)) <= 2:
             continue
-        value = evaluate_selection(problem, np.asarray(selection, dtype=np.int64))[metric_name]
+        value = evaluate_selection(problem, np.asarray(selection, dtype=np.int64))[metric_label]
         best = max(best, value)
     assert dist.shape[0] == problem.n  # oracle sanity: distances cover the ground set
     return best

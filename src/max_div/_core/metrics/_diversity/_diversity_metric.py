@@ -1,18 +1,23 @@
-"""`DiversityMetric` says how a selection's per-item contribution values reduce to one diversity value.
+"""`DiversityMetric` says how the selected items' contribution values reduce to one diversity value.
 
-Each diversity metric is a subclass of `DiversityMetric`. A subclass names the compiled function that
-reduces the contribution values, the family of per-item contributions it reduces, and 2 properties of
-its score that decide the solver's default tie-breakers (`DiversityObjective.default_tie_breakers`).
+An item's contribution value is a number per selected item, such as its distance to the nearest other
+selected item; `DiversityContributionFamily` names the kinds. Each diversity metric is a subclass of
+`DiversityMetric`, and a subclass names:
+
+- the compiled function that reduces the contribution values;
+- the family of per-item contributions that it reduces;
+- the properties of its score that decide the solver's default tie-breakers
+  (`DiversityObjective.default_tie_breakers`).
 """
 
 from collections.abc import Callable
 from dataclasses import dataclass
-from enum import StrEnum
 from typing import TYPE_CHECKING, ClassVar
 
 import numpy as np
 from numpy.typing import NDArray
 
+from ._contribution_family import DiversityContributionFamily
 from ._numba import (
     approx_geomean_separation,
     geomean_separation,
@@ -29,20 +34,6 @@ if TYPE_CHECKING:
     from ._hybrid_metric import DiversityTerm
 
 
-class DiversityContributionFamily(StrEnum):
-    """Enum for the per-point diversity-contribution families that diversity metrics consume.
-
-    Members
-    -------
-
-        - SEPARATION:     contribution = distance to the nearest selected item
-        - MEAN_DISTANCE:  contribution = mean distance to the selected items
-    """
-
-    SEPARATION = "SEPARATION"
-    MEAN_DISTANCE = "MEAN_DISTANCE"
-
-
 # ==================================================================================================
 #  DiversityMetric
 # ==================================================================================================
@@ -50,24 +41,24 @@ class DiversityContributionFamily(StrEnum):
 class DiversityMetric:
     """A diversity metric reduces the selected items' per-item contribution values to one diversity value.
 
-    Create instances via the factory methods only.  Each metric is a subclass that stores only its own
-    arguments and sets the members whose values differ for that metric.
+    Create instances via the factory methods only.
     """
 
     # Each subclass sets:
     # - `_label`, read by `label`, and `_factory_name`, read by `__repr__`;
     # - `_reduce`, the compiled function that reduces the contribution values, wrapped in `staticmethod`,
     #   because a compiled function stored on a class binds as a method when read from an instance;
-    # - the 3 public class variables below, where their defaults do not hold for it.
+    # - each public class variable whose default does not hold for it.
     _label: ClassVar[str]
     _factory_name: ClassVar[str]
     _reduce: ClassVar[Callable[[NDArray[np.float32]], np.float32]]
-    # the family of per-item contributions that this metric reduces
     contribution_family: ClassVar[DiversityContributionFamily] = DiversityContributionFamily.SEPARATION
-    # whether the solver breaks this metric's ties by the approximate geomean separation, as a metric that is
-    # set by the smallest separations needs; `DiversityObjective.default_tie_breakers` explains why
+    # Set to True when the solver must break this metric's ties by the approximate geomean separation; a metric
+    # whose score is set by its smallest separations needs this, and `DiversityObjective.default_tie_breakers`
+    # explains why.
     needs_approx_geomean_tie_breaker: ClassVar[bool] = False
-    # whether one coincident pair, a separation of zero, makes the score zero
+    # Set to True when one coincident pair, a separation of zero, makes the score zero, or near zero for the
+    # approximate geomean; the solver then also breaks this metric's ties by the non-zero separation fraction.
     is_zero_at_coincident_pair: ClassVar[bool] = False
 
     def __post_init__(self) -> None:
@@ -92,7 +83,8 @@ class DiversityMetric:
         """
         if contribution_values.size < 2:
             return np.float32(0.0)
-        return self._reduce(contribution_values)
+        else:
+            return self._reduce(contribution_values)
 
     def over(self, distance_metric: "DistanceMetric") -> "DiversityTerm":
         """Return this metric as a term over `distance_metric`, for a `HybridDiversityMetric`.
@@ -110,7 +102,7 @@ class DiversityMetric:
     # --------------------------------------------------------------------------
     @property
     def label(self) -> str:
-        """Return the metric's name in upper case, e.g. `MIN_SEPARATION`, which starts the labels of its objectives."""
+        """Return the metric's name in upper case, e.g. `MIN_SEPARATION`."""
         return self._label
 
     def __repr__(self) -> str:
@@ -122,31 +114,34 @@ class DiversityMetric:
     # --------------------------------------------------------------------------
     @classmethod
     def min_separation(cls) -> "DiversityMetric":
-        """Return the minimum separation of the selected items: the distance between the closest selected pair."""
+        """Return the metric that scores a selection by its minimum separation: the distance of its closest pair."""
         return MinSeparationDiversityMetric()
 
     @classmethod
     def mean_separation(cls) -> "DiversityMetric":
-        """Return the arithmetic mean separation of the selected items."""
+        """Return the metric that scores a selection by its arithmetic mean separation."""
         return MeanSeparationDiversityMetric()
 
     @classmethod
     def geomean_separation(cls) -> "DiversityMetric":
-        """Return the geometric mean separation of the selected items; it is zero as soon as one separation is zero."""
+        """Return the metric that scores a selection by its geometric mean separation.
+
+        The score is zero as soon as one separation is zero.
+        """
         return GeomeanSeparationDiversityMetric()
 
     @classmethod
     def approx_geomean_separation(cls) -> "DiversityMetric":
-        """Return the geometric mean separation, computed with fast approximations of log and exp.
+        """Return the metric that scores a selection by its geometric mean separation, computed with fast log and exp.
 
-        The result is within about one percent of `geomean_separation()`. A zero separation gives a
-        value near zero, not exactly zero.
+        The result is within about 1% of `geomean_separation()`. A zero separation gives a value
+        near zero, not exactly zero.
         """
         return ApproxGeomeanSeparationDiversityMetric()
 
     @classmethod
     def harmonic_mean_separation(cls) -> "DiversityMetric":
-        """Return the harmonic mean separation of the selected items.
+        """Return the metric that scores a selection by its harmonic mean separation.
 
         It lies between the geometric mean and the minimum in how hard it penalizes close pairs, is
         zero as soon as one separation is zero, and is computed exactly, with no logarithm or
@@ -156,12 +151,12 @@ class DiversityMetric:
 
     @classmethod
     def non_zero_separation_frac(cls) -> "DiversityMetric":
-        """Return the fraction of the selected items whose separation is not zero."""
+        """Return the metric that scores a selection by the fraction of its items whose separation is not zero."""
         return NonZeroSeparationFracDiversityMetric()
 
     @classmethod
     def mean_pairwise_distance(cls) -> "DiversityMetric":
-        """Return the mean distance over all pairs of selected items, the classical max-sum diversity objective."""
+        """Return the metric that scores a selection by the mean distance over all its pairs (max-sum diversity)."""
         return MeanPairwiseDistanceDiversityMetric()
 
 

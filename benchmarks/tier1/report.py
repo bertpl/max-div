@@ -18,7 +18,7 @@ from collections import defaultdict
 from pathlib import Path
 
 from benchmarks.common.protocol import QUOTED_BUDGETS_SEC
-from benchmarks.common.quality import METRIC_BY_LABEL
+from benchmarks.common.quality import EVALUATED_METRIC_BY_LABEL
 from benchmarks.common.records import RunRecord, budget_tag, load_records
 from benchmarks.common.registry import display_name
 from benchmarks.figures import ReferenceLine, ReferenceMarker, plot_anytime_curve
@@ -33,9 +33,9 @@ OBJECTIVES = (DiversityMetric.min_separation(), DiversityMetric.mean_separation(
 FULL_WIDTH_OBJECTIVE = DiversityMetric.min_separation()  # the other objectives get thumbnail galleries
 
 
-def median_quality(records: list[RunRecord], tool: str, metric_name: str, budget_sec: float) -> float | None:
+def median_quality(records: list[RunRecord], tool: str, metric_label: str, budget_sec: float) -> float | None:
     """Return the median quality over seeds of one tool at one budget, or None when that budget was not run."""
-    values = [r.quality[metric_name] for r in records if r.tool == tool and r.budget == budget_tag(budget_sec)]
+    values = [r.quality[metric_label] for r in records if r.tool == tool and r.budget == budget_tag(budget_sec)]
     return statistics.median(values) if values else None
 
 
@@ -119,7 +119,7 @@ def render_charts(
     """Render one chart per certified cell and return the written image names per (objective, problem)."""
     written: dict[tuple[str, str], list[str]] = defaultdict(list)
     for (problem, objective, n), rows in sorted(certified_optima(exact_rows).items()):
-        metric = METRIC_BY_LABEL[objective]
+        metric = EVALUATED_METRIC_BY_LABEL[objective]
         cell_records = [r for r in records_by_metric.get(objective, []) if r.problem == problem and r.n == n]
         if not cell_records:
             continue

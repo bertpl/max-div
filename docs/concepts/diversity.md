@@ -102,12 +102,12 @@ see [Objectives & the diversity-problem landscape](objectives.md).)
 
 | Metric | Formula | Characteristics |
 |--------|---------|-----------------|
-| `geomean_separation()` | $\exp\!\left(\frac{1}{k}\sum_{v \in S} \ln(\text{sep}(v))\right)$ | **Default.** Balances all separations. Sensitive to any item with low separation -- a single poorly-placed item drags down the score. |
+| `geomean_separation()` | $\exp\!\left(\frac{1}{k}\sum_{v \in S} \ln(\text{sep}(v))\right)$ | **Default.** Balances all separations. Sensitive to any item with low separation -- a single poorly-placed item lowers the score sharply. |
 | `min_separation()` | $\min_{v \in S} \text{sep}(v)$ | Only considers the worst-off item (the closest pair). Equivalent to the *p-dispersion* problem. Many swaps produce tied scores. |
 | `mean_separation()` | $\frac{1}{k}\sum_{v \in S} \text{sep}(v)$ | Averages all separations. Less sensitive to individual outliers than geomean, but can be dominated by a few very high separations. |
 | `approx_geomean_separation()` | Same as geomean but using fast log/exp approximations | Slightly less accurate but faster per iteration. Useful for large-scale problems where iteration speed matters more than per-iteration precision. |
 | `harmonic_mean_separation()` | $k \,/\, \sum_{v \in S} \big(1 / \text{sep}(v)\big)$ | Between the geometric mean and the minimum: every item still counts, but a close pair lowers the score more than under the geomean. Zero as soon as one separation is zero. Computed exactly, without logarithm or exponential. |
-| `mean_pairwise_distance()` | $\frac{2}{k(k-1)}\sum_{\{u,v\} \subseteq S} d(u, v)$ | Mean distance over all selected *pairs* -- the classical **max-sum diversity** objective (MaxSum MDP, also known as *remote-clique*). Maximizes total spread: selections gravitate to the outer regions of the data, and near-duplicates are tolerated if both sit far from everything else. |
+| `mean_pairwise_distance()` | $\frac{2}{k(k-1)}\sum_{\{u,v\} \subseteq S} d(u, v)$ | Mean distance over all selected *pairs* -- the classical **max-sum diversity** objective (MaxSum MDP, also known as *remote-clique*). Maximizes total spread: selections tend to lie in the outer regions of the data, and near-duplicates are tolerated if both sit far from everything else. |
 
 ### V.A. Which metric to choose? { #which-metric-to-choose }
 

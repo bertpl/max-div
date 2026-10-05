@@ -36,7 +36,7 @@ The solver automatically selects appropriate tie-breakers based on your chosen d
 
 | Primary Metric | Default Tie-Breakers | Why |
 |---------------|---------------------|-----|
-| `min_separation()` | `approx_geomean_separation()`, `non_zero_separation_frac()` | The score depends on the closest pair alone, so a swap that spreads the other items leaves it unchanged. Such a swap has value, though: it frees room around the closest pair and makes a later swap that moves one of its items apart more likely. The approximate geomean rewards it; the non-zero fraction takes over once that geomean has underflowed to zero. |
+| `min_separation()` | `approx_geomean_separation()`, `non_zero_separation_frac()` | The score depends on the closest pair alone, so a swap that spreads the other items leaves it unchanged. Such a swap has value, though: it moves other items away from the items of the closest pair and makes a later swap that moves one of its items apart more likely. The approximate geomean rewards it. The minimum is also zero as soon as one separation is zero, so the non-zero fraction counts the coincident pairs down. |
 | `geomean_separation()`, `approx_geomean_separation()`, `harmonic_mean_separation()` | `non_zero_separation_frac()` | These means are zero as soon as one separation is zero. Once two or more pairs coincide, no single swap moves the score off zero, so the solver would be stuck. The non-zero fraction counts the coincident pairs down until the score is non-zero again. |
 | `mean_separation()`, `mean_pairwise_distance()` | *(none)* | Every swap that changes a separation changes the score, so a tie never hides an improvement. |
 
