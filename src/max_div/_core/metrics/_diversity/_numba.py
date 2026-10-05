@@ -35,6 +35,7 @@ import numpy as np
 from numpy.typing import NDArray
 
 from max_div._core._math.geomean import fast_geomean_f32, geomean_f32
+from max_div._core._math.sorting import sorted_copy_f32
 from max_div._core.jit import lazy_njit
 
 # The +inf bit pattern: the integer minimum starts from it, as the float loop would start from +inf.
@@ -117,7 +118,8 @@ def gpq_separation(sep: NDArray[np.float32], rank_weights: NDArray[np.float32]) 
         rank_weights: one non-negative weight per separation, for the separations in ascending order,
             with at least one positive weight.
     """
-    sorted_sep = np.sort(sep)
+    # a separate inlined function, so that this call is the one place to swap the sort for `np.sort`
+    sorted_sep = sorted_copy_f32(sep)
     log_sum = np.float32(0.0)
     weight_sum = np.float32(0.0)
     for i in range(sorted_sep.shape[0]):
