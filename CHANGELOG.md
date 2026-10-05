@@ -5,21 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.21.1 (2026-10-05)
 
 ### Added
 - Add `DiversityMetric.gpq_separation(q)`, a diversity metric that is `min_separation()` at `q=0` and `geomean_separation()` at `q=0.5`, and whose score falls between theirs for any `q` in between
 
 ### Changed
 - **Breaking:** Turn `DiversityMetric` from an enum into a class with factory methods, such as `DiversityMetric.min_separation()` for `DiversityMetric.MIN_SEPARATION`
-
-### Deprecated
-
-### Removed
-
-### Fixed
-
-### Security
 
 ## 0.21.0 (2026-10-04)
 
