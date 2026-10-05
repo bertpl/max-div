@@ -59,7 +59,10 @@ def solve_nn_separation_scip(
     t_start = time.perf_counter()
     distances = problem.full_matrix().astype(np.float64)
     n, k = problem.n, problem.k
-    weights = np.log(np.maximum(distances, 1e-12)) if metric == DiversityMetric.geomean_separation() else distances
+    if metric == DiversityMetric.geomean_separation():
+        weights = np.log(np.maximum(distances, 1e-12))
+    else:
+        weights = distances
 
     model = Model("nn-separation")
     model.hideOutput()

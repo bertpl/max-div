@@ -33,9 +33,9 @@ OBJECTIVES = (DiversityMetric.min_separation(), DiversityMetric.mean_separation(
 FULL_WIDTH_OBJECTIVE = DiversityMetric.min_separation()  # the other objectives get thumbnail galleries
 
 
-def median_quality(records: list[RunRecord], tool: str, metric_label: str, budget_sec: float) -> float | None:
+def median_quality(records: list[RunRecord], tool: str, metric_name: str, budget_sec: float) -> float | None:
     """Return the median quality over seeds of one tool at one budget, or None when that budget was not run."""
-    values = [r.quality[metric_label] for r in records if r.tool == tool and r.budget == budget_tag(budget_sec)]
+    values = [r.quality[metric_name] for r in records if r.tool == tool and r.budget == budget_tag(budget_sec)]
     return statistics.median(values) if values else None
 
 

@@ -8,7 +8,7 @@ from max_div._core.metrics import DiversityMetric
 
 from .run_settings import N_BENCHMARK, N_WARMUP, TIME_PER_RUN_SEC
 
-# The benchmarked metrics: one per separation-family diversity metric.
+# The benchmarked metrics are all diversity metrics of the separation family.
 SEPARATION_FAMILY_METRICS = (
     DiversityMetric.min_separation(),
     DiversityMetric.mean_separation(),

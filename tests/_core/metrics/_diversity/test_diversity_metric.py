@@ -17,11 +17,6 @@ _FACTORY_METRICS = (
 )
 
 
-def _all_subclasses(cls: type) -> set[type]:
-    """Return every direct and indirect subclass of `cls`."""
-    return {subclass for direct in cls.__subclasses__() for subclass in (direct, *_all_subclasses(direct))}
-
-
 # ==================================================================================================
 #  Factories and subclasses
 # ==================================================================================================
@@ -32,7 +27,7 @@ def test_factory_metrics_cover_every_subclass_once():
 
     # --- assert -----------------------
     assert len(set(classes)) == len(classes)
-    assert set(classes) == _all_subclasses(DiversityMetric)
+    assert set(classes) == set(DiversityMetric.__subclasses__())
 
 
 def test_a_bare_diversity_metric_cannot_be_created():
@@ -112,7 +107,7 @@ def test_labels_are_distinct_upper_case_names():
         (DiversityMetric.mean_pairwise_distance(), [2.0, 3.0, 4.0], 3.0, 1e-6),
     ],
 )
-def test_diversity_compute(metric: DiversityMetric, separation: list[float], expected_result: float, tol: float):
+def test_compute(metric: DiversityMetric, separation: list[float], expected_result: float, tol: float):
     """Each metric reduces the given contribution values to the expected score."""
     # --- arrange ----------------------
     separation = np.array(separation, dtype=np.float32)
@@ -134,7 +129,7 @@ def test_diversity_compute(metric: DiversityMetric, separation: list[float], exp
         np.array([np.inf], dtype=np.float32),
     ],
 )
-def test_diversity_metric_small_arrays(metric: DiversityMetric, sep_array: np.ndarray):
+def test_compute_scores_fewer_than_2_values_as_zero(metric: DiversityMetric, sep_array: np.ndarray):
     """Every metric reports 0.0 below 2 values; a diversity score needs at least one pair."""
     # --- act --------------------------
     result = metric.compute(sep_array)
@@ -147,7 +142,7 @@ def test_diversity_metric_small_arrays(metric: DiversityMetric, sep_array: np.nd
 #  Per-metric class variables
 # ==================================================================================================
 @pytest.mark.parametrize("metric", _FACTORY_METRICS, ids=repr)
-def test_diversity_metric_contribution_family(metric: DiversityMetric):
+def test_contribution_family(metric: DiversityMetric):
     """Each metric maps to the contribution family that its name implies."""
     # --- arrange ----------------------
     if metric == DiversityMetric.mean_pairwise_distance():
@@ -160,8 +155,8 @@ def test_diversity_metric_contribution_family(metric: DiversityMetric):
 
 
 @pytest.mark.parametrize("metric", _FACTORY_METRICS, ids=repr)
-def test_is_zero_at_coincident_pair_matches_the_score(metric: DiversityMetric):
-    """A metric scores 0 when one separation is zero if and only if its `is_zero_at_coincident_pair` is True."""
+def test_needs_non_zero_separation_frac_tie_breaker_matches_the_score(metric: DiversityMetric):
+    """A metric needs the non-zero-fraction tie-breaker if and only if one zero separation makes it score near 0."""
     # --- arrange ----------------------
     contributions = np.array([0.0, 0.5, 1.0], dtype=np.float32)
 
@@ -170,7 +165,7 @@ def test_is_zero_at_coincident_pair_matches_the_score(metric: DiversityMetric):
 
     # --- assert -----------------------
     # the approximate geomean gives a value near zero, not exactly zero
-    assert (score < 1e-6) == metric.is_zero_at_coincident_pair
+    assert (score < 1e-6) == metric.needs_non_zero_separation_frac_tie_breaker
 
 
 @pytest.mark.parametrize(

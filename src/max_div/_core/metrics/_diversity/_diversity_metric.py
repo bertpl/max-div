@@ -1,13 +1,9 @@
 """`DiversityMetric` says how the selected items' contribution values reduce to one diversity value.
 
-An item's contribution value is a number per selected item, such as its distance to the nearest other
-selected item; `DiversityContributionFamily` names the kinds. Each diversity metric is a subclass of
-`DiversityMetric`, and a subclass names:
-
-- the compiled function that reduces the contribution values;
-- the family of per-item contributions that it reduces;
-- the properties of its score that decide the solver's default tie-breakers
-  (`DiversityObjective.default_tie_breakers`).
+An item's contribution value measures how much that selected item adds to the diversity, such as its
+distance to the nearest other selected item; `DiversityContributionFamily` names the kinds of
+contribution value. Each diversity metric is a subclass of `DiversityMetric`, created only through a
+factory method of `DiversityMetric`.
 """
 
 from collections.abc import Callable
@@ -45,11 +41,10 @@ class DiversityMetric:
     """
 
     # Each subclass sets:
-    # - `_label`, read by `label`, and `_factory_name`, read by `__repr__`;
+    # - `_factory_name`, the name of its factory method, read by `label` and `__repr__`;
     # - `_reduce`, the compiled function that reduces the contribution values, wrapped in `staticmethod`,
     #   because a compiled function stored on a class binds as a method when read from an instance;
     # - each public class variable whose default does not hold for it.
-    _label: ClassVar[str]
     _factory_name: ClassVar[str]
     _reduce: ClassVar[Callable[[NDArray[np.float32]], np.float32]]
     contribution_family: ClassVar[DiversityContributionFamily] = DiversityContributionFamily.SEPARATION
@@ -57,9 +52,10 @@ class DiversityMetric:
     # whose score is set by its smallest separations needs this, and `DiversityObjective.default_tie_breakers`
     # explains why.
     needs_approx_geomean_tie_breaker: ClassVar[bool] = False
-    # Set to True when one coincident pair, a separation of zero, makes the score zero, or near zero for the
-    # approximate geomean; the solver then also breaks this metric's ties by the non-zero separation fraction.
-    is_zero_at_coincident_pair: ClassVar[bool] = False
+    # Set to True when the solver must break this metric's ties by the non-zero separation fraction; a metric
+    # whose score is zero, or near zero, as soon as one coincident pair (2 selected items at distance zero)
+    # appears needs this.
+    needs_non_zero_separation_frac_tie_breaker: ClassVar[bool] = False
 
     def __post_init__(self) -> None:
         """Reject a bare `DiversityMetric`: only the subclasses returned by the factory methods compute a score."""
@@ -102,8 +98,8 @@ class DiversityMetric:
     # --------------------------------------------------------------------------
     @property
     def label(self) -> str:
-        """Return the metric's name in upper case, e.g. `MIN_SEPARATION`."""
-        return self._label
+        """Return the name of the metric's factory method in upper case, e.g. `MIN_SEPARATION`."""
+        return self._factory_name.upper()
 
     def __repr__(self) -> str:
         """Return the factory call that constructs this metric."""
@@ -143,9 +139,11 @@ class DiversityMetric:
     def harmonic_mean_separation(cls) -> "DiversityMetric":
         """Return the metric that scores a selection by its harmonic mean separation.
 
-        It lies between the geometric mean and the minimum in how hard it penalizes close pairs, is
-        zero as soon as one separation is zero, and is computed exactly, with no logarithm or
-        exponential.
+        The harmonic mean separation:
+
+        - penalizes close pairs harder than the geometric mean and less hard than the minimum;
+        - is zero as soon as one separation is zero;
+        - is computed exactly, with no logarithm or exponential.
         """
         return HarmonicMeanSeparationDiversityMetric()
 
@@ -167,18 +165,16 @@ class DiversityMetric:
 class MinSeparationDiversityMetric(DiversityMetric):
     """This metric is the minimum separation; see `DiversityMetric.min_separation`."""
 
-    _label = "MIN_SEPARATION"
     _factory_name = "min_separation"
     _reduce = staticmethod(min_separation)
     needs_approx_geomean_tie_breaker = True
-    is_zero_at_coincident_pair = True
+    needs_non_zero_separation_frac_tie_breaker = True
 
 
 @dataclass(frozen=True, repr=False)
 class MeanSeparationDiversityMetric(DiversityMetric):
     """This metric is the arithmetic mean separation; see `DiversityMetric.mean_separation`."""
 
-    _label = "MEAN_SEPARATION"
     _factory_name = "mean_separation"
     _reduce = staticmethod(mean_separation)
 
@@ -187,37 +183,33 @@ class MeanSeparationDiversityMetric(DiversityMetric):
 class GeomeanSeparationDiversityMetric(DiversityMetric):
     """This metric is the geometric mean separation; see `DiversityMetric.geomean_separation`."""
 
-    _label = "GEOMEAN_SEPARATION"
     _factory_name = "geomean_separation"
     _reduce = staticmethod(geomean_separation)
-    is_zero_at_coincident_pair = True
+    needs_non_zero_separation_frac_tie_breaker = True
 
 
 @dataclass(frozen=True, repr=False)
 class ApproxGeomeanSeparationDiversityMetric(DiversityMetric):
     """This metric is the approximate geometric mean separation; see `DiversityMetric.approx_geomean_separation`."""
 
-    _label = "APPROX_GEOMEAN_SEPARATION"
     _factory_name = "approx_geomean_separation"
     _reduce = staticmethod(approx_geomean_separation)
-    is_zero_at_coincident_pair = True
+    needs_non_zero_separation_frac_tie_breaker = True
 
 
 @dataclass(frozen=True, repr=False)
 class HarmonicMeanSeparationDiversityMetric(DiversityMetric):
     """This metric is the harmonic mean separation; see `DiversityMetric.harmonic_mean_separation`."""
 
-    _label = "HARMONIC_MEAN_SEPARATION"
     _factory_name = "harmonic_mean_separation"
     _reduce = staticmethod(harmonic_mean_separation)
-    is_zero_at_coincident_pair = True
+    needs_non_zero_separation_frac_tie_breaker = True
 
 
 @dataclass(frozen=True, repr=False)
 class NonZeroSeparationFracDiversityMetric(DiversityMetric):
     """This metric is the fraction of non-zero separations; see `DiversityMetric.non_zero_separation_frac`."""
 
-    _label = "NON_ZERO_SEPARATION_FRAC"
     _factory_name = "non_zero_separation_frac"
     _reduce = staticmethod(non_zero_separation_frac)
 
@@ -229,7 +221,6 @@ class NonZeroSeparationFracDiversityMetric(DiversityMetric):
 class MeanPairwiseDistanceDiversityMetric(DiversityMetric):
     """This metric is the mean pairwise distance; see `DiversityMetric.mean_pairwise_distance`."""
 
-    _label = "MEAN_PAIRWISE_DISTANCE"
     _factory_name = "mean_pairwise_distance"
     _reduce = staticmethod(mean_pairwise_distance)
     contribution_family = DiversityContributionFamily.MEAN_DISTANCE

@@ -19,8 +19,8 @@ simple objective counting as a single term):
 
 - the approximate geomean is needed when a term's score is set by its smallest separations, as
   min-separation's is (`DiversityMetric.needs_approx_geomean_tie_breaker`);
-- the non-zero fraction is needed when a term's score is zero as soon as one pair coincides
-  (`DiversityMetric.is_zero_at_coincident_pair`).
+- the non-zero fraction is needed when a term's score is zero, or near zero, as soon as one pair coincides
+  (`DiversityMetric.needs_non_zero_separation_frac_tie_breaker`).
 
 Each tie-breaker is computed over every distinct distance spec of the objective, as a hybrid when there are several.
 A hybrid gets one more tie-breaker, ranked before these, when its aggregation returns a tie-breaker
@@ -114,14 +114,18 @@ class DiversityObjective(ABC):
         """
         # --- which tie-breakers the metrics need ----
         # A score set by the smallest separations, such as min-separation, stays unchanged under a swap that
-        # spreads only the other items. Such a swap still has value: it moves other items away from the
-        # items of the closest pairs, and makes a later swap that moves one of those items apart more likely.
-        # The approximate geomean rewards such a swap.
+        # spreads only the items outside the closest pairs.
+        #
+        # Such a swap still has value: it moves those items away from the items of the closest pairs, and makes
+        # a later swap that moves the 2 items of a closest pair further apart more likely. The approximate
+        # geomean rewards such a swap.
         needs_approx_geomean = any(metric.needs_approx_geomean_tie_breaker for metric in self.diversity_metrics)
-        # A score that is zero as soon as one pair coincides (min-separation, and the geometric and harmonic
-        # mean separations) stays zero under any one swap once 2 pairs coincide; the non-zero
-        # fraction counts the coincident pairs down.
-        needs_non_zero_frac = any(metric.is_zero_at_coincident_pair for metric in self.diversity_metrics)
+        # A score that is zero, or near zero, as soon as one pair coincides stays there under any one swap once
+        # 2 pairs coincide; the non-zero fraction breaks the tie, because it rises with each coincident pair
+        # that a swap separates.
+        needs_non_zero_frac = any(
+            metric.needs_non_zero_separation_frac_tie_breaker for metric in self.diversity_metrics
+        )
 
         # --- the tie-breaker metrics, in rank order --
         # a hybrid tie-breaker aggregates its per-distance terms geometrically for the approximate

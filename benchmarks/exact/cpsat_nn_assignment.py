@@ -65,7 +65,10 @@ def solve_nn_assignment_cpsat(
     t_start = time.perf_counter()
     distances = problem.full_matrix().astype(np.float64)
     n, k = problem.n, problem.k
-    weights = np.log(np.maximum(distances, 1e-12)) if metric == DiversityMetric.geomean_separation() else distances
+    if metric == DiversityMetric.geomean_separation():
+        weights = np.log(np.maximum(distances, 1e-12))
+    else:
+        weights = distances
     int_weights = np.round(weights * WEIGHT_SCALE).astype(np.int64)
 
     model = cp_model.CpModel()
@@ -108,7 +111,10 @@ def solve_nn_assignment_cpsat(
 def _objective_from_log_scale(scaled_sum: float, k: int, metric: DiversityMetric) -> float:
     """Convert a scaled objective sum back to a mean (geomean via exp of the log-mean)."""
     mean = scaled_sum / WEIGHT_SCALE / k
-    return float(math.exp(mean)) if metric == DiversityMetric.geomean_separation() else float(mean)
+    if metric == DiversityMetric.geomean_separation():
+        return float(math.exp(mean))
+    else:
+        return float(mean)
 
 
 def _add_closest_assignment_constraints(model, x, y, distances) -> None:  # noqa: ANN001 -- cp_model types are dynamic

@@ -160,12 +160,14 @@ class HybridDiversityMetric:
     #  Representation
     # --------------------------------------------------------------------------
     def __eq__(self, other: object) -> bool:
+        """Return whether `other` is a hybrid with equal terms and an equal aggregation."""
         if not isinstance(other, HybridDiversityMetric):
             return NotImplemented
         else:
             return self._terms == other._terms and self._aggregation == other._aggregation
 
     def __hash__(self) -> int:
+        """Return a hash of the terms and the aggregation, consistent with `__eq__`."""
         return hash((self._terms, self._aggregation))
 
     def __repr__(self) -> str:
