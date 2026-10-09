@@ -110,7 +110,8 @@ tooling = [
     # instead of attempting a source build. A flat `>=6.0` minimum fails on 3.14, where that
     # version has no wheel and does not build.
     #
-    # On 3.15, no PyYAML release ships a wheel, so uv builds PyYAML from source, which works.
+    # On 3.15, no PyYAML release ships a wheel, so the 3.14 minimum also applies there and uv builds
+    # that release from source, which works.
     "pyyaml>=6.0.1; python_version == '3.12'",
     "pyyaml>=6.0.2; python_version == '3.13'",
     "pyyaml>=6.0.3; python_version >= '3.14'",
