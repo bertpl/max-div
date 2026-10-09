@@ -28,6 +28,7 @@ def test_constraint_default_weight():
 
 @pytest.mark.parametrize("weight", [0, 0.0, -1.0, -0.001, float("nan"), float("inf"), float("-inf")])
 def test_constraint_rejects_a_weight_that_is_not_finite_and_positive(weight: float):
+    """A zero, negative, NaN or infinite weight raises at construction."""
     # --- act & assert -----------------
     with pytest.raises(ValueError, match="weight must be finite and > 0"):
         Constraint(int_set={0, 1}, min_count=1, max_count=2, weight=weight)
@@ -84,6 +85,10 @@ def test_constraint_rejects_invalid_definitions(kwargs: dict, match: str):
     ids=["set", "list-with-repeats", "tuple", "range", "numpy-array", "set-of-numpy-integers"],
 )
 def test_constraint_stores_any_iterable_of_integers_as_a_frozenset_of_ints(int_set):
+    """Any accepted iterable of integers, numpy integers included, is stored as a frozenset of plain ints.
+
+    Repeated members are dropped.
+    """
     # --- act --------------------------
     con = Constraint(int_set=int_set, min_count=1, max_count=2)
 
@@ -93,7 +98,7 @@ def test_constraint_stores_any_iterable_of_integers_as_a_frozenset_of_ints(int_s
     assert all(type(member) is int for member in con.int_set)
 
 
-@pytest.mark.parametrize("field", ["int_set", "min_count", "max_count", "weight"])
+@pytest.mark.parametrize("field", [field.name for field in dataclasses.fields(Constraint)])
 def test_constraint_is_immutable(field: str):
     """A field cannot change after construction, so a validated constraint stays valid."""
     # --- arrange ----------------------
@@ -114,6 +119,10 @@ def test_constraint_min_equal_max_is_valid():
 
 
 def test_to_numpy_constraints():
+    """con_values holds each min_count and max_count; con_indices holds a 2m-element header of offsets.
+
+    Each constraint's sorted members follow the header.
+    """
     # --- arrange ----------------------
     cons = [
         Constraint(int_set={0, 1, 2, 3, 4}, min_count=2, max_count=3),
@@ -152,7 +161,10 @@ def test_to_numpy_constraints():
     ids=["below-n", "equal-to-n", "just-above-n", "beyond-int32"],
 )
 def test_to_numpy_constraints_clips_max_count_to_n(max_count: int, expected_packed: int):
-    """A max_count above n is stored as n in con_values, which allows the same selections and fits in int32."""
+    """A max_count above n is stored as n in con_values.
+
+    The clipped value fits in int32 and does not change which selections satisfy the constraint.
+    """
     # --- arrange ----------------------
     cons = [Constraint(int_set={0, 1, 2}, min_count=1, max_count=max_count)]
 
@@ -162,6 +174,16 @@ def test_to_numpy_constraints_clips_max_count_to_n(max_count: int, expected_pack
     # --- assert -----------------------
     assert con_values[0, 1] == expected_packed
     assert cons[0].max_count == max_count
+
+
+def test_to_numpy_constraints_rejects_an_index_of_n_or_more():
+    """An index outside [0, n) raises before it can reach compiled code, where bounds are not checked."""
+    # --- arrange ----------------------
+    cons = [Constraint(int_set={0, 1}, min_count=1, max_count=1), Constraint(int_set={2, 10}, min_count=1, max_count=1)]
+
+    # --- act & assert -----------------
+    with pytest.raises(ValueError, match="Constraint 1 references item index 10"):
+        to_numpy_constraints(cons, n=10)
 
 
 def test_to_numpy_membership():

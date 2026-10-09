@@ -4,20 +4,14 @@ import numpy as np
 import pytest
 from scipy.optimize import LinearConstraint, milp
 
-from max_div._core.constraints import Constraint, to_numpy_constraints
+from max_div._core.constraints import Constraint
 from max_div._core.feasibility import FeasibilityStatus, find_feasible
+from tests._core.feasibility.helpers import constraint_arrays
 
 
 # ==================================================================================================
 #  Helpers
 # ==================================================================================================
-def _arrays(cons: list[Constraint], n: int) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """Convert constraints to (con_values, con_indices, weights) as the pipeline ingests them."""
-    con_values, con_indices = to_numpy_constraints(cons, n)
-    weights = np.array([con.weight for con in cons], dtype=np.float64)
-    return con_values, con_indices, weights
-
-
 def _selection_satisfies(selection: np.ndarray, cons: list[Constraint]) -> bool:
     """Check a selection against every constraint's [min_count, max_count]."""
     chosen = {int(j) for j in selection}
@@ -58,7 +52,7 @@ def _random_instance(seed: int) -> tuple[int, int, list[Constraint]]:
 
 def _run(n: int, k: int, cons: list[Constraint], seed: int = 0, thorough: bool = False):
     """Run the pipeline on the given constraints."""
-    con_values, con_indices, weights = _arrays(cons, n)
+    con_values, con_indices, weights = constraint_arrays(cons, n)
     return find_feasible(con_values, con_indices, weights, n=n, k=k, seed=seed, thorough=thorough)
 
 
@@ -275,7 +269,7 @@ def test_per_constraint_violation_reproduces_the_total(seed: int):
     """The per-constraint profile describes the returned selection: weighted, it sums to `violation`."""
     # --- arrange ----------------------
     n, k, cons = _random_instance(seed)
-    _, _, weights = _arrays(cons, n)
+    _, _, weights = constraint_arrays(cons, n)
 
     # --- act --------------------------
     result = _run(n, k, cons, seed=seed)

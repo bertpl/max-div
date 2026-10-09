@@ -20,5 +20,6 @@ from max_div._core._utils import is_non_bool_int
     ],
 )
 def test_is_non_bool_int(value: object, expected: bool):
+    """Python and numpy integers count as integers; bools, floats, strings and None do not."""
     # --- act & assert -----------------
     assert is_non_bool_int(value) is expected

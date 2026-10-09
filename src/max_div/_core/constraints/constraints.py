@@ -65,14 +65,14 @@ from max_div._core.jit import lazy_njit
 class Constraint:
     """Constraint indicating we want to sample at least `min_count` and at most `max_count` integers from `int_set`.
 
-    `int_set` accepts any iterable of integers, such as a set, list, range or numpy array, and is stored as a
-    `frozenset`, so a repeated index counts once.  A `max_count` of `len(int_set)` or more leaves the count
-    unbounded.
+    `int_set` accepts any iterable of integers, such as a set or a numpy array, and is stored as a `frozenset`, so
+    a repeated index counts once.  A `max_count` of `len(int_set)` or more leaves the count unbounded.
 
     `weight` scales how strongly this constraint's violations count toward the feasibility score (default 1); a
     larger weight makes the solver prioritize satisfying it over lower-weight constraints.
 
-    A constraint is immutable, so it cannot change after a problem has validated it.
+    A constraint is immutable, so it cannot change after a problem has checked that every `int_set` member is
+    below its `n`; the constraint itself does not check this.
     """
 
     int_set: Collection[int]
@@ -83,8 +83,8 @@ class Constraint:
     def __post_init__(self) -> None:
         """Store `int_set` as a frozenset and validate every field that needs no problem context.
 
-        The check that every `int_set` member is below the problem's `n` happens at problem construction.  Some
-        clarifications on non-trivial checks:
+        The check that every `int_set` member is below the problem's item count `n` happens at problem
+        construction.  Some clarifications on non-trivial checks:
 
         - an empty `int_set` can constrain nothing, and its packed representation has no valid empty form;
         - negative or non-integral members cannot index the per-item numpy arrays, and a bool is rejected
@@ -135,20 +135,29 @@ def to_numpy_constraints(
     """Convert a sequence of Constraint objects to their numba-compatible representation.
 
       - con_values: 2D numpy array of shape (m, 2) with min_count and max_count for each constraint
-      - con_indices: 1D numpy array of shape (2*m + n_indices,) with indexed, concatenated indices of all constraints.
+      - con_indices: 1D numpy array of shape (2*m + n_indices,): a 2m-element header of per-constraint
+        [start, end) offsets, followed by the concatenated indices of all constraints.
 
     Each `max_count` is clipped to `n` in con_values, which keeps a large value, such as one meant as unbounded,
-    within int32.  Clipping allows the same selections: no `int_set` has more than `n` members, so a `max_count`
-    of `n` or more already leaves the count unbounded.
+    within int32.  Clipping does not change which selections satisfy a constraint: no `int_set` has more than `n`
+    members, so a `max_count` of `n` or more already leaves the count unbounded.
 
     Args:
         constraints: the constraints to convert.
-        n: the number of items in the problem; every `int_set` member must be below it, which this function does
-            not check.
+        n: the number of items in the problem; every `int_set` member must be below it.
 
     Returns:
         tuple of (con_values, con_indices)
+
+    Raises:
+        ValueError: If a constraint references an item index of `n` or more.
     """
+    # check indices against n
+    for i, con in enumerate(constraints):
+        largest = max(con.int_set)
+        if largest >= n:
+            raise ValueError(f"Constraint {i} references item index {largest}, outside the problem's [0, {n}) items.")
+
     # get dimensions
     m = len(constraints)
     n_indices = sum([len(con.int_set) for con in constraints])
