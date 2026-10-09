@@ -18,6 +18,8 @@ from ._diversity_contribution import (
 from ._score import Score, ScoreGenerator
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     from numpy.typing import NDArray
 
     from max_div._core.metrics import DiversityObjective
@@ -580,7 +582,7 @@ class SolverState:
         data_matrix_reader: DataMatrixReader,
         k: int,
         diversity_objectives: list[DiversityObjective],
-        constraints: list[Constraint],
+        constraints: Sequence[Constraint],
         penalty_quadratic: bool = False,
     ) -> SolverState:
         """Build an empty-selection state, with one distance store per distinct distance spec of the objectives.

@@ -20,6 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix a solve failing on a `Constraint` whose `max_count` is `2**31` or more
 - Raise on more kinds of invalid `Constraint` input, such as a `min_count` above the size of its `int_set`
 - Make `Constraint` immutable
+- Validate a problem built with `VectorMaxDivProblem(...)` or `DistanceMaxDivProblem(...)` the same way as one built with `MaxDivProblem.new()` or `from_distances()`
+- Store a problem's `constraints` as a tuple
 
 ### Security
 

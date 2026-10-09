@@ -19,6 +19,36 @@ from max_div._core.metrics import (
 from max_div._core.metrics._distance import FullMatrixDistanceSpec, VectorDistanceSpec, compute_full_matrix
 from max_div._core.problem import DistanceMaxDivProblem, MaxDivProblem, VectorMaxDivProblem
 
+# Every problem flavor is built either through its factory method or through its own constructor.
+_ENTRY_POINTS = ["factory", "constructor"]
+
+
+def _vector_problem(entry_point: str, vectors: np.ndarray, k: int, **kwargs) -> VectorMaxDivProblem:
+    """Build a vector problem through `MaxDivProblem.new` or through the flavor's constructor."""
+    if entry_point == "factory":
+        return MaxDivProblem.new(vectors, k, **kwargs)
+    else:
+        return VectorMaxDivProblem(
+            vectors=vectors,
+            k=k,
+            distance_metric=kwargs.get("distance_metric", DistanceMetric.l2_euclidean()),
+            diversity_metric=kwargs.get("diversity_metric", DiversityMetric.geomean_separation()),
+            constraints=kwargs.get("constraints") or [],
+        )
+
+
+def _distance_problem(entry_point: str, distances: np.ndarray, k: int, **kwargs) -> DistanceMaxDivProblem:
+    """Build a distance problem through `MaxDivProblem.from_distances` or through the flavor's constructor."""
+    if entry_point == "factory":
+        return MaxDivProblem.from_distances(distances, k, **kwargs)
+    else:
+        return DistanceMaxDivProblem(
+            distances=distances,
+            k=k,
+            diversity_metric=kwargs.get("diversity_metric", DiversityMetric.geomean_separation()),
+            constraints=kwargs.get("constraints") or [],
+        )
+
 
 def test_problem_properties():
     # --- arrange ----------------------
@@ -88,17 +118,20 @@ def test_problem_new_happy_path(con_type: str):
         (2, 10, 5, 11),  # k too large
     ],
 )
-def test_problem_new_value_error(ndims: int, n: int, d: int, k: int):
+@pytest.mark.parametrize("entry_point", _ENTRY_POINTS)
+def test_problem_rejects_malformed_vectors(entry_point: str, ndims: int, n: int, d: int, k: int):
+    """Both the factory method and the constructor reject malformed vectors and a k out of range."""
     # --- arrange ----------------------
     vectors = np.ones(100, dtype=np.float64) if ndims == 1 else np.ones((n, d), dtype=np.float64)
 
     # --- act & assert -----------------
     with pytest.raises(ValueError):
-        _ = MaxDivProblem.new(vectors, k)
+        _ = _vector_problem(entry_point, vectors, k)
 
 
 @pytest.mark.parametrize("largest_index, valid", [(9, True), (10, False)], ids=["n-1-in-range", "n-out-of-range"])
-def test_problem_constraint_index_range_check(largest_index: int, valid: bool):
+@pytest.mark.parametrize("entry_point", _ENTRY_POINTS)
+def test_problem_constraint_index_range_check(entry_point: str, largest_index: int, valid: bool):
     """A constraint index >= n raises at construction naming the constraint; n - 1 is in range."""
     # --- arrange ----------------------
     vectors = np.ones((10, 3), dtype=np.float32)
@@ -115,9 +148,23 @@ def test_problem_constraint_index_range_check(largest_index: int, valid: bool):
 
     # --- act & assert -----------------
     with expectation():
-        _ = MaxDivProblem.new(vectors, k=4, constraints=constraints)
+        _ = _vector_problem(entry_point, vectors, k=4, constraints=constraints)
     with expectation():
-        _ = MaxDivProblem.from_distances(distances, k=4, constraints=constraints)
+        _ = _distance_problem(entry_point, distances, k=4, constraints=constraints)
+
+
+@pytest.mark.parametrize("entry_point", _ENTRY_POINTS)
+def test_problem_stores_its_constraints_as_a_tuple(entry_point: str):
+    """A problem keeps its own tuple of constraints, so a later change to the caller's list does not reach it."""
+    # --- arrange ----------------------
+    constraints = [Constraint(int_set={0, 1}, min_count=1, max_count=2)]
+    problem = _vector_problem(entry_point, np.ones((10, 3), dtype=np.float32), k=4, constraints=constraints)
+
+    # --- act --------------------------
+    constraints.append(Constraint(int_set={50}, min_count=1, max_count=1))
+
+    # --- assert -----------------------
+    assert problem.constraints == (Constraint(int_set={0, 1}, min_count=1, max_count=2),)
 
 
 def test_problem_new_cosine_zero_vector_raises():
@@ -146,14 +193,15 @@ def test_problem_new_cosine_non_zero_vectors_ok():
     assert problem.distance_metric == DistanceMetric.cosine()
 
 
-def test_problem_new_along_axis_beyond_the_dimension_count_raises():
+@pytest.mark.parametrize("entry_point", _ENTRY_POINTS)
+def test_problem_along_axis_beyond_the_dimension_count_raises(entry_point: str):
     """An along-axis metric that reads a coordinate that the vectors do not have is rejected at construction."""
     # --- arrange ----------------------
     vectors = np.random.default_rng(0).random((5, 3)).astype(np.float32)
 
     # --- act / assert -----------------
     with pytest.raises(ValueError, match="do not have"):
-        _ = MaxDivProblem.new(vectors, k=3, distance_metric=DistanceMetric.along_axis(3))
+        _ = _vector_problem(entry_point, vectors, k=3, distance_metric=DistanceMetric.along_axis(3))
 
 
 @pytest.mark.parametrize("k", [None, 3])
@@ -313,12 +361,13 @@ def _mutated_square_symmetric(i: int, j: int, value: float) -> np.ndarray:
         ("k_too_large", squareform(np.arange(1, 11, dtype=np.float32)), 6),
     ],
 )
-def test_problem_from_distances_value_error(case: str, distances: np.ndarray, k: int):
-    """from_distances rejects malformed distance input with a ValueError."""
+@pytest.mark.parametrize("entry_point", _ENTRY_POINTS)
+def test_problem_rejects_malformed_distances(entry_point: str, case: str, distances: np.ndarray, k: int):
+    """Both the factory method and the constructor reject malformed distance input with a ValueError."""
 
     # --- act & assert -----------------
     with pytest.raises(ValueError):
-        _ = MaxDivProblem.from_distances(distances, k=k)
+        _ = _distance_problem(entry_point, distances, k=k)
 
 
 # -------------------------------------------------------------------------
@@ -396,6 +445,20 @@ def test_problem_from_distances_conversion_copy_warns_and_leaves_input_untouched
     np.testing.assert_array_equal(distances, original)  # user's array untouched
     assert problem.distances.dtype == np.float32
     assert problem.distances[0, 1] == problem.distances[1, 0] == np.float32(1.25)
+
+
+@pytest.mark.parametrize("entry_point", _ENTRY_POINTS)
+def test_problem_distance_input_warning_points_at_the_callers_file(entry_point: str):
+    """The warning names the caller's file through either entry point, past the dataclass-generated __init__."""
+    # --- arrange ----------------------
+    distances = _reference_square().astype(np.float64)
+
+    # --- act --------------------------
+    with pytest.warns(DistanceInputWarning, match="conversion copy") as record:
+        _ = _distance_problem(entry_point, distances, k=3)
+
+    # --- assert -----------------------
+    assert record[0].filename == __file__
 
 
 def test_problem_from_distances_condensed_conversion_copy_warns():
@@ -591,14 +654,15 @@ def test_problem_new_vector_flavor_full_matrix_is_computed_under_its_own_metric(
     np.testing.assert_allclose(matrix, 1.0 - unit @ unit.T, atol=1e-6)
 
 
-def test_problem_new_makes_the_vectors_c_contiguous():
+@pytest.mark.parametrize("entry_point", _ENTRY_POINTS)
+def test_problem_makes_the_vectors_c_contiguous(entry_point: str):
     """A Fortran-ordered input is stored in the C-contiguous float32 form every distance read expects."""
 
     # --- arrange ----------------------
     vectors = np.asfortranarray(np.random.default_rng(1).random((6, 2), dtype=np.float32))
 
     # --- act --------------------------
-    problem = MaxDivProblem.new(vectors, k=2)
+    problem = _vector_problem(entry_point, vectors, k=2)
 
     # --- assert -----------------------
     assert problem.vectors.flags.c_contiguous
@@ -698,6 +762,8 @@ def test_problem_new_hybrid_term_over_cosine_rejects_a_zero_vector():
         MaxDivProblem.new(vectors, k=2, diversity_metric=hybrid)
 
 
-def test_problem_from_distances_rejects_a_hybrid_term_with_its_own_distance_metric():
+@pytest.mark.parametrize("entry_point", _ENTRY_POINTS)
+def test_distance_problem_rejects_a_hybrid_term_with_its_own_distance_metric(entry_point: str):
+    """A problem built from distances has no vectors, so a hybrid term cannot name a distance metric."""
     with pytest.raises(ValueError, match="has no vectors"):
-        MaxDivProblem.from_distances(np.ones((5, 5)) - np.eye(5), k=2, diversity_metric=_HYBRID)
+        _distance_problem(entry_point, np.ones((5, 5)) - np.eye(5), k=2, diversity_metric=_HYBRID)
