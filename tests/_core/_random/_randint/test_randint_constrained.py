@@ -242,8 +242,8 @@ def test_randint_constrained_i_forbidden_priorities(min_count: int, eager: bool)
     k = 5
     i_forbidden = np.array([3, 4], dtype=np.int32)
 
-    # set up constraints & p such that sampling is tempted sample forbidden indices 3 or 4; min_count runs above
-    # the group size, which a Constraint rejects, so it is written into the packed array
+    # set up constraints & p such that p puts most weight on forbidden indices 3 and 4; some min_count values exceed
+    # the group size, which a Constraint rejects, so the test writes min_count into con_values directly
     constraints = [Constraint(int_set={0, 1, 2, 3, 4}, min_count=0, max_count=10)]
     con_values, con_indices = to_numpy_constraints(constraints, n)
     con_values[0, 0] = min_count

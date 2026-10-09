@@ -54,6 +54,7 @@ import numba
 import numpy as np
 from numpy.typing import NDArray
 
+from max_div._core._utils import is_non_bool_int
 from max_div._core.jit import lazy_njit
 
 
@@ -66,8 +67,10 @@ class Constraint:
 
     `int_set` accepts any iterable of integers, such as a set, list, range or numpy array, and is stored as a
     `frozenset`, so a repeated index counts once.  A `max_count` of `len(int_set)` or more leaves the count
-    unbounded.  `weight` scales how strongly this constraint's violations count toward the feasibility score
-    (default 1); a larger weight makes the solver prioritize satisfying it over lower-weight constraints.
+    unbounded.
+
+    `weight` scales how strongly this constraint's violations count toward the feasibility score (default 1); a
+    larger weight makes the solver prioritize satisfying it over lower-weight constraints.
 
     A constraint is immutable, so it cannot change after a problem has validated it.
     """
@@ -80,14 +83,14 @@ class Constraint:
     def __post_init__(self) -> None:
         """Store `int_set` as a frozenset and validate every field that needs no problem context.
 
-        The check against `n` happens at problem construction.  Some clarifications on non-trivial checks:
+        The check that every `int_set` member is below the problem's `n` happens at problem construction.  Some
+        clarifications on non-trivial checks:
 
         - an empty `int_set` can constrain nothing, and its packed representation has no valid empty form;
         - negative or non-integral members cannot index the per-item numpy arrays, and a bool is rejected
           although Python counts it as an integer;
         - a negative `min_count` is satisfied by every selection, so the lower bound would silently do nothing;
-        - a `min_count` above the size of `int_set` cannot be satisfied by any selection.  A `min_count` above
-          the problem's `k` stays legal: it may be intentional, and `check_feasibility` reports it.
+        - a `min_count` above the size of `int_set` cannot be satisfied by any selection.
         """
         if not math.isfinite(self.weight) or self.weight <= 0:
             raise ValueError(f"Constraint weight must be finite and > 0 (got {self.weight}).")
@@ -96,7 +99,7 @@ class Constraint:
         members = list(self.int_set)
         if not members:
             raise ValueError("Constraint int_set must not be empty.")
-        if not all(self._is_integer(value) for value in members):
+        if not all(is_non_bool_int(value) for value in members):
             raise ValueError("Constraint int_set members must be integers.")
         int_set = frozenset(int(value) for value in members)
         if min(int_set) < 0:
@@ -104,9 +107,9 @@ class Constraint:
         object.__setattr__(self, "int_set", int_set)  # the dataclass is frozen
 
         # --- counts -----------------------------
-        if not self._is_integer(self.min_count):
+        if not is_non_bool_int(self.min_count):
             raise ValueError(f"Constraint min_count must be an integer (got {self.min_count!r}).")
-        if not self._is_integer(self.max_count):
+        if not is_non_bool_int(self.max_count):
             raise ValueError(
                 f"Constraint max_count must be an integer (got {self.max_count!r}); "
                 "a max_count of len(int_set) or more leaves the count unbounded."
@@ -121,14 +124,6 @@ class Constraint:
                 f"members ({len(int_set)})."
             )
 
-    # --------------------------------------------------------------------------
-    #  Helpers
-    # --------------------------------------------------------------------------
-    @staticmethod
-    def _is_integer(value: object) -> bool:
-        """Return True for a Python or numpy integer, and False for a bool, which Python counts as an integer."""
-        return isinstance(value, (int, np.integer)) and not isinstance(value, bool)
-
 
 # ==================================================================================================
 #  CONSTRUCTORS for numpy-based constraint representation
@@ -142,13 +137,14 @@ def to_numpy_constraints(
       - con_values: 2D numpy array of shape (m, 2) with min_count and max_count for each constraint
       - con_indices: 1D numpy array of shape (2*m + n_indices,) with indexed, concatenated indices of all constraints.
 
-    Each `max_count` is clipped to `n` in con_values.  Every value of at least the size of `int_set` allows the
-    same selections; clipping to `n` keeps a large value, such as one meant as unbounded, within int32, and
-    leaves every `max_count` of at most `n` unchanged.
+    Each `max_count` is clipped to `n` in con_values, which keeps a large value, such as one meant as unbounded,
+    within int32.  Clipping allows the same selections: no `int_set` has more than `n` members, so a `max_count`
+    of `n` or more already leaves the count unbounded.
 
     Args:
         constraints: the constraints to convert.
-        n: the number of items in the problem.
+        n: the number of items in the problem; every `int_set` member must be below it, which this function does
+            not check.
 
     Returns:
         tuple of (con_values, con_indices)

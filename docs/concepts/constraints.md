@@ -5,9 +5,9 @@
 Constraints enforce that the selected subset includes a minimum and/or maximum number of
 [items](glossary.md#item) from specific groups. Each constraint is defined by:
 
-- **`int_set`** -- the item indices that form the group: a set, list, range or numpy array of integers, where a repeated index counts once
+- **`int_set`** -- the item indices that form the group: any iterable of integers, such as a set, list, range or numpy array, where a repeated index counts once
 - **`min_count`** -- minimum number of items to select from this group, at most the size of the group
-- **`max_count`** -- maximum number of items to select from this group; a value of the group size or more leaves it unbounded
+- **`max_count`** -- maximum number of items to select from this group; a value of the group size or more leaves the count unbounded
 - **`weight`** -- how strongly this constraint counts toward feasibility (default `1`, must be finite and `> 0`)
 
 A constraint cannot be changed after it is created.

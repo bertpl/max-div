@@ -152,7 +152,7 @@ def test_to_numpy_constraints():
     ids=["below-n", "equal-to-n", "just-above-n", "beyond-int32"],
 )
 def test_to_numpy_constraints_clips_max_count_to_n(max_count: int, expected_packed: int):
-    """A max_count above n packs as n, which allows the same selections and fits int32."""
+    """A max_count above n is stored as n in con_values, which allows the same selections and fits in int32."""
     # --- arrange ----------------------
     cons = [Constraint(int_set={0, 1, 2}, min_count=1, max_count=max_count)]
 
