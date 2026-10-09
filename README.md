@@ -32,7 +32,7 @@ diverse of `n` items, under optional fairness constraints.
 
     - provides **proofs of (in)feasibility**
 
-- 📐 uniquely supports **8+ distance metrics** (L1, L2, L∞, L−∞, Minkowski, cosine, geometric mean, single-dimension — or precomputed distances) and **5 diversity metrics** (minimum, mean, geomean & harmonic separation + mean pairwise distance) in any combination — including **hybrid objectives** that combine several diversity terms, each over its own distance
+- 📐 uniquely supports **8+ distance metrics** (L1, L2, L∞, L−∞, Minkowski, cosine, geometric mean, single-dimension — or precomputed distances) and **6 diversity metrics** (minimum, mean, geomean & harmonic separation, geometric pseudo-quantile separation + mean pairwise distance) in any combination — including **hybrid objectives** that combine several diversity terms, each over its own distance
 
 - 💾 computes item distances **eagerly when memory allows** (maximum speed), **lazily when problem size requires** (minimal memory usage)
 
