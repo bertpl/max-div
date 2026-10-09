@@ -332,14 +332,12 @@ class ScenarioB(Scenario):
         for i in range(m):
             cons.append(
                 Constraint(
-                    int_set=set(
-                        randint(
-                            n=np.int32(n),
-                            k=np.int32(n // 100),  # 1% random samples from n
-                            replace=False,
-                            p=P_UNIFORM,
-                            rng_state=new_rng_state(np.int64(seed + i)),
-                        )
+                    int_set=randint(
+                        n=np.int32(n),
+                        k=np.int32(n // 100),  # 1% random samples from n
+                        replace=False,
+                        p=P_UNIFORM,
+                        rng_state=new_rng_state(np.int64(seed + i)),
                     ),
                     min_count=1 + math.floor(10 / m),
                     max_count=1 + math.ceil(1000 / m),
