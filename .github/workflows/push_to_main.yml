@@ -3,9 +3,9 @@ name: Push to Main
 on:
   push:
     branches: ["main"]
-  # Dependabot auto-merge pushes its merge commit with GITHUB_TOKEN, and pushes made with
-  # GITHUB_TOKEN start no workflow runs, so this workflow is started by hand for that commit;
   # scripts/release.py needs a successful run of this workflow for the HEAD of main.
+  # A Dependabot auto-merge pushes its merge commit with GITHUB_TOKEN, and commits pushed with
+  # GITHUB_TOKEN start no workflow runs, so this workflow is started by hand for the merge commit.
   workflow_dispatch:
 
 permissions:
