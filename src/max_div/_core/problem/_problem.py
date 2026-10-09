@@ -61,7 +61,7 @@ class MaxDivProblem(ABC):
     # --- primary fields -------------------------
     k: int
     diversity_metric: DiversityMetric | HybridDiversityMetric
-    constraints: Sequence[Constraint]  # __post_init__ stores the constraints as a tuple
+    constraints: Sequence[Constraint] = ()  # __post_init__ stores the constraints as a tuple
 
     # --- validation -----------------------------
     def __post_init__(self) -> None:
@@ -72,8 +72,8 @@ class MaxDivProblem(ABC):
         Python 3.12.
         """
         self._convert_and_validate_data()
-        # k is checked before the metrics, so a k out of range raises the k range error, not a metric's error about k.
-        # k == n is allowed: the selection is then forced to every item (`MaxDivSolver.solve` adopts it directly).
+        # k is checked before the metrics, so an out-of-range k raises the error below, not an error from a metric's
+        # own check of k.  k == n is allowed: every item is then selected.
         if not (2 <= self.k <= self.n):
             raise ValueError(f"k must be in range [2, number of items (={self.n})]; here: {self.k}.")
         self._validate_metrics()
@@ -179,9 +179,9 @@ class MaxDivProblem(ABC):
     def _validate_constraints(self) -> None:
         """Raise ValueError when a constraint references an item index outside the problem's `[0, n)`.
 
-        `Constraint.__post_init__` owns every check that needs no problem context; the index-vs-`n`
-        check is the one that does.  It runs here so that the error is raised when the problem is built,
-        before any solve.
+        `Constraint.__post_init__` runs every check that needs no problem context.  Comparing each index
+        against `n` needs the problem, so that check runs here, when the problem is built and before any
+        solve.
 
         A `min_count` above `k` stays legal: such a constraint is unsatisfiable but can be intentional,
         and `find_feasible` reports it as infeasible with its exact violation.
@@ -264,8 +264,8 @@ class MaxDivProblem(ABC):
 class VectorMaxDivProblem(MaxDivProblem):
     """MaxDivProblem flavor defined by ``n`` vectors in ``d`` dimensions plus a distance metric.
 
-    `MaxDivProblem.new` fills in default metrics that are not given; calling the constructor directly runs the same
-    conversion and validation.
+    Both `MaxDivProblem.new` and the constructor convert and validate the fields; `new` also fills in default
+    metrics that are not given.
     """
 
     # --- primary fields -------------------------
@@ -281,7 +281,7 @@ class VectorMaxDivProblem(MaxDivProblem):
         if vectors.shape[0] < 3:
             raise ValueError("At least 3 vectors are required to formulate a max-div problem.")
         if vectors.shape[1] == 0:
-            raise ValueError("Vectors must have at least one dimension.")
+            raise ValueError("Vectors must have at least 1 dimension.")
         # every distance function expects float32 C-contiguous vectors; object.__setattr__ is needed because the
         # dataclass is frozen
         object.__setattr__(self, "vectors", np.ascontiguousarray(vectors, dtype=np.float32))
@@ -289,8 +289,8 @@ class VectorMaxDivProblem(MaxDivProblem):
     def _validate_metrics(self) -> None:
         """Validate every distance metric against the vectors and `k`.
 
-        These are the problem's own distance metric, which `full_matrix()` reads, and every one that a hybrid term
-        names.
+        The problem's own distance metric is validated even when every hybrid term names another one, because
+        `full_matrix()` reads it.
         """
         distance_metrics = [self.distance_metric]
         if isinstance(self.diversity_metric, HybridDiversityMetric):
@@ -330,8 +330,8 @@ class VectorMaxDivProblem(MaxDivProblem):
 class DistanceMaxDivProblem(MaxDivProblem):
     """MaxDivProblem flavor defined directly by precomputed pairwise distances.
 
-    `MaxDivProblem.from_distances` fills in a default diversity metric when none is given; calling the constructor
-    directly runs the same conversion and validation.
+    Both `MaxDivProblem.from_distances` and the constructor convert and validate the fields; `from_distances` also
+    fills in a default diversity metric when none is given.
     """
 
     # The given distances carry this label, because no distance metric names them.

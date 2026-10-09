@@ -119,7 +119,7 @@ def test_problem_new_happy_path(con_type: str):
     ],
 )
 @pytest.mark.parametrize("entry_point", _ENTRY_POINTS)
-def test_problem_rejects_malformed_vectors(entry_point: str, ndims: int, n: int, d: int, k: int):
+def test_problem_rejects_malformed_vectors_or_k(entry_point: str, ndims: int, n: int, d: int, k: int):
     """Both the factory method and the constructor reject malformed vectors and a k out of range."""
     # --- arrange ----------------------
     vectors = np.ones(100, dtype=np.float64) if ndims == 1 else np.ones((n, d), dtype=np.float64)
@@ -155,10 +155,7 @@ def test_problem_constraint_index_range_check(entry_point: str, largest_index: i
 
 @pytest.mark.parametrize("entry_point", _ENTRY_POINTS)
 def test_problem_stores_its_constraints_as_a_tuple(entry_point: str):
-    """A problem keeps its own tuple of constraints.
-
-    A later change to the caller's list therefore does not reach the problem.
-    """
+    """A problem stores its constraints as a tuple, so a later change to the caller's list cannot reach the problem."""
     # --- arrange ----------------------
     constraints = [Constraint(int_set={0, 1}, min_count=1, max_count=2)]
     problem = _vector_problem(entry_point, np.ones((10, 3), dtype=np.float32), k=4, constraints=constraints)
@@ -365,7 +362,7 @@ def _mutated_square_symmetric(i: int, j: int, value: float) -> np.ndarray:
     ],
 )
 @pytest.mark.parametrize("entry_point", _ENTRY_POINTS)
-def test_problem_rejects_malformed_distances(entry_point: str, case: str, distances: np.ndarray, k: int):
+def test_problem_rejects_malformed_distances_or_k(entry_point: str, case: str, distances: np.ndarray, k: int):
     """Both the factory method and the constructor reject malformed distance input with a ValueError."""
 
     # --- act & assert -----------------
@@ -454,7 +451,7 @@ def test_problem_from_distances_conversion_copy_warns_and_leaves_input_untouched
 def test_problem_distance_input_warning_points_at_the_callers_file(entry_point: str):
     """Through either entry point, the warning names the caller's file.
 
-    It names neither a max-div file nor the dataclass-generated __init__.
+    The warning names neither a max-div file nor the dataclass-generated __init__.
     """
     # --- arrange ----------------------
     distances = _reference_square().astype(np.float64)
