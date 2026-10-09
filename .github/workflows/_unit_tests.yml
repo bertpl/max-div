@@ -31,8 +31,10 @@ jobs:
           - { python: "3.12", resolution: highest,       jit: "on",  extras: "true"  }
           - { python: "3.13", resolution: highest,       jit: "on",  extras: "true"  }
           - { python: "3.14", resolution: highest,       jit: "on",  extras: "true"  }
+          - { python: "3.15", resolution: highest,       jit: "on",  extras: "true"  }
           - { python: "3.12", resolution: lowest-direct, jit: "on",  extras: "true"  }
           - { python: "3.14", resolution: lowest-direct, jit: "on",  extras: "true"  }
+          - { python: "3.15", resolution: lowest-direct, jit: "on",  extras: "true"  }
           - { python: "3.12", resolution: highest,       jit: "off", extras: "true"  }  # coverage job
           - { python: "3.14", resolution: highest,       jit: "off", extras: "true"  }  # coverage job
           - { python: "3.12", resolution: highest,       jit: "on",  extras: "false" }  # plain install
@@ -42,7 +44,8 @@ jobs:
           # marker can raise that floor for free-threaded builds alone — so a lowest-direct leg
           # would try to source-build a numba with no usable wheel. Do not "complete the matrix"
           # by adding one. The quoted "3.14t" is what makes uv resolve the free-threaded
-          # interpreter rather than the GIL one.
+          # interpreter rather than the GIL one. There is no 3.15t job: as of numba 0.68, numba
+          # ships no free-threaded wheel for 3.15.
           - { python: "3.14t", resolution: highest,      jit: "on",  extras: "true"  }
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
