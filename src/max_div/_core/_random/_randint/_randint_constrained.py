@@ -101,8 +101,7 @@ def randint_constrained(  # noqa: C901 — case-dispatch structure is clearer un
     * This version is numba-accelerated and uses efficient numpy-based data structures, resulting in 10-100x speedup
       compared to equivalent pure-Python implementations.
 
-    * `con_values` & `con_indices` can be obtained by using the `to_numpy`
-       method of the `ConstraintList` class.
+    * `con_values` & `con_indices` can be obtained with `to_numpy_constraints`.
 
     *  For benchmark results, see [here](../../../../benchmarks/internal/bm_randint_constrained.md)
 

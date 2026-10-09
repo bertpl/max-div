@@ -1,6 +1,6 @@
 import numpy as np
 
-from max_div._core.constraints import Constraint, ConstraintList
+from max_div._core.constraints import Constraint, to_numpy_constraints
 from max_div._core.feasibility.evaluation import _selection_counts, _weighted_violation
 from max_div._core.feasibility.indexing import build_item_constraint_csr
 from max_div._core.feasibility.repair import _repair_selection
@@ -8,7 +8,7 @@ from max_div._core.feasibility.repair import _repair_selection
 
 def _setup(cons: list[Constraint], n: int, selection: list[int]):
     """Build the packed arrays, mask, and counts the repair loop operates on."""
-    _, con_indices = ConstraintList(cons).to_numpy()
+    _, con_indices = to_numpy_constraints(cons, n)
     item_indptr, item_cons = build_item_constraint_csr(con_indices, n)
     con_min = np.array([c.min_count for c in cons], dtype=np.int64)
     con_max = np.array([c.max_count for c in cons], dtype=np.int64)

@@ -1,10 +1,10 @@
+import dataclasses
+
 import numpy as np
 import pytest
 
 from max_div._core.constraints.constraints import (
     Constraint,
-    ConstraintList,
-    _build_array_repr,
     _np_con_count_satisfied,
     _np_con_indices,
     _np_con_max_value,
@@ -13,6 +13,7 @@ from max_div._core.constraints.constraints import (
     _np_con_total_violation,
     _np_con_total_weighted_violation,
     _np_largest_con_index,
+    to_numpy_constraints,
     to_numpy_membership,
 )
 
@@ -25,10 +26,10 @@ def test_constraint_default_weight():
     assert con.weight == 1.0
 
 
-@pytest.mark.parametrize("weight", [0, 0.0, -1.0, -0.001])
-def test_constraint_rejects_non_positive_weight(weight: float):
+@pytest.mark.parametrize("weight", [0, 0.0, -1.0, -0.001, float("nan"), float("inf"), float("-inf")])
+def test_constraint_rejects_a_weight_that_is_not_finite_and_positive(weight: float):
     # --- act & assert -----------------
-    with pytest.raises(ValueError, match="weight must be > 0"):
+    with pytest.raises(ValueError, match="weight must be finite and > 0"):
         Constraint(int_set={0, 1}, min_count=1, max_count=2, weight=weight)
 
 
@@ -37,11 +38,31 @@ def test_constraint_rejects_non_positive_weight(weight: float):
     [
         ({"int_set": set(), "min_count": 1, "max_count": 2}, "must not be empty"),
         ({"int_set": {0.5, 1}, "min_count": 1, "max_count": 2}, "must be integers"),
+        ({"int_set": {True, 2}, "min_count": 1, "max_count": 2}, "must be integers"),
         ({"int_set": {-1, 1}, "min_count": 1, "max_count": 2}, "must be >= 0"),
+        ({"int_set": {0, 1}, "min_count": 1.5, "max_count": 2}, "min_count must be an integer"),
+        ({"int_set": {0, 1}, "min_count": True, "max_count": 2}, "min_count must be an integer"),
+        ({"int_set": {0, 1}, "min_count": 1, "max_count": float("inf")}, "max_count must be an integer"),
+        ({"int_set": {0, 1}, "min_count": 1, "max_count": None}, "max_count must be an integer"),
         ({"int_set": {0, 1}, "min_count": -1, "max_count": 2}, "min_count must be >= 0"),
         ({"int_set": {0, 1}, "min_count": 3, "max_count": 1}, "must be >= min_count"),
+        ({"int_set": {0, 1}, "min_count": 3, "max_count": 3}, "must not exceed the number of distinct"),
+        ({"int_set": [0, 0, 1], "min_count": 3, "max_count": 3}, "must not exceed the number of distinct"),
     ],
-    ids=["empty-int_set", "non-integer-member", "negative-member", "negative-min_count", "min-above-max"],
+    ids=[
+        "empty-int_set",
+        "non-integer-member",
+        "bool-member",
+        "negative-member",
+        "float-min_count",
+        "bool-min_count",
+        "infinite-max_count",
+        "none-max_count",
+        "negative-min_count",
+        "min-above-max",
+        "min-above-set-size",
+        "min-above-distinct-members",
+    ],
 )
 def test_constraint_rejects_invalid_definitions(kwargs: dict, match: str):
     """Every malformed constraint definition raises at construction; none reaches compiled code."""
@@ -50,13 +71,37 @@ def test_constraint_rejects_invalid_definitions(kwargs: dict, match: str):
         Constraint(**kwargs)
 
 
-def test_constraint_accepts_numpy_integer_members():
-    """numpy integers count as integral int_set members (a set built from a numpy array is common)."""
+@pytest.mark.parametrize(
+    "int_set",
+    [
+        {0, 1, 2},
+        [2, 0, 1, 0],
+        (0, 1, 2),
+        range(3),
+        np.array([0, 1, 2]),
+        set(np.array([0, 1, 2], dtype=np.int32)),
+    ],
+    ids=["set", "list-with-repeats", "tuple", "range", "numpy-array", "set-of-numpy-integers"],
+)
+def test_constraint_stores_any_iterable_of_integers_as_a_frozenset_of_ints(int_set):
     # --- act --------------------------
-    con = Constraint(int_set=set(np.array([0, 1, 2], dtype=np.int32)), min_count=1, max_count=2)
+    con = Constraint(int_set=int_set, min_count=1, max_count=2)
 
     # --- assert -----------------------
-    assert con.min_count == 1
+    assert isinstance(con.int_set, frozenset)
+    assert con.int_set == frozenset({0, 1, 2})
+    assert all(type(member) is int for member in con.int_set)
+
+
+@pytest.mark.parametrize("field", ["int_set", "min_count", "max_count", "weight"])
+def test_constraint_is_immutable(field: str):
+    """A field cannot change after construction, so a validated constraint stays valid."""
+    # --- arrange ----------------------
+    con = Constraint(int_set={0, 1, 2}, min_count=1, max_count=2)
+
+    # --- act & assert -----------------
+    with pytest.raises(dataclasses.FrozenInstanceError):
+        setattr(con, field, -1)
 
 
 def test_constraint_min_equal_max_is_valid():
@@ -68,7 +113,7 @@ def test_constraint_min_equal_max_is_valid():
     assert (con.min_count, con.max_count) == (2, 2)
 
 
-def test_build_array_repr():
+def test_to_numpy_constraints():
     # --- arrange ----------------------
     cons = [
         Constraint(int_set={0, 1, 2, 3, 4}, min_count=2, max_count=3),
@@ -77,12 +122,11 @@ def test_build_array_repr():
     ]
 
     # --- act --------------------------
-    con_values_1, con_indices_1 = _build_array_repr(cons)
-    con_values_2, con_indices_2 = ConstraintList(cons).to_numpy()
+    con_values, con_indices = to_numpy_constraints(cons, n=14)
 
     # --- assert -----------------------
     assert np.array_equal(
-        con_values_1,
+        con_values,
         np.array(
             [
                 [2, 3],  # min_count, max_count for constraint 0
@@ -93,16 +137,31 @@ def test_build_array_repr():
         ),
     )
 
-    assert con_indices_1.shape[0] == 17  # (2*m) + (5+4+2) = 6 + 11 = 17
-    assert con_indices_1.dtype == np.int32
+    assert con_indices.shape[0] == 17  # (2*m) + (5+4+2) = 6 + 11 = 17
+    assert con_indices.dtype == np.int32
 
     for i, con in enumerate(cons):
-        i_start = con_indices_1[2 * i]
-        i_end = con_indices_1[2 * i + 1]
-        assert list(con_indices_1[i_start:i_end]) == sorted(con.int_set)
+        i_start = con_indices[2 * i]
+        i_end = con_indices[2 * i + 1]
+        assert list(con_indices[i_start:i_end]) == sorted(con.int_set)
 
-    assert np.array_equal(con_values_1, con_values_2)
-    assert np.array_equal(con_indices_1, con_indices_2)
+
+@pytest.mark.parametrize(
+    "max_count, expected_packed",
+    [(5, 5), (10, 10), (11, 10), (2**40, 10)],
+    ids=["below-n", "equal-to-n", "just-above-n", "beyond-int32"],
+)
+def test_to_numpy_constraints_clips_max_count_to_n(max_count: int, expected_packed: int):
+    """A max_count above n packs as n, which allows the same selections and fits int32."""
+    # --- arrange ----------------------
+    cons = [Constraint(int_set={0, 1, 2}, min_count=1, max_count=max_count)]
+
+    # --- act --------------------------
+    con_values, _ = to_numpy_constraints(cons, n=10)
+
+    # --- assert -----------------------
+    assert con_values[0, 1] == expected_packed
+    assert cons[0].max_count == max_count
 
 
 def test_to_numpy_membership():
@@ -132,7 +191,7 @@ def test_to_numpy_membership():
     }
 
     # --- act --------------------------
-    _, con_indices = _build_array_repr(cons)
+    _, con_indices = to_numpy_constraints(cons, n)
     con_membership = to_numpy_membership(con_indices, m=len(cons), n=n)
 
     # --- assert -----------------------
@@ -151,7 +210,7 @@ def test_to_numpy_membership_accepts_numpy_index():
     cons = [Constraint(int_set={0, 2}, min_count=1, max_count=2)]
 
     # --- act --------------------------
-    _, con_indices = _build_array_repr(cons)
+    _, con_indices = to_numpy_constraints(cons, n=3)
     con_membership = to_numpy_membership(con_indices, m=1, n=3)
 
     # --- assert -----------------------
@@ -161,13 +220,14 @@ def test_to_numpy_membership_accepts_numpy_index():
 
 def test_np_con_min_value():
     # --- arrange ----------------------
-    con_values, _con_indices = ConstraintList(
+    con_values, _con_indices = to_numpy_constraints(
         [
             Constraint(int_set={0, 1, 2, 3, 4}, min_count=2, max_count=3),
             Constraint(int_set={10, 11, 12, 13}, min_count=0, max_count=7),
             Constraint(int_set={3, 11}, min_count=2, max_count=2),
-        ]
-    ).to_numpy()
+        ],
+        n=50,
+    )
 
     # --- act & assert -----------------
     assert _np_con_min_value(con_values, np.int32(0)) == 2
@@ -177,13 +237,14 @@ def test_np_con_min_value():
 
 def test_np_con_max_value():
     # --- arrange ----------------------
-    con_values, _con_indices = ConstraintList(
+    con_values, _con_indices = to_numpy_constraints(
         [
             Constraint(int_set={0, 1, 2, 3, 4}, min_count=2, max_count=3),
             Constraint(int_set={10, 11, 12, 13}, min_count=0, max_count=7),
             Constraint(int_set={3, 11}, min_count=2, max_count=2),
-        ]
-    ).to_numpy()
+        ],
+        n=50,
+    )
 
     # --- act & assert -----------------
     assert _np_con_max_value(con_values, np.int32(0)) == 3
@@ -193,13 +254,14 @@ def test_np_con_max_value():
 
 def test_np_con_indices():
     # --- arrange ----------------------
-    _con_values, con_indices = ConstraintList(
+    _con_values, con_indices = to_numpy_constraints(
         [
             Constraint(int_set={0, 1, 2, 3, 4}, min_count=2, max_count=3),
             Constraint(int_set={10, 11, 12, 13}, min_count=0, max_count=7),
             Constraint(int_set={3, 11}, min_count=2, max_count=2),
-        ]
-    ).to_numpy()
+        ],
+        n=50,
+    )
 
     # --- act & assert -----------------
     assert np.array_equal(_np_con_indices(con_indices, np.int32(0)), np.array([0, 1, 2, 3, 4], dtype=np.int32))
@@ -217,13 +279,14 @@ def test_np_con_indices():
 )
 def test_np_largest_con_index(i1_max: int, i2_max: int, i3_max: int, expected_result: int):
     # --- arrange ----------------------
-    _, con_indices = ConstraintList(
+    _, con_indices = to_numpy_constraints(
         [
             Constraint(int_set={0, 1, 2, 3, i1_max}, min_count=2, max_count=3),
             Constraint(int_set={10, 11, 12, i2_max}, min_count=0, max_count=7),
             Constraint(int_set={3, i3_max}, min_count=2, max_count=2),
-        ]
-    ).to_numpy()
+        ],
+        n=50,
+    )
 
     # --- act --------------------------
     result = _np_largest_con_index(con_indices)

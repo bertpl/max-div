@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from max_div._core.constraints import Constraint, ConstraintList
+from max_div._core.constraints import Constraint, to_numpy_constraints
 from max_div._core.constraints.constraints import _np_con_total_weighted_violation
 from max_div._core.feasibility.evaluation import (
     _dual_value,
@@ -14,9 +14,9 @@ from max_div._core.feasibility.evaluation import (
 from max_div._core.feasibility.indexing import build_item_constraint_csr
 
 
-def _arrays(cons: list[Constraint]) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+def _arrays(cons: list[Constraint], n: int) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Convert constraints to (con_values, con_indices, weights) as the pipeline ingests them."""
-    con_values, con_indices = ConstraintList(cons).to_numpy()
+    con_values, con_indices = to_numpy_constraints(cons, n)
     weights = np.array([con.weight for con in cons], dtype=np.float64)
     return con_values, con_indices, weights
 
@@ -51,7 +51,7 @@ def test_dual_value_pigeonhole_toy():
     """All-ones prices on the pigeonhole instance give g = 2."""
     # --- arrange ----------------------
     n, k, cons = _pigeonhole_instance()
-    _, con_indices, _ = _arrays(cons)
+    _, con_indices, _ = _arrays(cons, n)
     item_indptr, item_cons = build_item_constraint_csr(con_indices, n)
     lam_min = np.ones(2)
     lam_max = np.zeros(2)
@@ -81,7 +81,7 @@ def test_exact_topk_guard():
         Constraint(int_set={2, 3}, min_count=1, max_count=2, weight=1.0),
     ]
     n, k = 5, 2  # item 4 is unconstrained; {0, 2} is a witness, so the instance is feasible
-    _, con_indices, _ = _arrays(cons)
+    _, con_indices, _ = _arrays(cons, n)
     item_indptr, item_cons = build_item_constraint_csr(con_indices, n)
     con_min = np.array([1, 1], dtype=np.int64)
     con_max = np.array([2, 2], dtype=np.int64)
@@ -123,7 +123,7 @@ def test_certified_bound_reduces_to_linear_dual_value():
         Constraint(int_set={0, 1}, min_count=2, max_count=2),
         Constraint(int_set={2, 3}, min_count=2, max_count=2),
     ]
-    con_values, con_indices, _ = _arrays(cons)
+    con_values, con_indices, _ = _arrays(cons, n=4)
     con_min = con_values[:, 0].astype(np.int64)
     con_max = con_values[:, 1].astype(np.int64)
     item_indptr, item_cons = build_item_constraint_csr(con_indices, 4)

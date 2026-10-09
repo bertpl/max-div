@@ -10,7 +10,7 @@ def build_item_constraint_csr(con_indices: NDArray[np.int32], n: int) -> tuple[N
     """Transpose the packed constraint->item layout into an item->constraint CSR (compressed sparse row) index.
 
     Args:
-        con_indices: the packed representation built by `ConstraintList.to_numpy` — a 2m-element
+        con_indices: the packed representation built by `to_numpy_constraints` — a 2m-element
             header of per-constraint [start, end) offsets, followed by the concatenated member
             indices.
         n: the number of items.

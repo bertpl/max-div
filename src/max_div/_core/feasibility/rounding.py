@@ -116,7 +116,7 @@ def sample_and_repair(
         marginals: per-item inclusion probabilities in [0, 1], summing to `k`.
         k: the selection size.
         rng_state: xoroshiro128+ state, advanced in place.
-        con_indices: packed constraint->item membership array (`ConstraintList.to_numpy`).
+        con_indices: packed constraint->item membership array (`to_numpy_constraints`).
         item_indptr: item->constraint CSR offsets, as built by `build_item_constraint_csr`.
         item_cons: item->constraint CSR values — the constraints containing each item.
         con_min: per-constraint minimum counts.
@@ -166,7 +166,7 @@ def deterministic_round(
     Args:
         marginals: per-item inclusion probabilities in [0, 1], summing to `k`.
         k: the selection size.
-        con_indices: packed constraint->item membership array (`ConstraintList.to_numpy`).
+        con_indices: packed constraint->item membership array (`to_numpy_constraints`).
         item_indptr: item->constraint CSR offsets, as built by `build_item_constraint_csr`.
         item_cons: item->constraint CSR values — the constraints containing each item.
         con_min: per-constraint minimum counts.

@@ -22,7 +22,7 @@ def choice_constrained(
     This function is to 'randint_constrained' what 'choice' is to 'randint'.
 
     Notes:
-      - `con_values` and `con_indices` can be constructed using ConstraintList(constraints).to_numpy()
+      - `con_values` and `con_indices` can be constructed using to_numpy_constraints(constraints, n)
       - `con_indices` refers to values of the `values` array, not indices into it.
 
     Args:

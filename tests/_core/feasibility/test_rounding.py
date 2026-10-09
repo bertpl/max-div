@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 
 from max_div._core._random import new_rng_state
-from max_div._core.constraints import Constraint, ConstraintList
+from max_div._core.constraints import Constraint, to_numpy_constraints
 from max_div._core.feasibility.indexing import build_item_constraint_csr
 from max_div._core.feasibility.rounding import (
     deterministic_round,
@@ -14,7 +14,7 @@ from max_div._core.feasibility.rounding import (
 
 def _repair_arrays(cons: list[Constraint], n: int):
     """Build the packed arrays the repairing rounders operate on."""
-    _, con_indices = ConstraintList(cons).to_numpy()
+    _, con_indices = to_numpy_constraints(cons, n)
     item_indptr, item_cons = build_item_constraint_csr(con_indices, n)
     con_min = np.array([c.min_count for c in cons], dtype=np.int64)
     con_max = np.array([c.max_count for c in cons], dtype=np.int64)

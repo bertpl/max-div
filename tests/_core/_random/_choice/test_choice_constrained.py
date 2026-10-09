@@ -3,7 +3,7 @@ import pytest
 
 from max_div._core._random import P_UNIFORM, choice_constrained, new_rng_state
 from max_div._core._utils import deterministic_hash_int64
-from max_div._core.constraints import Constraint, ConstraintList
+from max_div._core.constraints import Constraint, to_numpy_constraints
 
 
 def test_choice_constrained_argument_validation():
@@ -15,7 +15,7 @@ def test_choice_constrained_argument_validation():
         Constraint(int_set={10, 11, 12, 13, 14}, min_count=1, max_count=3),
         Constraint(int_set={3, 4, 10, 11}, min_count=2, max_count=2),
     ]
-    con_values, con_indices = ConstraintList(constraints).to_numpy()
+    con_values, con_indices = to_numpy_constraints(constraints, n)
     rng_state = new_rng_state(np.int64(42))
     values = np.array([0, 1, 2, 3, 4, 10, 11, 12, 13, 14], dtype=np.int32)
     p = P_UNIFORM
@@ -60,7 +60,7 @@ def test_choice_constrained_invariants(eager: bool, n: int, k_context: int, unif
         Constraint(int_set={10, 11, 12, 13, 14}, min_count=1, max_count=3),
         Constraint(int_set={3, 4, 10, 11}, min_count=2, max_count=2),
     ]
-    con_values, con_indices = ConstraintList(constraints).to_numpy()
+    con_values, con_indices = to_numpy_constraints(constraints, n)
     seed = deterministic_hash_int64((k_context, n, eager, uniform))
     rng_state = new_rng_state(np.int64(seed))
 
@@ -112,7 +112,7 @@ def test_choice_constrained_p_adherence(seed: int):
         Constraint(int_set={10, 11, 12, 13, 14}, min_count=1, max_count=3),
         Constraint(int_set={3, 4, 10, 11}, min_count=2, max_count=2),
     ]
-    con_values, con_indices = ConstraintList(constraints).to_numpy()
+    con_values, con_indices = to_numpy_constraints(constraints, n)
     rng_state = new_rng_state(np.int64(seed))
     values = np.array([0, 1, 2, 3, 4, 10, 11, 12, 13, 14], dtype=np.int32)
     p = np.array([1, 1, 1, 1, 1, 1, 1, 1e3, 1, 1], dtype=np.float32)  # very strongly favor value 12

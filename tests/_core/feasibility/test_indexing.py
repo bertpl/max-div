@@ -1,12 +1,12 @@
 import numpy as np
 
-from max_div._core.constraints import Constraint, ConstraintList
+from max_div._core.constraints import Constraint, to_numpy_constraints
 from max_div._core.feasibility.indexing import build_item_constraint_csr
 
 
-def _arrays(cons: list[Constraint]) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+def _arrays(cons: list[Constraint], n: int) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Convert constraints to (con_values, con_indices, weights) as the pipeline ingests them."""
-    con_values, con_indices = ConstraintList(cons).to_numpy()
+    con_values, con_indices = to_numpy_constraints(cons, n)
     weights = np.array([con.weight for con in cons], dtype=np.float64)
     return con_values, con_indices, weights
 
@@ -18,7 +18,7 @@ def test_build_item_constraint_csr():
         Constraint(int_set={0, 1, 2}, min_count=1, max_count=3),
         Constraint(int_set={2, 3}, min_count=0, max_count=2),
     ]
-    _, con_indices, _ = _arrays(cons)
+    _, con_indices, _ = _arrays(cons, n=5)
 
     # --- act --------------------------
     item_indptr, item_cons = build_item_constraint_csr(con_indices, 5)

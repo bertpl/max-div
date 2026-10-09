@@ -16,6 +16,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 ### Fixed
+- Accept any iterable of integers as a `Constraint`'s `int_set`, such as a numpy array
+- Fix a solve failing on a `Constraint` whose `max_count` is `2**31` or more
+- Raise when a `Constraint`'s `min_count` exceeds the size of its `int_set`, a count is not an integer, or the weight is not finite
+- Make `Constraint` immutable
 
 ### Security
 

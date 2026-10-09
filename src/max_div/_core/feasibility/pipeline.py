@@ -76,7 +76,7 @@ def find_feasible(
 
     Args:
         con_values: 2D array (m, 2) with min_count and max_count for each constraint.
-        con_indices: packed constraint->item membership array (`ConstraintList.to_numpy`).
+        con_indices: packed constraint->item membership array (`to_numpy_constraints`).
         con_weights: per-constraint violation weights, in constraint order.
         n: the number of items.
         k: the selection size.

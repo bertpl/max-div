@@ -37,7 +37,7 @@ Example:
                     +-------------------->    con 0 indices
 
 Notes:
-    - use ConstraintList(constraints).to_numpy() to convert a list of Constraint objects to (con_values, con_indices)
+    - use to_numpy_constraints(constraints, n) to convert a list of Constraint objects to (con_values, con_indices)
     - con_indices is usually treated as a read-only data structure that models membership of indices to constraints
     - con_values, however, is often modified during sampling to reflect how many more samples are needed, hence to keep
                   track of constraint satisfaction as sampling / solving a problem is progressing.
@@ -46,6 +46,8 @@ Notes:
 
 """
 
+import math
+from collections.abc import Collection, Sequence
 from dataclasses import dataclass
 
 import numba
@@ -58,85 +60,115 @@ from max_div._core.jit import lazy_njit
 # ==================================================================================================
 #  Constraint class
 # ==================================================================================================
-@dataclass
+@dataclass(frozen=True)
 class Constraint:
     """Constraint indicating we want to sample at least `min_count` and at most `max_count` integers from `int_set`.
 
-    `weight` scales how strongly this constraint's violations count toward the feasibility score
+    `int_set` accepts any iterable of integers, such as a set, list, range or numpy array, and is stored as a
+    `frozenset`, so a repeated index counts once.  A `max_count` of `len(int_set)` or more leaves the count
+    unbounded.  `weight` scales how strongly this constraint's violations count toward the feasibility score
     (default 1); a larger weight makes the solver prioritize satisfying it over lower-weight constraints.
+
+    A constraint is immutable, so it cannot change after a problem has validated it.
     """
 
-    int_set: set[int]
+    int_set: Collection[int]
     min_count: int
     max_count: int
     weight: float = 1.0
 
     def __post_init__(self) -> None:
-        """Validate every field that needs no problem context; the check against `n` happens at problem construction.
+        """Store `int_set` as a frozenset and validate every field that needs no problem context.
 
-        Some clarifications on non-trivial checks:
+        The check against `n` happens at problem construction.  Some clarifications on non-trivial checks:
 
         - an empty `int_set` can constrain nothing, and its packed representation has no valid empty form;
-        - negative or non-integral members cannot index the per-item numpy arrays;
-        - a negative `min_count` is satisfied by every selection, so the lower bound would silently do nothing.
+        - negative or non-integral members cannot index the per-item numpy arrays, and a bool is rejected
+          although Python counts it as an integer;
+        - a negative `min_count` is satisfied by every selection, so the lower bound would silently do nothing;
+        - a `min_count` above the size of `int_set` cannot be satisfied by any selection.  A `min_count` above
+          the problem's `k` stays legal: it may be intentional, and `check_feasibility` reports it.
         """
-        if self.weight <= 0:
-            raise ValueError(f"Constraint weight must be > 0 (got {self.weight}).")
-        if not self.int_set:
+        if not math.isfinite(self.weight) or self.weight <= 0:
+            raise ValueError(f"Constraint weight must be finite and > 0 (got {self.weight}).")
+
+        # --- int_set ----------------------------
+        members = list(self.int_set)
+        if not members:
             raise ValueError("Constraint int_set must not be empty.")
-        if any(not isinstance(value, (int, np.integer)) for value in self.int_set):
+        if not all(self._is_integer(value) for value in members):
             raise ValueError("Constraint int_set members must be integers.")
-        if min(self.int_set) < 0:
-            raise ValueError(f"Constraint int_set members must be >= 0 (got {min(self.int_set)}).")
+        int_set = frozenset(int(value) for value in members)
+        if min(int_set) < 0:
+            raise ValueError(f"Constraint int_set members must be >= 0 (got {min(int_set)}).")
+        object.__setattr__(self, "int_set", int_set)  # the dataclass is frozen
+
+        # --- counts -----------------------------
+        if not self._is_integer(self.min_count):
+            raise ValueError(f"Constraint min_count must be an integer (got {self.min_count!r}).")
+        if not self._is_integer(self.max_count):
+            raise ValueError(
+                f"Constraint max_count must be an integer (got {self.max_count!r}); "
+                "a max_count of len(int_set) or more leaves the count unbounded."
+            )
         if self.min_count < 0:
             raise ValueError(f"Constraint min_count must be >= 0 (got {self.min_count}).")
         if self.max_count < self.min_count:
             raise ValueError(f"Constraint max_count ({self.max_count}) must be >= min_count ({self.min_count}).")
+        if self.min_count > len(int_set):
+            raise ValueError(
+                f"Constraint min_count ({self.min_count}) must not exceed the number of distinct int_set "
+                f"members ({len(int_set)})."
+            )
 
-
-class ConstraintList:
-    """Simple helper class to facilitate conversion of list of Constraint objects to numpy-based representation."""
-
-    def __init__(self, constraints: list[Constraint]) -> None:
-        self._cons = constraints
-
-    def to_numpy(self) -> tuple[NDArray[np.int32], NDArray[np.int32]]:
-        return _build_array_repr(self._cons)
+    # --------------------------------------------------------------------------
+    #  Helpers
+    # --------------------------------------------------------------------------
+    @staticmethod
+    def _is_integer(value: object) -> bool:
+        """Return True for a Python or numpy integer, and False for a bool, which Python counts as an integer."""
+        return isinstance(value, (int, np.integer)) and not isinstance(value, bool)
 
 
 # ==================================================================================================
 #  CONSTRUCTORS for numpy-based constraint representation
 # ==================================================================================================
-def _build_array_repr(
-    cons: list[Constraint],
+def to_numpy_constraints(
+    constraints: Sequence[Constraint],
+    n: int,
 ) -> tuple[NDArray[np.int32], NDArray[np.int32]]:
-    """Convert list of Constraint objects to numba-compatible representation.
+    """Convert a sequence of Constraint objects to their numba-compatible representation.
 
       - con_values: 2D numpy array of shape (m, 2) with min_count and max_count for each constraint
-      - con_indices: 1D numpy array of shape (2*m + n_indices,) with indexed, concatenated indices of all cons.
+      - con_indices: 1D numpy array of shape (2*m + n_indices,) with indexed, concatenated indices of all constraints.
+
+    Each `max_count` is clipped to `n` in con_values.  Every value of at least the size of `int_set` allows the
+    same selections; clipping to `n` keeps a large value, such as one meant as unbounded, within int32, and
+    leaves every `max_count` of at most `n` unchanged.
 
     Args:
-        cons: list of Constraint objects
+        constraints: the constraints to convert.
+        n: the number of items in the problem.
 
     Returns:
         tuple of (con_values, con_indices)
     """
     # get dimensions
-    m = len(cons)
-    n_indices = sum([len(con.int_set) for con in cons])
+    m = len(constraints)
+    n_indices = sum([len(con.int_set) for con in constraints])
 
     # pre-allocate
     con_values = np.empty((m, 2), dtype=np.int32)
     con_indices = np.empty((2 * m) + n_indices, dtype=np.int32)
 
     # build con_values
-    for i, con in enumerate(cons):
+    for i, con in enumerate(constraints):
         con_values[i, 0] = np.int32(con.min_count)
-        con_values[i, 1] = np.int32(con.max_count)
+        con_values[i, 1] = np.int32(min(con.max_count, n))
 
     # build con_indices
     i_start = 2 * m  # where we start filling in values from int_set for each constraint
-    for i, con in enumerate(cons):
+    for i, con in enumerate(constraints):
         i_end = i_start + len(con.int_set)
         con_indices[2 * i] = np.int32(i_start)
         con_indices[(2 * i) + 1] = np.int32(i_end)
@@ -161,7 +193,7 @@ def to_numpy_membership(con_indices: NDArray[np.int32], m: int, n: int) -> NDArr
     per-item Python objects.
 
     Args:
-        con_indices: packed constraint→items array, as produced by ConstraintList.to_numpy().
+        con_indices: packed constraint→items array, as produced by to_numpy_constraints().
         m: number of constraints.
         n: total number of items.
 
