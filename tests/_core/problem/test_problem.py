@@ -155,7 +155,10 @@ def test_problem_constraint_index_range_check(entry_point: str, largest_index: i
 
 @pytest.mark.parametrize("entry_point", _ENTRY_POINTS)
 def test_problem_stores_its_constraints_as_a_tuple(entry_point: str):
-    """A problem keeps its own tuple of constraints, so a later change to the caller's list does not reach it."""
+    """A problem keeps its own tuple of constraints.
+
+    A later change to the caller's list therefore does not reach the problem.
+    """
     # --- arrange ----------------------
     constraints = [Constraint(int_set={0, 1}, min_count=1, max_count=2)]
     problem = _vector_problem(entry_point, np.ones((10, 3), dtype=np.float32), k=4, constraints=constraints)
@@ -449,7 +452,10 @@ def test_problem_from_distances_conversion_copy_warns_and_leaves_input_untouched
 
 @pytest.mark.parametrize("entry_point", _ENTRY_POINTS)
 def test_problem_distance_input_warning_points_at_the_callers_file(entry_point: str):
-    """The warning names the caller's file through either entry point, past the dataclass-generated __init__."""
+    """Through either entry point, the warning names the caller's file.
+
+    It names neither a max-div file nor the dataclass-generated __init__.
+    """
     # --- arrange ----------------------
     distances = _reference_square().astype(np.float64)
 
@@ -763,7 +769,7 @@ def test_problem_new_hybrid_term_over_cosine_rejects_a_zero_vector():
 
 
 @pytest.mark.parametrize("entry_point", _ENTRY_POINTS)
-def test_distance_problem_rejects_a_hybrid_term_with_its_own_distance_metric(entry_point: str):
+def test_problem_rejects_a_hybrid_term_with_its_own_distance_metric_over_distances(entry_point: str):
     """A problem built from distances has no vectors, so a hybrid term cannot name a distance metric."""
     with pytest.raises(ValueError, match="has no vectors"):
         _distance_problem(entry_point, np.ones((5, 5)) - np.eye(5), k=2, diversity_metric=_HYBRID)

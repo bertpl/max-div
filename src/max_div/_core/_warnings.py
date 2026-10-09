@@ -41,13 +41,15 @@ class FeasibilityConvergenceWarning(MaxDivWarning):
 # ==================================================================================================
 #  Issuing warnings
 # ==================================================================================================
-def warn_outside_max_div(message: str, category: type[Warning]) -> None:
+def warn_at_first_frame_outside_max_div(message: str, category: type[Warning]) -> None:
     """Issue a warning attributed to the first stack frame outside max-div.
 
     A fixed `stacklevel` cannot point at the user's line when entry points reach the warning through call
-    stacks of different depths, as `MaxDivProblem.new()` and a direct constructor call do.  Both also pass
-    through the dataclass-generated `__init__`, whose frame has the file name `<string>`, so the walk skips
-    that frame too.  `warnings.warn(skip_file_prefixes=...)` does not skip it on Python 3.12.
+    stacks of different depths, as `MaxDivProblem.new()` and a direct constructor call do.
+
+    Both also pass through the dataclass-generated `__init__`, whose frame has the file name `<string>`, so the
+    function skips that frame too as it walks up the stack.  `warnings.warn(skip_file_prefixes=...)` does not
+    skip it on Python 3.12.
     """
     frame = inspect.currentframe()
     stacklevel = 1  # stacklevel 1 of warnings.warn is this function's own frame
