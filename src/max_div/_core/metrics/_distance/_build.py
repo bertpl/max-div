@@ -142,11 +142,11 @@ def _fill_matrix_parallel(
 ) -> None:
     """Fill a full (n, n) distance matrix from vectors, in parallel; each pair written to both halves."""
     n = vectors.shape[0]
-    for i in numba.prange(n):  # ty: ignore[not-iterable] -- prange is iterable inside njit; the stub doesn't know
+    for i in numba.prange(n):
         out[i, i] = np.float32(0.0)
     for j_block in range(0, n, block_width):
         j_end = min(j_block + block_width, n)
-        for i in numba.prange(j_end):  # ty: ignore[not-iterable] -- prange is iterable inside njit; the stub doesn't know
+        for i in numba.prange(j_end):
             for j in range(max(j_block, np.int64(i) + 1), j_end):
                 value = _pairwise_distance(vectors, metric_kind, metric_float_param, np.int32(i), np.int32(j))
                 out[i, j] = value

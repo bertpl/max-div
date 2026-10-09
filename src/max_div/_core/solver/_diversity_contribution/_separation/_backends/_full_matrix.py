@@ -42,7 +42,7 @@ def add_many(sep: NDArray[np.float32], store: DistanceStore, i_added_many: NDArr
     `parallel=True`, and the threading layer engages only when the parallel arm runs.
     """
     if parallel:
-        for j in numba.prange(store.n):  # ty: ignore[not-iterable] -- prange is iterable inside njit; the stub doesn't know
+        for j in numba.prange(store.n):
             nearest = sep[j]
             for i in i_added_many:
                 if i != j:
