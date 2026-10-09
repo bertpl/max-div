@@ -141,7 +141,7 @@ def solve_relaxation(
         con_max: per-constraint maximum counts.
         w_lin: per-constraint linear penalty weights (>= 0).
         w_quad: per-constraint quadratic penalty weights (>= 0; not both zero per constraint).
-        con_indices: packed constraint->item membership array (`ConstraintList.to_numpy`).
+        con_indices: packed constraint->item membership array (`to_numpy_constraints`).
         n: the number of items.
         k: the selection size (0 < k < n).
 

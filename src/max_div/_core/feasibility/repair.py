@@ -136,7 +136,7 @@ def _best_member_move(
     Args:
         worst: the constraint whose violation the move targets.
         short: whether that constraint is below its minimum (else it is in excess).
-        con_indices: packed constraint->item membership array (`ConstraintList.to_numpy`).
+        con_indices: packed constraint->item membership array (`to_numpy_constraints`).
         item_indptr: item->constraint CSR offsets, as built by `build_item_constraint_csr`.
         item_cons: item->constraint CSR values — the constraints containing each item.
         sel_mask: boolean selection mask over items.
@@ -254,7 +254,7 @@ def _repair_selection(
     structures require — those land in the UNKNOWN outcome by design.
 
     Args:
-        con_indices: packed constraint->item membership array (`ConstraintList.to_numpy`).
+        con_indices: packed constraint->item membership array (`to_numpy_constraints`).
         item_indptr: item->constraint CSR offsets, as built by `build_item_constraint_csr`.
         item_cons: item->constraint CSR values — the constraints containing each item.
         con_min: per-constraint minimum counts.

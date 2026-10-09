@@ -1,1 +1,1 @@
-from .constraints import Constraint, ConstraintList
+from .constraints import Constraint, to_numpy_constraints

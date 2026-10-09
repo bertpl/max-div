@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 from scipy.optimize import linprog
 
-from max_div._core.constraints import Constraint, ConstraintList
+from max_div._core.constraints import Constraint, to_numpy_constraints
 from max_div._core.feasibility.evaluation import certified_bound, clamp_admissible
 from max_div._core.feasibility.indexing import build_item_constraint_csr
 from max_div._core.feasibility.ipm import RelaxationSolution, _adjust_marginals_to_sum_k, solve_relaxation
@@ -11,9 +11,9 @@ from max_div._core.feasibility.ipm import RelaxationSolution, _adjust_marginals_
 # ==================================================================================================
 #  Helpers
 # ==================================================================================================
-def _arrays(cons: list[Constraint]) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+def _arrays(cons: list[Constraint], n: int) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Convert constraints to (con_min, con_max, con_indices) as the solver ingests them."""
-    con_values, con_indices = ConstraintList(cons).to_numpy()
+    con_values, con_indices = to_numpy_constraints(cons, n)
     return con_values[:, 0].astype(np.int64), con_values[:, 1].astype(np.int64), con_indices
 
 
@@ -55,13 +55,13 @@ def _linprog_value(n: int, k: int, cons: list[Constraint], w_lin: np.ndarray) ->
 
 def _solve(n: int, k: int, cons: list[Constraint], w_lin: np.ndarray, w_quad: np.ndarray) -> RelaxationSolution:
     """Run the IPM on the given instance."""
-    con_min, con_max, con_indices = _arrays(cons)
+    con_min, con_max, con_indices = _arrays(cons, n)
     return solve_relaxation(con_min, con_max, w_lin, w_quad, con_indices, n=n, k=k)
 
 
 def _bound(sol: RelaxationSolution, n: int, k: int, cons: list[Constraint], w_lin, w_quad) -> float:
     """Clamp the solve's multipliers and evaluate the certified bound exactly."""
-    con_min, con_max, con_indices = _arrays(cons)
+    con_min, con_max, con_indices = _arrays(cons, n)
     item_indptr, item_cons = build_item_constraint_csr(con_indices, n)
     lam_min = clamp_admissible(sol.lam_min, w_lin, w_quad)
     lam_max = clamp_admissible(sol.lam_max, w_lin, w_quad)
@@ -213,7 +213,7 @@ def test_iteration_cap_reports_unconverged(monkeypatch):
     cons = [Constraint(int_set={0, 1}, min_count=2, max_count=2)]
 
     # --- act --------------------------
-    con_min, con_max, con_indices = _arrays(cons)
+    con_min, con_max, con_indices = _arrays(cons, n=4)
     sol = ipm.solve_relaxation(con_min, con_max, np.ones(1), np.zeros(1), con_indices, n=4, k=2)
 
     # --- assert -----------------------

@@ -5,10 +5,12 @@
 Constraints enforce that the selected subset includes a minimum and/or maximum number of
 [items](glossary.md#item) from specific groups. Each constraint is defined by:
 
-- **`int_set`** -- a set of item indices that form the group
-- **`min_count`** -- minimum number of items to select from this group
-- **`max_count`** -- maximum number of items to select from this group
-- **`weight`** -- how strongly this constraint counts toward feasibility (default `1`, must be `> 0`)
+- **`int_set`** -- the item indices that form the group: any iterable of integers, such as a set or a numpy array, where a repeated index counts once
+- **`min_count`** -- minimum number of items to select from this group, at most the size of the group
+- **`max_count`** -- maximum number of items to select from this group; a value of the group size or more leaves the count unbounded
+- **`weight`** -- how strongly this constraint counts toward feasibility (default `1`, must be finite and `> 0`)
+
+A constraint cannot be changed after it is created.
 
 ```python
 from max_div import Constraint

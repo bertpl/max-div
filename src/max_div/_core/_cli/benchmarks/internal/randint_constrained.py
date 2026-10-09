@@ -19,7 +19,7 @@ from max_div._core._markdown import (
 )
 from max_div._core._random import P_UNIFORM, new_rng_state, randint, randint_constrained
 from max_div._core._utils import benchmark, stdout_to_file
-from max_div._core.constraints import Constraint, ConstraintList
+from max_div._core.constraints import Constraint, to_numpy_constraints
 
 from .run_settings import N_BENCHMARK, N_WARMUP, TIME_PER_RUN_SEC
 
@@ -173,7 +173,7 @@ def _benchmark(
     lst_con_indices = []
     for i in range(index_range):
         cons = s.build_constraints(int(n), int(k), m, seed=424242 * i)
-        con_values, con_indices = ConstraintList(cons).to_numpy()
+        con_values, con_indices = to_numpy_constraints(cons, int(n))
         lst_cons.append(cons)
         lst_con_values.append(con_values)
         lst_con_indices.append(con_indices)
@@ -238,7 +238,7 @@ def _determine_precision(
     for run_idx in range(n_runs):
         # --- build constraints ------------------
         cons = s.build_constraints(n, k, m, seed=424242 * run_idx)
-        con_values, con_indices = ConstraintList(cons).to_numpy()
+        con_values, con_indices = to_numpy_constraints(cons, int(n))
 
         # Run the appropriate function with seed equal to run index
         rng_state = new_rng_state(np.int64(run_idx))

@@ -12,6 +12,7 @@ import numba
 import numpy as np
 from numpy.typing import NDArray
 
+from max_div._core._utils import is_non_bool_int
 from max_div._core.jit import lazy_njit
 
 from ._vector_layout import validate_vector_array_layout
@@ -539,7 +540,7 @@ class AlongAxisDistanceMetric(DistanceMetric):
 
     def __post_init__(self) -> None:
         """Reject an axis that is not a non-negative integer, and store it as a plain int."""
-        if isinstance(self.axis, bool) or not isinstance(self.axis, (int, np.integer)) or self.axis < 0:
+        if not is_non_bool_int(self.axis) or self.axis < 0:
             raise ValueError(f"along_axis requires a non-negative integer axis; here: {self.axis!r}.")
         # A frozen dataclass rejects `self.axis = ...`; `object.__setattr__` is the documented way to set a field in
         # `__post_init__`.  Storing a plain int makes `along_axis(np.int64(2))` equal to `along_axis(2)`.
@@ -634,7 +635,7 @@ class L2AndProjectionsForKDistanceMetric(L2AndProjectionsDistanceMetric):
     def __post_init__(self) -> None:
         """Check the L2 scale as `L2AndProjectionsDistanceMetric` does, and reject a `k` that is not an integer >= 2."""
         super().__post_init__()
-        if isinstance(self.k, bool) or not isinstance(self.k, (int, np.integer)) or self.k < 2:
+        if not is_non_bool_int(self.k) or self.k < 2:
             raise ValueError(f"l2_and_projections requires an integer k >= 2; here: {self.k!r}.")
         # A frozen dataclass rejects `self.k = ...`, so the plain int is stored with `object.__setattr__`.
         object.__setattr__(self, "k", int(self.k))

@@ -7,7 +7,7 @@ from typing import ClassVar
 import numpy as np
 from numpy.typing import NDArray
 
-from max_div._core.constraints import Constraint, ConstraintList
+from max_div._core.constraints import Constraint, to_numpy_constraints
 from max_div._core.distance_storage import (
     USER_MATRIX_ID,
     AdoptingDataMatrixProducer,
@@ -136,7 +136,7 @@ class MaxDivProblem(ABC):
                 DeprecationWarning,
                 stacklevel=2,
             )
-        con_values, con_indices = ConstraintList(self.constraints).to_numpy()
+        con_values, con_indices = to_numpy_constraints(self.constraints, self.n)
         return find_feasible(
             con_values=con_values,
             con_indices=con_indices,
