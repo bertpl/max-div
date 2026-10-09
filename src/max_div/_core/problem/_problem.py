@@ -1,5 +1,6 @@
 import warnings
 from abc import ABC, abstractmethod
+from collections.abc import Sequence
 from dataclasses import dataclass
 from functools import partial
 from typing import ClassVar
@@ -45,7 +46,7 @@ class MaxDivProblem(ABC):
 
     A problem consists of ``n`` items of which ``k`` must be selected, a diversity metric (a
     `DiversityMetric` over the problem's own distance, or a `HybridDiversityMetric` over several),
-    and optionally a list of fairness constraints. Two flavors exist, differing in how item
+    and optionally a tuple of fairness constraints. Two flavors exist, differing in how item
     dissimilarity is defined:
 
       - [`VectorMaxDivProblem`][max_div.problem.VectorMaxDivProblem] — items are vectors and
@@ -53,15 +54,41 @@ class MaxDivProblem(ABC):
       - [`DistanceMaxDivProblem`][max_div.problem.DistanceMaxDivProblem] — pairwise distances
         are supplied directly, for custom or non-Euclidean metrics; created via `from_distances`.
 
-    Use the `new` / `from_distances` factory methods to create instances with validation.
+    Every construction converts and validates the fields, whether through the `new` / `from_distances`
+    factory methods or through a flavor's own constructor.
     """
 
     # --- primary fields -------------------------
     k: int
     diversity_metric: DiversityMetric | HybridDiversityMetric
-    constraints: list[Constraint]
+    constraints: Sequence[Constraint] = ()  # __post_init__ stores the constraints as a tuple
+
+    # --- validation -----------------------------
+    def __post_init__(self) -> None:
+        """Convert and validate every field.
+
+        Each flavor supplies its own steps through `_convert_and_validate_data` and `_validate_metrics`, and does
+        not override `__post_init__`, because zero-argument `super()` raises inside a `slots=True` dataclass on
+        Python 3.12.
+        """
+        self._convert_and_validate_data()
+        # k is checked before the metrics, so an out-of-range k raises the error below, not an error from a metric's
+        # own check of k.  k == n is allowed: every item is then selected.
+        if not (2 <= self.k <= self.n):
+            raise ValueError(f"k must be in range [2, number of items (={self.n})]; here: {self.k}.")
+        self._validate_metrics()
+        object.__setattr__(self, "constraints", tuple(self.constraints))  # the dataclass is frozen
+        self._validate_constraints()
 
     # --- flavor-specific ------------------------
+    @abstractmethod
+    def _convert_and_validate_data(self) -> None:
+        """Store the flavor's data as float32 C-contiguous arrays, raising ValueError when the data is malformed."""
+
+    @abstractmethod
+    def _validate_metrics(self) -> None:
+        """Raise ValueError when a distance or diversity metric cannot be used with the flavor's data and `k`."""
+
     @property
     @abstractmethod
     def n(self) -> int:
@@ -146,7 +173,29 @@ class MaxDivProblem(ABC):
             thorough=thorough,
         )
 
-    # --- factory methods ------------------------
+    # --------------------------------------------------------------------------
+    #  Helpers
+    # --------------------------------------------------------------------------
+    def _validate_constraints(self) -> None:
+        """Raise ValueError when a constraint references an item index outside the problem's `[0, n)`.
+
+        `Constraint.__post_init__` runs every check that needs no problem context.  Comparing each index
+        against `n` needs the problem, so that check runs here, when the problem is built and before any
+        solve.
+
+        A `min_count` above `k` stays legal: such a constraint is unsatisfiable but can be intentional,
+        and `find_feasible` reports it as infeasible with its exact violation.
+        """
+        for i, con in enumerate(self.constraints):
+            largest = max(con.int_set)
+            if largest >= self.n:
+                raise ValueError(
+                    f"Constraint {i} references item index {largest}, outside the problem's [0, {self.n}) items."
+                )
+
+    # --------------------------------------------------------------------------
+    #  Factory methods
+    # --------------------------------------------------------------------------
     @classmethod
     def new(
         cls,
@@ -154,9 +203,9 @@ class MaxDivProblem(ABC):
         k: int,
         distance_metric: DistanceMetric = DistanceMetric.l2_euclidean(),  # noqa: B008 -- immutable frozen dataclass, safe as a default
         diversity_metric: DiversityMetric | HybridDiversityMetric = DiversityMetric.geomean_separation(),  # noqa: B008 -- immutable frozen dataclass, safe as a default
-        constraints: list[Constraint] | None = None,
+        constraints: Sequence[Constraint] | None = None,
     ) -> "VectorMaxDivProblem":
-        """Create a new VectorMaxDivProblem with validation.
+        """Create a VectorMaxDivProblem, raising ValueError when an argument is invalid.
 
         Args:
             vectors: 2D numpy array of shape ``(n, d)`` with at least 3 rows.
@@ -165,37 +214,14 @@ class MaxDivProblem(ABC):
             distance_metric: Distance metric for pairwise distances.
             diversity_metric: Diversity metric to maximize; a `HybridDiversityMetric` term over its own
                 distance metric reads that metric, not `distance_metric`.
-            constraints: Optional list of fairness constraints.
+            constraints: Optional fairness constraints; the problem stores them as a tuple.
         """
-        # --- validate ---------------------------
-        if vectors.ndim != 2:
-            raise ValueError("Vectors must be a 2D numpy array.")
-        if vectors.shape[0] < 3:
-            raise ValueError("At least 3 vectors are required to formulate a max-div problem.")
-        if vectors.shape[1] == 0:
-            raise ValueError("Vectors must have at least one dimension.")
-        vectors = np.ascontiguousarray(vectors, dtype=np.float32)  # the form every distance function expects
-        # Validate k before the metrics, so a k out of range is reported as such, not as a mismatch with a metric's k
-        cls._validate_k(k, vectors.shape[0])
-        # validate the problem's own distance metric, which `full_matrix()` reads, and every distance metric that
-        # a hybrid term names
-        distance_metrics = [distance_metric]
-        if isinstance(diversity_metric, HybridDiversityMetric):
-            distance_metrics.extend(diversity_metric.named_distance_metrics)
-        for metric in distance_metrics:
-            metric.validate(vectors, k)  # fail fast, before any distance store is built
-
-        if constraints is None:
-            constraints = []
-        cls._validate_constraints(constraints, vectors.shape[0])
-
-        # --- build ------------------------------
         return VectorMaxDivProblem(
             vectors=vectors,
             k=k,
             distance_metric=distance_metric,
             diversity_metric=diversity_metric,
-            constraints=constraints,
+            constraints=constraints if constraints is not None else (),
         )
 
     @classmethod
@@ -204,9 +230,9 @@ class MaxDivProblem(ABC):
         distances: np.ndarray,
         k: int,
         diversity_metric: DiversityMetric | HybridDiversityMetric = DiversityMetric.geomean_separation(),  # noqa: B008 -- immutable frozen dataclass, safe as a default
-        constraints: list[Constraint] | None = None,
+        constraints: Sequence[Constraint] | None = None,
     ) -> "DistanceMaxDivProblem":
-        """Create a new DistanceMaxDivProblem from precomputed pairwise distances, with validation.
+        """Create a DistanceMaxDivProblem from pairwise distances, raising ValueError when an argument is invalid.
 
         Accepts either a square symmetric ``(n, n)`` distance matrix or a condensed distance
         vector of length ``n*(n-1)/2`` (scipy layout, as produced by ``scipy.spatial.distance.pdist``).
@@ -221,65 +247,14 @@ class MaxDivProblem(ABC):
             k: Number of items to select (must satisfy ``2 <= k <= n``).
             diversity_metric: Diversity metric to maximize; a `HybridDiversityMetric` term may not name a
                 distance metric of its own, as there are no vectors to compute one from.
-            constraints: Optional list of fairness constraints.
+            constraints: Optional fairness constraints; the problem stores them as a tuple.
         """
-        # --- validate, keeping the provided format ---
-        distances = np.asarray(distances)
-        if distances.ndim == 2:
-            validated = validated_square_distances(distances)
-            n = validated.shape[0]
-        elif distances.ndim == 1:
-            validated = validated_condensed_distances(distances)
-            n = _n_from_condensed_size(validated.size)
-        else:
-            raise ValueError(f"Distances must be a square (n, n) matrix or condensed 1D vector; got {distances.ndim}D.")
-
-        cls._validate_k(k, n)
-        if constraints is None:
-            constraints = []
-        cls._validate_constraints(constraints, n)
-
-        # --- build ------------------------------
-        problem = DistanceMaxDivProblem(
-            distances=validated,
+        return DistanceMaxDivProblem(
+            distances=distances,
             k=k,
             diversity_metric=diversity_metric,
-            constraints=constraints,
+            constraints=constraints if constraints is not None else (),
         )
-        # reading `diversity_objective` calls `_distance_spec_of`, which raises for a hybrid term that names a
-        # distance metric
-        _ = problem.diversity_objective
-        return problem
-
-    # --------------------------------------------------------------------------
-    #  Helpers
-    # --------------------------------------------------------------------------
-    @staticmethod
-    def _validate_k(k: int, n: int) -> None:
-        """Raise ValueError unless 2 <= k <= n.
-
-        `k == n` is allowed: the selection is then forced to every item (`MaxDivSolver.solve` adopts
-        that selection directly).
-        """
-        if not (2 <= k <= n):
-            raise ValueError(f"k must be in range [2, number of items (={n})]; here: {k}.")
-
-    @staticmethod
-    def _validate_constraints(constraints: list[Constraint], n: int) -> None:
-        """Raise ValueError when a constraint references an item index outside the problem's `[0, n)`.
-
-        `Constraint.__post_init__` owns every check that needs no problem context; the index-vs-`n`
-        check is the one that does.  An out-of-range index would reach compiled code with bounds
-        checking off, where it is a memory error, not an exception.  `min_count` or `max_count`
-        above `k` stay legal: such a constraint is unsatisfiable but meaningful, and `find_feasible`
-        reports it as infeasible with its exact violation.
-        """
-        for i, con in enumerate(constraints):
-            largest = max(con.int_set)
-            if largest >= n:
-                raise ValueError(
-                    f"Constraint {i} references item index {largest}, outside the problem's [0, {n}) items."
-                )
 
 
 # ==================================================================================================
@@ -289,7 +264,8 @@ class MaxDivProblem(ABC):
 class VectorMaxDivProblem(MaxDivProblem):
     """MaxDivProblem flavor defined by ``n`` vectors in ``d`` dimensions plus a distance metric.
 
-    Use `MaxDivProblem.new` to create instances with validation.
+    Both `MaxDivProblem.new` and the constructor convert and validate the fields; `new` also fills in default
+    metrics that are not given.
     """
 
     # --- primary fields -------------------------
@@ -297,6 +273,31 @@ class VectorMaxDivProblem(MaxDivProblem):
     distance_metric: DistanceMetric
 
     # --- flavor-specific ------------------------
+    def _convert_and_validate_data(self) -> None:
+        """Require at least 3 vectors with at least 1 dimension, and store them float32 C-contiguous."""
+        vectors = np.asarray(self.vectors)
+        if vectors.ndim != 2:
+            raise ValueError("Vectors must be a 2D numpy array.")
+        if vectors.shape[0] < 3:
+            raise ValueError("At least 3 vectors are required to formulate a max-div problem.")
+        if vectors.shape[1] == 0:
+            raise ValueError("Vectors must have at least 1 dimension.")
+        # every distance function expects float32 C-contiguous vectors; object.__setattr__ is needed because the
+        # dataclass is frozen
+        object.__setattr__(self, "vectors", np.ascontiguousarray(vectors, dtype=np.float32))
+
+    def _validate_metrics(self) -> None:
+        """Validate every distance metric against the vectors and `k`.
+
+        The problem's own distance metric is validated even when every hybrid term names another one, because
+        `full_matrix()` reads it.
+        """
+        distance_metrics = [self.distance_metric]
+        if isinstance(self.diversity_metric, HybridDiversityMetric):
+            distance_metrics.extend(self.diversity_metric.named_distance_metrics)
+        for metric in distance_metrics:
+            metric.validate(self.vectors, self.k)  # fail fast, before any distance store is built
+
     @property
     def n(self) -> int:
         return self.vectors.shape[0]
@@ -329,7 +330,8 @@ class VectorMaxDivProblem(MaxDivProblem):
 class DistanceMaxDivProblem(MaxDivProblem):
     """MaxDivProblem flavor defined directly by precomputed pairwise distances.
 
-    Use `MaxDivProblem.from_distances` to create instances with validation.
+    Both `MaxDivProblem.from_distances` and the constructor convert and validate the fields; `from_distances` also
+    fills in a default diversity metric when none is given.
     """
 
     # The given distances carry this label, because no distance metric names them.
@@ -339,6 +341,22 @@ class DistanceMaxDivProblem(MaxDivProblem):
     distances: NDArray[np.float32]  # as provided: (n, n) square matrix or condensed 1D vector
 
     # --- flavor-specific ------------------------
+    def _convert_and_validate_data(self) -> None:
+        """Validate the distances in the format provided, and store them float32 C-contiguous."""
+        distances = np.asarray(self.distances)
+        if distances.ndim == 2:
+            validated_distances = validated_square_distances(distances)
+        elif distances.ndim == 1:
+            validated_distances = validated_condensed_distances(distances)
+        else:
+            raise ValueError(f"Distances must be a square (n, n) matrix or condensed 1D vector; got {distances.ndim}D.")
+        object.__setattr__(self, "distances", validated_distances)  # the dataclass is frozen
+
+    def _validate_metrics(self) -> None:
+        """Reject a hybrid term that names a distance metric of its own."""
+        # reading `diversity_objective` calls `_distance_spec_of`, which raises for such a term
+        _ = self.diversity_objective
+
     @property
     def n(self) -> int:
         if self.has_full_matrix:

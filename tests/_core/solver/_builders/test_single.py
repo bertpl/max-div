@@ -250,7 +250,7 @@ def test_max_div_solver_builder_end_to_end():
     assert solver._solver_steps[1].name() == solver_steps[0].name()
     assert solver._solver_steps[2].name() == solver_steps[1].name()
     assert solver._diversity_objectives[0].diversity_metric == DiversityMetric.min_separation()
-    assert solver._constraints == constraints
+    assert solver._constraints == tuple(constraints)
     assert solver._seed == 123
 
 

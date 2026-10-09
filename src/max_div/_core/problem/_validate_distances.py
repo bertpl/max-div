@@ -10,12 +10,10 @@ Scans are blocked so each (i, j) block is visited together with its transpose pa
 blocks in cache at a time over data that is O(n²) by definition.
 """
 
-import warnings
-
 import numpy as np
 from numpy.typing import NDArray
 
-from max_div._core._warnings import DistanceInputWarning
+from max_div._core._warnings import DistanceInputWarning, warn_at_first_frame_outside_max_div
 from max_div._core.jit import lazy_njit
 
 # side length of the square tiles the blocked scans walk; two float32 tiles fit comfortably in L2
@@ -156,11 +154,10 @@ def validated_square_distances(distances: np.ndarray) -> NDArray[np.float32]:
 
     converted = np.ascontiguousarray(distances, dtype=np.float32)
     if converted is not distances:
-        warnings.warn(
+        warn_at_first_frame_outside_max_div(
             f"Square distance input required a conversion copy (dtype {distances.dtype} or memory layout); "
             "pass a float32 C-contiguous array to avoid the copy and enable zero-copy adoption.",
             DistanceInputWarning,
-            stacklevel=3,
         )
 
     n_nonfinite, n_negative, max_abs_diag, n_asym, max_abs_delta, max_rel_delta = _scan_square(converted)
@@ -173,12 +170,11 @@ def validated_square_distances(distances: np.ndarray) -> NDArray[np.float32]:
     if n_asym:
         _symmetrize_square(converted)
         modified_note = " The provided array itself was modified." if converted is distances else ""
-        warnings.warn(
+        warn_at_first_frame_outside_max_div(
             f"Asymmetric square distance matrix: {n_asym} (i, j)/(j, i) pairs differ "
             f"(max |delta| = {max_abs_delta:.3e}, max relative delta = {max_rel_delta:.3e}); "
             f"symmetrized in place by averaging each pair.{modified_note}",
             DistanceInputWarning,
-            stacklevel=3,
         )
     return converted
 
@@ -199,11 +195,10 @@ def validated_condensed_distances(distances: np.ndarray) -> NDArray[np.float32]:
 
     converted = np.ascontiguousarray(distances, dtype=np.float32)
     if converted is not distances:
-        warnings.warn(
+        warn_at_first_frame_outside_max_div(
             f"Condensed distance input required a conversion copy (dtype {distances.dtype} or memory layout); "
             "pass a float32 C-contiguous array to avoid the copy and enable zero-copy adoption.",
             DistanceInputWarning,
-            stacklevel=3,
         )
 
     n_nonfinite, n_negative = _scan_condensed(converted)

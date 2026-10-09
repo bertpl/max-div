@@ -131,7 +131,7 @@ class ScoreGenerator:
         k: int,
         diversity_objectives: list[DiversityObjective],
         bindings: DiversityObjectiveBindings,
-        constraints: list[Constraint],
+        constraints: Sequence[Constraint],
         penalty_quadratic: bool = False,
     ) -> None:
         """Initialize the ScoreGenerator.
@@ -143,7 +143,7 @@ class ScoreGenerator:
                 the tie-breakers, scored in that order into `Score.diversities`.
             bindings: `compute_score` receives one array per entry of `bindings.tracker_specs`, in that
                 order, and each objective picks its own arrays by its positions.
-            constraints: (list[Constraint]) The list of constraints used in the max-div problem.
+            constraints: (Sequence[Constraint]) The constraints used in the max-div problem.
             penalty_quadratic: (bool) If True, penalize constraint violations quadratically instead of linearly.
         """
         # --- size score computation -------------

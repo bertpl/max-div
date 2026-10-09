@@ -1,4 +1,4 @@
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -43,7 +43,7 @@ class MaxDivSolver:
         data_matrix_reader_provider: Callable[[], DataMatrixReader],
         k: int,
         diversity_objectives: list[DiversityObjective],
-        constraints: list[Constraint],
+        constraints: Sequence[Constraint],
         solver_steps: list[SolverStep],
         seed: int = 42,
         constraint_penalty: ConstraintPenalty = ConstraintPenalty.LINEAR,
@@ -62,7 +62,7 @@ class MaxDivSolver:
             k: (int) The number of items to be selected from the input set ('universe').
             diversity_objectives: the primary objective first, then the tie-breakers, scored in
                 that order; each distance spec names the data matrix that its distance store reads.
-            constraints: (list[Constraint]) A list of m constraints to try to satisfy during solving.
+            constraints: (Sequence[Constraint]) The m constraints to try to satisfy during solving.
             solver_steps: (list[SolverStep]) A list of solver steps to execute,
                 the first of which needs to be an InitializationStep,
                 while all latter ones need to be OptimizationSteps.

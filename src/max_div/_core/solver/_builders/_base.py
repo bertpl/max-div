@@ -34,6 +34,8 @@ from max_div._core.solver._duration import E2eBudget, TargetDuration, TargetTime
 from max_div._core.solver._strategies import InitializationStrategy
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     from max_div._core.constraints import Constraint
     from max_div._core.solver._strategies._initialization._init_given_selection import InitGivenSelection
 
@@ -53,7 +55,7 @@ class SolverBuilderBase:
         self._n: int = problem.n
         self._k: int = problem.k
         self._primary_objective: DiversityObjective = problem.diversity_objective
-        self._constraints: list[Constraint] = problem.constraints
+        self._constraints: Sequence[Constraint] = problem.constraints
 
         # --- shared configuration ---------------
         self._custom_diversity_tie_breakers: list[DiversityObjective] | None = None  # None → the defaults

@@ -5,7 +5,7 @@ and read by several processes, while each process assembles its own solver over 
 this record — which is why the record must stay small enough to pickle.
 """
 
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass, replace
 
 from max_div._core.constraints import Constraint
@@ -28,7 +28,7 @@ class SolverConfig:
     # The primary objective comes first, then the tie-breakers in order; each distance spec names the data
     # matrix that its distance store reads.
     diversity_objectives: list[DiversityObjective]
-    constraints: list[Constraint]
+    constraints: Sequence[Constraint]
     solver_steps: list[SolverStep]
     seed: int
     constraint_penalty: ConstraintPenalty
