@@ -21,8 +21,8 @@ build would leave it guarding nothing.
 
 JIT-compiled and NUMBA_DISABLE_JIT execution produce identical selections but slightly different
 score floats (float32 register arithmetic vs numpy's float64 scalar promotion), while each
-regime is bit-stable across runs. The expected data is therefore committed per regime, and the
-test asserts against the dataset matching the active regime:
+JIT setting is bit-stable across runs. The expected data is therefore committed per JIT setting,
+and the test asserts against the dataset of the current JIT setting:
 
 - 'nojit' (interpreted) output is environment-independent (verified across platforms and
   Python versions), so it is asserted unconditionally — including on the jit-off CI jobs.
@@ -41,7 +41,7 @@ test asserts against the dataset matching the active regime:
   On a run with that option, every case errors on a fingerprint mismatch, because such a
   mismatch means that uv.lock pins other versions than the ones recorded in the jit dataset.
 
-To regenerate the expected data (both regimes) after an intentional numeric change or a numba
+To regenerate the expected data (both JIT settings) after an intentional numeric change or a numba
 upgrade in uv.lock:
 
     uv run --all-extras --python 3.14 python -m tests._core.solver.test_golden_master
@@ -170,7 +170,7 @@ def _case_key(problem_name: str, preset: SolverPreset, seed: int) -> str:
 # ==================================================================================================
 @pytest.fixture(scope="module")
 def expected_data() -> dict[str, Any]:
-    """Load the expected data of the active numba regime; fail if the jit data's fingerprint differs from this run's."""
+    """Load the expected data of the current JIT setting; fail if the jit data's fingerprint differs from this run's."""
     is_numba_jit_enabled = _is_numba_jit_enabled()
     dataset = json.loads(_data_file(is_numba_jit_enabled).read_text())
     runtime_fingerprint = _runtime_fingerprint()
@@ -187,7 +187,7 @@ def expected_data() -> dict[str, Any]:
 @pytest.mark.parametrize("preset", PRESETS)
 @pytest.mark.parametrize("problem_name", PROBLEMS)
 def test_golden_master(problem_name: str, preset: SolverPreset, seed: int, expected_data: dict[str, Any]):
-    """A seeded solve reproduces the expected data of the active numba regime bit for bit."""
+    """A seeded solve reproduces the expected data of the current JIT setting bit for bit."""
     # --- arrange ----------------------
     expected = expected_data["cases"][_case_key(problem_name, preset, seed)]
 
@@ -201,8 +201,8 @@ def test_golden_master(problem_name: str, preset: SolverPreset, seed: int, expec
 # ==================================================================================================
 #  Regeneration mode
 # ==================================================================================================
-def regenerate_active_regime() -> None:
-    """Recompute and overwrite the expected data file of the active numba regime, for the full matrix."""
+def regenerate_for_current_jit_setting() -> None:
+    """Recompute and overwrite the expected data file of the current JIT setting, for the full matrix."""
     records = {}
     for problem_name in PROBLEMS:
         for preset in PRESETS:
@@ -217,10 +217,10 @@ def regenerate_active_regime() -> None:
 
 
 if __name__ == "__main__":
-    if "--active-regime-only" in sys.argv:
-        regenerate_active_regime()
+    if "--current-jit-setting-only" in sys.argv:
+        regenerate_for_current_jit_setting()
     else:
-        # numba reads NUMBA_DISABLE_JIT at import time, so each regime runs in its own interpreter
+        # numba reads NUMBA_DISABLE_JIT at import time, so each JIT setting runs in its own interpreter
         for disable_jit in ("0", "1"):
             env = {**os.environ, "NUMBA_DISABLE_JIT": disable_jit}
-            subprocess.run([sys.executable, "-m", __spec__.name, "--active-regime-only"], env=env, check=True)  # noqa: S603 -- fixed args, script mode
+            subprocess.run([sys.executable, "-m", __spec__.name, "--current-jit-setting-only"], env=env, check=True)  # noqa: S603 -- fixed args, script mode
