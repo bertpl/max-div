@@ -4,6 +4,9 @@ Significantly faster due to use of faster underlying RNG functionality (see `max
 algorithms for each case, making use of a.o. the fact that we only want to sample int32 values here.
 """
 
+import re
+import warnings
+
 import numpy as np
 from numpy.typing import NDArray
 
@@ -16,6 +19,20 @@ from max_div._core._random._rng import (
     rand_nz_float32,
 )
 from max_div._core.jit import lazy_njit
+
+# With numba's JIT compilation disabled, `randint` runs as numpy arithmetic. Weighted sampling without
+# replacement ranks the items by the key -log2(u)/p[i], with u uniform in (0, 1), and numpy warns when a
+# tiny p[i] makes that key exceed the float32 range, so that casting the key to float32 turns it into +inf.
+#
+# That +inf key is the documented result for a tiny p (see `randint`), so the warning reports no error;
+# compiled code overflows to the same +inf without a warning. Under pytest the warning still shows,
+# because pytest discards the warning filters that a module adds while pytest is importing that module.
+warnings.filterwarnings(
+    "ignore",
+    message=r"overflow encountered in cast",
+    category=RuntimeWarning,
+    module=re.escape(__name__) + r"\Z",
+)
 
 _SMALLEST_F32 = np.finfo(np.float32).smallest_subnormal
 
@@ -62,9 +79,12 @@ def randint(  # noqa: C901 — case-dispatch structure is clearer un-split
       - When providing `p`...
 
           - we will never return a sample `i` for which `p[i]==0.0`, except when replace=False and there are <k options
-            with probability p>0.0.
+            with probability p>0.0.  Without replacement, an option with p below about 1e-38 can count as p==0.0
+            here (see the float32 note below).
 
-          - it is not needed to normalize p to sum to 1; any non-negative values are accepted.
+          - it is not needed to normalize p to sum to 1; any non-negative values are accepted.  Without
+            replacement, though, an option with p below about 1e-38 can count as p==0.0 (see the float32 note
+            below).
             However, we do require that sum(p) > 0, such that it can be guaranteed we always return a sample
             with p[i] > 0.
 
@@ -77,6 +97,15 @@ def randint(  # noqa: C901 — case-dispatch structure is clearer un-split
           - over a wide dynamic range the CDF paths lose the smallest values: the float32 running sum stops
             changing for an item whose p is below about sum(p) / 2^24, so that item is never drawn.  Accepted,
             because such an item's draw probability is below 1e-7 anyway.
+
+          - without replacement, Efraimidis-Spirakis sampling ranks each item by the float32 key -log2(u)/p[i],
+            with u uniform in (0, 1).  For a tiny p[i] this key can exceed the float32 range (about 3.4e38) and
+            become +inf, which is also the key of an item with p[i]==0.0, so the item with the tiny p[i] then
+            counts as p[i]==0.0.  The share of draws in which the key becomes +inf is:
+              - about 10% at p[i] = 1e-38;
+              - about half at p[i] = 3e-39;
+              - nearly all below p[i] = 1e-40.
+            Accepted as a consequence of the float32 keys, like the precision loss of the CDF paths.
 
     ALTERNATIVES CONSIDERED:
 
