@@ -101,7 +101,7 @@ package = [
     "check-wheel-contents>=0.6.2",
 ]
 # This group holds the dependencies of the maintainer tooling under scripts/. The `test` group does
-# not include it, because the package tests import no script; `make test-scripts` installs both
+# not include the `tooling` group, because the package tests import no script; `make test-scripts` installs both
 # groups for the tests of the scripts.
 tooling = [
     # Per-Python minimum versions, same rationale as the runtime dependencies above: each is the
@@ -246,7 +246,7 @@ convention = "google"
 "tests/_core/_markdown/test_table.py" = ["E501"]  # expected-output literals: exact rendered table rows
 "__init__.py" = ["F401"]                 # re-export modules: naked imports, no `as` alias
 "scripts/**" = ["INP001", "S", "D", "ANN", "TID251"]  # maintainer tooling, not the shipped library
-"scripts/tests/**" = ["SLF001"]  # in addition to the scripts/** ignores, because the tests call the scripts' private functions
+"scripts/tests/**" = ["SLF001"]  # The tests call the scripts' private functions, so this entry adds SLF001 to the scripts/** ignores.
 ".github/scripts/**" = ["INP001", "S", "D", "ANN"]   # maintainer tooling, not held to shipped-source style
 # benchmark closures are constructed and invoked within the same loop iteration, so late binding never bites
 "src/max_div/_core/_cli/benchmarks/internal/**" = ["B023"]

@@ -11,9 +11,9 @@ SCRIPTS_DIR = Path(__file__).resolve().parents[1]
 def load_script(name: str) -> ModuleType:
     """Import `scripts/<name>.py` as top-level module `name`, the way it runs as `python scripts/<name>.py`.
 
-    A script imports another script by its bare name, so the module is registered in `sys.modules`
-    under `name` before its code runs: a script loaded afterwards that runs `import <name>` gets the
-    module that `load_script` already loaded.
+    A script imports another script by its bare name, and `scripts/` is not on `sys.path`, so load
+    the scripts it imports first: each module is registered in `sys.modules` under `name` before its
+    code runs, so a script loaded afterwards that runs `import <name>` gets that module.
     """
     spec = importlib.util.spec_from_file_location(name, SCRIPTS_DIR / f"{name}.py")
     module = importlib.util.module_from_spec(spec)
