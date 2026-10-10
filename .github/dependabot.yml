@@ -55,8 +55,8 @@ updates:
       timezone: "Europe/Zurich"
     commit-message:
       prefix: "chore"
-    # Never touch pyproject.toml requirement ranges: the per-Python floors are
-    # a deliberate compatibility contract (earliest release shipping a wheel),
+    # Never touch pyproject.toml requirement ranges: the per-Python minimum versions
+    # are a deliberate compatibility contract (earliest release shipping a wheel),
     # not something to ratchet up to the latest version.
     versioning-strategy: lockfile-only
     ignore:

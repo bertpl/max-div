@@ -69,7 +69,7 @@ Examples:
 ```
 feat: add fairness-constraint presets
 fix: handle empty candidate set
-chore: bump numba floor
+chore: raise the minimum numba version
 docs: clarify separation-metric semantics
 ```
 

@@ -25,7 +25,7 @@ regime is bit-stable across runs. The expected data is therefore committed per r
 test asserts against the dataset matching the active regime:
 
 - 'nojit' (interpreted) output is environment-independent (verified across platforms and
-  Python versions), so it is asserted unconditionally — including on the coverage legs.
+  Python versions), so it is asserted unconditionally — including on the jit-off CI jobs.
 - 'jit' output depends on numba's codegen, which varies with Python and numba version (numba
   compiles from Python bytecode, so two Python minors can round floats differently under the
   same numba). The jit dataset therefore records the fingerprint of the

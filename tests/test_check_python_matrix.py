@@ -6,7 +6,7 @@ _mod = load_script("check_python_matrix")
 
 
 def test_reads_only_quoted_matrix_python_values(tmp_path):
-    """The parser picks up quoted `python:` matrix legs and ignores `python_version:` / expressions."""
+    """The parser picks up quoted `python:` matrix entries and ignores `python_version:` / expressions."""
     # --- arrange ----------------------
     workflow = tmp_path / "wf.yml"
     workflow.write_text(
@@ -25,7 +25,7 @@ def test_reads_only_quoted_matrix_python_values(tmp_path):
 
 
 def test_uncovered_versions_flags_declared_gap_only():
-    """A declared version absent from the matrix is uncovered; an extra matrix leg is not."""
+    """A declared version absent from the matrix is uncovered; an extra matrix job is not."""
     # --- act --------------------------
     missing = _mod.uncovered_versions(declared={"3.11", "3.15"}, tested={"3.11", "3.14t"})
 
@@ -34,7 +34,7 @@ def test_uncovered_versions_flags_declared_gap_only():
 
 
 def test_repo_matrix_covers_declared_versions():
-    """The live repo satisfies the invariant: every declared version has a matrix leg."""
+    """The live repo satisfies the invariant: every declared version has a matrix job."""
     # --- act --------------------------
     exit_code = _mod.main()
 

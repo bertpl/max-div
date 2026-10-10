@@ -13,7 +13,7 @@ license-files = ["LICENSE"]
 requires-python = ">=3.12"
 dependencies = [
     # Per-Python minimum versions: each is the earliest release shipping a wheel for that CPython,
-    # so `lowest-direct` CI legs install wheels instead of attempting source builds.
+    # so `lowest-direct` CI jobs install wheels instead of attempting source builds.
     "numpy>=2.0.0; python_version == '3.12'",
     "numpy>=2.1.0; python_version == '3.13'",
     "numpy>=2.3.2; python_version == '3.14'",
