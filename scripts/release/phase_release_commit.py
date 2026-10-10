@@ -17,7 +17,7 @@ from release_helpers import (
     fail_with_message,
     run_command,
 )
-from release_step import BadgeMetrics, Phase, ReleaseContext, ReleaseStep
+from release_step import BadgeMetrics, ReleaseContext, ReleasePhase, ReleaseStep
 
 
 # ==================================================================================================
@@ -26,13 +26,13 @@ from release_step import BadgeMetrics, Phase, ReleaseContext, ReleaseStep
 class ReleaseCommitStep(ReleaseStep):
     """A release commit step builds the release commit or its tag, locally; nothing is pushed yet."""
 
-    phase = Phase.RELEASE_COMMIT
+    phase = ReleasePhase.RELEASE_COMMIT
 
 
 # ==================================================================================================
 #  Steps
 # ==================================================================================================
-class BumpVersion(ReleaseCommitStep):
+class BumpVersionStep(ReleaseCommitStep):
     """Set version in pyproject.toml."""
 
     def title(self, context: ReleaseContext) -> str:
@@ -42,7 +42,7 @@ class BumpVersion(ReleaseCommitStep):
         run_command(["uv", "version", context.version])
 
 
-class RefreshLock(ReleaseCommitStep):
+class RefreshUvLockStep(ReleaseCommitStep):
     """Refresh uv.lock after version bump."""
 
     def title(self, context: ReleaseContext) -> str:
@@ -52,8 +52,8 @@ class RefreshLock(ReleaseCommitStep):
         run_command(["uv", "lock"])
 
 
-class FinalizeChangelog(ReleaseCommitStep):
-    """Move Unreleased entries to a dated version section."""
+class FinalizeChangelogStep(ReleaseCommitStep):
+    """Turn the Unreleased section into a dated version section, dropping the categories that have no entries."""
 
     def title(self, context: ReleaseContext) -> str:
         return f"finalize CHANGELOG.md '## Unreleased' -> '## {context.version} ({date.today().isoformat()})'"
@@ -100,8 +100,11 @@ class FinalizeChangelog(ReleaseCommitStep):
         CHANGELOG.write_text(text)
 
 
-class CommitRelease(ReleaseCommitStep):
-    """Refresh README badges, stamp the splash, then create the release commit."""
+class StampAndCommitReleaseStep(ReleaseCommitStep):
+    """Refresh the README badges from `context.badge_metrics`, stamp the splash, then create the release commit.
+
+    `GatherBadgeMetricsStep` sets `context.badge_metrics`, so it must run before this step.
+    """
 
     def title(self, context: ReleaseContext) -> str:
         return f"refresh README badges + stamp splash + commit 'release: {context.version}'"
@@ -118,24 +121,17 @@ class CommitRelease(ReleaseCommitStep):
     # --------------------------------------------------------------------------
     #  Helpers
     # --------------------------------------------------------------------------
-    @classmethod
-    def _refresh_readme_badges(cls, badges: BadgeMetrics) -> None:
-        """Stamp the README coverage + test-count badges from the metrics in `badges`."""
+    @staticmethod
+    def _refresh_readme_badges(badge_metrics: BadgeMetrics) -> None:
+        """Stamp the README coverage + test-count badges from `badge_metrics`."""
         text = README.read_text()
         text = re.sub(
             r"badge/coverage-[\d.]+%25-[a-z]+",
-            f"badge/coverage-{badges.coverage_pct:.2f}%25-{cls._coverage_color(badges.coverage_pct)}",
+            f"badge/coverage-{badge_metrics.coverage_pct:.2f}%25-{badge_metrics.coverage_color}",
             text,
         )
-        text = re.sub(r"badge/tests-\d+-blue", f"badge/tests-{badges.test_union}-blue", text)
+        text = re.sub(r"badge/tests-\d+-blue", f"badge/tests-{badge_metrics.test_union}-blue", text)
         README.write_text(text)
-
-    @staticmethod
-    def _coverage_color(pct: float) -> str:
-        """Map a coverage percentage to a shields.io badge color."""
-        if pct >= 90:
-            return "brightgreen"
-        return "yellow" if pct >= 75 else "red"
 
     @staticmethod
     def _stamp_readme_splash_url(version: str) -> None:
@@ -156,16 +152,16 @@ class CommitRelease(ReleaseCommitStep):
     def _stamp_splash(version: str) -> None:
         """Stamp the release version onto the committed splash webp (needs ImageMagick).
 
-        Runs the version-overlay stage of ``create_splash_with_version.sh`` on the
-        committed, version-independent base image. Fails loudly if ``magick`` is
-        absent, since a maintainer-driven release must produce the real asset.
+        It runs the version-overlay stage of ``create_splash_with_version.sh`` on the committed,
+        version-independent base image. It exits with an error if ``magick`` is absent, since a
+        maintainer-driven release must produce the real asset.
         """
         if shutil.which("magick") is None:
             fail_with_message("ImageMagick ('magick') is required to stamp the release splash but was not found")
         run_command(["sh", str(SPLASH_SCRIPT), f"v{version}"], cwd=REPO_ROOT)
 
 
-class CreateTag(ReleaseCommitStep):
+class CreateTagStep(ReleaseCommitStep):
     """Create the version tag."""
 
     def title(self, context: ReleaseContext) -> str:

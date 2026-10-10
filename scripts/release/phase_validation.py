@@ -7,6 +7,7 @@ import re
 import sys
 import tempfile
 import time
+import tomllib
 import urllib.error
 import urllib.request
 from pathlib import Path
@@ -21,7 +22,7 @@ from release_helpers import (
     parse_semver,
     run_command,
 )
-from release_step import BadgeMetrics, Phase, ReleaseContext, ReleaseStep
+from release_step import BadgeMetrics, ReleaseContext, ReleasePhase, ReleaseStep
 
 # warn if the cumulative union exceeds this multiple of the largest single combo
 TEST_COUNT_UNION_RATIO_WARN = 1.5
@@ -37,13 +38,13 @@ CI_POLL_INTERVAL_SEC = 30
 class ValidationStep(ReleaseStep):
     """A validation step checks a precondition of the release and writes nothing to the repo."""
 
-    phase = Phase.VALIDATION
+    phase = ReleasePhase.VALIDATION
 
 
 # ==================================================================================================
 #  Steps
 # ==================================================================================================
-class CheckWorkingTree(ValidationStep):
+class CheckCleanWorkingTreeOnMainStep(ValidationStep):
     """Validate working tree is on main and clean."""
 
     def title(self, context: ReleaseContext) -> str:
@@ -58,7 +59,7 @@ class CheckWorkingTree(ValidationStep):
             fail_with_message("working tree has uncommitted changes:\n" + porcelain)
 
 
-class CheckInSync(ValidationStep):
+class CheckMainInSyncWithOriginStep(ValidationStep):
     """Validate main is in sync with origin."""
 
     def title(self, context: ReleaseContext) -> str:
@@ -72,7 +73,7 @@ class CheckInSync(ValidationStep):
             fail_with_message(f"local main ({local[:8]}) does not match origin/main ({remote[:8]})")
 
 
-class CheckVersionUpgrade(ValidationStep):
+class CheckVersionUpgradeStep(ValidationStep):
     """Validate VERSION is strictly greater than current."""
 
     def title(self, context: ReleaseContext) -> str:
@@ -80,26 +81,14 @@ class CheckVersionUpgrade(ValidationStep):
 
     def run(self, context: ReleaseContext) -> None:
         new = parse_semver(context.version)
-        current = parse_semver(self._read_pyproject_version())
+        current = parse_semver(tomllib.loads(PYPROJECT.read_text())["project"]["version"])
         if new <= current:
             fail_with_message(
                 f"VERSION {context.version} is not greater than current {'.'.join(str(p) for p in current)}"
             )
 
-    # --------------------------------------------------------------------------
-    #  Helpers
-    # --------------------------------------------------------------------------
-    @staticmethod
-    def _read_pyproject_version() -> str:
-        """Read the current version from pyproject.toml."""
-        text = PYPROJECT.read_text()
-        m = re.search(r'(?m)^version\s*=\s*"([^"]+)"', text)
-        if not m:
-            fail_with_message("Could not find version in pyproject.toml")
-        return m.group(1)
 
-
-class CheckTagDoesNotExist(ValidationStep):
+class CheckTagDoesNotExistStep(ValidationStep):
     """Validate tag does not exist locally or on origin."""
 
     def title(self, context: ReleaseContext) -> str:
@@ -113,7 +102,7 @@ class CheckTagDoesNotExist(ValidationStep):
             fail_with_message(f"tag {tag} already exists on origin")
 
 
-class CheckNotOnPyPI(ValidationStep):
+class CheckNotOnPyPIStep(ValidationStep):
     """Validate version is not already on PyPI."""
 
     def title(self, context: ReleaseContext) -> str:
@@ -130,11 +119,11 @@ class CheckNotOnPyPI(ValidationStep):
                 fail_with_message(f"PyPI check returned HTTP {e.code}")
         except urllib.error.URLError as e:
             # HTTPError is a subclass of URLError, so this only catches transport failures
-            # (DNS, connection reset, the 10s timeout) — fail cleanly instead of a raw traceback.
+            # (DNS, connection reset, the 10s timeout) — exit with a one-line error message, not a raw traceback.
             fail_with_message(f"could not reach PyPI to check {context.version}: {e.reason}")
 
 
-class CheckClassifiers(ValidationStep):
+class CheckClassifiersMatchPythonVersionsStep(ValidationStep):
     """Validate Python classifiers match .python-versions."""
 
     def title(self, context: ReleaseContext) -> str:
@@ -155,7 +144,7 @@ class CheckClassifiers(ValidationStep):
             )
 
 
-class CheckChangelogHasEntries(ValidationStep):
+class CheckChangelogHasEntriesStep(ValidationStep):
     """Validate Unreleased section has at least one bullet entry."""
 
     def title(self, context: ReleaseContext) -> str:
@@ -169,13 +158,11 @@ class CheckChangelogHasEntries(ValidationStep):
             fail_with_message("'## Unreleased' has no bullet entries")
 
 
-class GatherBadgeMetrics(ValidationStep):
+class GatherBadgeMetricsStep(ValidationStep):
     """Resolve every badge number, failing the release if any of them cannot be obtained.
 
-    Gathering the badge metrics is the last precondition: the fetch runs after every cheap check
-    has passed and before the first write. When the 'Push to Main' run for HEAD is still in flight,
-    the step waits for it rather than aborting — the common case after a last-minute commit (e.g. a
-    changelog entry) is CI that simply has not finished yet, and waiting turns a manual
+    When the 'Push to Main' run for HEAD is still in flight, the step waits for it, because the common case after a
+    last-minute commit (e.g. a changelog entry) is CI that has not finished yet, and waiting turns a manual
     watch-and-rerun loop into one invocation.
     """
 
@@ -229,18 +216,18 @@ class GatherBadgeMetrics(ValidationStep):
         if run_id is None:
             fail_with_message(f"no 'Push to Main' run found for HEAD {local_head[:8]} — did the push trigger CI?")
         deadline = time.monotonic() + CI_WAIT_TIMEOUT_SEC
-        announced = False
+        has_announced_wait = False
         while True:
             status, conclusion = cls._workflow_run_state(run_id)
             if status == "completed":
                 if conclusion != "success":
                     fail_with_message(f"'Push to Main' run for HEAD {local_head[:8]} concluded '{conclusion}'")
                 return run_id
-            if not announced:
+            if not has_announced_wait:
                 print(
                     f"       CI for HEAD {local_head[:8]} is {status} — waiting up to {CI_WAIT_TIMEOUT_SEC // 60} min"
                 )
-                announced = True
+                has_announced_wait = True
             if time.monotonic() >= deadline:
                 fail_with_message(f"timed out after {CI_WAIT_TIMEOUT_SEC // 60} min waiting for CI on {local_head[:8]}")
             time.sleep(CI_POLL_INTERVAL_SEC)

@@ -1,12 +1,12 @@
-"""These tests check how the badge-metrics step waits for the 'Push to Main' CI run (scripts/release/validation.py)."""
+"""These tests check how GatherBadgeMetricsStep (scripts/release/phase_validation.py) waits for CI on main."""
 
 import json
 
 import pytest
 
-from scripts.tests.helpers import load_release_module
+from scripts.tests.release.helpers import load_release_module
 
-_validation = load_release_module("validation")
+_validation = load_release_module("phase_validation")
 
 _HEAD_SHA = "a" * 40
 
@@ -53,7 +53,7 @@ def test_an_in_flight_run_is_polled_by_its_id_until_it_succeeds(monkeypatch: pyt
     )
 
     # --- act --------------------------
-    run_id = _validation.GatherBadgeMetrics._wait_for_main_ci(_HEAD_SHA)
+    run_id = _validation.GatherBadgeMetricsStep._wait_for_main_ci(_HEAD_SHA)
 
     # --- assert -----------------------
     assert run_id == "42"
@@ -79,4 +79,4 @@ def test_the_release_aborts_without_a_successful_run(
 
     # --- act / assert -----------------
     with pytest.raises(SystemExit):
-        _validation.GatherBadgeMetrics._wait_for_main_ci(_HEAD_SHA)
+        _validation.GatherBadgeMetricsStep._wait_for_main_ci(_HEAD_SHA)

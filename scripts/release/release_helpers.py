@@ -1,4 +1,4 @@
-"""This module holds the repo paths and helpers that the steps of several release phases share."""
+"""This module holds the repo paths and helpers common to several release phases."""
 
 from __future__ import annotations
 
@@ -25,7 +25,10 @@ UNRELEASED_SECTION_RE = re.compile(r"^## Unreleased\s*$(.*?)(?=^## |\Z)", re.MUL
 
 
 def run_command(cmd: list[str], **kw: object) -> str:
-    """Run a subprocess and return stdout, or exit on failure."""
+    """Run a subprocess and return its stdout.
+
+    On failure, print the command and its output to stderr and raise `CalledProcessError`.
+    """
     # check=False is deliberate: the return code is handled below with
     # richer diagnostics than subprocess's own CalledProcessError.
     result = subprocess.run(cmd, capture_output=True, text=True, check=False, **kw)

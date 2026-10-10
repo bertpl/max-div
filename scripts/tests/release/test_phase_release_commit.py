@@ -1,19 +1,19 @@
-"""These tests check the changelog step of the release commit (scripts/release/release_commit.py)."""
+"""These tests check the changelog step of the release commit (scripts/release/phase_release_commit.py)."""
 
 from datetime import date
 
 import pytest
 
-from scripts.tests.helpers import load_release_module
+from scripts.tests.release.helpers import load_release_module
 
-_release_commit = load_release_module("release_commit")
+_release_commit = load_release_module("phase_release_commit")
 _release_step = load_release_module("release_step")
 
 
 def test_finalize_changelog_dates_the_unreleased_section_and_drops_its_empty_categories(
     tmp_path, monkeypatch: pytest.MonkeyPatch
 ):
-    """The `## Unreleased` heading becomes the dated version heading, and categories without entries go."""
+    """The `## Unreleased` heading becomes the dated version heading, and the categories without entries are removed."""
     # --- arrange ----------------------
     changelog = tmp_path / "CHANGELOG.md"
     changelog.write_text(
@@ -24,7 +24,7 @@ def test_finalize_changelog_dates_the_unreleased_section_and_drops_its_empty_cat
     monkeypatch.setattr(_release_commit, "CHANGELOG", changelog)
 
     # --- act --------------------------
-    _release_commit.FinalizeChangelog().run(_release_step.ReleaseContext("0.2.0"))
+    _release_commit.FinalizeChangelogStep().run(_release_step.ReleaseContext("0.2.0"))
 
     # --- assert -----------------------
     assert changelog.read_text() == (
