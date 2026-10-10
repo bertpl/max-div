@@ -7,34 +7,34 @@ permissions:
   contents: read
 
 jobs:
-  # The rows of the test matrix come from scripts/ci_test_matrix.py, which builds them from the
+  # The entries of the test matrix come from scripts/ci_test_matrix.py, which builds them from the
   # [tool.ci-test-matrix] table in pyproject.toml; the table and its comments say which jobs run
   # and why.
-  matrix-rows:
+  build-test-matrix:
     runs-on: ubuntu-latest
     outputs:
-      rows: ${{ steps.rows.outputs.rows }}
+      entries: ${{ steps.entries.outputs.entries }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
-      - name: Build the matrix rows
-        id: rows
-        # The script's output goes into a variable first: inside echo "rows=$(...)", a failing
+      - name: Build the matrix entries
+        id: entries
+        # The script's output goes into a variable first: inside echo "entries=$(...)", a failing
         # script would not fail this step.
         run: |
-          rows="$(uv run --no-project python scripts/ci_test_matrix.py matrix)"
-          echo "rows=$rows" >> "$GITHUB_OUTPUT"
+          entries="$(uv run --no-project python scripts/ci_test_matrix.py matrix)"
+          echo "entries=$entries" >> "$GITHUB_OUTPUT"
 
   core:
     name: py${{ matrix.python }} / ${{ matrix.resolution }} / jit-${{ matrix.jit }} / extras-${{ matrix.extras }}
-    needs: [matrix-rows]
+    needs: [build-test-matrix]
     runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
       matrix:
-        include: ${{ fromJSON(needs.matrix-rows.outputs.rows) }}
+        include: ${{ fromJSON(needs.build-test-matrix.outputs.entries) }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
