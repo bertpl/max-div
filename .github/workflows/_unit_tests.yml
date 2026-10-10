@@ -17,8 +17,8 @@ jobs:
       matrix:
         # ubuntu-only: pure Python + numpy/scipy/numba, no OS-specific code paths, so one
         # OS exercises everything. Strategic combos cover every axis (every supported Python,
-        # both resolution ends), not their full product. numba is a mandatory
-        # dependency; the jit axis distinguishes compiled (representative) from
+        # every resolution), not their full product. numba is a mandatory dependency; the jit
+        # axis distinguishes compiled (representative) from
         # interpreted execution — coverage comes from the jit-off jobs, since numba
         # only yields line coverage with the JIT disabled. The extras axis distinguishes
         # a full install from the plain install a user gets: on the extras-off jobs the
@@ -34,6 +34,14 @@ jobs:
           - { python: "3.12", resolution: lowest-direct, jit: "on",  extras: "true"  }
           - { python: "3.14", resolution: lowest-direct, jit: "on",  extras: "true"  }
           - { python: "3.15", resolution: lowest-direct, jit: "on",  extras: "true"  }
+          # This job installs the versions in uv.lock, on the Python version recorded in the JIT
+          # golden master (the expected output of seeded, JIT-compiled solves, which
+          # tests/_core/solver/test_golden_master.py checks). So this is the one jit-on job where
+          # `make test` runs the JIT golden master test, and a version mismatch fails it.
+          #
+          # The other jit-on jobs skip that test: they run another Python, or install the newest
+          # or the minimum versions, which can differ from the recorded ones.
+          - { python: "3.14", resolution: locked,        jit: "on",  extras: "true"  }
           - { python: "3.12", resolution: highest,       jit: "off", extras: "true"  }  # coverage job
           - { python: "3.14", resolution: highest,       jit: "off", extras: "true"  }  # coverage job
           - { python: "3.12", resolution: highest,       jit: "on",  extras: "false" }  # plain install

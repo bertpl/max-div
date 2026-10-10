@@ -29,10 +29,16 @@ test asserts against the dataset matching the active regime:
 - 'jit' output depends on numba's codegen, which varies with Python and numba version (numba
   compiles from Python bytecode, so two Python minors can round floats differently under the
   same numba). The jit dataset therefore records the fingerprint of the
-  environment it was generated in, and the test skips when the runtime doesn't match —
-  a version-driven codegen change is numba's business, not a regression of this codebase.
+  environment it was generated in, and only a run in that environment can check it — a
+  version-driven codegen change is numba's business, not a regression of this codebase.
 
-To regenerate the expected data (both regimes) after an intentional numeric change:
+  So the test carries the `jit_golden_master` marker: with JIT compilation on, its cases run
+  only when pytest gets `--jit-golden-master` (tests/conftest.py), and `JIT_GOLDEN_MASTER_ARG`
+  in the Makefile decides which `make test` runs pass that option. On such a run, a
+  fingerprint mismatch fails every case.
+
+To regenerate the expected data (both regimes) after an intentional numeric change or a numba
+upgrade in uv.lock:
 
     uv run --all-extras --python 3.14 python -m tests._core.solver.test_golden_master
 """
@@ -153,17 +159,27 @@ def _case_key(problem_name: str, preset: SolverPreset, seed: int) -> str:
 # ==================================================================================================
 #  Tests
 # ==================================================================================================
+@pytest.fixture(scope="module")
+def expected_data() -> dict[str, Any]:
+    """Load the expected data of the active numba regime, failing if the jit data's fingerprint is not this run's."""
+    regime = _active_regime()
+    data = json.loads(_data_file(regime).read_text())
+    runtime_fingerprint = _runtime_fingerprint()
+    if regime == "jit" and data["fingerprint"] != runtime_fingerprint:
+        pytest.fail(
+            f"the jit expected data was generated with {data['fingerprint']}, this run has {runtime_fingerprint}. "
+            "Regenerate it with: uv run --all-extras --python 3.14 python -m tests._core.solver.test_golden_master"
+        )
+    return data
+
+
+@pytest.mark.jit_golden_master
 @pytest.mark.parametrize("seed", SEEDS)
 @pytest.mark.parametrize("preset", PRESETS)
 @pytest.mark.parametrize("problem_name", PROBLEMS)
-def test_golden_master(problem_name: str, preset: SolverPreset, seed: int):
+def test_golden_master(problem_name: str, preset: SolverPreset, seed: int, expected_data: dict[str, Any]):
+    """A seeded solve reproduces the expected data of the active numba regime bit for bit."""
     # --- arrange ----------------------
-    regime = _active_regime()
-    expected_data = json.loads(_data_file(regime).read_text())
-    if regime == "jit" and expected_data["fingerprint"] != _runtime_fingerprint():
-        pytest.skip(
-            f"jit-compiled output is fingerprint-specific; data was generated with {expected_data['fingerprint']}"
-        )
     expected = expected_data["cases"][_case_key(problem_name, preset, seed)]
 
     # --- act --------------------------

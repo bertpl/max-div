@@ -5,19 +5,36 @@
 # there is only one place that names them. CI overrides PY and RESOLUTION per matrix job; the
 # defaults are the single representative combo to run locally.
 #
+# RESOLUTION=locked installs exactly what uv.lock pins, and fails if the lock is out of date with
+# pyproject.toml. `highest` and `lowest-direct` are uv resolution strategies. With uv.lock present,
+# `highest` installs the locked versions; it resolves the newest versions only when uv.lock is absent.
+#
 # On the uv flags. Every `uv run` / `uv sync` implicitly activates a set of dependency groups —
 # uv's "default groups", which is `dev` unless a project configures otherwise. `--group` ADDS to
 # that set rather than replacing it, so `--group test` on its own installs test AND dev, and the
 # narrowing would be cosmetic. `--no-default-groups` empties the implicit set, leaving only what
 # is named. `--only-group` narrows as well, but additionally drops the project and its runtime
 # dependencies, which leaves pytest with nothing to import.
-PY ?= 3.14
-RESOLUTION ?= highest
+
+# The default Python is also the Python version recorded in the JIT golden master: the expected
+# output of seeded, JIT-compiled solves, which tests/_core/solver/test_golden_master.py checks.
+DEFAULT_PY := 3.14
+PY ?= $(DEFAULT_PY)
+RESOLUTION ?= locked
 # ALL_EXTRAS=false runs the suite as a plain install would: tests that need an extra are skipped, and
 # the tests of what the package does without one are run. CI covers both values.
 ALL_EXTRAS ?= true
-UV_RUN = uv run --exact --python $(PY) --resolution $(RESOLUTION) --no-default-groups --group test \
-         $(if $(filter true,$(ALL_EXTRAS)),--all-extras,)
+UV_RUN = uv run --exact --python $(PY) \
+         $(if $(filter locked,$(RESOLUTION)),--locked,--resolution $(RESOLUTION)) \
+         --no-default-groups --group test $(if $(filter true,$(ALL_EXTRAS)),--all-extras,)
+
+# The JIT golden master's expected data holds only for the Python and numba versions that generated
+# it, so its cases run only when pytest gets `--jit-golden-master` (tests/conftest.py).
+#
+# A run from uv.lock on the default Python is meant to have those versions, so JIT_GOLDEN_MASTER_ARG
+# passes the option on that run. There a version mismatch fails the JIT golden master test, because
+# it means that uv.lock and the golden master have diverged.
+JIT_GOLDEN_MASTER_ARG = $(if $(and $(filter locked,$(RESOLUTION)),$(filter $(DEFAULT_PY),$(PY))),--jit-golden-master,)
 
 # Appended to the pytest invocation. Locally this silences the warning summary; CI overrides it
 # to pass coverage flags, and deliberately keeps the warnings visible.
@@ -59,16 +76,16 @@ help:
 	@echo 'Options:'
 	@echo ''
 	@echo '  test / collect-test-ids / coverage'
-	@echo '                                 - accept `PY=<version>` and `RESOLUTION=highest|lowest-direct` to pick the'
-	@echo '                                   interpreter and uv resolution strategy, and `PYTEST_ARGS=<flags>` to replace'
+	@echo '                                 - accept `PY=<version>` and `RESOLUTION=locked|highest|lowest-direct` to pick the'
+	@echo '                                   interpreter and the dependency versions, and `PYTEST_ARGS=<flags>` to replace'
 	@echo '                                   the default pytest flags. The CI matrix drives these targets that way.'
 
 build:
 	uv build;
 
 test:
-	# run all tests - with numba & one interpreter (see PY / RESOLUTION above)
-	$(UV_RUN) pytest ./tests --durations=20 $(PYTEST_ARGS)
+	# run all tests - with numba & one interpreter (see PY / RESOLUTION / JIT_GOLDEN_MASTER_ARG above)
+	$(UV_RUN) pytest ./tests --durations=20 $(JIT_GOLDEN_MASTER_ARG) $(PYTEST_ARGS)
 
 # Collected node-ids, one per line. CI unions these across matrix jobs to count the suite, so this
 # target's stdout is data: it is written with `@` and its commentary lives here rather than in the
