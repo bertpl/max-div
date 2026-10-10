@@ -77,9 +77,9 @@ jobs:
     needs: [preflight]
     uses: ./.github/workflows/_unit_tests.yml
 
-  # Tests of the maintainer tooling under scripts/: single job (default Python, from uv.lock),
-  # outside the package test matrix. They test no code of the published package, so running them
-  # on every Python and JIT setting would check nothing that 1 run does not.
+  # The tests of the maintainer tooling under scripts/ run as 1 job, outside the package test matrix.
+  # They test no code of the published package, so running them on every Python and JIT setting
+  # would check nothing that 1 run does not.
   test-scripts:
     needs: [preflight]
     runs-on: ubuntu-latest

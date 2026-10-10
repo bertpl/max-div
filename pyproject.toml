@@ -100,13 +100,14 @@ lint = [
 package = [
     "check-wheel-contents>=0.6.2",
 ]
-# Maintainer tooling under scripts/. Not part of `test`: the package tests import no script, and
-# `make test-scripts` installs this group next to `test` for the tests of the scripts.
+# This group holds the dependencies of the maintainer tooling under scripts/. The `test` group does
+# not include it, because the package tests import no script; `make test-scripts` installs both
+# groups for the tests of the scripts.
 tooling = [
     # Per-Python minimum versions, same rationale as the runtime dependencies above: each is the
-    # earliest release shipping a wheel for that CPython, so a `lowest-direct` install gets a wheel
-    # instead of attempting a source build. A flat `>=6.0` minimum fails on 3.14, where that
-    # version has no wheel and does not build.
+    # earliest release shipping a wheel for that CPython, so an installation with `lowest-direct`
+    # resolution gets a wheel instead of attempting a source build. A flat `>=6.0` minimum fails on
+    # 3.14, where that version has no wheel and does not build.
     #
     # On 3.15, no PyYAML release ships a wheel, so the 3.14 minimum also applies there and uv builds
     # that release from source, which works.
@@ -245,7 +246,7 @@ convention = "google"
 "tests/_core/_markdown/test_table.py" = ["E501"]  # expected-output literals: exact rendered table rows
 "__init__.py" = ["F401"]                 # re-export modules: naked imports, no `as` alias
 "scripts/**" = ["INP001", "S", "D", "ANN", "TID251"]  # maintainer tooling, not the shipped library
-"scripts/tests/**" = ["SLF001"]  # on top of scripts/**: the tests call the scripts' private functions
+"scripts/tests/**" = ["SLF001"]  # in addition to the scripts/** ignores, because the tests call the scripts' private functions
 ".github/scripts/**" = ["INP001", "S", "D", "ANN"]   # maintainer tooling, not held to shipped-source style
 # benchmark closures are constructed and invoked within the same loop iteration, so late binding never bites
 "src/max_div/_core/_cli/benchmarks/internal/**" = ["B023"]

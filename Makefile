@@ -112,7 +112,7 @@ build-capability-data:
 	uv run --no-default-groups --group tooling python scripts/build_hero_table.py
 
 test-scripts:
-	# maintainer tooling tests - separate from the package suite, so 1 run on the default Python from uv.lock
+	# These tests check the maintainer tooling, not the package, so 1 run on the default Python covers them.
 	uv run --exact --python $(DEFAULT_PY) --locked --no-default-groups --group test --group tooling pytest ./scripts/tests --durations=20 --disable-warnings
 
 test-benchmarks:
