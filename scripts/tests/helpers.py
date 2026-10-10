@@ -1,5 +1,6 @@
 """This module holds the helpers shared by the tests of the maintainer tooling."""
 
+import importlib
 import importlib.util
 import sys
 from pathlib import Path
@@ -20,3 +21,15 @@ def load_script(name: str) -> ModuleType:
     sys.modules[spec.name] = module
     spec.loader.exec_module(module)
     return module
+
+
+def load_release_module(name: str) -> ModuleType:
+    """Import module `name` of the scripts/release/ folder, the way `python scripts/release` resolves it.
+
+    The folder runs by its path, so its modules import each other by bare name; this puts the folder
+    on `sys.path`, so those imports resolve in the tests too.
+    """
+    release_dir = str(SCRIPTS_DIR / "release")
+    if release_dir not in sys.path:
+        sys.path.insert(0, release_dir)
+    return importlib.import_module(name)

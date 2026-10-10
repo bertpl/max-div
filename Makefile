@@ -153,11 +153,11 @@ release:
 ifndef VERSION
 	$(error VERSION is required: make release VERSION=X.Y.Z)
 endif
-	# preconditions first (seconds, and step 8 waits out an in-flight main CI run), so a bad
-	# changelog or a stale coverage run aborts before the test suite spends its minutes
-	uv run python scripts/release.py $(VERSION) --dry-run
+	# preconditions first (seconds, and the badge-metrics step waits out an in-flight main CI
+	# run), so a bad changelog or a stale coverage run aborts before the test suite spends its minutes
+	uv run python scripts/release $(VERSION) --dry-run
 	$(MAKE) test
-	uv run python scripts/release.py $(VERSION)
+	uv run python scripts/release $(VERSION)
 
 splash:
 	./images/splash/create_splash_with_version.sh "$$(uv version --short)-dev";
