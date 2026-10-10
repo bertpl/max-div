@@ -1,3 +1,7 @@
+import os
+import subprocess
+import sys
+
 import numpy as np
 import pytest
 from numba import TypingError
@@ -538,3 +542,53 @@ def test_randint_never_draws_a_zero_probability_item():
 
     # --- assert -----------------------
     assert not any(np.isin(draw, zero_p).any() for draw in draws)
+
+
+@pytest.mark.parametrize(
+    "p_small, is_like_zero",
+    [
+        pytest.param(1e-45, True, id="below_the_limit"),
+        pytest.param(1e-36, False, id="above_the_limit"),
+    ],
+)
+def test_randint_counts_an_item_with_p_below_the_float32_key_limit_as_p_zero(p_small: float, is_like_zero: bool):
+    """Without replacement, an item far below p = 1e-38 is drawn as if its p were 0; one above 1e-37 is not."""
+    # --- arrange ----------------------
+    # the small items come last, so they leave the random draws of the items before them unchanged
+    p_small_items = np.array([1.0, 1.0, 1.0, 1.0, p_small, p_small], dtype=np.float32)
+    p_zero_items = np.array([1.0, 1.0, 1.0, 1.0, 0.0, 0.0], dtype=np.float32)
+
+    # --- act --------------------------
+    draws_small = [randint(np.int32(6), np.int32(5), False, p_small_items, new_rng_state(s)) for s in range(20)]
+    draws_zero = [randint(np.int32(6), np.int32(5), False, p_zero_items, new_rng_state(s)) for s in range(20)]
+
+    # --- assert -----------------------
+    is_same = [np.array_equal(small, zero) for small, zero in zip(draws_small, draws_zero, strict=True)]
+    assert all(is_same) == is_like_zero
+
+
+def test_randint_and_the_rng_emit_no_overflow_warning_with_jit_compilation_off():
+    """With JIT compilation off, seeding the RNG and drawing with a tiny p emit no overflow warning.
+
+    The check runs in a fresh interpreter, as a user's script would: pytest drops the warning filters
+    that max-div adds while pytest imports it.
+    """
+    # --- arrange ----------------------
+    code = (
+        "import warnings\n"
+        "import numpy as np\n"
+        "from max_div._core._random import new_rng_state, randint\n"
+        "p = np.array([1.0, 1.0, 1.0, 1.0, 1e-45, 0.0], dtype=np.float32)\n"
+        "with warnings.catch_warnings(record=True) as caught:\n"
+        "    rng_state = new_rng_state(1)\n"
+        "    for _ in range(20):\n"
+        "        randint(np.int32(6), np.int32(5), False, p, rng_state)\n"
+        "print(sum(issubclass(w.category, RuntimeWarning) for w in caught))\n"
+    )
+    env = {**os.environ, "NUMBA_DISABLE_JIT": "1"}
+
+    # --- act --------------------------
+    output = subprocess.run([sys.executable, "-c", code], env=env, capture_output=True, text=True, check=True).stdout  # noqa: S603 -- fixed args
+
+    # --- assert -----------------------
+    assert output.strip() == "0"

@@ -9,11 +9,24 @@ This is based on the following:
   - splitmix64 for seed initialization by Sebastiano Vigna (http://xorshift.di.unimi.it/splitmix64.c)
 """
 
+import re
+import warnings
+
 import numpy as np
 from numpy import float32, float64, uint64
 from numpy.typing import NDArray
 
 from max_div._core.jit import lazy_njit
+
+# With numba's JIT compilation disabled, the functions below run as numpy scalar arithmetic, and numpy
+# warns on every uint64 overflow. xoroshiro128+ and splitmix64 rely on that wrap-around, so the warning
+# reports no error.
+warnings.filterwarnings(
+    "ignore",
+    message=r"overflow encountered in scalar (add|multiply)",
+    category=RuntimeWarning,
+    module=re.escape(__name__) + r"\Z",
+)
 
 # ==================================================================================================
 #  Constants
