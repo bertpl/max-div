@@ -26,9 +26,9 @@ and the test asserts against the dataset of the current JIT setting:
 
 - 'nojit' (interpreted) output is environment-independent (verified across platforms and
   Python versions), so it is asserted unconditionally — including on the jit-off CI jobs.
-- 'jit' output depends on numba's codegen, which varies with Python and numba version (numba
-  compiles from Python bytecode, so two Python minors can round floats differently under the
-  same numba).
+- 'jit' output depends on numba's codegen, which varies with the Python and numba versions
+  (numba compiles from Python bytecode, so two Python minors can round floats differently
+  under the same numba) and with the CPU architecture that LLVM generates code for.
 
   The jit dataset therefore records the fingerprint of the environment it was generated in,
   and only a run in that environment can check the jit dataset: a change in numba's code
@@ -49,6 +49,7 @@ upgrade in uv.lock:
 
 import json
 import os
+import platform
 import subprocess
 import sys
 from pathlib import Path
@@ -91,9 +92,13 @@ def _runtime_fingerprint() -> dict[str, str]:
     """Identify the properties of the runtime that jit-compiled numeric output depends on."""
     import numba
 
+    # one name per architecture: macOS reports arm64 where Linux reports aarch64, and Windows
+    # reports AMD64 where the others report x86_64
+    machine = platform.machine().lower()
     return {
         "python": f"{sys.version_info.major}.{sys.version_info.minor}",
         "numba": numba.__version__,
+        "cpu_architecture": {"aarch64": "arm64", "amd64": "x86_64"}.get(machine, machine),
     }
 
 
@@ -180,7 +185,9 @@ def expected_data() -> dict[str, Any]:
     if is_numba_jit_enabled and dataset["fingerprint"] != runtime_fingerprint:
         pytest.fail(
             f"the jit expected data was generated with {dataset['fingerprint']}, this run has {runtime_fingerprint}. "
-            "Regenerate it with: uv run --all-extras --python 3.14 python -m tests._core.solver.test_golden_master"
+            "After a numba upgrade in uv.lock, regenerate it with: "
+            "uv run --all-extras --python 3.14 python -m tests._core.solver.test_golden_master. "
+            "On another CPU architecture, skip it with: make test JIT_GOLDEN_MASTER_ENV="
         )
     return dataset
 

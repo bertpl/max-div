@@ -28,12 +28,13 @@ UV_RUN = uv run --exact --python $(PY) \
          $(if $(filter locked,$(RESOLUTION)),--locked,--resolution $(RESOLUTION)) \
          --no-default-groups --group test $(if $(filter true,$(ALL_EXTRAS)),--all-extras,)
 
-# With JIT compilation on, the JIT golden master's expected data holds only for the Python and numba
-# versions that generated it, so its test runs only when MAX_DIV_JIT_GOLDEN_MASTER=1
-# (tests/_core/solver/test_golden_master.py).
+# With JIT compilation on, the JIT golden master's expected data holds only for the Python version,
+# numba version and CPU architecture that generated it, so its test runs only when
+# MAX_DIV_JIT_GOLDEN_MASTER=1 (tests/_core/solver/test_golden_master.py).
 #
 # A run from uv.lock on the default Python should have the Python and numba versions that generated
-# the expected data, so JIT_GOLDEN_MASTER_ENV sets the variable on that run.
+# the expected data, so JIT_GOLDEN_MASTER_ENV sets the variable on that run. The CPU architecture is
+# not checked here: on a machine with another one, `make test JIT_GOLDEN_MASTER_ENV=` skips the test.
 JIT_GOLDEN_MASTER_ENV = $(if $(and $(filter locked,$(RESOLUTION)),$(filter $(DEFAULT_PY),$(PY))),MAX_DIV_JIT_GOLDEN_MASTER=1,)
 
 # Appended to the pytest invocation. Locally this silences the warning summary; CI overrides it
