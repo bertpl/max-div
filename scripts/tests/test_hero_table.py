@@ -16,7 +16,7 @@ from copy import deepcopy
 
 import pytest
 
-from tests.helpers import load_script
+from scripts.tests.helpers import load_script
 
 
 @pytest.fixture(scope="module")

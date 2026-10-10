@@ -5,7 +5,7 @@ Every declared Python has a job, and the `resolution: locked` job runs the Makef
 
 import re
 
-from tests.helpers import load_script
+from scripts.tests.helpers import load_script
 
 _mod = load_script("check_python_matrix")
 

@@ -4,7 +4,7 @@ import json
 
 import pytest
 
-from tests.helpers import load_script
+from scripts.tests.helpers import load_script
 
 _release = load_script("release")
 

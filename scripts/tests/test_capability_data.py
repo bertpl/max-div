@@ -15,9 +15,9 @@ from pathlib import Path
 
 import pytest
 
-from tests.helpers import load_script
+from scripts.tests.helpers import load_script
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
+REPO_ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = REPO_ROOT / "scripts" / "capability_data.py"
 
 
@@ -645,7 +645,7 @@ def repo_copy(tmp_path):
 
 def _run(root, *args):
     """Invoke the generator the way the make target, the commit hook and CI all do."""
-    return subprocess.run(  # noqa: S603 -- fixed, repo-local command
+    return subprocess.run(
         [sys.executable, str(SCRIPT), "--root", str(root), *args],
         capture_output=True,
         encoding="utf-8",

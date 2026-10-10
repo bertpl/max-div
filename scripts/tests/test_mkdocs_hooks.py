@@ -10,9 +10,9 @@ from types import SimpleNamespace
 
 import pytest
 
-from tests.helpers import load_script
+from scripts.tests.helpers import load_script
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
+REPO_ROOT = Path(__file__).resolve().parents[2]
 README = REPO_ROOT / "README.md"
 
 
