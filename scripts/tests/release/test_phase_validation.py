@@ -1,25 +1,25 @@
-"""These tests check how the release script waits for the 'Push to Main' CI run (scripts/release.py)."""
+"""These tests check how GatherBadgeMetricsStep (scripts/release/phase_validation.py) waits for CI on main."""
 
 import json
 
 import pytest
 
-from scripts.tests.helpers import load_script
+from scripts.tests.release.helpers import load_release_module
 
-_release = load_script("release")
+_validation = load_release_module("phase_validation")
 
 _HEAD_SHA = "a" * 40
 
 
 def _fake_gh(monkeypatch: pytest.MonkeyPatch, runs_for_commit: list[dict], states: list[dict]) -> list[list[str]]:
-    """Replace the script's `run_command` so it answers `gh run list` and `gh run view` with canned JSON.
+    """Replace the module's `run_command` so it answers `gh run list` and `gh run view` with canned JSON.
 
     `gh run list` gets `runs_for_commit`; each `gh run view` gets the next entry of `states`.
 
-    Also patch `time.sleep` in the script to return immediately, so the polling loop does not wait.
+    Also patch `time.sleep` in the module to return immediately, so the polling loop does not wait.
 
     Returns:
-        The list of commands run by the script, in order.
+        The list of commands run by the module, in order.
     """
     commands: list[list[str]] = []
     remaining_states = list(states)
@@ -34,8 +34,8 @@ def _fake_gh(monkeypatch: pytest.MonkeyPatch, runs_for_commit: list[dict], state
         else:
             raise AssertionError(f"unexpected command {cmd}")
 
-    monkeypatch.setattr(_release, "run_command", run_command)
-    monkeypatch.setattr(_release.time, "sleep", lambda _: None)
+    monkeypatch.setattr(_validation, "run_command", run_command)
+    monkeypatch.setattr(_validation.time, "sleep", lambda _: None)
     return commands
 
 
@@ -53,7 +53,7 @@ def test_an_in_flight_run_is_polled_by_its_id_until_it_succeeds(monkeypatch: pyt
     )
 
     # --- act --------------------------
-    run_id = _release._wait_for_main_ci(_HEAD_SHA)
+    run_id = _validation.GatherBadgeMetricsStep._wait_for_main_ci(_HEAD_SHA)
 
     # --- assert -----------------------
     assert run_id == "42"
@@ -79,4 +79,4 @@ def test_the_release_aborts_without_a_successful_run(
 
     # --- act / assert -----------------
     with pytest.raises(SystemExit):
-        _release._wait_for_main_ci(_HEAD_SHA)
+        _validation.GatherBadgeMetricsStep._wait_for_main_ci(_HEAD_SHA)
