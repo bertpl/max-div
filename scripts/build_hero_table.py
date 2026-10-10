@@ -28,7 +28,7 @@ SCRIPTS_DIR = Path(__file__).resolve().parent
 REPO_ROOT = SCRIPTS_DIR.parent
 OUT_DIR = REPO_ROOT / "docs" / "images"
 
-# `scripts/` is maintainer tooling rather than an importable package, so the sibling loader is
+# Scripts import each other by bare name, never as `scripts.<name>`, so the sibling loader is
 # reached by putting this directory on the path. Running the script does that already; importing
 # it, as the tests do, does not.
 sys.path.insert(0, str(SCRIPTS_DIR))

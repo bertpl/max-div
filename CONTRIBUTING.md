@@ -21,6 +21,7 @@ This syncs dev dependencies via `uv` and installs pre-commit hooks.
 
 ```bash
 make test            # Run the test suite (pytest)
+make test-scripts    # Run the tests of the maintainer tooling under scripts/
 make lint            # Run the full pre-commit hook suite over all files, formatting and applying ruff fixes
 make coverage        # Run the test suite with an HTML coverage report
 ```

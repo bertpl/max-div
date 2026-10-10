@@ -77,11 +77,10 @@ jobs:
     needs: [preflight]
     uses: ./.github/workflows/_unit_tests.yml
 
-  # Comparison-benchmark harness tests: single job (py3.14, numba on) with the
-  # `benchmarks` dependency group — deliberately outside the package test matrix.
-  # Network-dependent tests (MDPLIB fetch, code-FDM fetch) skip on fetch failure,
-  # so upstream availability can never block a merge.
-  test-benchmarks-harness:
+  # The tests of the code under scripts/ and benchmarks/, which the published package does not
+  # contain, run as 1 job on the default Python with numba on, outside the package test matrix.
+  # Running them on every Python and JIT setting would check nothing that 1 run does not.
+  test-tooling:
     needs: [preflight]
     runs-on: ubuntu-latest
     steps:
@@ -99,7 +98,13 @@ jobs:
         with:
           path: reports/benchmarks/mdplib/mmdp_instances.zip
           key: mdplib-mmdp-32c437de
-      - name: Run harness tests
+      - name: Run script tests
+        run: make test-scripts
+      # Runs after a failed step too, so that 1 run reports both test suites. Network-dependent
+      # tests (MDPLIB fetch, code-FDM fetch) skip on fetch failure, so upstream availability can
+      # never block a merge.
+      - name: Run benchmark harness tests
+        if: ${{ !cancelled() }}
         run: make test-benchmarks
 
   # Package-integrity gate: build once, verify the wheel statically, then
@@ -155,7 +160,7 @@ jobs:
     # `always()` is load-bearing — without it the gate is skipped when an
     # upstream job fails, and GitHub treats a skipped required check as passing.
     if: always()
-    needs: [preflight, pre-commit, test, test-benchmarks-harness, package, pip-audit, docs]
+    needs: [preflight, pre-commit, test, test-tooling, package, pip-audit, docs]
     runs-on: ubuntu-latest
     steps:
       - name: Fail if any required job did not succeed

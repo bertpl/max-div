@@ -1959,7 +1959,6 @@ test = [
     { name = "pytest" },
     { name = "pytest-cov" },
     { name = "pytest-xdist" },
-    { name = "pyyaml" },
 ]
 tooling = [
     { name = "pyyaml" },
@@ -2046,9 +2045,6 @@ test = [
     { name = "pytest", specifier = ">=8.0" },
     { name = "pytest-cov", specifier = ">=6.0" },
     { name = "pytest-xdist", specifier = ">=3.5.0" },
-    { name = "pyyaml", marker = "python_full_version == '3.12.*'", specifier = ">=6.0.1" },
-    { name = "pyyaml", marker = "python_full_version == '3.13.*'", specifier = ">=6.0.2" },
-    { name = "pyyaml", marker = "python_full_version >= '3.14'", specifier = ">=6.0.3" },
 ]
 tooling = [
     { name = "pyyaml", marker = "python_full_version == '3.12.*'", specifier = ">=6.0.1" },

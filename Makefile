@@ -41,7 +41,7 @@ JIT_GOLDEN_MASTER_ENV = $(if $(and $(filter locked,$(RESOLUTION)),$(filter $(DEF
 # to pass coverage flags, and deliberately keeps the warnings visible.
 PYTEST_ARGS ?= --disable-warnings
 
-.PHONY: help build test collect-test-ids check-capability-data build-capability-data coverage test-and-coverage lint dev-setup release splash docs show-coverage show-docs update-internal-benchmarks update-solver-strategies-benchmarks update-solver-feasibility-benchmarks update-all-benchmarks update-solver-benchmark-figures
+.PHONY: help build test collect-test-ids test-scripts test-benchmarks check-capability-data build-capability-data coverage test-and-coverage lint dev-setup release splash docs show-coverage show-docs update-internal-benchmarks update-solver-strategies-benchmarks update-solver-feasibility-benchmarks update-all-benchmarks update-solver-benchmark-figures
 
 help:
 	@echo 'Commands:'
@@ -52,6 +52,8 @@ help:
 	@echo ''
 	@echo '  test                                   Run pytest unit tests.'
 	@echo '  collect-test-ids                       List collected test node-ids without running them.'
+	@echo '  test-scripts                           Run the tests of the maintainer tooling under ./scripts.'
+	@echo '  test-benchmarks                        Run the tests of the comparison-benchmark harness under ./benchmarks.'
 	@echo '  check-capability-data                  Validate the solver capability data without writing anything.'
 	@echo '  build-capability-data                  Validate it and regenerate the feature tables.'
 	@echo '  coverage                               Generate test coverage report. (./reports/coverage)'
@@ -108,6 +110,10 @@ check-capability-data:
 build-capability-data:
 	uv run --no-default-groups --group tooling python scripts/capability_data.py
 	uv run --no-default-groups --group tooling python scripts/build_hero_table.py
+
+test-scripts:
+	# These tests check the maintainer tooling, not the package, so 1 run on the default Python covers them.
+	uv run --exact --python $(DEFAULT_PY) --locked --no-default-groups --group test --group tooling pytest ./scripts/tests --durations=20 --disable-warnings
 
 test-benchmarks:
 	# comparison-benchmark harness tests - separate from the package suite (needs the benchmarks deps group)
