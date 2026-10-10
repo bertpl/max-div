@@ -278,8 +278,9 @@ exclude_also = [
 addopts = "-n auto --dist worksteal"
 
 # The CI test matrix of .github/workflows/_unit_tests.yml, built by scripts/ci_test_matrix.py: the
-# baseline runs on every Python in .python-versions, and each variant changes 1 setting on a
-# selection of Pythons. The settings are the inputs of .github/actions/unit_test.
+# baseline runs on every Python in .python-versions, and each variant overrides some of the
+# baseline's settings on a selection of Pythons. The settings other than runner are the inputs of
+# .github/actions/unit_test.
 #
 # Every job runs on Linux, because the package is Python, numpy, scipy and numba with no code that
 # depends on the OS. Every job runs on ARM, which runs this suite about twice as fast as x64 for
@@ -287,19 +288,23 @@ addopts = "-n auto --dist worksteal"
 [tool.ci-test-matrix]
 baseline = { runner = "ubuntu-24.04-arm", resolution = "highest", jit = "on", extras = "true", coverage = "false" }
 variants = [
-    # Each Python declares its own minimum versions of the runtime dependencies.
+    # The runtime dependencies declare separate minimum versions for each Python, so every Python
+    # gets a lowest-direct job.
     { pythons = "all", resolution = "lowest-direct" },
-    # uv.lock on the default Python installs the Python and numba versions that the JIT golden
-    # master recorded, so this job runs it (tests/_core/solver/test_golden_master.py).
+    # Installing from uv.lock on the default Python gives the Python and numba versions that the
+    # JIT golden master recorded, so this job runs the JIT golden master test
+    # (tests/_core/solver/test_golden_master.py).
     { pythons = "default", resolution = "locked", env = { MAX_DIV_JIT_GOLDEN_MASTER = "1" } },
     # Coverage can trace the lines inside numba-compiled functions only with JIT compilation off.
-    # The coverage job combines the data of these jobs before it checks the minimum coverage.
     { pythons = "oldest+default", jit = "off", coverage = "true" },
-    # The plain install a user gets: the tests that need an extra are skipped, and the tests of what
-    # the package does without one run.
+    # These jobs test the plain install that a user gets: they skip the tests that need an extra,
+    # and run the tests of the package's behavior without the extras installed. They run compiled,
+    # because the extras and JIT settings do not interact: a test that patches the extras
+    # availability check covers the missing-extra branch on every job.
     { pythons = "oldest+default", extras = "false" },
-    # The Pythons for which numba ships a free-threaded wheel; as of numba 0.68, 3.15 has none.
-    # These jobs install the newest versions only: the minimum numba versions predate numba's first
-    # free-threaded wheels, in 0.65, so a `lowest-direct` job would build numba from source.
-    { pythons = ["3.14"], free_threaded = true },
+    # This variant selects the Pythons for which numba ships a free-threaded wheel; as of numba 0.68,
+    # 3.15 has none. These jobs install the newest versions only: the minimum numba versions
+    # predate numba's first free-threaded wheels, in 0.65, so a `lowest-direct` job would build
+    # numba from source. No PEP 508 marker can raise that minimum for free-threaded builds alone.
+    { pythons = ["3.14"], is_free_threaded = true },
 ]

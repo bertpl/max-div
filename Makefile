@@ -16,10 +16,10 @@
 # is named. `--only-group` narrows as well, but additionally drops the project and its runtime
 # dependencies, which leaves pytest with nothing to import.
 
-# The default Python, read from .python-version. It is also the Python version recorded in the JIT
-# golden master: the expected output of seeded, JIT-compiled solves, which
-# tests/_core/solver/test_golden_master.py checks. `$(shell)`, not `$(file)`, because the make that
-# ships with macOS is GNU Make 3.81, which has no `$(file)`.
+# DEFAULT_PY is the default Python, read from .python-version. It is also the Python version
+# recorded in the JIT golden master: the expected output of seeded, JIT-compiled solves, which
+# tests/_core/solver/test_golden_master.py checks. The file is read with `$(shell)`, not `$(file)`,
+# because the make that ships with macOS is GNU Make 3.81, which has no `$(file)`.
 DEFAULT_PY := $(strip $(shell cat .python-version))
 PY ?= $(DEFAULT_PY)
 RESOLUTION ?= locked
@@ -34,13 +34,16 @@ UV_RUN = uv run --exact --python $(PY) \
 # numba version and CPU architecture that generated it, so its test runs only when
 # MAX_DIV_JIT_GOLDEN_MASTER=1 (tests/_core/solver/test_golden_master.py).
 #
-# The CI test matrix ([tool.ci-test-matrix] in pyproject.toml) decides which jobs set that variable.
-# JIT_GOLDEN_MASTER_ENV asks scripts/ci_test_matrix.py for the env of the matrix jobs with this PY
-# and RESOLUTION, so a local `make test` sets the variable exactly when the matching CI job does.
+# The CI test matrix ([tool.ci-test-matrix] in pyproject.toml) decides which jobs set
+# MAX_DIV_JIT_GOLDEN_MASTER. JIT_GOLDEN_MASTER_ENV asks scripts/ci_test_matrix.py for the env of the
+# matrix jobs with this PY and RESOLUTION, so a local `make test` sets the variable exactly when the
+# matching CI job does.
+#
 # The CPU architecture is not checked here: on a machine with another one,
 # `make test JIT_GOLDEN_MASTER_ENV=` skips the test.
 #
-# If the script fails, make stops: an empty value would skip the test without a word.
+# If the script fails, make stops, because an empty JIT_GOLDEN_MASTER_ENV would skip the test
+# silently.
 JIT_GOLDEN_MASTER_ENV = $(call stop_if_failed,$(shell uv run --no-project --python $(PY) python scripts/ci_test_matrix.py env python=$(PY) resolution=$(RESOLUTION) || echo CI_TEST_MATRIX_FAILED))
 stop_if_failed = $(if $(filter CI_TEST_MATRIX_FAILED,$(1)),$(error scripts/ci_test_matrix.py failed, see its error above),$(1))
 

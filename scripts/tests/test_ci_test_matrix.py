@@ -1,4 +1,4 @@
-"""Tests of scripts/ci_test_matrix.py: the rows that it builds, its checks, and the invariants of max-div's table."""
+"""These tests cover the rows that scripts/ci_test_matrix.py builds, its checks, and max-div's table."""
 
 import json
 from pathlib import Path
@@ -17,7 +17,7 @@ baseline = { resolution = "highest", jit = "on" }
 variants = [
     { pythons = "default", resolution = "locked", env = { GOLDEN = "1" } },
     { pythons = "oldest+default", jit = "off" },
-    { pythons = ["3.14"], free_threaded = true },
+    { pythons = ["3.14"], is_free_threaded = true },
 ]
 """
 
@@ -36,7 +36,7 @@ def test_the_rows_are_the_baseline_on_every_python_then_each_variant(tmp_path):
     root = _write_repo(tmp_path, _TABLE)
 
     # --- act --------------------------
-    matrix = _mod.CiTestMatrix.from_config(root)
+    matrix = _mod.CiTestMatrix.from_repo(root)
 
     # --- assert -----------------------
     assert [row.to_matrix_entry() for row in matrix.rows] == [
@@ -64,6 +64,7 @@ def test_the_rows_are_the_baseline_on_every_python_then_each_variant(tmp_path):
     ],
 )
 def test_a_selection_picks_its_pythons_oldest_first_each_once(selection, expected):
+    """A selection returns its Pythons oldest first, each once."""
     # --- arrange ----------------------
     versions = _mod.PythonVersions(_SUPPORTED, "3.14")
 
@@ -72,13 +73,13 @@ def test_a_selection_picks_its_pythons_oldest_first_each_once(selection, expecte
 
 
 def test_the_supported_pythons_are_sorted_by_version_not_as_text(tmp_path):
-    """3.9 sorts before 3.10, so `oldest` is 3.9."""
+    """The supported Pythons are sorted by version, so 3.9 comes before 3.10."""
     # --- arrange ----------------------
     (tmp_path / ".python-versions").write_text("3.10\n3.9\n", encoding="utf-8")
     (tmp_path / ".python-version").write_text("3.10\n", encoding="utf-8")
 
     # --- act --------------------------
-    versions = _mod.PythonVersions.from_files(tmp_path)
+    versions = _mod.PythonVersions.from_repo(tmp_path)
 
     # --- assert -----------------------
     assert versions.supported == ("3.9", "3.10")
@@ -93,8 +94,9 @@ def test_the_supported_pythons_are_sorted_by_version_not_as_text(tmp_path):
     ],
 )
 def test_env_for_returns_the_env_of_the_matching_rows(tmp_path, query, expected):
+    """env_for returns the env of the matching rows, or an empty dict if no row matches."""
     # --- arrange ----------------------
-    matrix = _mod.CiTestMatrix.from_config(_write_repo(tmp_path, _TABLE))
+    matrix = _mod.CiTestMatrix.from_repo(_write_repo(tmp_path, _TABLE))
 
     # --- act / assert -----------------
     assert matrix.env_for(query) == expected
@@ -108,11 +110,12 @@ def test_env_for_returns_the_env_of_the_matching_rows(tmp_path, query, expected)
     ],
 )
 def test_env_for_raises_when_the_query_does_not_decide_the_env(tmp_path, query, message):
+    """env_for raises when the matching rows disagree or the query names an unknown setting."""
     # --- arrange ----------------------
-    matrix = _mod.CiTestMatrix.from_config(_write_repo(tmp_path, _TABLE))
+    matrix = _mod.CiTestMatrix.from_repo(_write_repo(tmp_path, _TABLE))
 
     # --- act / assert -----------------
-    with pytest.raises(_mod.MatrixConfigError, match=message):
+    with pytest.raises(_mod.CiTestMatrixError, match=message):
         matrix.env_for(query)
 
 
@@ -164,15 +167,17 @@ def test_env_for_raises_when_the_query_does_not_decide_the_env(tmp_path, query, 
     ],
 )
 def test_an_invalid_table_or_version_file_raises(tmp_path, pyproject, default, message):
+    """An invalid table or version file raises CiTestMatrixError."""
     # --- arrange ----------------------
     root = _write_repo(tmp_path, pyproject, default=default)
 
     # --- act / assert -----------------
-    with pytest.raises(_mod.MatrixConfigError, match=message):
-        _mod.CiTestMatrix.from_config(root)
+    with pytest.raises(_mod.CiTestMatrixError, match=message):
+        _mod.CiTestMatrix.from_repo(root)
 
 
 def test_the_matrix_command_prints_the_rows_as_json(tmp_path, capsys):
+    """The matrix command prints the rows as a JSON list and exits 0."""
     # --- arrange ----------------------
     root = _write_repo(tmp_path, _TABLE)
 
@@ -182,7 +187,7 @@ def test_the_matrix_command_prints_the_rows_as_json(tmp_path, capsys):
     # --- assert -----------------------
     rows = json.loads(capsys.readouterr().out)
     assert exit_code == 0
-    assert rows == [row.to_matrix_entry() for row in _mod.CiTestMatrix.from_config(root).rows]
+    assert rows == [row.to_matrix_entry() for row in _mod.CiTestMatrix.from_repo(root).rows]
 
 
 @pytest.mark.parametrize(
@@ -194,6 +199,7 @@ def test_the_matrix_command_prints_the_rows_as_json(tmp_path, capsys):
     ],
 )
 def test_the_env_and_check_commands_print_their_result(tmp_path, capsys, args, expected_stdout):
+    """The env and check commands print their result and exit 0."""
     # --- arrange ----------------------
     root = _write_repo(tmp_path, _TABLE)
 
@@ -213,6 +219,7 @@ def test_the_env_and_check_commands_print_their_result(tmp_path, capsys, args, e
     ],
 )
 def test_a_command_reports_an_error_and_exits_1(tmp_path, capsys, pyproject, args):
+    """A command that hits a CiTestMatrixError prints ERROR to stderr and exits 1."""
     # --- arrange ----------------------
     root = _write_repo(tmp_path, pyproject)
 
@@ -225,9 +232,12 @@ def test_a_command_reports_an_error_and_exits_1(tmp_path, capsys, pyproject, arg
 
 
 def test_the_live_matrix_collects_coverage_on_exactly_its_jit_off_jobs():
-    """Coverage traces the lines inside numba-compiled functions only with JIT compilation off."""
+    """Exactly the jit-off jobs collect coverage.
+
+    Coverage traces the lines inside numba-compiled functions only with JIT compilation off.
+    """
     # --- act --------------------------
-    matrix = _mod.CiTestMatrix.from_config(_mod.REPO_ROOT)
+    matrix = _mod.CiTestMatrix.from_repo(_mod.REPO_ROOT)
 
     # --- assert -----------------------
     coverage_rows = [row for row in matrix.rows if row.settings["coverage"] == "true"]
@@ -237,12 +247,16 @@ def test_the_live_matrix_collects_coverage_on_exactly_its_jit_off_jobs():
 
 
 def test_the_live_matrix_runs_the_jit_golden_master_on_1_locked_jit_on_job_of_the_default_python():
-    """uv.lock on the default Python installs the Python and numba versions that the JIT golden master recorded."""
+    """Only the locked jit-on job of the default Python runs the JIT golden master.
+
+    Installing from uv.lock on the default Python gives the Python and numba versions that the JIT golden master
+    recorded.
+    """
     # --- arrange ----------------------
-    default = _mod.PythonVersions.from_files(_mod.REPO_ROOT).default
+    default = _mod.PythonVersions.from_repo(_mod.REPO_ROOT).default
 
     # --- act --------------------------
-    matrix = _mod.CiTestMatrix.from_config(_mod.REPO_ROOT)
+    matrix = _mod.CiTestMatrix.from_repo(_mod.REPO_ROOT)
 
     # --- assert -----------------------
     golden_master_rows = [row for row in matrix.rows if row.env.get("MAX_DIV_JIT_GOLDEN_MASTER") == "1"]

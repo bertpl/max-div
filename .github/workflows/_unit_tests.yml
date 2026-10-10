@@ -8,7 +8,8 @@ permissions:
 
 jobs:
   # The rows of the test matrix come from scripts/ci_test_matrix.py, which builds them from the
-  # [tool.ci-test-matrix] table in pyproject.toml; the table holds the rules and their reasons.
+  # [tool.ci-test-matrix] table in pyproject.toml; the table and its comments say which jobs run
+  # and why.
   matrix:
     runs-on: ubuntu-latest
     outputs:
@@ -20,7 +21,8 @@ jobs:
       - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
       - name: Build the matrix rows
         id: rows
-        # A separate assignment, so that a failing script fails this step.
+        # The script's output goes into a variable first: inside echo "rows=$(...)", a failing
+        # script would not fail this step.
         run: |
           rows="$(uv run --no-project python scripts/ci_test_matrix.py matrix)"
           echo "rows=$rows" >> "$GITHUB_OUTPUT"

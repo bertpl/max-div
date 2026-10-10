@@ -52,8 +52,8 @@ repos:
         # too, so editing one leaves them stale exactly as it leaves the feature tables stale.
         files: ^(data/(capability_axes|solver_registry)\.yaml|docs/benchmarks/third_party/solvers/.*\.md)$
         pass_filenames: false
-      - id: ci-test-matrix
-        name: ci test matrix
+      - id: ci-test-matrix-check
+        name: ci test matrix table is valid
         entry: uv run --no-project python scripts/ci_test_matrix.py check
         language: system
         # The matrix is built from these files, so an edit to any of them can make it invalid.
