@@ -9,7 +9,7 @@ inputs:
         default: ""
     dependency_resolution:
         required: false
-        description: "uv resolution strategy: 'highest' (default) or 'lowest-direct'."
+        description: "'locked' installs exactly what uv.lock pins; 'highest' (default) and 'lowest-direct' are uv resolution strategies, resolved from pyproject.toml."
         default: "highest"
     jit:
         required: false
@@ -31,7 +31,7 @@ runs:
         uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
         with:
           # Distinct cache key per combo (incl. Python, since wheels are cpXY-specific) so
-          # parallel legs don't race to save one shared key or restore the wrong interpreter's wheels.
+          # parallel jobs don't race to save one shared key or restore the wrong interpreter's wheels.
           cache-suffix: py${{ inputs.python_version }}-${{ inputs.dependency_resolution }}-jit-${{ inputs.jit }}-extras-${{ inputs.all_extras }}
 
       - name: Determine Python version
@@ -43,10 +43,10 @@ runs:
           echo "PYTHON_EFFECTIVE_VERSION=$PY" >> "$GITHUB_ENV"
           echo "Using Python $PY."
 
-      - name: Drop the checked-out lock so each combo resolves fresh from pyproject
+      - name: Drop the checked-out lock so the combo resolves fresh from pyproject
+        if: inputs.dependency_resolution != 'locked'
         shell: bash
-        # `uv run --resolution` re-resolves per the requested strategy even with a lock present,
-        # but removing the committed lock guarantees the matrix leg is never pinned by it.
+        # With uv.lock present, a `highest` job would install the locked versions, not the newest.
         run: rm -f uv.lock
 
       # `make test`, not a bare `uv run`: the interpreter, resolution strategy and dependency
@@ -69,10 +69,10 @@ runs:
           # NUMBA_BOUNDSCHECK=1 compiles bounds checks into every njit function, so an
           # out-of-bounds access under any test raises instead of corrupting memory; worth
           # the modest slowdown (numpy alone does not substitute: it raises on overruns but
-          # silently wraps negative indices).  Not on the lowest-direct cells: the numba
-          # floor fails to serialize bounds-checked functions at import (a deep-recursion
-          # PicklingError), so those cells run without it.
-          [ "$RES" = "highest" ] && export NUMBA_BOUNDSCHECK=1
+          # silently wraps negative indices).  Not on the lowest-direct jobs: the minimum
+          # numba versions fail to serialize bounds-checked functions at import (a
+          # deep-recursion PicklingError), so those jobs run without it.
+          [ "$RES" != "lowest-direct" ] && export NUMBA_BOUNDSCHECK=1
           COV_FLAG=""
           # --cov-fail-under=0: the gate is cumulative (coverage job), not per-combo
           [ "$COV" = "true" ] && COV_FLAG="--cov --cov-report= --cov-fail-under=0"

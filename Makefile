@@ -2,8 +2,12 @@
 # Single definition, shared by every target below AND by the CI test matrix, which calls these
 # targets rather than repeating the command. That is the point: the interpreter, the resolution
 # strategy and the dependency group cannot drift between a developer machine and CI, because
-# there is only one place that names them. CI overrides PY and RESOLUTION per matrix leg; the
+# there is only one place that names them. CI overrides PY and RESOLUTION per matrix job; the
 # defaults are the single representative combo to run locally.
+#
+# RESOLUTION=locked installs exactly what uv.lock pins, and fails if the lock is out of date with
+# pyproject.toml. `highest` and `lowest-direct` are uv resolution strategies. With uv.lock present,
+# `highest` installs the locked versions, not the newest ones, so CI removes the lock for those jobs.
 #
 # On the uv flags. Every `uv run` / `uv sync` implicitly activates a set of dependency groups —
 # uv's "default groups", which is `dev` unless a project configures otherwise. `--group` ADDS to
@@ -11,13 +15,23 @@
 # narrowing would be cosmetic. `--no-default-groups` empties the implicit set, leaving only what
 # is named. `--only-group` narrows as well, but additionally drops the project and its runtime
 # dependencies, which leaves pytest with nothing to import.
-PY ?= 3.14
-RESOLUTION ?= highest
+
+# The default Python is also the one that the JIT golden master is generated with
+# (tests/_core/solver/test_golden_master.py).
+DEFAULT_PY := 3.14
+PY ?= $(DEFAULT_PY)
+RESOLUTION ?= locked
 # ALL_EXTRAS=false runs the suite as a plain install would: tests that need an extra are skipped, and
 # the tests of what the package does without one are run. CI covers both values.
 ALL_EXTRAS ?= true
-UV_RUN = uv run --exact --python $(PY) --resolution $(RESOLUTION) --no-default-groups --group test \
-         $(if $(filter true,$(ALL_EXTRAS)),--all-extras,)
+UV_RUN = uv run --exact --python $(PY) \
+         $(if $(filter locked,$(RESOLUTION)),--locked,--resolution $(RESOLUTION)) \
+         --no-default-groups --group test $(if $(filter true,$(ALL_EXTRAS)),--all-extras,)
+
+# The JIT golden master records the Python and numba versions that it was generated with, and skips
+# on any other runtime. A run from uv.lock on the default Python is meant to match them, so there a
+# mismatch means that uv.lock and the golden master have diverged, and this option makes it fail.
+REQUIRE_JIT_GOLDEN_MASTER = $(if $(and $(filter locked,$(RESOLUTION)),$(filter $(DEFAULT_PY),$(PY))),--require-jit-golden-master,)
 
 # Appended to the pytest invocation. Locally this silences the warning summary; CI overrides it
 # to pass coverage flags, and deliberately keeps the warnings visible.
@@ -59,18 +73,18 @@ help:
 	@echo 'Options:'
 	@echo ''
 	@echo '  test / collect-test-ids / coverage'
-	@echo '                                 - accept `PY=<version>` and `RESOLUTION=highest|lowest-direct` to pick the'
-	@echo '                                   interpreter and uv resolution strategy, and `PYTEST_ARGS=<flags>` to replace'
+	@echo '                                 - accept `PY=<version>` and `RESOLUTION=locked|highest|lowest-direct` to pick the'
+	@echo '                                   interpreter and the dependency versions, and `PYTEST_ARGS=<flags>` to replace'
 	@echo '                                   the default pytest flags. The CI matrix drives these targets that way.'
 
 build:
 	uv build;
 
 test:
-	# run all tests - with numba & one interpreter (see PY / RESOLUTION above)
-	$(UV_RUN) pytest ./tests --durations=20 $(PYTEST_ARGS)
+	# run all tests - with numba & one interpreter (see PY / RESOLUTION / REQUIRE_JIT_GOLDEN_MASTER above)
+	$(UV_RUN) pytest ./tests --durations=20 $(REQUIRE_JIT_GOLDEN_MASTER) $(PYTEST_ARGS)
 
-# Collected node-ids, one per line. CI unions these across matrix legs to count the suite, so this
+# Collected node-ids, one per line. CI unions these across matrix jobs to count the suite, so this
 # target's stdout is data: it is written with `@` and its commentary lives here rather than in the
 # recipe, since an echoed recipe line would land in whatever consumes the list.
 # -o addopts="" clears `-n auto`, so collection runs in-process instead of under xdist.
@@ -99,7 +113,7 @@ coverage:
 	# NOTE: NUMBA_DISABLE_JIT ensure coverage collects detailed line-by-line coverage info, also for numba-compiled functions
     #       NUMBA_JIT_COVERAGE is another option, but would incorrectly emit coverage info for ALL compiled lines, when a function is triggered.
 	mkdir -p ./reports
-	# same install surface as `test` and as the CI coverage legs (see PY / RESOLUTION above)
+	# same install surface as `test` and as the CI coverage jobs (see PY / RESOLUTION above)
 	NUMBA_DISABLE_JIT=1 COVERAGE_FILE=./reports/.coverage $(UV_RUN) pytest ./tests --cov --cov-report=html:./reports/coverage --durations=20 $(PYTEST_ARGS)
 
 test-and-coverage:

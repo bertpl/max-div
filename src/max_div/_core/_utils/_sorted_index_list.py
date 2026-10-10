@@ -9,10 +9,10 @@ defined — `memcpy` is the one that is not, `memmove` is the one that is.
 
 This module runs two ways, and no single implementation serves both:
 
-  - **Compiled** — production, and every test leg but coverage.  Nothing written in Python compiles
+  - **Compiled** — production, and every test run but coverage.  Nothing written in Python compiles
     to a `memmove`: numba lowers an element loop and a slice assignment alike to a copy loop, which
     is several times slower at large `n_live`.  Reaching the instruction takes an intrinsic.
-  - **Interpreted** — the coverage run and the JIT-disabled legs, where compilation is switched off
+  - **Interpreted** — the coverage run and the JIT-disabled jobs, where compilation is switched off
     so coverage can see inside these functions.  An intrinsic does not exist in this mode at all: it
     produces instructions for a compiler, and no compiler is running.  numpy slice assignment stands
     in, and buffers its source, so it is equally safe on overlap.
