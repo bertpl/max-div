@@ -19,8 +19,9 @@ from numpy.typing import NDArray
 from max_div._core.jit import lazy_njit
 
 # With numba's JIT compilation disabled, the functions below run as numpy scalar arithmetic, and numpy
-# warns on every uint64 overflow. xoroshiro128+ and splitmix64 rely on that wrap-around, so the warning
-# reports no error.
+# warns on every uint64 overflow, which wraps around modulo 2^64. xoroshiro128+ and splitmix64 rely on
+# that wrap-around, so the warning reports no error. Under pytest the warning still shows, because
+# pytest discards the warning filters added while it imports a module.
 warnings.filterwarnings(
     "ignore",
     message=r"overflow encountered in scalar (add|multiply)",

@@ -20,10 +20,13 @@ from max_div._core._random._rng import (
 )
 from max_div._core.jit import lazy_njit
 
-# With numba's JIT compilation disabled, `randint` runs as numpy arithmetic, and numpy warns when a key of
-# the weighted path without replacement overflows the float32 range as it is stored. That +inf key is
-# the documented result for a tiny p (see `randint`), so the warning reports no error; compiled code
-# overflows to the same +inf without a warning.
+# With numba's JIT compilation disabled, `randint` runs as numpy arithmetic. Weighted sampling without
+# replacement ranks the items by the key -log2(u)/p[i], and numpy warns when a tiny p[i] makes that key
+# too large for float32 as it is cast to float32.
+#
+# That +inf key is the documented result for a tiny p (see `randint`), so the warning reports no error;
+# compiled code overflows to the same +inf without a warning. Under pytest the warning still shows,
+# because pytest discards the warning filters added while it imports a module.
 warnings.filterwarnings(
     "ignore",
     message=r"overflow encountered in cast",
@@ -79,8 +82,9 @@ def randint(  # noqa: C901 — case-dispatch structure is clearer un-split
             with probability p>0.0.  Without replacement, an option with p below about 1e-38 can count as p==0.0
             here (see the float32 note below).
 
-          - it is not needed to normalize p to sum to 1; any non-negative values are accepted, as long as the
-            options that matter keep p above about 1e-38 (see the float32 note below).
+          - it is not needed to normalize p to sum to 1; any non-negative values are accepted, as long as, without
+            replacement, every option that should be drawn keeps p above about 1e-38 (see the float32 note
+            below).
             However, we do require that sum(p) > 0, such that it can be guaranteed we always return a sample
             with p[i] > 0.
 
@@ -94,10 +98,13 @@ def randint(  # noqa: C901 — case-dispatch structure is clearer un-split
             changing for an item whose p is below about sum(p) / 2^24, so that item is never drawn.  Accepted,
             because such an item's draw probability is below 1e-7 anyway.
 
-          - without replacement, the float32 key -log2(u)/p[i] of a tiny p[i] can exceed the float32 range
-            (about 3.4e38) and become +inf, the key of an item with p[i]==0.0.  This happens for about 10% of the
-            draws at p[i] = 1e-38, half of them at 3e-39 and nearly all below 1e-40, and such an item then counts
-            as p[i]==0.0.  Accepted as the price of the float32 keys, like the precision loss of the CDF paths.
+          - without replacement, the float32 key -log2(u)/p[i] (u uniform in (0, 1)) of a tiny p[i] can exceed
+            the float32 range (about 3.4e38) and become +inf, the key of an item with p[i]==0.0, so that item
+            then counts as p[i]==0.0.  The share of draws where this happens is:
+              - about 10% at p[i] = 1e-38;
+              - about half at p[i] = 3e-39;
+              - nearly all below p[i] = 1e-40.
+            Accepted as a consequence of the float32 keys, like the precision loss of the CDF paths.
 
     ALTERNATIVES CONSIDERED:
 

@@ -545,33 +545,40 @@ def test_randint_never_draws_a_zero_probability_item():
 
 
 @pytest.mark.parametrize(
-    "p_small, is_like_zero",
+    "p_small, is_drawn_as_p_zero",
     [
         pytest.param(1e-45, True, id="below_the_limit"),
         pytest.param(1e-36, False, id="above_the_limit"),
     ],
 )
-def test_randint_counts_an_item_with_p_below_the_float32_key_limit_as_p_zero(p_small: float, is_like_zero: bool):
+def test_randint_counts_an_item_with_p_below_the_float32_key_limit_as_p_zero(p_small: float, is_drawn_as_p_zero: bool):
     """Without replacement, an item far below p = 1e-38 is drawn as if its p were 0; one above 1e-37 is not."""
     # --- arrange ----------------------
-    # the small items come last, so they leave the random draws of the items before them unchanged
-    p_small_items = np.array([1.0, 1.0, 1.0, 1.0, p_small, p_small], dtype=np.float32)
-    p_zero_items = np.array([1.0, 1.0, 1.0, 1.0, 0.0, 0.0], dtype=np.float32)
+    # the small items come last: an item with p == 0 draws no random number, so placing it earlier would
+    # shift the random numbers of every item after it
+    p_with_small_items = np.array([1.0, 1.0, 1.0, 1.0, p_small, p_small], dtype=np.float32)
+    p_with_zero_items = np.array([1.0, 1.0, 1.0, 1.0, 0.0, 0.0], dtype=np.float32)
 
     # --- act --------------------------
-    draws_small = [randint(np.int32(6), np.int32(5), False, p_small_items, new_rng_state(s)) for s in range(20)]
-    draws_zero = [randint(np.int32(6), np.int32(5), False, p_zero_items, new_rng_state(s)) for s in range(20)]
+    draws_with_small_items = [
+        randint(np.int32(6), np.int32(5), False, p_with_small_items, new_rng_state(s)) for s in range(20)
+    ]
+    draws_with_zero_items = [
+        randint(np.int32(6), np.int32(5), False, p_with_zero_items, new_rng_state(s)) for s in range(20)
+    ]
 
     # --- assert -----------------------
-    is_same = [np.array_equal(small, zero) for small, zero in zip(draws_small, draws_zero, strict=True)]
-    assert all(is_same) == is_like_zero
+    is_same_per_seed = [
+        np.array_equal(small, zero) for small, zero in zip(draws_with_small_items, draws_with_zero_items, strict=True)
+    ]
+    assert all(is_same_per_seed) == is_drawn_as_p_zero
 
 
 def test_randint_and_the_rng_emit_no_overflow_warning_with_jit_compilation_off():
     """With JIT compilation off, seeding the RNG and drawing with a tiny p emit no overflow warning.
 
-    The check runs in a fresh interpreter, as a user's script would: pytest drops the warning filters
-    that max-div adds while pytest imports it.
+    The check runs in a fresh interpreter, as a user's script would: pytest drops max-div's warning
+    filters while pytest imports it.
     """
     # --- arrange ----------------------
     code = (
