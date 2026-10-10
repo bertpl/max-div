@@ -21,24 +21,35 @@ build would leave it guarding nothing.
 
 JIT-compiled and NUMBA_DISABLE_JIT execution produce identical selections but slightly different
 score floats (float32 register arithmetic vs numpy's float64 scalar promotion), while each
-regime is bit-stable across runs. The expected data is therefore committed per regime, and the
-test asserts against the dataset matching the active regime:
+JIT setting is bit-stable across runs. The expected data is therefore committed per JIT setting,
+and the test asserts against the dataset of the current JIT setting:
 
 - 'nojit' (interpreted) output is environment-independent (verified across platforms and
   Python versions), so it is asserted unconditionally — including on the jit-off CI jobs.
-- 'jit' output depends on numba's codegen, which varies with Python and numba version (numba
-  compiles from Python bytecode, so two Python minors can round floats differently under the
-  same numba). The jit dataset therefore records the fingerprint of the
-  environment it was generated in, and the test skips when the runtime doesn't match —
-  a version-driven codegen change is numba's business, not a regression of this codebase.
+- 'jit' output depends on numba's codegen, which varies with the Python and numba versions
+  (numba compiles from Python bytecode, so two Python minors can round floats differently
+  under the same numba) and with the CPU architecture that LLVM generates code for.
 
-To regenerate the expected data (both regimes) after an intentional numeric change:
+  The jit dataset therefore records the fingerprint of the environment it was generated in,
+  and only a run in that environment can check the jit dataset: a change in numba's code
+  generation caused by a new Python or numba version is not a regression of this codebase.
+
+  So with JIT compilation on, the test runs only when the environment variable
+  MAX_DIV_JIT_GOLDEN_MASTER is 1. `JIT_GOLDEN_MASTER_ENV` in the Makefile decides which
+  `make test` invocations set it.
+
+  On a run with the variable set, every case errors on a fingerprint mismatch, because such a
+  mismatch means that uv.lock pins other versions than the ones recorded in the jit dataset.
+
+To regenerate the expected data (both JIT settings) after an intentional numeric change or a numba
+upgrade in uv.lock:
 
     uv run --all-extras --python 3.14 python -m tests._core.solver.test_golden_master
 """
 
 import json
 import os
+import platform
 import subprocess
 import sys
 from pathlib import Path
@@ -68,32 +79,44 @@ SEEDS = [42, 123]
 N_ITERATIONS = 30
 PROBLEM_N = 100
 
+# with JIT compilation on, the test runs only on request (see the module docstring)
+IS_JIT_GOLDEN_MASTER_REQUESTED = os.environ.get("MAX_DIV_JIT_GOLDEN_MASTER") == "1"
 
-def _active_regime() -> str:
-    return "nojit" if numba_config.DISABLE_JIT else "jit"
+
+def _is_numba_jit_enabled() -> bool:
+    """Return True when numba compiles, and False when NUMBA_DISABLE_JIT=1 runs the code interpreted."""
+    return not numba_config.DISABLE_JIT
 
 
 def _runtime_fingerprint() -> dict[str, str]:
     """Identify the properties of the runtime that jit-compiled numeric output depends on."""
     import numba
 
+    # one name per architecture: macOS reports arm64 where Linux reports aarch64, and Windows
+    # reports AMD64 where the others report x86_64
+    machine = platform.machine().lower()
     return {
         "python": f"{sys.version_info.major}.{sys.version_info.minor}",
         "numba": numba.__version__,
+        "cpu_architecture": {"aarch64": "arm64", "amd64": "x86_64"}.get(machine, machine),
     }
 
 
-def _data_file(regime: str) -> Path:
-    return Path(__file__).parent / f"golden_master_data_{regime}.json"
+def _data_file(is_numba_jit_enabled: bool) -> Path:
+    """Return the expected data file for numba JIT compilation on or off."""
+    suffix = "jit" if is_numba_jit_enabled else "nojit"
+    return Path(__file__).parent / f"golden_master_data_{suffix}.json"
 
 
 def _distances_from(vectors: NDArray[np.float32], metric: DistanceMetric) -> NDArray[np.float32]:
     """Build a distance matrix with plain numpy, independent of the library's own pairwise distance functions.
 
-    Computing it here rather than through the library is what makes this guard indifferent to
-    changes in the pairwise distance functions: it pins the search given fixed distances. The result is
-    quantized and symmetrized so the matrix is bit-identical on every machine — the same
-    reasoning that quantizes the vectors below, applied one step later.
+    The library's pairwise distance functions compile with `fastmath={"reassoc", "contract"}`, so
+    their float bits change with the CPU and the numba version without any regression. Computing
+    the matrix here keeps those changes out of this guard, which checks the search given fixed
+    distances; `tests/_core/metrics/_distance/_store/test_bundle.py` checks the distance functions
+    across backends. The result is quantized and symmetrized so the matrix is bit-identical on
+    every machine — the same reasoning that quantizes the vectors below, applied one step later.
     """
     diff = vectors[:, None, :].astype(np.float64) - vectors[None, :, :].astype(np.float64)
     if metric == DistanceMetric.l1_manhattan():
@@ -128,7 +151,7 @@ def _solve(problem_name: str, preset: SolverPreset, seed: int) -> MaxDivSolution
     return solver.solve(verbosity=Verbosity.SILENT)
 
 
-def _as_record(solution: MaxDivSolution) -> dict[str, Any]:
+def _convert_solution_to_record(solution: MaxDivSolution) -> dict[str, Any]:
     """Extract the deterministic part of a solution (selection + score checkpoints, no wall-clock times)."""
     return {
         "i_selected": [int(i) for i in solution.i_selected],
@@ -153,47 +176,64 @@ def _case_key(problem_name: str, preset: SolverPreset, seed: int) -> str:
 # ==================================================================================================
 #  Tests
 # ==================================================================================================
+@pytest.fixture(scope="module")
+def expected_data() -> dict[str, Any]:
+    """Load the expected data of the current JIT setting; fail if the jit data's fingerprint differs from this run's."""
+    is_numba_jit_enabled = _is_numba_jit_enabled()
+    dataset = json.loads(_data_file(is_numba_jit_enabled).read_text())
+    runtime_fingerprint = _runtime_fingerprint()
+    if is_numba_jit_enabled and dataset["fingerprint"] != runtime_fingerprint:
+        pytest.fail(
+            f"the jit expected data was generated with {dataset['fingerprint']}, this run has {runtime_fingerprint}. "
+            "After a numba upgrade in uv.lock, regenerate it with: "
+            "uv run --all-extras --python 3.14 python -m tests._core.solver.test_golden_master. "
+            "On another CPU architecture, skip it with: make test JIT_GOLDEN_MASTER_ENV="
+        )
+    return dataset
+
+
+@pytest.mark.skipif(
+    _is_numba_jit_enabled() and not IS_JIT_GOLDEN_MASTER_REQUESTED,
+    reason="with JIT compilation on, the golden master runs only with MAX_DIV_JIT_GOLDEN_MASTER=1",
+)
 @pytest.mark.parametrize("seed", SEEDS)
 @pytest.mark.parametrize("preset", PRESETS)
 @pytest.mark.parametrize("problem_name", PROBLEMS)
-def test_golden_master(problem_name: str, preset: SolverPreset, seed: int):
+def test_golden_master(problem_name: str, preset: SolverPreset, seed: int, expected_data: dict[str, Any]):
+    """A seeded solve reproduces the expected data of the current JIT setting bit for bit."""
     # --- arrange ----------------------
-    regime = _active_regime()
-    expected_data = json.loads(_data_file(regime).read_text())
-    if regime == "jit" and expected_data["fingerprint"] != _runtime_fingerprint():
-        pytest.skip(
-            f"jit-compiled output is fingerprint-specific; data was generated with {expected_data['fingerprint']}"
-        )
     expected = expected_data["cases"][_case_key(problem_name, preset, seed)]
 
     # --- act --------------------------
     solution = _solve(problem_name, preset, seed)
 
     # --- assert -----------------------
-    assert _as_record(solution) == expected  # exact equality, incl. float bits (see module docstring)
+    assert _convert_solution_to_record(solution) == expected  # exact equality, incl. float bits (see module docstring)
 
 
 # ==================================================================================================
 #  Regeneration mode
 # ==================================================================================================
-def regenerate_active_regime() -> None:
-    """Recompute and overwrite the expected data file of the active numba regime, for the full matrix."""
+def regenerate_for_current_jit_setting() -> None:
+    """Recompute and overwrite the expected data file of the current JIT setting, for the full matrix."""
     records = {}
     for problem_name in PROBLEMS:
         for preset in PRESETS:
             for seed in SEEDS:
-                records[_case_key(problem_name, preset, seed)] = _as_record(_solve(problem_name, preset, seed))
-    data_file = _data_file(_active_regime())
+                records[_case_key(problem_name, preset, seed)] = _convert_solution_to_record(
+                    _solve(problem_name, preset, seed)
+                )
+    data_file = _data_file(_is_numba_jit_enabled())
     data = {"fingerprint": _runtime_fingerprint(), "cases": records}
     data_file.write_text(json.dumps(data, indent=1) + "\n")
     print(f"wrote {len(records)} cases to {data_file}")
 
 
 if __name__ == "__main__":
-    if "--active-regime-only" in sys.argv:
-        regenerate_active_regime()
+    if "--current-jit-setting-only" in sys.argv:
+        regenerate_for_current_jit_setting()
     else:
-        # numba reads NUMBA_DISABLE_JIT at import time, so each regime runs in its own interpreter
+        # numba reads NUMBA_DISABLE_JIT at import time, so each JIT setting runs in its own interpreter
         for disable_jit in ("0", "1"):
             env = {**os.environ, "NUMBA_DISABLE_JIT": disable_jit}
-            subprocess.run([sys.executable, "-m", __spec__.name, "--active-regime-only"], env=env, check=True)  # noqa: S603 -- fixed args, script mode
+            subprocess.run([sys.executable, "-m", __spec__.name, "--current-jit-setting-only"], env=env, check=True)  # noqa: S603 -- fixed args, script mode

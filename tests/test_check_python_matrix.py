@@ -1,4 +1,9 @@
-"""Guards for the CI-matrix coverage check (scripts/check_python_matrix.py)."""
+"""Guard the CI test matrix.
+
+Every declared Python has a job, and the `resolution: locked` job runs the Makefile's DEFAULT_PY.
+"""
+
+import re
 
 from tests.helpers import load_script
 
@@ -40,3 +45,17 @@ def test_repo_matrix_covers_declared_versions():
 
     # --- assert -----------------------
     assert exit_code == 0
+
+
+def test_locked_matrix_job_runs_the_makefile_default_python():
+    """The `resolution: locked` matrix job runs DEFAULT_PY, so `make test` runs the JIT golden master there."""
+    # --- arrange ----------------------
+    makefile = (_mod.REPO_ROOT / "Makefile").read_text(encoding="utf-8")
+    workflow = _mod.UNIT_TESTS_WORKFLOW.read_text(encoding="utf-8")
+
+    # --- act --------------------------
+    default_py = re.search(r"^DEFAULT_PY := (\S+)$", makefile, re.MULTILINE).group(1)
+    locked_pythons = re.findall(r'python:\s*"([^"]+)",\s*resolution:\s*locked\b', workflow)
+
+    # --- assert -----------------------
+    assert locked_pythons == [default_py]

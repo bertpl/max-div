@@ -9,7 +9,7 @@ inputs:
         default: ""
     dependency_resolution:
         required: false
-        description: "uv resolution strategy: 'highest' (default) or 'lowest-direct'."
+        description: "'locked' installs exactly what uv.lock pins; 'highest' (default) and 'lowest-direct' are uv resolution strategies, which resolve versions from pyproject.toml."
         default: "highest"
     jit:
         required: false
@@ -43,13 +43,13 @@ runs:
           echo "PYTHON_EFFECTIVE_VERSION=$PY" >> "$GITHUB_ENV"
           echo "Using Python $PY."
 
-      - name: Drop the checked-out lock so each combo resolves fresh from pyproject
+      - name: Drop the checked-out lock so the matrix job resolves fresh from pyproject.toml
+        if: inputs.dependency_resolution != 'locked'
         shell: bash
-        # `uv run --resolution` re-resolves per the requested strategy even with a lock present,
-        # but removing the committed lock guarantees the matrix job is never pinned by it.
+        # With uv.lock present, a `highest` job would install the locked versions, not the newest.
         run: rm -f uv.lock
 
-      # `make test`, not a bare `uv run`: the interpreter, resolution strategy and dependency
+      # `make test`, not a bare `uv run`: the interpreter, dependency versions and dependency
       # group are defined once, in the Makefile, so this matrix and a developer's local run
       # cannot drift apart. Only the genuinely CI-side concerns stay here — the JIT toggle, the
       # coverage flags, and the per-combo data file.
@@ -74,7 +74,7 @@ runs:
           # The lowest-direct jobs run without NUMBA_BOUNDSCHECK: the minimum numba versions
           # fail to serialize bounds-checked functions at import (a deep-recursion
           # PicklingError).
-          [ "$RES" = "highest" ] && export NUMBA_BOUNDSCHECK=1
+          [ "$RES" != "lowest-direct" ] && export NUMBA_BOUNDSCHECK=1
           COV_FLAG=""
           # --cov-fail-under=0: the gate is cumulative (coverage job), not per-combo
           [ "$COV" = "true" ] && COV_FLAG="--cov --cov-report= --cov-fail-under=0"
