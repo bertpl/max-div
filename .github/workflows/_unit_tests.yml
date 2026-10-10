@@ -10,15 +10,16 @@ jobs:
   core:
     name: py${{ matrix.python }} / ${{ matrix.resolution }} / jit-${{ matrix.jit }} / extras-${{ matrix.extras }}
     # ARM, which runs this suite about twice as fast as the x64 runner for the same work.
-    # Standardized rather than mixed: the matrix does not set out to test architectures, and
-    # picking x64 for some jobs would keep the old default without a reason for it.
+    # Standardized rather than mixed: the matrix does not set out to test architectures, so no
+    # job has a reason to run on x64.
     runs-on: ubuntu-24.04-arm
     strategy:
       fail-fast: false
       matrix:
         # ubuntu-only: pure Python + numpy/scipy/numba, no OS-specific code paths, so one
         # OS exercises everything. Strategic combos cover every axis (every supported Python,
-        # every resolution), not their full product. numba is a mandatory dependency; the jit axis distinguishes compiled (representative) from
+        # every resolution), not their full product. numba is a mandatory dependency; the jit
+        # axis distinguishes compiled (representative) from
         # interpreted execution — coverage comes from the jit-off jobs, since numba
         # only yields line coverage with the JIT disabled. The extras axis distinguishes
         # a full install from the plain install a user gets: on the extras-off jobs the
@@ -35,16 +36,20 @@ jobs:
           - { python: "3.14", resolution: lowest-direct, jit: "on",  extras: "true"  }
           - { python: "3.15", resolution: lowest-direct, jit: "on",  extras: "true"  }
           # This job installs the versions in uv.lock, on the Python version recorded in the JIT
-          # golden master, so `make test` fails the JIT golden master test on a version mismatch
-          # instead of skipping it. The other jit-on jobs run another Python or resolve the newest
-          # or the minimum versions, so they skip the JIT golden master test whenever their
-          # versions differ from the recorded ones.
+          # golden master (the expected output of seeded, JIT-compiled solves, which
+          # tests/_core/solver/test_golden_master.py checks), so `make test` fails the JIT golden
+          # master test on a version mismatch instead of skipping it.
+          #
+          # The other jit-on jobs skip that test whenever their Python or numba version differs
+          # from the recorded one: they run another Python, or install the newest or the minimum
+          # versions.
           - { python: "3.14", resolution: locked,        jit: "on",  extras: "true"  }
           - { python: "3.12", resolution: highest,       jit: "off", extras: "true"  }  # coverage job
           - { python: "3.14", resolution: highest,       jit: "off", extras: "true"  }  # coverage job
           - { python: "3.12", resolution: highest,       jit: "on",  extras: "false" }  # plain install
           - { python: "3.14", resolution: highest,       jit: "on",  extras: "false" }  # plain install
-          # Free-threaded build. `highest` only, deliberately: the minimum numba version for 3.14
+          # This job runs the free-threaded build with `highest` only, deliberately: the minimum
+          # numba version for 3.14
           # is 0.63, which predates numba's free-threaded wheels (first shipped in 0.65), and no
           # PEP 508 marker can raise that minimum for free-threaded builds alone — so a
           # lowest-direct job would try to source-build a numba with no usable wheel. Do not
@@ -63,12 +68,13 @@ jobs:
           dependency_resolution: ${{ matrix.resolution }}
           jit: ${{ matrix.jit }}
           all_extras: ${{ matrix.extras }}
-          # the jit-off jobs upload their data; the coverage job combines + gates
+          # the jit-off jobs upload their data; the coverage job combines it and checks the
+          # minimum coverage
           coverage: ${{ matrix.jit == 'off' && 'true' || 'false' }}
 
   coverage:
     name: coverage
-    # Cumulative gate: combine the coverage jobs' data into one report before checking
+    # Cumulative check: combine the jit-off jobs' coverage data into one report before checking
     # the minimum coverage, so version-divergent code paths don't read as uncovered.
     needs: [core]
     # always() so a cancelled/failed combo makes this job FAIL explicitly rather than

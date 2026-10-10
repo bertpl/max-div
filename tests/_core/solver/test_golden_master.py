@@ -25,17 +25,15 @@ regime is bit-stable across runs. The expected data is therefore committed per r
 test asserts against the dataset matching the active regime:
 
 - 'nojit' (interpreted) output is environment-independent (verified across platforms and
-  Python versions), so it is asserted unconditionally — including on the coverage jobs.
+  Python versions), so it is asserted unconditionally — including on the CI jobs that collect coverage.
 - 'jit' output depends on numba's codegen, which varies with Python and numba version (numba
   compiles from Python bytecode, so two Python minors can round floats differently under the
   same numba). The jit dataset therefore records the fingerprint of the
   environment it was generated in, and the test skips when the runtime doesn't match —
   a version-driven codegen change is numba's business, not a regression of this codebase.
 
-  With `--require-jit-golden-master`, a mismatch fails instead. `make test` passes that option
-  on the runs that are meant to match the expected data (see `REQUIRE_JIT_GOLDEN_MASTER_ARG` in
-  the Makefile), so on those runs a mismatch means that uv.lock and the expected data have
-  diverged.
+  With `--require-jit-golden-master`, the test fails on a mismatch instead.
+  `REQUIRE_JIT_GOLDEN_MASTER_ARG` in the Makefile decides which `make test` runs pass that option.
 
 To regenerate the expected data (both regimes) after an intentional numeric change or a numba
 upgrade in uv.lock:
@@ -163,6 +161,7 @@ def _case_key(problem_name: str, preset: SolverPreset, seed: int) -> str:
 @pytest.mark.parametrize("preset", PRESETS)
 @pytest.mark.parametrize("problem_name", PROBLEMS)
 def test_golden_master(problem_name: str, preset: SolverPreset, seed: int, pytestconfig: pytest.Config):
+    """A seeded solve reproduces the expected data of the active numba regime bit for bit."""
     # --- arrange ----------------------
     regime = _active_regime()
     expected_data = json.loads(_data_file(regime).read_text())

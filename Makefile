@@ -7,7 +7,7 @@
 #
 # RESOLUTION=locked installs exactly what uv.lock pins, and fails if the lock is out of date with
 # pyproject.toml. `highest` and `lowest-direct` are uv resolution strategies. With uv.lock present,
-# `highest` installs the locked versions, not the newest ones.
+# `highest` installs the locked versions; it resolves the newest versions only when uv.lock is absent.
 #
 # On the uv flags. Every `uv run` / `uv sync` implicitly activates a set of dependency groups —
 # uv's "default groups", which is `dev` unless a project configures otherwise. `--group` ADDS to
@@ -17,7 +17,7 @@
 # dependencies, which leaves pytest with nothing to import.
 
 # The default Python is also the Python version recorded in the JIT golden master: the expected
-# output of seeded, JIT-compiled solves in tests/_core/solver/test_golden_master.py.
+# output of seeded, JIT-compiled solves, which tests/_core/solver/test_golden_master.py checks.
 DEFAULT_PY := 3.14
 PY ?= $(DEFAULT_PY)
 RESOLUTION ?= locked
@@ -29,9 +29,12 @@ UV_RUN = uv run --exact --python $(PY) \
          --no-default-groups --group test $(if $(filter true,$(ALL_EXTRAS)),--all-extras,)
 
 # The JIT golden master records the Python and numba versions of the run that generated it, and its
-# test skips on any other runtime. A run from uv.lock on the default Python is meant to match those
-# versions, so on that run a mismatch means that uv.lock and the golden master have diverged, and
-# `--require-jit-golden-master` makes the JIT golden master test fail.
+# test skips on any other runtime.
+#
+# A run from uv.lock on the default Python is meant to match those versions, so on that run a
+# mismatch means that uv.lock and the golden master have diverged. On that run,
+# REQUIRE_JIT_GOLDEN_MASTER_ARG passes `--require-jit-golden-master`, which makes the JIT golden
+# master test fail on a mismatch instead of skipping it.
 REQUIRE_JIT_GOLDEN_MASTER_ARG = $(if $(and $(filter locked,$(RESOLUTION)),$(filter $(DEFAULT_PY),$(PY))),--require-jit-golden-master,)
 
 # Appended to the pytest invocation. Locally this silences the warning summary; CI overrides it
@@ -114,7 +117,7 @@ coverage:
 	# NOTE: NUMBA_DISABLE_JIT ensure coverage collects detailed line-by-line coverage info, also for numba-compiled functions
     #       NUMBA_JIT_COVERAGE is another option, but would incorrectly emit coverage info for ALL compiled lines, when a function is triggered.
 	mkdir -p ./reports
-	# same install surface as `test` and as the CI coverage jobs (see PY / RESOLUTION above)
+	# This recipe installs the same dependencies as `test` and as the CI jit-off jobs (see PY / RESOLUTION above)
 	NUMBA_DISABLE_JIT=1 COVERAGE_FILE=./reports/.coverage $(UV_RUN) pytest ./tests --cov --cov-report=html:./reports/coverage --durations=20 $(PYTEST_ARGS)
 
 test-and-coverage:
