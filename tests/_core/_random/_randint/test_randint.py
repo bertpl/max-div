@@ -545,13 +545,15 @@ def test_randint_never_draws_a_zero_probability_item():
 
 
 @pytest.mark.parametrize(
-    "p_small, is_drawn_as_p_zero",
+    "p_small, is_counted_as_p_zero",
     [
         pytest.param(1e-45, True, id="below_the_limit"),
         pytest.param(1e-36, False, id="above_the_limit"),
     ],
 )
-def test_randint_counts_an_item_with_p_below_the_float32_key_limit_as_p_zero(p_small: float, is_drawn_as_p_zero: bool):
+def test_randint_counts_an_item_with_p_below_the_float32_key_limit_as_p_zero(
+    p_small: float, is_counted_as_p_zero: bool
+):
     """Without replacement, an item far below p = 1e-38 is drawn as if its p were 0; one above 1e-37 is not."""
     # --- arrange ----------------------
     # the small items come last: an item with p == 0 draws no random number, so placing it earlier would
@@ -571,14 +573,14 @@ def test_randint_counts_an_item_with_p_below_the_float32_key_limit_as_p_zero(p_s
     is_same_per_seed = [
         np.array_equal(small, zero) for small, zero in zip(draws_with_small_items, draws_with_zero_items, strict=True)
     ]
-    assert all(is_same_per_seed) == is_drawn_as_p_zero
+    assert all(is_same_per_seed) == is_counted_as_p_zero
 
 
 def test_randint_and_the_rng_emit_no_overflow_warning_with_jit_compilation_off():
     """With JIT compilation off, seeding the RNG and drawing with a tiny p emit no overflow warning.
 
-    The check runs in a fresh interpreter, as a user's script would: pytest drops max-div's warning
-    filters while pytest imports it.
+    The check runs in a fresh interpreter, as a user's script would: pytest discards the warning
+    filters that max-div adds while pytest is importing max-div.
     """
     # --- arrange ----------------------
     code = (
