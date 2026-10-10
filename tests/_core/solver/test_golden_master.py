@@ -79,8 +79,9 @@ N_ITERATIONS = 30
 PROBLEM_N = 100
 
 
-def _active_regime() -> str:
-    return "nojit" if numba_config.DISABLE_JIT else "jit"
+def _is_numba_jit_enabled() -> bool:
+    """Return True when numba compiles, and False when NUMBA_DISABLE_JIT=1 runs the code interpreted."""
+    return not numba_config.DISABLE_JIT
 
 
 def _runtime_fingerprint() -> dict[str, str]:
@@ -93,17 +94,21 @@ def _runtime_fingerprint() -> dict[str, str]:
     }
 
 
-def _data_file(regime: str) -> Path:
-    return Path(__file__).parent / f"golden_master_data_{regime}.json"
+def _data_file(is_numba_jit_enabled: bool) -> Path:
+    """Return the expected data file for numba JIT compilation on or off."""
+    suffix = "jit" if is_numba_jit_enabled else "nojit"
+    return Path(__file__).parent / f"golden_master_data_{suffix}.json"
 
 
 def _distances_from(vectors: NDArray[np.float32], metric: DistanceMetric) -> NDArray[np.float32]:
     """Build a distance matrix with plain numpy, independent of the library's own pairwise distance functions.
 
-    Computing it here rather than through the library is what makes this guard indifferent to
-    changes in the pairwise distance functions: it pins the search given fixed distances. The result is
-    quantized and symmetrized so the matrix is bit-identical on every machine — the same
-    reasoning that quantizes the vectors below, applied one step later.
+    The library's pairwise distance functions compile with `fastmath={"reassoc", "contract"}`, so
+    their float bits change with the CPU and the numba version without any regression. Computing
+    the matrix here keeps those changes out of this guard, which checks the search given fixed
+    distances; `tests/_core/metrics/_distance/_store/test_bundle.py` checks the distance functions
+    across backends. The result is quantized and symmetrized so the matrix is bit-identical on
+    every machine — the same reasoning that quantizes the vectors below, applied one step later.
     """
     diff = vectors[:, None, :].astype(np.float64) - vectors[None, :, :].astype(np.float64)
     if metric == DistanceMetric.l1_manhattan():
@@ -138,7 +143,7 @@ def _solve(problem_name: str, preset: SolverPreset, seed: int) -> MaxDivSolution
     return solver.solve(verbosity=Verbosity.SILENT)
 
 
-def _as_record(solution: MaxDivSolution) -> dict[str, Any]:
+def _convert_solution_to_record(solution: MaxDivSolution) -> dict[str, Any]:
     """Extract the deterministic part of a solution (selection + score checkpoints, no wall-clock times)."""
     return {
         "i_selected": [int(i) for i in solution.i_selected],
@@ -166,10 +171,10 @@ def _case_key(problem_name: str, preset: SolverPreset, seed: int) -> str:
 @pytest.fixture(scope="module")
 def expected_data() -> dict[str, Any]:
     """Load the expected data of the active numba regime; fail if the jit data's fingerprint differs from this run's."""
-    regime = _active_regime()
-    dataset = json.loads(_data_file(regime).read_text())
+    is_numba_jit_enabled = _is_numba_jit_enabled()
+    dataset = json.loads(_data_file(is_numba_jit_enabled).read_text())
     runtime_fingerprint = _runtime_fingerprint()
-    if regime == "jit" and dataset["fingerprint"] != runtime_fingerprint:
+    if is_numba_jit_enabled and dataset["fingerprint"] != runtime_fingerprint:
         pytest.fail(
             f"the jit expected data was generated with {dataset['fingerprint']}, this run has {runtime_fingerprint}. "
             "Regenerate it with: uv run --all-extras --python 3.14 python -m tests._core.solver.test_golden_master"
@@ -190,7 +195,7 @@ def test_golden_master(problem_name: str, preset: SolverPreset, seed: int, expec
     solution = _solve(problem_name, preset, seed)
 
     # --- assert -----------------------
-    assert _as_record(solution) == expected  # exact equality, incl. float bits (see module docstring)
+    assert _convert_solution_to_record(solution) == expected  # exact equality, incl. float bits (see module docstring)
 
 
 # ==================================================================================================
@@ -202,8 +207,10 @@ def regenerate_active_regime() -> None:
     for problem_name in PROBLEMS:
         for preset in PRESETS:
             for seed in SEEDS:
-                records[_case_key(problem_name, preset, seed)] = _as_record(_solve(problem_name, preset, seed))
-    data_file = _data_file(_active_regime())
+                records[_case_key(problem_name, preset, seed)] = _convert_solution_to_record(
+                    _solve(problem_name, preset, seed)
+                )
+    data_file = _data_file(_is_numba_jit_enabled())
     data = {"fingerprint": _runtime_fingerprint(), "cases": records}
     data_file.write_text(json.dumps(data, indent=1) + "\n")
     print(f"wrote {len(records)} cases to {data_file}")
