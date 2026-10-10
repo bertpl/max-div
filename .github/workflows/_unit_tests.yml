@@ -10,7 +10,7 @@ jobs:
   # The rows of the test matrix come from scripts/ci_test_matrix.py, which builds them from the
   # [tool.ci-test-matrix] table in pyproject.toml; the table and its comments say which jobs run
   # and why.
-  matrix:
+  matrix-rows:
     runs-on: ubuntu-latest
     outputs:
       rows: ${{ steps.rows.outputs.rows }}
@@ -29,12 +29,12 @@ jobs:
 
   core:
     name: py${{ matrix.python }} / ${{ matrix.resolution }} / jit-${{ matrix.jit }} / extras-${{ matrix.extras }}
-    needs: [matrix]
+    needs: [matrix-rows]
     runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
       matrix:
-        include: ${{ fromJSON(needs.matrix.outputs.rows) }}
+        include: ${{ fromJSON(needs.matrix-rows.outputs.rows) }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:

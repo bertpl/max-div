@@ -18,8 +18,10 @@
 
 # DEFAULT_PY is the default Python, read from .python-version. It is also the Python version
 # recorded in the JIT golden master: the expected output of seeded, JIT-compiled solves, which
-# tests/_core/solver/test_golden_master.py checks. The file is read with `$(shell)`, not `$(file)`,
-# because the make that ships with macOS is GNU Make 3.81, which has no `$(file)`.
+# tests/_core/solver/test_golden_master.py checks.
+#
+# .python-version is read with `$(shell)`, not `$(file)`, because the make that ships with macOS
+# is GNU Make 3.81, which has no `$(file)`.
 DEFAULT_PY := $(strip $(shell cat .python-version))
 PY ?= $(DEFAULT_PY)
 RESOLUTION ?= locked

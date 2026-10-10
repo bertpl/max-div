@@ -87,14 +87,8 @@ class CiTestMatrix:
         if table is None:
             raise CiTestMatrixError("pyproject.toml has no [tool.ci-test-matrix] table")
         baseline = table.get("baseline", {})
-        non_settings = sorted(set(baseline) & {"python", *NON_SETTING_VARIANT_KEYS})
-        if non_settings:
-            raise CiTestMatrixError(f"the baseline sets {non_settings}, which are not settings of a job")
-        _require_strings(baseline, "the baseline")
-
-        # The baseline's own rows are those of a variant that overrides nothing on every Python.
-        variants = [Variant("all", {}, False, {})]
-        variants += [Variant.from_entry(entry, baseline) for entry in table.get("variants", [])]
+        variants = [Variant.for_baseline(baseline)]
+        variants += [Variant.from_table_entry(entry, baseline) for entry in table.get("variants", [])]
         rows: list[Row] = []
         for variant in variants:
             for row in variant.build_rows(versions, baseline):
@@ -123,14 +117,41 @@ class Variant:
         return [Row(python + suffix, settings, self.env) for python in versions.select(self.pythons)]
 
     # --------------------------------------------------------------------------
+    #  Helpers
+    # --------------------------------------------------------------------------
+    @staticmethod
+    def _require_strings(values: dict, table_part: str) -> None:
+        """Raise `CiTestMatrixError` if a value in `values` is not a string.
+
+        The error message names `table_part`, the part of the table that holds `values`.
+        """
+        not_strings = sorted(key for key, value in values.items() if not isinstance(value, str))
+        if not_strings:
+            raise CiTestMatrixError(f"{table_part} sets {not_strings} to a value that is not a string")
+
+    # --------------------------------------------------------------------------
     #  Factory methods
     # --------------------------------------------------------------------------
     @classmethod
-    def from_entry(cls, entry: dict, baseline: dict[str, str]) -> Variant:
+    def for_baseline(cls, baseline: dict[str, str]) -> Variant:
+        """Build the variant that runs on every Python and overrides nothing, so its rows are the baseline's.
+
+        Raises:
+            CiTestMatrixError: If the baseline sets a key that is not a setting of a job, or holds a
+                value that is not a string.
+        """
+        non_settings = sorted(set(baseline) & {"python", *NON_SETTING_VARIANT_KEYS})
+        if non_settings:
+            raise CiTestMatrixError(f"the baseline sets {non_settings}, which are not settings of a job")
+        cls._require_strings(baseline, "the baseline")
+        return cls("all", {}, False, {})
+
+    @classmethod
+    def from_table_entry(cls, entry: dict, baseline: dict[str, str]) -> Variant:
         """Build a variant from 1 entry of the table's `variants` list.
 
         Raises:
-            CiTestMatrixError: If the entry selects no Pythons, overrides a setting that the
+            CiTestMatrixError: If the entry has no `pythons` key, overrides a setting that the
                 baseline does not define, or holds a value that is not a string.
         """
         if "pythons" not in entry:
@@ -139,9 +160,9 @@ class Variant:
         unknown = sorted(set(overrides) - set(baseline))
         if unknown:
             raise CiTestMatrixError(f"the variant {entry} sets {unknown}, which the baseline does not define")
-        _require_strings(overrides, f"the variant {entry}")
+        cls._require_strings(overrides, f"the variant {entry}")
         env = entry.get("env", {})
-        _require_strings(env, f"the env of the variant {entry}")
+        cls._require_strings(env, f"the env of the variant {entry}")
         return cls(entry["pythons"], overrides, entry.get("is_free_threaded", False), env)
 
 
@@ -249,19 +270,6 @@ class CiTestMatrixError(ValueError):
 
 
 # ==================================================================================================
-#  Helpers
-# ==================================================================================================
-def _require_strings(values: dict, source: str) -> None:
-    """Raise `CiTestMatrixError` if a value in `values` is not a string.
-
-    The error message names `source`, the part of the table that holds `values`.
-    """
-    not_strings = sorted(key for key, value in values.items() if not isinstance(value, str))
-    if not_strings:
-        raise CiTestMatrixError(f"{source} sets {not_strings} to a value that is not a string")
-
-
-# ==================================================================================================
 #  Command line
 # ==================================================================================================
 def main(argv: list[str] | None = None) -> int:
@@ -279,8 +287,8 @@ def main(argv: list[str] | None = None) -> int:
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
     subparsers.add_parser("matrix", help="print the rows as a JSON list, 1 object per job")
-    env_parser = subparsers.add_parser("env", help="print the env of the rows that match the given settings")
-    env_parser.add_argument("settings", nargs="+", metavar="KEY=VALUE")
+    env_parser = subparsers.add_parser("env", help="print the env of the rows that match the given KEY=VALUE query")
+    env_parser.add_argument("query", nargs="+", metavar="KEY=VALUE")
     subparsers.add_parser("check", help="validate the table against the version files")
     args = parser.parse_args(argv)
 
@@ -289,7 +297,7 @@ def main(argv: list[str] | None = None) -> int:
         if args.command == "matrix":
             print(json.dumps([row.to_matrix_entry() for row in matrix.rows]))
         elif args.command == "env":
-            env = matrix.env_for(_parse_settings(args.settings))
+            env = matrix.env_for(_parse_query(args.query))
             print(" ".join(f"{key}={value}" for key, value in env.items()))
         else:
             print(f"CI test matrix OK: {len(matrix.rows)} jobs")
@@ -300,19 +308,19 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
 
-def _parse_settings(items: list[str]) -> dict[str, str]:
-    """Turn `KEY=VALUE` command-line items into a dict.
+def _parse_query(items: list[str]) -> dict[str, str]:
+    """Turn `KEY=VALUE` command-line items into the query dict of `CiTestMatrix.env_for`.
 
     Raises:
         CiTestMatrixError: If an item has no `=`.
     """
-    settings: dict[str, str] = {}
+    query: dict[str, str] = {}
     for item in items:
         key, separator, value = item.partition("=")
         if not separator:
             raise CiTestMatrixError(f"{item!r} is not KEY=VALUE")
-        settings[key] = value
-    return settings
+        query[key] = value
+    return query
 
 
 if __name__ == "__main__":

@@ -1,4 +1,4 @@
-"""These tests cover the rows that scripts/ci_test_matrix.py builds, its checks, and max-div's table."""
+"""These tests cover scripts/ci_test_matrix.py and the `[tool.ci-test-matrix]` table in pyproject.toml."""
 
 import json
 from pathlib import Path
@@ -247,7 +247,7 @@ def test_the_live_matrix_collects_coverage_on_exactly_its_jit_off_jobs():
 
 
 def test_the_live_matrix_runs_the_jit_golden_master_on_1_locked_jit_on_job_of_the_default_python():
-    """Only the locked jit-on job of the default Python runs the JIT golden master.
+    """Only the locked jit-on job of the default Python runs the JIT golden master test.
 
     Installing from uv.lock on the default Python gives the Python and numba versions that the JIT golden master
     recorded.
