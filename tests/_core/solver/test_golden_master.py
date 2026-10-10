@@ -33,9 +33,9 @@ test asserts against the dataset matching the active regime:
   a version-driven codegen change is numba's business, not a regression of this codebase.
 
   With `--require-jit-golden-master`, a mismatch fails instead. `make test` passes that option
-  when it installs from uv.lock on the Python of the regeneration command below, and a CI job
-  runs `make test` that way. There the runtime is meant to match, so a mismatch means that
-  uv.lock and the expected data have diverged.
+  on the runs that are meant to match the expected data (see `REQUIRE_JIT_GOLDEN_MASTER_ARG` in
+  the Makefile), so on those runs a mismatch means that uv.lock and the expected data have
+  diverged.
 
 To regenerate the expected data (both regimes) after an intentional numeric change or a numba
 upgrade in uv.lock:
@@ -166,19 +166,19 @@ def test_golden_master(problem_name: str, preset: SolverPreset, seed: int, pytes
     # --- arrange ----------------------
     regime = _active_regime()
     expected_data = json.loads(_data_file(regime).read_text())
-    fingerprint = _runtime_fingerprint()
-    if regime == "jit" and expected_data["fingerprint"] != fingerprint:
-        mismatch = (
+    runtime_fingerprint = _runtime_fingerprint()
+    if regime == "jit" and expected_data["fingerprint"] != runtime_fingerprint:
+        mismatch_message = (
             "jit-compiled output is fingerprint-specific; data was generated with "
-            f"{expected_data['fingerprint']}, this run has {fingerprint}"
+            f"{expected_data['fingerprint']}, this run has {runtime_fingerprint}"
         )
         if pytestconfig.getoption("--require-jit-golden-master"):
             pytest.fail(
-                f"{mismatch}. Regenerate the expected data with: "
+                f"{mismatch_message}. Regenerate the expected data with: "
                 "uv run --all-extras --python 3.14 python -m tests._core.solver.test_golden_master"
             )
         else:
-            pytest.skip(mismatch)
+            pytest.skip(mismatch_message)
     expected = expected_data["cases"][_case_key(problem_name, preset, seed)]
 
     # --- act --------------------------

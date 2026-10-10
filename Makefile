@@ -7,7 +7,7 @@
 #
 # RESOLUTION=locked installs exactly what uv.lock pins, and fails if the lock is out of date with
 # pyproject.toml. `highest` and `lowest-direct` are uv resolution strategies. With uv.lock present,
-# `highest` installs the locked versions, not the newest ones, so CI removes the lock for those jobs.
+# `highest` installs the locked versions, not the newest ones.
 #
 # On the uv flags. Every `uv run` / `uv sync` implicitly activates a set of dependency groups —
 # uv's "default groups", which is `dev` unless a project configures otherwise. `--group` ADDS to
@@ -16,8 +16,8 @@
 # is named. `--only-group` narrows as well, but additionally drops the project and its runtime
 # dependencies, which leaves pytest with nothing to import.
 
-# The default Python is also the one that the JIT golden master is generated with
-# (tests/_core/solver/test_golden_master.py).
+# The default Python is also the Python version recorded in the JIT golden master: the expected
+# output of seeded, JIT-compiled solves in tests/_core/solver/test_golden_master.py.
 DEFAULT_PY := 3.14
 PY ?= $(DEFAULT_PY)
 RESOLUTION ?= locked
@@ -28,10 +28,11 @@ UV_RUN = uv run --exact --python $(PY) \
          $(if $(filter locked,$(RESOLUTION)),--locked,--resolution $(RESOLUTION)) \
          --no-default-groups --group test $(if $(filter true,$(ALL_EXTRAS)),--all-extras,)
 
-# The JIT golden master records the Python and numba versions that it was generated with, and skips
-# on any other runtime. A run from uv.lock on the default Python is meant to match them, so there a
-# mismatch means that uv.lock and the golden master have diverged, and this option makes it fail.
-REQUIRE_JIT_GOLDEN_MASTER = $(if $(and $(filter locked,$(RESOLUTION)),$(filter $(DEFAULT_PY),$(PY))),--require-jit-golden-master,)
+# The JIT golden master records the Python and numba versions of the run that generated it, and its
+# test skips on any other runtime. A run from uv.lock on the default Python is meant to match those
+# versions, so on that run a mismatch means that uv.lock and the golden master have diverged, and
+# `--require-jit-golden-master` makes the JIT golden master test fail.
+REQUIRE_JIT_GOLDEN_MASTER_ARG = $(if $(and $(filter locked,$(RESOLUTION)),$(filter $(DEFAULT_PY),$(PY))),--require-jit-golden-master,)
 
 # Appended to the pytest invocation. Locally this silences the warning summary; CI overrides it
 # to pass coverage flags, and deliberately keeps the warnings visible.
@@ -81,8 +82,8 @@ build:
 	uv build;
 
 test:
-	# run all tests - with numba & one interpreter (see PY / RESOLUTION / REQUIRE_JIT_GOLDEN_MASTER above)
-	$(UV_RUN) pytest ./tests --durations=20 $(REQUIRE_JIT_GOLDEN_MASTER) $(PYTEST_ARGS)
+	# run all tests - with numba & one interpreter (see PY / RESOLUTION / REQUIRE_JIT_GOLDEN_MASTER_ARG above)
+	$(UV_RUN) pytest ./tests --durations=20 $(REQUIRE_JIT_GOLDEN_MASTER_ARG) $(PYTEST_ARGS)
 
 # Collected node-ids, one per line. CI unions these across matrix jobs to count the suite, so this
 # target's stdout is data: it is written with `@` and its commentary lives here rather than in the

@@ -9,7 +9,7 @@ inputs:
         default: ""
     dependency_resolution:
         required: false
-        description: "'locked' installs exactly what uv.lock pins; 'highest' (default) and 'lowest-direct' are uv resolution strategies, resolved from pyproject.toml."
+        description: "'locked' installs exactly what uv.lock pins; 'highest' (default) and 'lowest-direct' are uv resolution strategies, which resolve versions from pyproject.toml."
         default: "highest"
     jit:
         required: false
@@ -69,9 +69,9 @@ runs:
           # NUMBA_BOUNDSCHECK=1 compiles bounds checks into every njit function, so an
           # out-of-bounds access under any test raises instead of corrupting memory; worth
           # the modest slowdown (numpy alone does not substitute: it raises on overruns but
-          # silently wraps negative indices).  Not on the lowest-direct jobs: the minimum
-          # numba versions fail to serialize bounds-checked functions at import (a
-          # deep-recursion PicklingError), so those jobs run without it.
+          # silently wraps negative indices).  The lowest-direct jobs run without it: the
+          # minimum numba versions fail to serialize bounds-checked functions at import (a
+          # deep-recursion PicklingError).
           [ "$RES" != "lowest-direct" ] && export NUMBA_BOUNDSCHECK=1
           COV_FLAG=""
           # --cov-fail-under=0: the gate is cumulative (coverage job), not per-combo

@@ -9,10 +9,10 @@ import max_div  # noqa: F401
 
 
 def pytest_addoption(parser: pytest.Parser) -> None:
-    """Register `--require-jit-golden-master`, which `make test` passes on a run from uv.lock on the default Python."""
+    """Register `--require-jit-golden-master`, which makes the JIT golden master test fail on a version mismatch."""
     parser.addoption(
         "--require-jit-golden-master",
         action="store_true",
-        help="fail the JIT golden master, instead of skipping it, when this run's Python or numba version "
-        "differs from the versions that it was generated with",
+        help="fail the JIT golden master test, instead of skipping it, when this run's Python or numba version "
+        "differs from the versions recorded in its expected data",
     )
