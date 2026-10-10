@@ -52,12 +52,12 @@ repos:
         # too, so editing one leaves them stale exactly as it leaves the feature tables stale.
         files: ^(data/(capability_axes|solver_registry)\.yaml|docs/benchmarks/third_party/solvers/.*\.md)$
         pass_filenames: false
-      - id: python-matrix-coverage
-        name: python matrix covers .python-versions
-        entry: uv run --no-default-groups --group tooling python scripts/check_python_matrix.py
+      - id: ci-test-matrix-check
+        name: ci test matrix table is valid
+        entry: uv run --no-project python scripts/ci_test_matrix.py check
         language: system
-        # A version added to .python-versions but not to the CI matrix would ship untested.
-        files: ^(\.python-versions|\.github/workflows/_unit_tests\.yml)$
+        # The matrix is built from these files, so an edit to any of them can make it invalid.
+        files: ^(\.python-versions?|pyproject\.toml|scripts/ci_test_matrix\.py)$
         pass_filenames: false
       - id: uv-lock
         name: uv lock --check

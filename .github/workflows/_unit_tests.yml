@@ -7,57 +7,34 @@ permissions:
   contents: read
 
 jobs:
+  # The entries of the test matrix come from scripts/ci_test_matrix.py, which builds them from the
+  # [tool.ci-test-matrix] table in pyproject.toml; the table and its comments say which jobs run
+  # and why.
+  build-test-matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      entries: ${{ steps.entries.outputs.entries }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+      - name: Build the matrix entries
+        id: entries
+        # The script's output goes into a variable first: inside echo "entries=$(...)", a failing
+        # script would not fail this step.
+        run: |
+          entries="$(uv run --no-project python scripts/ci_test_matrix.py matrix)"
+          echo "entries=$entries" >> "$GITHUB_OUTPUT"
+
   core:
     name: py${{ matrix.python }} / ${{ matrix.resolution }} / jit-${{ matrix.jit }} / extras-${{ matrix.extras }}
-    # ARM, which runs this suite about twice as fast as the x64 runner for the same work.
-    # Every matrix job runs on ARM, because the matrix does not set out to test architectures.
-    runs-on: ubuntu-24.04-arm
+    needs: [build-test-matrix]
+    runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
       matrix:
-        # ubuntu-only: pure Python + numpy/scipy/numba, no OS-specific code paths, so one
-        # OS exercises everything. Strategic combos cover every axis (every supported Python,
-        # every resolution), not their full product. numba is a mandatory dependency; the jit
-        # axis distinguishes compiled (representative) from
-        # interpreted execution — coverage comes from the jit-off jobs, since numba
-        # only yields line coverage with the JIT disabled. The extras axis distinguishes
-        # a full install from the plain install a user gets: on the extras-off jobs the
-        # tests that need an extra are skipped and the tests of what the package does
-        # without one are run. The two axes do not interact, so the extras-off jobs run
-        # compiled; the guard's missing-extra branch is covered on every job by a test
-        # that patches the availability check.
-        include:
-          - { python: "3.12", resolution: highest,       jit: "on",  extras: "true"  }
-          - { python: "3.13", resolution: highest,       jit: "on",  extras: "true"  }
-          - { python: "3.14", resolution: highest,       jit: "on",  extras: "true"  }
-          - { python: "3.15", resolution: highest,       jit: "on",  extras: "true"  }
-          - { python: "3.12", resolution: lowest-direct, jit: "on",  extras: "true"  }
-          - { python: "3.14", resolution: lowest-direct, jit: "on",  extras: "true"  }
-          - { python: "3.15", resolution: lowest-direct, jit: "on",  extras: "true"  }
-          # This job installs the versions in uv.lock, on the Makefile's DEFAULT_PY. So on this job
-          # alone among the jit-on jobs, `make test` runs the JIT golden master test (see
-          # JIT_GOLDEN_MASTER_ENV in the Makefile), and a mismatch between the installed Python or
-          # numba version and the one recorded in the golden master fails that test.
-          #
-          # The other jit-on jobs skip that test: they run another Python, or install the newest
-          # or the minimum versions, which can differ from the recorded ones.
-          - { python: "3.14", resolution: locked,        jit: "on",  extras: "true"  }
-          - { python: "3.12", resolution: highest,       jit: "off", extras: "true"  }  # coverage job
-          - { python: "3.14", resolution: highest,       jit: "off", extras: "true"  }  # coverage job
-          - { python: "3.12", resolution: highest,       jit: "on",  extras: "false" }  # plain install
-          - { python: "3.14", resolution: highest,       jit: "on",  extras: "false" }  # plain install
-          # This job runs the free-threaded build with `highest` only, deliberately. A
-          # lowest-direct job would install the minimum numba version for 3.14 (`dependencies`
-          # in pyproject.toml), which predates numba's free-threaded wheels (first shipped in
-          # 0.65), so it would try to build numba from source.
-          #
-          # No PEP 508 marker can raise that minimum for free-threaded builds alone. Do not
-          # "complete the matrix" by adding a lowest-direct job.
-          #
-          # The quoted "3.14t" makes uv resolve the free-threaded interpreter, not the GIL one.
-          #
-          # There is no 3.15t job: as of numba 0.68, numba ships no free-threaded wheel for 3.15.
-          - { python: "3.14t", resolution: highest,      jit: "on",  extras: "true"  }
+        include: ${{ fromJSON(needs.build-test-matrix.outputs.entries) }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -68,9 +45,7 @@ jobs:
           dependency_resolution: ${{ matrix.resolution }}
           jit: ${{ matrix.jit }}
           all_extras: ${{ matrix.extras }}
-          # Only the jit-off jobs upload coverage data: with numba compilation off, coverage can
-          # trace the lines inside numba-compiled functions.
-          coverage: ${{ matrix.jit == 'off' && 'true' || 'false' }}
+          coverage: ${{ matrix.coverage }}
 
   coverage:
     name: coverage

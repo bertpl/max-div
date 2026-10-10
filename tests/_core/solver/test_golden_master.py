@@ -35,8 +35,9 @@ and the test asserts against the dataset of the current JIT setting:
   generation caused by a new Python or numba version is not a regression of this codebase.
 
   So with JIT compilation on, the test runs only when the environment variable
-  MAX_DIV_JIT_GOLDEN_MASTER is 1. `JIT_GOLDEN_MASTER_ENV` in the Makefile decides which
-  `make test` invocations set it.
+  MAX_DIV_JIT_GOLDEN_MASTER is 1. The `[tool.ci-test-matrix]` table in pyproject.toml decides which
+  CI jobs set it, and `JIT_GOLDEN_MASTER_ENV` in the Makefile sets it on a `make test` invocation
+  whose PY and RESOLUTION match such a job.
 
   On a run with the variable set, every case errors on a fingerprint mismatch, because such a
   mismatch means that uv.lock pins other versions than the ones recorded in the jit dataset.
