@@ -49,7 +49,7 @@ runs:
         # With uv.lock present, a `highest` job would install the locked versions, not the newest.
         run: rm -f uv.lock
 
-      # `make test`, not a bare `uv run`: the interpreter, resolution strategy and dependency
+      # `make test`, not a bare `uv run`: the interpreter, dependency versions and dependency
       # group are defined once, in the Makefile, so this matrix and a developer's local run
       # cannot drift apart. Only the genuinely CI-side concerns stay here — the JIT toggle, the
       # coverage flags, and the per-combo data file.

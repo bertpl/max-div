@@ -1,4 +1,7 @@
-"""Guard the CI test matrix: every declared Python has a job, and the `resolution: locked` job runs DEFAULT_PY."""
+"""Guard the CI test matrix.
+
+Every declared Python has a job, and the `resolution: locked` job runs the Makefile's DEFAULT_PY.
+"""
 
 import re
 

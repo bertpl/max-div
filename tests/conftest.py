@@ -14,11 +14,11 @@ import max_div  # noqa: F401
 # ==================================================================================================
 # The JIT golden master (tests/_core/solver/test_golden_master.py with JIT compilation on) checks
 # expected data that holds only for the Python and numba versions that generated it. So whoever runs
-# pytest states whether this run has those versions; for `make test`, JIT_GOLDEN_MASTER_ARG in the
-# Makefile decides it.
+# pytest passes `--jit-golden-master` only on a run that has those versions; for `make test`,
+# JIT_GOLDEN_MASTER_ARG in the Makefile decides whether to pass it.
 #
-# With JIT compilation off, the cases check the interpreted expected data, which holds on every
-# runtime, so they always run.
+# With JIT compilation off, the cases check the expected data of interpreted solves, which holds on
+# every runtime, so they always run.
 def pytest_addoption(parser: pytest.Parser) -> None:
     """Register `--jit-golden-master`, which runs the JIT golden master cases."""
     parser.addoption(

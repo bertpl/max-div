@@ -1,7 +1,7 @@
 # --- how the package suite is installed and run ------------
 # Single definition, shared by every target below AND by the CI test matrix, which calls these
-# targets rather than repeating the command. That is the point: the interpreter, the resolution
-# strategy and the dependency group cannot drift between a developer machine and CI, because
+# targets rather than repeating the command. That is the point: the interpreter, the dependency
+# versions and the dependency group cannot drift between a developer machine and CI, because
 # there is only one place that names them. CI overrides PY and RESOLUTION per matrix job; the
 # defaults are the single representative combo to run locally.
 #
@@ -31,9 +31,8 @@ UV_RUN = uv run --exact --python $(PY) \
 # The JIT golden master's expected data holds only for the Python and numba versions that generated
 # it, so its cases run only when pytest gets `--jit-golden-master` (tests/conftest.py).
 #
-# A run from uv.lock on the default Python is meant to have those versions, so JIT_GOLDEN_MASTER_ARG
-# passes the option on that run. A version mismatch on that run fails the JIT golden master test,
-# because such a mismatch means that uv.lock and the golden master have diverged.
+# A run from uv.lock on the default Python should have the Python and numba versions that generated
+# the expected data, so JIT_GOLDEN_MASTER_ARG passes the option on that run.
 JIT_GOLDEN_MASTER_ARG = $(if $(and $(filter locked,$(RESOLUTION)),$(filter $(DEFAULT_PY),$(PY))),--jit-golden-master,)
 
 # Appended to the pytest invocation. Locally this silences the warning summary; CI overrides it
