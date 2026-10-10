@@ -28,12 +28,13 @@ UV_RUN = uv run --exact --python $(PY) \
          $(if $(filter locked,$(RESOLUTION)),--locked,--resolution $(RESOLUTION)) \
          --no-default-groups --group test $(if $(filter true,$(ALL_EXTRAS)),--all-extras,)
 
-# The JIT golden master's expected data holds only for the Python and numba versions that generated
-# it, so its cases run only when pytest gets `--jit-golden-master` (tests/conftest.py).
+# With JIT compilation on, the JIT golden master's expected data holds only for the Python and numba
+# versions that generated it, so its test runs only when MAX_DIV_JIT_GOLDEN_MASTER=1
+# (tests/_core/solver/test_golden_master.py).
 #
 # A run from uv.lock on the default Python should have the Python and numba versions that generated
-# the expected data, so JIT_GOLDEN_MASTER_ARG passes the option on that run.
-JIT_GOLDEN_MASTER_ARG = $(if $(and $(filter locked,$(RESOLUTION)),$(filter $(DEFAULT_PY),$(PY))),--jit-golden-master,)
+# the expected data, so JIT_GOLDEN_MASTER_ENV sets the variable on that run.
+JIT_GOLDEN_MASTER_ENV = $(if $(and $(filter locked,$(RESOLUTION)),$(filter $(DEFAULT_PY),$(PY))),MAX_DIV_JIT_GOLDEN_MASTER=1,)
 
 # Appended to the pytest invocation. Locally this silences the warning summary; CI overrides it
 # to pass coverage flags, and deliberately keeps the warnings visible.
@@ -83,8 +84,8 @@ build:
 	uv build;
 
 test:
-	# run all tests - with numba & one interpreter (see PY / RESOLUTION / JIT_GOLDEN_MASTER_ARG above)
-	$(UV_RUN) pytest ./tests --durations=20 $(JIT_GOLDEN_MASTER_ARG) $(PYTEST_ARGS)
+	# run all tests - with numba & one interpreter (see PY / RESOLUTION / JIT_GOLDEN_MASTER_ENV above)
+	$(JIT_GOLDEN_MASTER_ENV) $(UV_RUN) pytest ./tests --durations=20 $(PYTEST_ARGS)
 
 # Collected node-ids, one per line. CI unions these across matrix jobs to count the suite, so this
 # target's stdout is data: it is written with `@` and its commentary lives here rather than in the

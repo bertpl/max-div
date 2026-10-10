@@ -34,11 +34,11 @@ and the test asserts against the dataset of the current JIT setting:
   and only a run in that environment can check the jit dataset: a change in numba's code
   generation caused by a new Python or numba version is not a regression of this codebase.
 
-  So the test carries the `jit_golden_master` marker: with JIT compilation on, its cases run
-  only when pytest gets `--jit-golden-master` (tests/conftest.py). `JIT_GOLDEN_MASTER_ARG`
-  in the Makefile decides which `make test` invocations pass that option.
+  So with JIT compilation on, the test runs only when the environment variable
+  MAX_DIV_JIT_GOLDEN_MASTER is 1. `JIT_GOLDEN_MASTER_ENV` in the Makefile decides which
+  `make test` invocations set it.
 
-  On a run with that option, every case errors on a fingerprint mismatch, because such a
+  On a run with the variable set, every case errors on a fingerprint mismatch, because such a
   mismatch means that uv.lock pins other versions than the ones recorded in the jit dataset.
 
 To regenerate the expected data (both JIT settings) after an intentional numeric change or a numba
@@ -77,6 +77,9 @@ SEEDS = [42, 123]
 # fast with NUMBA_DISABLE_JIT, where these solves run interpreted
 N_ITERATIONS = 30
 PROBLEM_N = 100
+
+# with JIT compilation on, the test runs only on request (see the module docstring)
+IS_JIT_GOLDEN_MASTER_REQUESTED = os.environ.get("MAX_DIV_JIT_GOLDEN_MASTER") == "1"
 
 
 def _is_numba_jit_enabled() -> bool:
@@ -182,7 +185,10 @@ def expected_data() -> dict[str, Any]:
     return dataset
 
 
-@pytest.mark.jit_golden_master
+@pytest.mark.skipif(
+    _is_numba_jit_enabled() and not IS_JIT_GOLDEN_MASTER_REQUESTED,
+    reason="with JIT compilation on, the golden master runs only with MAX_DIV_JIT_GOLDEN_MASTER=1",
+)
 @pytest.mark.parametrize("seed", SEEDS)
 @pytest.mark.parametrize("preset", PRESETS)
 @pytest.mark.parametrize("problem_name", PROBLEMS)

@@ -36,7 +36,7 @@ jobs:
           - { python: "3.15", resolution: lowest-direct, jit: "on",  extras: "true"  }
           # This job installs the versions in uv.lock, on the Makefile's DEFAULT_PY. So on this job
           # alone among the jit-on jobs, `make test` runs the JIT golden master test (see
-          # JIT_GOLDEN_MASTER_ARG in the Makefile), and a mismatch between the installed Python or
+          # JIT_GOLDEN_MASTER_ENV in the Makefile), and a mismatch between the installed Python or
           # numba version and the one recorded in the golden master fails that test.
           #
           # The other jit-on jobs skip that test: they run another Python, or install the newest
