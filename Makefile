@@ -2,7 +2,7 @@
 # Single definition, shared by every target below AND by the CI test matrix, which calls these
 # targets rather than repeating the command. That is the point: the interpreter, the resolution
 # strategy and the dependency group cannot drift between a developer machine and CI, because
-# there is only one place that names them. CI overrides PY and RESOLUTION per matrix leg; the
+# there is only one place that names them. CI overrides PY and RESOLUTION per matrix job; the
 # defaults are the single representative combo to run locally.
 #
 # On the uv flags. Every `uv run` / `uv sync` implicitly activates a set of dependency groups —
@@ -70,7 +70,7 @@ test:
 	# run all tests - with numba & one interpreter (see PY / RESOLUTION above)
 	$(UV_RUN) pytest ./tests --durations=20 $(PYTEST_ARGS)
 
-# Collected node-ids, one per line. CI unions these across matrix legs to count the suite, so this
+# Collected node-ids, one per line. CI unions these across matrix jobs to count the suite, so this
 # target's stdout is data: it is written with `@` and its commentary lives here rather than in the
 # recipe, since an echoed recipe line would land in whatever consumes the list.
 # -o addopts="" clears `-n auto`, so collection runs in-process instead of under xdist.
@@ -99,7 +99,6 @@ coverage:
 	# NOTE: NUMBA_DISABLE_JIT ensure coverage collects detailed line-by-line coverage info, also for numba-compiled functions
     #       NUMBA_JIT_COVERAGE is another option, but would incorrectly emit coverage info for ALL compiled lines, when a function is triggered.
 	mkdir -p ./reports
-	# same install surface as `test` and as the CI coverage legs (see PY / RESOLUTION above)
 	NUMBA_DISABLE_JIT=1 COVERAGE_FILE=./reports/.coverage $(UV_RUN) pytest ./tests --cov --cov-report=html:./reports/coverage --durations=20 $(PYTEST_ARGS)
 
 test-and-coverage:
