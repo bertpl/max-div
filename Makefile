@@ -16,9 +16,11 @@
 # is named. `--only-group` narrows as well, but additionally drops the project and its runtime
 # dependencies, which leaves pytest with nothing to import.
 
-# The default Python is also the Python version recorded in the JIT golden master: the expected
-# output of seeded, JIT-compiled solves, which tests/_core/solver/test_golden_master.py checks.
-DEFAULT_PY := 3.14
+# The default Python, read from .python-version. It is also the Python version recorded in the JIT
+# golden master: the expected output of seeded, JIT-compiled solves, which
+# tests/_core/solver/test_golden_master.py checks. `$(shell)`, not `$(file)`, because the make that
+# ships with macOS is GNU Make 3.81, which has no `$(file)`.
+DEFAULT_PY := $(strip $(shell cat .python-version))
 PY ?= $(DEFAULT_PY)
 RESOLUTION ?= locked
 # ALL_EXTRAS=false runs the suite as a plain install would: tests that need an extra are skipped, and
@@ -32,10 +34,15 @@ UV_RUN = uv run --exact --python $(PY) \
 # numba version and CPU architecture that generated it, so its test runs only when
 # MAX_DIV_JIT_GOLDEN_MASTER=1 (tests/_core/solver/test_golden_master.py).
 #
-# A run from uv.lock on the default Python should have the Python and numba versions that generated
-# the expected data, so JIT_GOLDEN_MASTER_ENV sets the variable on that run. The CPU architecture is
-# not checked here: on a machine with another one, `make test JIT_GOLDEN_MASTER_ENV=` skips the test.
-JIT_GOLDEN_MASTER_ENV = $(if $(and $(filter locked,$(RESOLUTION)),$(filter $(DEFAULT_PY),$(PY))),MAX_DIV_JIT_GOLDEN_MASTER=1,)
+# The CI test matrix ([tool.ci-test-matrix] in pyproject.toml) decides which jobs set that variable.
+# JIT_GOLDEN_MASTER_ENV asks scripts/ci_test_matrix.py for the env of the matrix jobs with this PY
+# and RESOLUTION, so a local `make test` sets the variable exactly when the matching CI job does.
+# The CPU architecture is not checked here: on a machine with another one,
+# `make test JIT_GOLDEN_MASTER_ENV=` skips the test.
+#
+# If the script fails, make stops: an empty value would skip the test without a word.
+JIT_GOLDEN_MASTER_ENV = $(call stop_if_failed,$(shell uv run --no-project --python $(PY) python scripts/ci_test_matrix.py env python=$(PY) resolution=$(RESOLUTION) || echo CI_TEST_MATRIX_FAILED))
+stop_if_failed = $(if $(filter CI_TEST_MATRIX_FAILED,$(1)),$(error scripts/ci_test_matrix.py failed, see its error above),$(1))
 
 # Appended to the pytest invocation. Locally this silences the warning summary; CI overrides it
 # to pass coverage flags, and deliberately keeps the warnings visible.
@@ -117,7 +124,7 @@ test-scripts:
 
 test-benchmarks:
 	# comparison-benchmark harness tests - separate from the package suite (needs the benchmarks deps group)
-	uv run --group benchmarks --python 3.14 pytest ./benchmarks/tests --durations=20 --disable-warnings
+	uv run --group benchmarks --python $(DEFAULT_PY) pytest ./benchmarks/tests --durations=20 --disable-warnings
 
 coverage:
 	# NOTE: NUMBA_DISABLE_JIT ensure coverage collects detailed line-by-line coverage info, also for numba-compiled functions
