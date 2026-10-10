@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import ClassVar
 
-from release_helpers import parse_semver
+from helpers import parse_semver
 
 
 # ==================================================================================================

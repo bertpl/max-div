@@ -5,8 +5,8 @@ from __future__ import annotations
 import re
 import sys
 
-from release_helpers import CATEGORIES, CHANGELOG, fail_with_message, run_command
-from release_step import ReleaseContext, ReleasePhase, ReleaseStep
+from helpers import CATEGORIES, CHANGELOG, fail_with_message, run_command
+from step import ReleaseContext, ReleasePhase, ReleaseStep
 
 
 # ==================================================================================================

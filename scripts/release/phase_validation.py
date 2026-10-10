@@ -12,7 +12,7 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
-from release_helpers import (
+from helpers import (
     CHANGELOG,
     PACKAGE_NAME,
     PYPROJECT,
@@ -22,7 +22,7 @@ from release_helpers import (
     parse_semver,
     run_command,
 )
-from release_step import BadgeMetrics, ReleaseContext, ReleasePhase, ReleaseStep
+from step import BadgeMetrics, ReleaseContext, ReleasePhase, ReleaseStep
 
 # warn if the cumulative union exceeds this multiple of the largest single combo
 TEST_COUNT_UNION_RATIO_WARN = 1.5

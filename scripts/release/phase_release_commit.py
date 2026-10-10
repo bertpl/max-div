@@ -6,7 +6,7 @@ import re
 import shutil
 from datetime import date
 
-from release_helpers import (
+from helpers import (
     CATEGORIES,
     CHANGELOG,
     README,
@@ -17,7 +17,7 @@ from release_helpers import (
     fail_with_message,
     run_command,
 )
-from release_step import BadgeMetrics, ReleaseContext, ReleasePhase, ReleaseStep
+from step import BadgeMetrics, ReleaseContext, ReleasePhase, ReleaseStep
 
 
 # ==================================================================================================

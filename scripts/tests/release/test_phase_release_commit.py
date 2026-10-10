@@ -7,7 +7,7 @@ import pytest
 from scripts.tests.release.helpers import load_release_module
 
 _release_commit = load_release_module("phase_release_commit")
-_release_step = load_release_module("release_step")
+_step = load_release_module("step")
 
 
 def test_finalize_changelog_dates_the_unreleased_section_and_drops_its_empty_categories(
@@ -24,7 +24,7 @@ def test_finalize_changelog_dates_the_unreleased_section_and_drops_its_empty_cat
     monkeypatch.setattr(_release_commit, "CHANGELOG", changelog)
 
     # --- act --------------------------
-    _release_commit.FinalizeChangelogStep().run(_release_step.ReleaseContext("0.2.0"))
+    _release_commit.FinalizeChangelogStep().run(_step.ReleaseContext("0.2.0"))
 
     # --- assert -----------------------
     assert changelog.read_text() == (

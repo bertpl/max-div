@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import subprocess
 
+from helpers import PACKAGE_NAME
 from phase_post_release import AddUnreleasedSectionStep, CommitNextCycleStep, PushMainAndTagStep
 from phase_release_commit import (
     BumpVersionStep,
@@ -23,8 +24,7 @@ from phase_validation import (
     CheckVersionUpgradeStep,
     GatherBadgeMetricsStep,
 )
-from release_helpers import PACKAGE_NAME
-from release_step import ReleaseContext, ReleasePhase, ReleaseStep
+from step import ReleaseContext, ReleasePhase, ReleaseStep
 
 # The release runs these steps in this order and numbers them by their position, so a step is added
 # or moved by editing this list alone. The order has 2 constraints:

@@ -1,4 +1,4 @@
-"""These tests check the order of the release steps and how scripts/release/release_runner.py runs them."""
+"""These tests check the order of the release steps and how scripts/release/runner.py runs them."""
 
 import subprocess
 
@@ -6,16 +6,16 @@ import pytest
 
 from scripts.tests.release.helpers import load_release_module
 
-_release_runner = load_release_module("release_runner")
-_release_step = load_release_module("release_step")
+_runner = load_release_module("runner")
+_step = load_release_module("step")
 _validation = load_release_module("phase_validation")
 _release_commit = load_release_module("phase_release_commit")
 _post_release = load_release_module("phase_post_release")
 
-ReleasePhase = _release_step.ReleasePhase
+ReleasePhase = _step.ReleasePhase
 
 
-class _RecordingStep(_release_step.ReleaseStep):
+class _RecordingStep(_step.ReleaseStep):
     """A _RecordingStep appends to `run_log` when it runs or handles its failure, and raises `error` if one is given."""
 
     def __init__(self, phase: ReleasePhase, step_title: str, run_log: list[str], error: BaseException | None = None):
@@ -24,15 +24,15 @@ class _RecordingStep(_release_step.ReleaseStep):
         self._run_log = run_log
         self._error = error
 
-    def title(self, context: _release_step.ReleaseContext) -> str:
+    def title(self, context: _step.ReleaseContext) -> str:
         return self._step_title
 
-    def run(self, context: _release_step.ReleaseContext) -> None:
+    def run(self, context: _step.ReleaseContext) -> None:
         self._run_log.append(self._step_title)
         if self._error is not None:
             raise self._error
 
-    def on_failure(self, context: _release_step.ReleaseContext) -> None:
+    def on_failure(self, context: _step.ReleaseContext) -> None:
         self._run_log.append(f"on_failure: {self._step_title}")
 
 
@@ -47,7 +47,7 @@ def test_the_release_steps_list_every_step_class_once():
     step_classes = [cls for base in phase_bases for cls in base.__subclasses__()]
 
     # --- act --------------------------
-    listed_classes = [type(step) for step in _release_runner.RELEASE_STEPS]
+    listed_classes = [type(step) for step in _runner.RELEASE_STEPS]
 
     # --- assert -----------------------
     assert sorted(cls.__name__ for cls in listed_classes) == sorted(cls.__name__ for cls in step_classes)
@@ -59,7 +59,7 @@ def test_the_release_steps_run_phase_by_phase():
     phase_order = list(ReleasePhase)
 
     # --- act --------------------------
-    positions = [phase_order.index(step.phase) for step in _release_runner.RELEASE_STEPS]
+    positions = [phase_order.index(step.phase) for step in _runner.RELEASE_STEPS]
 
     # --- assert -----------------------
     assert positions == sorted(positions)
@@ -69,7 +69,7 @@ def test_the_release_steps_run_phase_by_phase():
 def test_the_badge_metrics_are_gathered_before_the_release_commit_reads_them():
     """`GatherBadgeMetricsStep` runs before the step that stamps the README badges from its metrics."""
     # --- act --------------------------
-    step_types = [type(step) for step in _release_runner.RELEASE_STEPS]
+    step_types = [type(step) for step in _runner.RELEASE_STEPS]
 
     # --- assert -----------------------
     assert step_types.index(_validation.GatherBadgeMetricsStep) < step_types.index(
@@ -86,10 +86,10 @@ def test_run_release_numbers_the_steps_and_names_each_phase(capsys: pytest.Captu
         _RecordingStep(ReleasePhase.VALIDATION, "check b", run_log),
         _RecordingStep(ReleasePhase.RELEASE_COMMIT, "commit c", run_log),
     ]
-    context = _release_step.ReleaseContext("1.2.3", badge_metrics=_release_step.BadgeMetrics(99.5, 10))
+    context = _step.ReleaseContext("1.2.3", badge_metrics=_step.BadgeMetrics(99.5, 10))
 
     # --- act --------------------------
-    _release_runner.run_release(steps, context, is_dry_run=False)
+    _runner.run_release(steps, context, is_dry_run=False)
 
     # --- assert -----------------------
     assert run_log == ["check a", "check b", "commit c"]
@@ -107,10 +107,10 @@ def test_a_dry_run_runs_only_the_validation_steps(capsys: pytest.CaptureFixture)
         _RecordingStep(ReleasePhase.RELEASE_COMMIT, "commit b", run_log),
         _RecordingStep(ReleasePhase.POST_RELEASE, "push c", run_log),
     ]
-    context = _release_step.ReleaseContext("1.2.3", badge_metrics=_release_step.BadgeMetrics(99.5, 10))
+    context = _step.ReleaseContext("1.2.3", badge_metrics=_step.BadgeMetrics(99.5, 10))
 
     # --- act --------------------------
-    _release_runner.run_release(steps, context, is_dry_run=True)
+    _runner.run_release(steps, context, is_dry_run=True)
 
     # --- assert -----------------------
     assert run_log == ["check a"]
@@ -132,11 +132,11 @@ def test_a_failing_step_handles_its_failure_and_stops_the_release(error: BaseExc
         _RecordingStep(ReleasePhase.RELEASE_COMMIT, "failing step", run_log, error=error),
         _RecordingStep(ReleasePhase.RELEASE_COMMIT, "never runs", run_log),
     ]
-    context = _release_step.ReleaseContext("1.2.3")
+    context = _step.ReleaseContext("1.2.3")
 
     # --- act --------------------------
     with pytest.raises(type(error)):
-        _release_runner.run_release(steps, context, is_dry_run=False)
+        _runner.run_release(steps, context, is_dry_run=False)
 
     # --- assert -----------------------
     assert run_log == ["failing step", "on_failure: failing step"]

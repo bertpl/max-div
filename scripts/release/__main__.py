@@ -1,6 +1,6 @@
 """Release max-div: `make release VERSION=X.Y.Z` runs this folder as `python scripts/release X.Y.Z`.
 
-The release is a list of steps, `RELEASE_STEPS` in release_runner.py, run in order, phase by phase:
+The release is a list of steps, `RELEASE_STEPS` in runner.py, run in order, phase by phase:
 
 - validation (phase_validation.py) checks the preconditions and writes nothing; `--dry-run` stops here;
 - release commit (phase_release_commit.py) builds the release commit and its tag, locally;
@@ -8,9 +8,9 @@ The release is a list of steps, `RELEASE_STEPS` in release_runner.py, run in ord
   tag atomically.
 
 Python runs this folder by its path, so `scripts/release/` itself is on `sys.path`, and its modules
-import each other by module name alone (`import release_helpers`).
+import each other by module name alone (`import helpers`).
 """
 
-from release_runner import main
+from runner import main
 
 main()

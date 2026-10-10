@@ -5,7 +5,7 @@ import pytest
 from scripts.tests.release.helpers import load_release_module
 
 _post_release = load_release_module("phase_post_release")
-_release_step = load_release_module("release_step")
+_step = load_release_module("step")
 
 
 def test_add_unreleased_section_inserts_every_empty_category_above_the_newest_version(
@@ -18,7 +18,7 @@ def test_add_unreleased_section_inserts_every_empty_category_above_the_newest_ve
     monkeypatch.setattr(_post_release, "CHANGELOG", changelog)
 
     # --- act --------------------------
-    _post_release.AddUnreleasedSectionStep().run(_release_step.ReleaseContext("0.2.0"))
+    _post_release.AddUnreleasedSectionStep().run(_step.ReleaseContext("0.2.0"))
 
     # --- assert -----------------------
     assert changelog.read_text() == (
@@ -31,7 +31,7 @@ def test_add_unreleased_section_inserts_every_empty_category_above_the_newest_ve
 def test_a_post_release_failure_prints_how_to_undo_the_release_commit_and_tag(capsys: pytest.CaptureFixture):
     """A failing post-release step prints the commands that reset main to before the tag and delete the tag."""
     # --- arrange ----------------------
-    context = _release_step.ReleaseContext("1.2.3")
+    context = _step.ReleaseContext("1.2.3")
 
     # --- act --------------------------
     with pytest.raises(SystemExit):
