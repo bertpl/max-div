@@ -10,9 +10,9 @@ from release_step import ReleaseContext, ReleasePhase, ReleaseStep
 
 
 # ==================================================================================================
-#  PostReleaseStep
+#  PostReleasePhaseStep
 # ==================================================================================================
-class PostReleaseStep(ReleaseStep):
+class PostReleasePhaseStep(ReleaseStep):
     """A post-release step runs after the tag exists; its failure leaves a local release commit and tag."""
 
     phase = ReleasePhase.POST_RELEASE
@@ -21,7 +21,7 @@ class PostReleaseStep(ReleaseStep):
         """Print how to undo the local release commit and tag, then exit.
 
         The tag points at the release commit, so the commit before the tag is where `main` stood before the
-        release, no matter which post-release step failed. Resetting to it also drops the
+        release, no matter which post-release step failed. Resetting to that commit also drops the
         'chore: begin next development cycle' commit if it exists.
         """
         print(
@@ -38,7 +38,7 @@ class PostReleaseStep(ReleaseStep):
 # ==================================================================================================
 #  Steps
 # ==================================================================================================
-class AddUnreleasedSectionStep(PostReleaseStep):
+class AddUnreleasedSectionStep(PostReleasePhaseStep):
     """Add a fresh Unreleased section to the changelog."""
 
     def title(self, context: ReleaseContext) -> str:
@@ -54,7 +54,7 @@ class AddUnreleasedSectionStep(PostReleaseStep):
         CHANGELOG.write_text(text)
 
 
-class CommitNextCycleStep(PostReleaseStep):
+class CommitNextCycleStep(PostReleasePhaseStep):
     """Commit the fresh Unreleased section."""
 
     def title(self, context: ReleaseContext) -> str:
@@ -65,7 +65,7 @@ class CommitNextCycleStep(PostReleaseStep):
         run_command(["git", "commit", "-m", "chore: begin next development cycle"])
 
 
-class PushMainAndTagStep(PostReleaseStep):
+class PushMainAndTagStep(PostReleasePhaseStep):
     """Push main and the tag atomically."""
 
     def title(self, context: ReleaseContext) -> str:

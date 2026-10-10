@@ -36,7 +36,7 @@ classifiers = [
     "Intended Audience :: Developers",
     "Intended Audience :: Science/Research",
     "Operating System :: OS Independent",
-    # Python versions kept in sync with .python-versions (`make release` checks this)
+    # These Python versions must match .python-versions, and `make release` checks that they do.
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",

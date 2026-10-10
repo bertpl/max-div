@@ -1,4 +1,4 @@
-"""This module holds the release commit steps: bump the version, finalize the changelog, commit and tag."""
+"""This module holds the release commit steps, which build the release commit and its tag locally."""
 
 from __future__ import annotations
 
@@ -21,9 +21,9 @@ from release_step import BadgeMetrics, ReleaseContext, ReleasePhase, ReleaseStep
 
 
 # ==================================================================================================
-#  ReleaseCommitStep
+#  ReleaseCommitPhaseStep
 # ==================================================================================================
-class ReleaseCommitStep(ReleaseStep):
+class ReleaseCommitPhaseStep(ReleaseStep):
     """A release commit step builds the release commit or its tag, locally; nothing is pushed yet."""
 
     phase = ReleasePhase.RELEASE_COMMIT
@@ -32,7 +32,7 @@ class ReleaseCommitStep(ReleaseStep):
 # ==================================================================================================
 #  Steps
 # ==================================================================================================
-class BumpVersionStep(ReleaseCommitStep):
+class BumpVersionStep(ReleaseCommitPhaseStep):
     """Set version in pyproject.toml."""
 
     def title(self, context: ReleaseContext) -> str:
@@ -42,7 +42,7 @@ class BumpVersionStep(ReleaseCommitStep):
         run_command(["uv", "version", context.version])
 
 
-class RefreshUvLockStep(ReleaseCommitStep):
+class RefreshUvLockStep(ReleaseCommitPhaseStep):
     """Refresh uv.lock after version bump."""
 
     def title(self, context: ReleaseContext) -> str:
@@ -52,7 +52,7 @@ class RefreshUvLockStep(ReleaseCommitStep):
         run_command(["uv", "lock"])
 
 
-class FinalizeChangelogStep(ReleaseCommitStep):
+class FinalizeChangelogStep(ReleaseCommitPhaseStep):
     """Turn the Unreleased section into a dated version section, dropping the categories that have no entries."""
 
     def title(self, context: ReleaseContext) -> str:
@@ -100,7 +100,7 @@ class FinalizeChangelogStep(ReleaseCommitStep):
         CHANGELOG.write_text(text)
 
 
-class StampAndCommitReleaseStep(ReleaseCommitStep):
+class StampReadmeAndSplashThenCommitStep(ReleaseCommitPhaseStep):
     """Refresh the README badges from `context.badge_metrics`, stamp the splash, then create the release commit.
 
     `GatherBadgeMetricsStep` sets `context.badge_metrics`, so it must run before this step.
@@ -161,7 +161,7 @@ class StampAndCommitReleaseStep(ReleaseCommitStep):
         run_command(["sh", str(SPLASH_SCRIPT), f"v{version}"], cwd=REPO_ROOT)
 
 
-class CreateTagStep(ReleaseCommitStep):
+class CreateTagStep(ReleaseCommitPhaseStep):
     """Create the version tag."""
 
     def title(self, context: ReleaseContext) -> str:

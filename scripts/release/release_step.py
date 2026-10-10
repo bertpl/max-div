@@ -7,6 +7,8 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import ClassVar
 
+from release_helpers import parse_semver
+
 
 # ==================================================================================================
 #  ReleaseStep
@@ -28,7 +30,7 @@ class ReleaseStep(ABC):
         the 2 failures that `run_release` handles.
         """
 
-    # Not abstract: doing nothing is the default, and only a step whose failure leaves something to undo overrides it.
+    # Not abstract, because only a step whose failure leaves something to undo overrides it.
     def on_failure(self, context: ReleaseContext) -> None:  # noqa: B027
         """Run after `run` fails, before the failure propagates; the default does nothing."""
 
@@ -39,11 +41,8 @@ class ReleaseStep(ABC):
 class ReleasePhase(Enum):
     """A phase of the release; the phases run in the order that they are listed here."""
 
-    # This phase only checks: its steps write nothing to the repo, and `--dry-run` stops after this phase.
     VALIDATION = "Validation"
-    # This phase builds the release commit and its tag, locally; nothing is pushed yet.
     RELEASE_COMMIT = "Release commit"
-    # This phase runs after the tag exists, so a failure here leaves a local release commit and tag to undo.
     POST_RELEASE = "Post-release"
 
 
@@ -54,20 +53,23 @@ class ReleasePhase(Enum):
 class ReleaseContext:
     """A ReleaseContext holds the state of 1 release, shared by all its steps.
 
-    It carries the version being released, and the results that an earlier step stores for a later step to read,
-    such as the badge metrics.
+    It carries the version being released, and the results of earlier steps, such as the badge metrics.
     """
 
     version: str
     badge_metrics: BadgeMetrics | None = None
+
+    def __post_init__(self) -> None:
+        """Exit with an error unless `version` is in X.Y.Z form."""
+        parse_semver(self.version)
 
 
 @dataclass(frozen=True)
 class BadgeMetrics:
     """A BadgeMetrics records the badge numbers for one release.
 
-    They are CI's combined coverage percentage, and `test_union`, the number of distinct tests across all CI matrix
-    combos.
+    The badge numbers are CI's combined coverage percentage, and `test_union`, the number of distinct tests across
+    all CI matrix entries.
     """
 
     coverage_pct: float

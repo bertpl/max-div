@@ -33,9 +33,9 @@ CI_POLL_INTERVAL_SEC = 30
 
 
 # ==================================================================================================
-#  ValidationStep
+#  ValidationPhaseStep
 # ==================================================================================================
-class ValidationStep(ReleaseStep):
+class ValidationPhaseStep(ReleaseStep):
     """A validation step checks a precondition of the release and writes nothing to the repo."""
 
     phase = ReleasePhase.VALIDATION
@@ -44,7 +44,7 @@ class ValidationStep(ReleaseStep):
 # ==================================================================================================
 #  Steps
 # ==================================================================================================
-class CheckCleanWorkingTreeOnMainStep(ValidationStep):
+class CheckCleanWorkingTreeOnMainStep(ValidationPhaseStep):
     """Validate working tree is on main and clean."""
 
     def title(self, context: ReleaseContext) -> str:
@@ -59,7 +59,7 @@ class CheckCleanWorkingTreeOnMainStep(ValidationStep):
             fail_with_message("working tree has uncommitted changes:\n" + porcelain)
 
 
-class CheckMainInSyncWithOriginStep(ValidationStep):
+class CheckMainInSyncWithOriginStep(ValidationPhaseStep):
     """Validate main is in sync with origin."""
 
     def title(self, context: ReleaseContext) -> str:
@@ -73,7 +73,7 @@ class CheckMainInSyncWithOriginStep(ValidationStep):
             fail_with_message(f"local main ({local[:8]}) does not match origin/main ({remote[:8]})")
 
 
-class CheckVersionUpgradeStep(ValidationStep):
+class CheckVersionUpgradeStep(ValidationPhaseStep):
     """Validate VERSION is strictly greater than current."""
 
     def title(self, context: ReleaseContext) -> str:
@@ -81,14 +81,12 @@ class CheckVersionUpgradeStep(ValidationStep):
 
     def run(self, context: ReleaseContext) -> None:
         new = parse_semver(context.version)
-        current = parse_semver(tomllib.loads(PYPROJECT.read_text())["project"]["version"])
-        if new <= current:
-            fail_with_message(
-                f"VERSION {context.version} is not greater than current {'.'.join(str(p) for p in current)}"
-            )
+        current_version = tomllib.loads(PYPROJECT.read_text())["project"]["version"]
+        if new <= parse_semver(current_version):
+            fail_with_message(f"VERSION {context.version} is not greater than current {current_version}")
 
 
-class CheckTagDoesNotExistStep(ValidationStep):
+class CheckTagDoesNotExistStep(ValidationPhaseStep):
     """Validate tag does not exist locally or on origin."""
 
     def title(self, context: ReleaseContext) -> str:
@@ -102,7 +100,7 @@ class CheckTagDoesNotExistStep(ValidationStep):
             fail_with_message(f"tag {tag} already exists on origin")
 
 
-class CheckNotOnPyPIStep(ValidationStep):
+class CheckVersionNotOnPyPIStep(ValidationPhaseStep):
     """Validate version is not already on PyPI."""
 
     def title(self, context: ReleaseContext) -> str:
@@ -123,7 +121,7 @@ class CheckNotOnPyPIStep(ValidationStep):
             fail_with_message(f"could not reach PyPI to check {context.version}: {e.reason}")
 
 
-class CheckClassifiersMatchPythonVersionsStep(ValidationStep):
+class CheckClassifiersMatchPythonVersionsStep(ValidationPhaseStep):
     """Validate Python classifiers match .python-versions."""
 
     def title(self, context: ReleaseContext) -> str:
@@ -144,7 +142,7 @@ class CheckClassifiersMatchPythonVersionsStep(ValidationStep):
             )
 
 
-class CheckChangelogHasEntriesStep(ValidationStep):
+class CheckChangelogHasEntriesStep(ValidationPhaseStep):
     """Validate Unreleased section has at least one bullet entry."""
 
     def title(self, context: ReleaseContext) -> str:
@@ -158,12 +156,12 @@ class CheckChangelogHasEntriesStep(ValidationStep):
             fail_with_message("'## Unreleased' has no bullet entries")
 
 
-class GatherBadgeMetricsStep(ValidationStep):
+class GatherBadgeMetricsStep(ValidationPhaseStep):
     """Resolve every badge number, failing the release if any of them cannot be obtained.
 
-    When the 'Push to Main' run for HEAD is still in flight, the step waits for it, because the common case after a
-    last-minute commit (e.g. a changelog entry) is CI that has not finished yet, and waiting turns a manual
-    watch-and-rerun loop into one invocation.
+    When the 'Push to Main' run for HEAD is still running, the step waits for it. After a last-minute commit (e.g.
+    a changelog entry), CI has usually not finished yet, and waiting saves the maintainer from watching CI and
+    rerunning the release by hand.
     """
 
     def title(self, context: ReleaseContext) -> str:
@@ -193,43 +191,43 @@ class GatherBadgeMetricsStep(ValidationStep):
         badge matches the CI gate exactly. It waits up to `CI_WAIT_TIMEOUT_SEC` for HEAD's
         'Push to Main' run to succeed, and exits when no such run succeeds in time.
         """
-        local_head = run_command(["git", "rev-parse", "HEAD"]).strip()
-        run_id = cls._wait_for_main_ci(local_head)
+        head_sha = run_command(["git", "rev-parse", "HEAD"]).strip()
+        run_id = cls._wait_for_main_ci(head_sha)
         with tempfile.TemporaryDirectory() as tmp:
             run_command(["gh", "run", "download", run_id, "--name", "release-metrics", "--dir", tmp])
             return json.loads((Path(tmp) / "metrics.json").read_text())
 
     @classmethod
-    def _wait_for_main_ci(cls, local_head: str) -> str:
-        """Return the id of a successful 'Push to Main' run for `local_head`, waiting one out if in flight.
+    def _wait_for_main_ci(cls, head_sha: str) -> str:
+        """Return the id of a successful 'Push to Main' run for `head_sha`, waiting one out if in flight.
 
         Aborts when:
 
-        - no run exists for `local_head` (the push did not trigger CI);
+        - no run exists for `head_sha` (the push did not trigger CI);
         - the run concluded without success;
         - `CI_WAIT_TIMEOUT_SEC` passes without the run completing.
 
         Once found, the run is polled by its id, so an out-of-date result from `gh run list` cannot
         hide the run.
         """
-        run_id = cls._main_run_id_for(local_head)
+        run_id = cls._main_run_id_for(head_sha)
         if run_id is None:
-            fail_with_message(f"no 'Push to Main' run found for HEAD {local_head[:8]} — did the push trigger CI?")
+            fail_with_message(f"no 'Push to Main' run found for HEAD {head_sha[:8]} — did the push trigger CI?")
         deadline = time.monotonic() + CI_WAIT_TIMEOUT_SEC
         has_announced_wait = False
         while True:
-            status, conclusion = cls._workflow_run_state(run_id)
+            state = json.loads(run_command(["gh", "run", "view", run_id, "--json", "status,conclusion"]))
+            # the conclusion is empty until the run completes
+            status, conclusion = state["status"], state.get("conclusion") or ""
             if status == "completed":
                 if conclusion != "success":
-                    fail_with_message(f"'Push to Main' run for HEAD {local_head[:8]} concluded '{conclusion}'")
+                    fail_with_message(f"'Push to Main' run for HEAD {head_sha[:8]} concluded '{conclusion}'")
                 return run_id
             if not has_announced_wait:
-                print(
-                    f"       CI for HEAD {local_head[:8]} is {status} — waiting up to {CI_WAIT_TIMEOUT_SEC // 60} min"
-                )
+                print(f"       CI for HEAD {head_sha[:8]} is {status} — waiting up to {CI_WAIT_TIMEOUT_SEC // 60} min")
                 has_announced_wait = True
             if time.monotonic() >= deadline:
-                fail_with_message(f"timed out after {CI_WAIT_TIMEOUT_SEC // 60} min waiting for CI on {local_head[:8]}")
+                fail_with_message(f"timed out after {CI_WAIT_TIMEOUT_SEC // 60} min waiting for CI on {head_sha[:8]}")
             time.sleep(CI_POLL_INTERVAL_SEC)
 
     @staticmethod
@@ -259,12 +257,3 @@ class GatherBadgeMetricsStep(ValidationStep):
             return str(runs[0]["databaseId"])
         else:
             return None
-
-    @staticmethod
-    def _workflow_run_state(run_id: str) -> tuple[str, str]:
-        """Return (status, conclusion) of the workflow run `run_id`.
-
-        The conclusion is empty until the run completes.
-        """
-        state = json.loads(run_command(["gh", "run", "view", run_id, "--json", "status,conclusion"]))
-        return state["status"], state.get("conclusion") or ""

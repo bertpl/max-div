@@ -153,9 +153,9 @@ release:
 ifndef VERSION
 	$(error VERSION is required: make release VERSION=X.Y.Z)
 endif
-	# Check the preconditions first, so a bad changelog or a stale coverage run aborts before the test
-	# suite runs for minutes. The checks take seconds, unless GatherBadgeMetricsStep waits for an
-	# in-flight main CI run.
+	# Check the preconditions first, so a bad changelog or a missing or failed CI run for HEAD aborts
+	# before the test suite runs for minutes. The checks take seconds, unless GatherBadgeMetricsStep
+	# waits for a main CI run that is still running.
 	uv run python scripts/release $(VERSION) --dry-run
 	$(MAKE) test
 	uv run python scripts/release $(VERSION)

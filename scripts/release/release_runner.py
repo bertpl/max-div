@@ -11,39 +11,40 @@ from phase_release_commit import (
     CreateTagStep,
     FinalizeChangelogStep,
     RefreshUvLockStep,
-    StampAndCommitReleaseStep,
+    StampReadmeAndSplashThenCommitStep,
 )
 from phase_validation import (
     CheckChangelogHasEntriesStep,
     CheckClassifiersMatchPythonVersionsStep,
     CheckCleanWorkingTreeOnMainStep,
     CheckMainInSyncWithOriginStep,
-    CheckNotOnPyPIStep,
     CheckTagDoesNotExistStep,
+    CheckVersionNotOnPyPIStep,
     CheckVersionUpgradeStep,
     GatherBadgeMetricsStep,
 )
-from release_helpers import PACKAGE_NAME, parse_semver
+from release_helpers import PACKAGE_NAME
 from release_step import ReleaseContext, ReleasePhase, ReleaseStep
 
 # The release runs these steps in this order and numbers them by their position, so a step is added
-# or moved by editing this list alone. The steps of each phase stay together, in the order that
-# ReleasePhase lists the phases, and a step that reads a ReleaseContext field comes after the step
-# that sets it.
+# or moved by editing this list alone. The order has 2 constraints:
+# - the steps of each phase stay together, in the order that ReleasePhase lists the phases;
+# - a step that reads a ReleaseContext field comes after the step that sets it.
 RELEASE_STEPS: list[ReleaseStep] = [
     CheckCleanWorkingTreeOnMainStep(),
     CheckMainInSyncWithOriginStep(),
     CheckVersionUpgradeStep(),
     CheckTagDoesNotExistStep(),
-    CheckNotOnPyPIStep(),
+    CheckVersionNotOnPyPIStep(),
     CheckClassifiersMatchPythonVersionsStep(),
     CheckChangelogHasEntriesStep(),
-    # The last precondition: the CI fetch runs after every cheap check has passed and before the first write.
+    # GatherBadgeMetricsStep is the last precondition: it downloads the CI metrics after every cheap
+    # check has passed and before the first write.
     GatherBadgeMetricsStep(),
     BumpVersionStep(),
     RefreshUvLockStep(),
     FinalizeChangelogStep(),
-    StampAndCommitReleaseStep(),
+    StampReadmeAndSplashThenCommitStep(),
     CreateTagStep(),
     AddUnreleasedSectionStep(),
     CommitNextCycleStep(),
@@ -61,17 +62,18 @@ def main(argv: list[str] | None = None) -> None:
         help="run every precondition, including the CI badge-metrics fetch, then stop before the first write",
     )
     args = parser.parse_args(argv)
-    parse_semver(args.version)
+    context = ReleaseContext(args.version)
 
     print(f"Releasing {PACKAGE_NAME} v{args.version}")
-    run_release(RELEASE_STEPS, ReleaseContext(args.version), is_dry_run=args.dry_run)
+    run_release(RELEASE_STEPS, context, is_dry_run=args.dry_run)
 
 
 def run_release(steps: list[ReleaseStep], context: ReleaseContext, is_dry_run: bool) -> None:
     """Run `steps` in order, numbered by position, printing each phase's name as it starts.
 
-    A dry run runs only the validation steps. When a step fails, its `on_failure` runs before the
-    failure propagates; a post-release step uses it to print how to undo the local release commit and tag.
+    A dry run runs only the validation steps and then prints the badge metrics, so one of those steps
+    must set `context.badge_metrics`. When a step raises `SystemExit` or `CalledProcessError`, its
+    `on_failure` runs before the exception propagates; any other exception propagates without it.
     """
     if is_dry_run:
         steps = [step for step in steps if step.phase is ReleasePhase.VALIDATION]
