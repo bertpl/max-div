@@ -1,4 +1,4 @@
-"""Guard the CI test matrix: every declared Python has a job, and the locked job runs the Makefile's DEFAULT_PY."""
+"""Guard the CI test matrix: every declared Python has a job, and the `resolution: locked` job runs DEFAULT_PY."""
 
 import re
 
@@ -45,7 +45,7 @@ def test_repo_matrix_covers_declared_versions():
 
 
 def test_locked_matrix_job_runs_the_makefile_default_python():
-    """The `locked` matrix job runs the Makefile's DEFAULT_PY, where `make test` runs the JIT golden master."""
+    """The `resolution: locked` matrix job runs DEFAULT_PY, so `make test` runs the JIT golden master there."""
     # --- arrange ----------------------
     makefile = (_mod.REPO_ROOT / "Makefile").read_text(encoding="utf-8")
     workflow = _mod.UNIT_TESTS_WORKFLOW.read_text(encoding="utf-8")

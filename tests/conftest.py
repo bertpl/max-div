@@ -12,18 +12,20 @@ import max_div  # noqa: F401
 # ==================================================================================================
 #  JIT golden master opt-in
 # ==================================================================================================
-# The JIT golden master's expected data holds for 1 Python and numba version only, so whoever runs
-# pytest decides whether this run has those versions: `make test` passes `--jit-golden-master` when
-# it installs uv.lock on its default Python. Without the option, the JIT cases are skipped. With
-# JIT compilation off, the cases check the interpreted expected data, which holds on every runtime,
-# so they always run.
+# The JIT golden master (tests/_core/solver/test_golden_master.py with JIT compilation on) checks
+# expected data that holds only for the Python and numba versions that generated it. So whoever runs
+# pytest states whether this run has those versions; for `make test`, JIT_GOLDEN_MASTER_ARG in the
+# Makefile decides it.
+#
+# With JIT compilation off, the cases check the interpreted expected data, which holds on every
+# runtime, so they always run.
 def pytest_addoption(parser: pytest.Parser) -> None:
     """Register `--jit-golden-master`, which runs the JIT golden master cases."""
     parser.addoption(
         "--jit-golden-master",
         action="store_true",
         help="run the JIT golden master cases; pass it only on a run with the Python and numba versions "
-        "that the JIT expected data was generated with",
+        "that generated the JIT expected data",
     )
 
 
@@ -35,7 +37,7 @@ def pytest_configure(config: pytest.Config) -> None:
 def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:
     """Skip the `jit_golden_master` cases under JIT compilation, unless `--jit-golden-master` is given."""
     if not numba_config.DISABLE_JIT and not config.getoption("--jit-golden-master"):
-        skip = pytest.mark.skip(reason="the JIT golden master runs only with --jit-golden-master")
+        skip_marker = pytest.mark.skip(reason="the JIT golden master runs only with --jit-golden-master")
         for item in items:
             if item.get_closest_marker("jit_golden_master"):
-                item.add_marker(skip)
+                item.add_marker(skip_marker)

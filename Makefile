@@ -6,8 +6,8 @@
 # defaults are the single representative combo to run locally.
 #
 # RESOLUTION=locked installs exactly what uv.lock pins, and fails if the lock is out of date with
-# pyproject.toml. `highest` and `lowest-direct` are uv resolution strategies. With uv.lock present,
-# `highest` installs the locked versions; it resolves the newest versions only when uv.lock is absent.
+# pyproject.toml. `highest` and `lowest-direct` are uv resolution strategies. `highest` resolves the
+# newest versions, except when uv.lock is present: then it installs the locked versions.
 #
 # On the uv flags. Every `uv run` / `uv sync` implicitly activates a set of dependency groups —
 # uv's "default groups", which is `dev` unless a project configures otherwise. `--group` ADDS to
@@ -32,8 +32,8 @@ UV_RUN = uv run --exact --python $(PY) \
 # it, so its cases run only when pytest gets `--jit-golden-master` (tests/conftest.py).
 #
 # A run from uv.lock on the default Python is meant to have those versions, so JIT_GOLDEN_MASTER_ARG
-# passes the option on that run. There a version mismatch fails the JIT golden master test, because
-# it means that uv.lock and the golden master have diverged.
+# passes the option on that run. A version mismatch on that run fails the JIT golden master test,
+# because such a mismatch means that uv.lock and the golden master have diverged.
 JIT_GOLDEN_MASTER_ARG = $(if $(and $(filter locked,$(RESOLUTION)),$(filter $(DEFAULT_PY),$(PY))),--jit-golden-master,)
 
 # Appended to the pytest invocation. Locally this silences the warning summary; CI overrides it

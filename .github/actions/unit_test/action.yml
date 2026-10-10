@@ -43,7 +43,7 @@ runs:
           echo "PYTHON_EFFECTIVE_VERSION=$PY" >> "$GITHUB_ENV"
           echo "Using Python $PY."
 
-      - name: Drop the checked-out lock so the combo resolves fresh from pyproject
+      - name: Drop the checked-out lock so the matrix job resolves fresh from pyproject.toml
         if: inputs.dependency_resolution != 'locked'
         shell: bash
         # With uv.lock present, a `highest` job would install the locked versions, not the newest.
