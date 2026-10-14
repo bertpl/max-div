@@ -24,7 +24,7 @@ def test_the_address_is_a_positive_integer_that_stays_the_same():
 
 
 def test_a_lazy_store_reads_the_value_of_the_function():
-    """A lazy store over a custom metric reads the value that the function returns, narrowed to float32."""
+    """A lazy store over a custom metric reads the function's return value, narrowed to float32."""
     # --- arrange ----------------------
     vectors = np.random.default_rng(20261014).random((5, 3)).astype(np.float32)
     store = DistanceStore.lazy_from_vectors(vectors, DistanceMetric.custom(custom_l1))
@@ -45,7 +45,7 @@ def test_the_function_is_called_with_the_lower_index_first():
 
     # --- act --------------------------
     matrix = compute_full_matrix(vectors, metric)
-    lazy = np.array([[get_distance(store, np.int32(i), np.int32(j)) for j in range(4)] for i in range(4)])
+    lazy_matrix = np.array([[get_distance(store, np.int32(i), np.int32(j)) for j in range(4)] for i in range(4)])
 
     # --- assert -----------------------
     expected = np.array(
@@ -53,4 +53,4 @@ def test_the_function_is_called_with_the_lower_index_first():
         dtype=np.float32,
     )
     np.testing.assert_array_equal(matrix, expected)
-    np.testing.assert_array_equal(lazy, expected)
+    np.testing.assert_array_equal(lazy_matrix, expected)

@@ -18,7 +18,7 @@ def custom_l1(a: np.ndarray, b: np.ndarray) -> float:
     """Return the L1 distance of 2 vectors, written as a user would write it for `DistanceMetric.custom`.
 
     It accumulates in float64 in coordinate order under the fastmath flags of the built-in metrics, so it
-    computes the bits that `DistanceMetric.l1_manhattan()` computes.
+    computes the same bits as `DistanceMetric.l1_manhattan()`.
     """
     acc = 0.0
     for c in range(a.shape[0]):

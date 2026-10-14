@@ -1,13 +1,15 @@
-"""A custom distance metric computes each distance with a numba function that the user supplies.
+"""A custom distance metric computes each distance with the user's numba function.
 
 ## Why the function is called by its address
 
-The compiled solver code has 1 numba type for every distance store, which is what lets each solver
-function declare its signature once and be cached.  A numba function passed as an object has a type of
-its own, so it cannot travel inside a store.  Instead, `address_of_custom_distance` compiles the user's
-function into a wrapper with the C calling convention, whose address is a plain integer, and
-`call_custom_distance` calls the wrapper at that address.  The address reaches the compiled pairwise
-distance function as the metric's float parameter (see `CustomDistanceMetric`).
+Every distance store has the same numba type in the compiled solver code, so each solver function
+declares its signature once and is cached.  A numba function passed as an object has a type of its own,
+so a distance store cannot hold it.
+
+Instead, `address_of_custom_distance` compiles the user's function into a wrapper with the C calling
+convention, whose address is a plain integer, and `call_custom_distance` calls the wrapper at that
+address.  The compiled pairwise distance function receives the address as the metric's float parameter
+(see `CustomDistanceMetric`).
 
 ## How it runs with JIT compilation on and off
 
@@ -36,7 +38,7 @@ from numpy.typing import NDArray
 # It is a numba dispatcher, or, with JIT compilation off, the plain Python function that `numba.njit` returns.
 CustomDistanceFunction = Callable[[NDArray[np.float32], NDArray[np.float32]], float]
 
-# The wrapper's C signature: pointers to the first values of 2 rows, and the number of values in a row.
+# The wrapper's C signature takes pointers to the first values of 2 rows and the number of values in a row.
 _WRAPPER_SIGNATURE = types.float64(types.CPointer(types.float32), types.CPointer(types.float32), types.int64)
 
 # With JIT compilation off, each custom distance function is stored here under its "address".
@@ -64,15 +66,18 @@ def address_of_custom_distance(distance_function: CustomDistanceFunction) -> int
 def _compile_wrapper(distance_function: CustomDistanceFunction) -> CFunc:
     """Return the C-callable wrapper of the numba function `distance_function`, compiled on the first call.
 
-    The cache also keeps every wrapper alive for the life of the process, which its address requires: a
-    distance store holds only the address.
+    The cache also keeps every wrapper alive for the life of the process.  A distance store holds only the
+    wrapper's address, so the wrapper must stay in memory as long as the process runs.
 
-    The wrapper compiles the function's Python source inline, so a distance costs 1 call, not 2.  Both take
-    the function's own njit options: an inlined function compiles with its caller's fastmath flags, so the
-    wrapper needs the user's flags to compute what the user's function computes.
+    The wrapper compiles the function's Python source inline, so a distance costs 1 call, not 2.  The wrapper
+    and the inlined copy of the function both take the function's own njit options: an inlined function
+    compiles with its caller's fastmath flags, so the wrapper needs the user's flags to compute what the
+    user's function computes.
     """
     # ty does not know a dispatcher's attributes, `targetoptions` and `py_func`
     target_options = distance_function.targetoptions  # ty: ignore[unresolved-attribute]
+    # `numba.njit` warns when it is given `nopython`, and the inlined copy sets its own `inline`, so neither of
+    # the user's values is passed on.
     options = {name: value for name, value in target_options.items() if name not in ("nopython", "inline")}
     python_function = distance_function.py_func  # ty: ignore[unresolved-attribute]
     inlined_function = numba.njit(inline="always", **options)(python_function)
@@ -102,9 +107,8 @@ def call_custom_distance(
 def _call_custom_distance_compiled(address, vectors, i, j):  # noqa: ANN001, ANN202 -- numba's overload protocol
     """Register what numba compiles in place of `call_custom_distance`: a call to the wrapper at `address`.
 
-    The inlining is required, not an optimization.  The compiled pairwise distance function is inlined into
-    every loop that reads a lazy distance, whatever the metric; a call to a separately compiled function
-    there, even in the branch of a kind the loop never takes, slows those loops for every metric.
+    The inlining is required, not an optimization: the `_pairwise_distance` docstring explains why everything
+    that its branches call must be inlined.
     """
 
     def implementation(address, vectors, i, j):  # noqa: ANN001, ANN202

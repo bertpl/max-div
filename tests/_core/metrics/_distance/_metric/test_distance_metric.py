@@ -9,8 +9,6 @@ from max_div._core.metrics import DistanceMetric
 from max_div._core.metrics._distance._metric import NO_FLOAT_PARAM, _distance_metric, validate_vector_array_layout
 from tests._core.metrics._distance.conftest import custom_l1
 
-_needs_jit = pytest.mark.skipif(numba.config.DISABLE_JIT, reason="needs numba's JIT")
-
 # Every metric with a dedicated factory method of its own.
 _FACTORY_METRICS = (
     DistanceMetric.l1_manhattan(),
@@ -286,6 +284,9 @@ def test_l2_and_projections_float_param_combines_k_and_the_dimension_count(
     assert metric.float_param(n_dims) == pytest.approx(expected)
 
 
+# ==================================================================================================
+#  Custom
+# ==================================================================================================
 def _plain_python_l1(a: np.ndarray, b: np.ndarray) -> float:
     """Return the L1 distance of 2 vectors, without numba compiling it."""
     return float(np.abs(a - b).sum())
@@ -293,7 +294,14 @@ def _plain_python_l1(a: np.ndarray, b: np.ndarray) -> float:
 
 @pytest.mark.parametrize(
     "distance_function",
-    [pytest.param(_plain_python_l1, marks=_needs_jit, id="plain Python function"), pytest.param(42, id="int")],
+    [
+        pytest.param(
+            _plain_python_l1,
+            marks=pytest.mark.skipif(numba.config.DISABLE_JIT, reason="needs numba's JIT"),
+            id="plain Python function",
+        ),
+        pytest.param(42, id="int"),
+    ],
 )
 def test_custom_rejects_anything_but_a_numba_function(distance_function: object):
     """With JIT compilation on, `custom` accepts only a `numba.njit` function; with it off, any callable."""

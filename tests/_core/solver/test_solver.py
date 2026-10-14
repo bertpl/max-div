@@ -573,6 +573,9 @@ def test_min_separation_over_l2_and_projections_with_k_solves_in_parallel_from_l
     assert solution.score.diversity == pytest.approx(expected, rel=1e-5)
 
 
+# ==================================================================================================
+#  Custom distance metric
+# ==================================================================================================
 @pytest.mark.parametrize("storage_type", [DistanceStorageType.LAZY, DistanceStorageType.FULL_MATRIX], ids=str)
 def test_a_custom_distance_selects_what_the_built_in_metric_with_its_formula_selects(storage_type):
     """A custom metric computing the L1 distance's bits makes the solve select what `l1_manhattan()` selects."""
@@ -585,19 +588,16 @@ def test_a_custom_distance_selects_what_the_built_in_metric_with_its_formula_sel
         return builder.with_distance_storage(storage_type).build().solve(verbosity=Verbosity.SILENT)
 
     # --- act --------------------------
-    built_in = solve(DistanceMetric.l1_manhattan())
-    custom = solve(DistanceMetric.custom(custom_l1))
+    built_in_solution = solve(DistanceMetric.l1_manhattan())
+    custom_solution = solve(DistanceMetric.custom(custom_l1))
 
     # --- assert -----------------------
-    assert list(custom.i_selected) == list(built_in.i_selected)
-    assert custom.score.diversity == built_in.score.diversity
+    assert list(custom_solution.i_selected) == list(built_in_solution.i_selected)
+    assert custom_solution.score.diversity == built_in_solution.score.diversity
 
 
 def test_a_custom_distance_solves_in_parallel_from_lazy_distance_stores():
-    """A 2-worker solve over a custom metric scores the selection by the custom function's distances.
-
-    Each worker process receives the metric pickled and compiles its own wrapper of the function.
-    """
+    """A 2-worker solve over a custom metric scores the selection by the custom function's distances."""
     # --- arrange ----------------------
     vectors = np.random.default_rng(20261014).random((60, 2)).astype(np.float32)
     problem = MaxDivProblem.new(

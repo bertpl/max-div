@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
-- Add `DistanceMetric.custom()`, a distance metric computed by your own numba function, which also works with lazy distance storage
+- Add `DistanceMetric.custom()`, a distance metric that computes each distance with your own numba function, and that also works with the `LAZY` distance storage type
 
 ### Changed
 
