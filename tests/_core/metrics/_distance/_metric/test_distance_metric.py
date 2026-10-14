@@ -7,7 +7,7 @@ import pytest
 
 from max_div._core.metrics import DistanceMetric
 from max_div._core.metrics._distance._metric import NO_FLOAT_PARAM, _distance_metric, validate_vector_array_layout
-from tests._core.metrics._distance.conftest import custom_l1
+from tests._core.metrics._distance.helpers import custom_l1
 
 # Every metric with a dedicated factory method of its own.
 _FACTORY_METRICS = (
@@ -304,7 +304,7 @@ def _plain_python_l1(a: np.ndarray, b: np.ndarray) -> float:
     ],
 )
 def test_custom_rejects_anything_but_a_numba_function(distance_function: object):
-    """With JIT compilation on, `custom` accepts only a `numba.njit` function; with it off, any callable."""
+    """`custom` raises TypeError for a plain Python function with JIT compilation on, and for a non-callable."""
     # --- act / assert -----------------
     with pytest.raises(TypeError, match=r"numba\.njit"):
         DistanceMetric.custom(distance_function)  # ty: ignore[invalid-argument-type] -- the case under test
@@ -324,11 +324,17 @@ def test_custom_float_param_is_the_same_whole_number_for_every_call():
 def test_custom_float_param_raises_for_an_address_that_a_float_cannot_hold(monkeypatch: pytest.MonkeyPatch):
     """An address above 2**53 does not convert to a float and back unchanged, so the metric refuses it."""
     # --- arrange ----------------------
-    monkeypatch.setattr(_distance_metric, "address_of_custom_distance", lambda distance_function: 2**53 + 1)
+    monkeypatch.setattr(_distance_metric, "address_of_custom_distance_function", lambda distance_function: 2**53 + 1)
 
     # --- act / assert -----------------
     with pytest.raises(RuntimeError, match="does not fit a float64"):
         DistanceMetric.custom(custom_l1).float_param(3)
+
+
+def test_custom_with_the_function_name_as_label_equals_custom_without_a_label():
+    """Passing the function's name as the label gives the metric that the default label gives."""
+    # --- act / assert -----------------
+    assert DistanceMetric.custom(custom_l1, label="custom_l1") == DistanceMetric.custom(custom_l1)
 
 
 def test_custom_repr_names_the_label_when_it_differs_from_the_function_name():

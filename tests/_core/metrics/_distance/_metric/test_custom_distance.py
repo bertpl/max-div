@@ -3,8 +3,8 @@ import numpy as np
 
 from max_div._core.metrics import DistanceMetric
 from max_div._core.metrics._distance import DistanceStore, compute_full_matrix, get_distance
-from max_div._core.metrics._distance._metric._custom_distance import address_of_custom_distance
-from tests._core.metrics._distance.conftest import custom_l1
+from max_div._core.metrics._distance._metric._custom_distance import address_of_custom_distance_function
+from tests._core.metrics._distance.helpers import custom_l1
 
 
 @numba.njit
@@ -16,7 +16,7 @@ def _first_plus_twice_second(a: np.ndarray, b: np.ndarray) -> float:
 def test_the_address_is_a_positive_integer_that_stays_the_same():
     """Every call for one function returns the same positive address."""
     # --- act --------------------------
-    addresses = {address_of_custom_distance(custom_l1) for _ in range(3)}
+    addresses = {address_of_custom_distance_function(custom_l1) for _ in range(3)}
 
     # --- assert -----------------------
     (address,) = addresses

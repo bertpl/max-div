@@ -251,8 +251,9 @@ def _pairwise_distance(  # noqa: C901 -- flat dispatch, one arm per kind: comple
     performance-relevant.
 
     What a branch calls is performance-relevant: this function is inlined into every loop that reads
-    a distance from a lazy distance store, and a call to a separately compiled function in any branch
-    slows those loops for every kind, so everything a branch calls must be inlined too.
+    a distance from a lazy distance store, and a call to a separately compiled function in any branch,
+    even a branch that never runs for the current kind, slows those loops for every kind, so everything
+    that a branch calls must be inlined too.
 
     The specialized Minkowski kinds apply the outer root as repeated squarings.
     """

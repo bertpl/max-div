@@ -20,8 +20,7 @@ from max_div._core.solver._solver_state import SolverState
 from max_div._core.solver._solver_step import OptimizationStep, SolverStep
 from max_div._core.solver._step_identity import SolverStepIdentity
 from max_div._core.solver._strategies import InitializationStrategy, OptimizationStrategy
-from tests._core.metrics._distance.conftest import custom_l1
-from tests._core.metrics._distance.helpers import condensed_distances, l2_and_projections_reference
+from tests._core.metrics._distance.helpers import condensed_distances, custom_l1, l2_and_projections_reference
 
 
 # ==================================================================================================
@@ -578,7 +577,7 @@ def test_min_separation_over_l2_and_projections_with_k_solves_in_parallel_from_l
 # ==================================================================================================
 @pytest.mark.parametrize("storage_type", [DistanceStorageType.LAZY, DistanceStorageType.FULL_MATRIX], ids=str)
 def test_a_custom_distance_selects_what_the_built_in_metric_with_its_formula_selects(storage_type):
-    """A custom metric computing the L1 distance's bits makes the solve select what `l1_manhattan()` selects."""
+    """A custom metric with the same floats as `l1_manhattan()` makes the solve select what `l1_manhattan()` selects."""
     # --- arrange ----------------------
     vectors = np.random.default_rng(20261014).random((60, 3)).astype(np.float32)
 

@@ -4,17 +4,17 @@
 
 Every distance store has the same numba type in the compiled solver code, so each solver function
 declares its signature once and is cached.  A numba function passed as an object has a type of its own,
-so a distance store cannot hold it.
+so a distance store that held one would get a different numba type for each function, and every solver
+function would compile again for each.
 
-Instead, `address_of_custom_distance` compiles the user's function into a wrapper with the C calling
-convention, whose address is a plain integer, and `call_custom_distance` calls the wrapper at that
-address.  The compiled pairwise distance function receives the address as the metric's float parameter
-(see `CustomDistanceMetric`).
+Instead, `address_of_custom_distance_function` compiles the user's function into a wrapper with the C
+calling convention, whose address is a plain integer, and `call_custom_distance` calls the wrapper at that
+address.  `CustomDistanceMetric` passes the address to the compiled pairwise distance function.
 
 ## How it runs with JIT compilation on and off
 
 This module follows the pattern of `max_div._core._utils._sorted_index_list`, whose module docstring
-explains the mechanism:
+explains how one function runs both compiled and interpreted:
 
   - **Compiled** — the `@overload` of `call_custom_distance` replaces it in compiled callers with the
     `_call_address` intrinsic, which emits the call to the address.
@@ -48,8 +48,8 @@ _PYTHON_FUNCTIONS_BY_ADDRESS: dict[int, CustomDistanceFunction] = {}
 # ==================================================================================================
 #  Address of a custom distance function
 # ==================================================================================================
-def address_of_custom_distance(distance_function: CustomDistanceFunction) -> int:
-    """Return the address that `call_custom_distance` calls to compute `distance_function`, a positive integer.
+def address_of_custom_distance_function(distance_function: CustomDistanceFunction) -> int:
+    """Return the address, a positive integer, that `call_custom_distance` calls to compute `distance_function`.
 
     With JIT compilation on, the address is that of the function's C-callable wrapper, compiled once per
     process.  With JIT compilation off, `distance_function` is a plain Python function, and the address is
@@ -69,8 +69,9 @@ def _compile_wrapper(distance_function: CustomDistanceFunction) -> CFunc:
     The cache also keeps every wrapper alive for the life of the process.  A distance store holds only the
     wrapper's address, so the wrapper must stay in memory as long as the process runs.
 
-    The wrapper compiles the function's Python source inline, so a distance costs 1 call, not 2.  The wrapper
-    and the inlined copy of the function both take the function's own njit options: an inlined function
+    The wrapper compiles the function's Python source inline, so a distance costs 1 call, not 2.
+
+    The wrapper and the inlined copy of the function both take the function's own njit options: an inlined function
     compiles with its caller's fastmath flags, so the wrapper needs the user's flags to compute what the
     user's function computes.
     """
@@ -97,7 +98,7 @@ def call_custom_distance(
 ) -> float:
     """Return the distance between rows i and j of `vectors`, computed by the custom distance at `address`.
 
-    `address` must come from `address_of_custom_distance`: in compiled code, any other value crashes the
+    `address` must come from `address_of_custom_distance_function`: in compiled code, any other value crashes the
     process.  This body runs only with JIT compilation off; compiled callers get `_call_address` instead.
     """
     return _PYTHON_FUNCTIONS_BY_ADDRESS[int(address)](vectors[i], vectors[j])
@@ -122,9 +123,8 @@ def _call_custom_distance_compiled(address, vectors, i, j):  # noqa: ANN001, ANN
 def _call_address(typingctx, address, vectors, i, j):  # noqa: ANN001, ANN202 -- numba intrinsic
     """Emit a call to the C function at `address`, with pointers to rows i and j of `vectors` and the row length.
 
-    The body runs while numba compiles a caller, and returns the call's type signature plus the `codegen`
-    that writes the instructions.  `vectors` must be a C-contiguous 2D float32 array: the row pointers are
-    computed from its data pointer and its second dimension.
+    `vectors` must be a C-contiguous 2D float32 array: the row pointers are computed from its data pointer and
+    its second dimension.
     """
     signature = types.float64(types.int64, vectors, types.int64, types.int64)
 

@@ -1,29 +1,16 @@
 """Fixtures shared across the distance test tree live here."""
 
-import numba
 import numpy as np
 import pytest
 
 from max_div._core.metrics import DistanceMetric
+from tests._core.metrics._distance.helpers import custom_l1
 
 
 @pytest.fixture
 def vectors() -> np.ndarray:
     """Return a small float32 C-contiguous array with no zero rows, so every metric accepts it."""
     return np.ascontiguousarray(np.random.default_rng(7).random((6, 3), dtype=np.float32) + 0.1)
-
-
-@numba.njit(fastmath={"reassoc", "contract"})
-def custom_l1(a: np.ndarray, b: np.ndarray) -> float:
-    """Return the L1 distance of 2 vectors, written as a user would write it for `DistanceMetric.custom`.
-
-    It accumulates in float64 in coordinate order under the fastmath flags of the built-in metrics, so it
-    computes the same bits as `DistanceMetric.l1_manhattan()`.
-    """
-    acc = 0.0
-    for c in range(a.shape[0]):
-        acc += abs(np.float64(a[c]) - np.float64(b[c]))
-    return acc
 
 
 # NAMED_METRICS lists every metric with a factory method of its own; the along-axis one reads a
