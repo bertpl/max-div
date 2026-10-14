@@ -63,7 +63,7 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 [^code-fdm-3]: Reachable by passing your own distance function as the algorithms' `dist` argument.
 [^code-fdm-4]: `utils.cosine_dist` returns the angle between 2 vectors. The angle orders pairs the same way as cosine distance, so a max-min selection under `utils.cosine_dist` matches one under cosine distance.
 [^code-fdm-5]: There is no matrix input, but a `dist` function that looks each pair up in your own matrix makes the matrix usable.
-[^code-fdm-6]: Every algorithm takes the distance function as its `dist` argument and calls it for each pair it needs.
+[^code-fdm-6]: Every algorithm takes the distance function as its `dist` argument and calls it for each pair that it needs.
 [^code-fdm-7]: This is the whole point of the tool: it selects a maximally dispersed subset subject to a required count from each group, which is the fair-diversity problem max-div also targets.
 [^code-fdm-8]: Each item belongs to exactly one group. Overlapping membership — an item that is both in-region and in-category — is outside the model the algorithms are built on.
 [^code-fdm-9]: Counts are exact requirements per group, not a minimum and a maximum, so a range cannot be expressed.

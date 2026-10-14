@@ -52,7 +52,7 @@ solver:
       mark: full
       note:
         text: >-
-          Since every distance is a coefficient you supply, an arbitrary metric costs nothing extra — this is the one distance axis where a modeling solver is at no disadvantage.
+          Since every distance is a coefficient that you supply, an arbitrary metric costs nothing extra — this is the one distance axis where a modeling solver is at no disadvantage.
     distance.custom_function:
       mark: none
       note:

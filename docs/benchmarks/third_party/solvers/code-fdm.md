@@ -59,7 +59,7 @@ solver:
       mark: full
       note:
         text: >-
-          Every algorithm takes the distance function as its `dist` argument and calls it for each pair it needs.
+          Every algorithm takes the distance function as its `dist` argument and calls it for each pair that it needs.
     objective.max_min: {mark: full}
     objective.mean_nn: {mark: none}
     objective.geomean_nn: {mark: none}

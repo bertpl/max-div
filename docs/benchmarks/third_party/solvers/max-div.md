@@ -33,7 +33,7 @@ solver:
       mark: full
       note:
         text: >-
-          `DistanceMetric.custom()` takes a `numba.njit` function of 2 vectors. A custom metric works with every distance storage type, including lazy storage, in which the solver calls the function each time it needs a distance and never stores all n² distances.
+          `DistanceMetric.custom()` takes a `numba.njit` function of 2 vectors. A custom metric works with every way that max-div can store distances, including lazy storage, in which the solver calls the function each time it needs a distance and never stores all n² distances.
     objective.max_min: {mark: full}
     objective.mean_nn: {mark: full}
     objective.geomean_nn: {mark: full}

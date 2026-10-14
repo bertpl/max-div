@@ -57,7 +57,7 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 *Every fact above was verified on or after 2026-07-27; each tool's own date is in the table.*
 
 [^cmp-1]: A problem can be built from a precomputed distance matrix, square or condensed, so any metric the caller can compute is usable without max-div implementing it.
-[^cmp-2]: `DistanceMetric.custom()` takes a `numba.njit` function of 2 vectors. A custom metric works with every distance storage type, including lazy storage, in which the solver calls the function each time it needs a distance and never stores all n² distances.
+[^cmp-2]: `DistanceMetric.custom()` takes a `numba.njit` function of 2 vectors. A custom metric works with every way that max-div can store distances, including lazy storage, in which the solver calls the function each time it needs a distance and never stores all n² distances.
 [^cmp-3]: Counts are per-group minimum and maximum bounds, and carry per-constraint weights and a choice of linear or quadratic penalty shaping when a problem is over-constrained.
 [^cmp-4]: `check_feasibility` returns a three-valued verdict whose definite answers are proofs. Feasible comes with a satisfying selection; infeasible with an independently re-checkable certificate. Unknown claims nothing.
 [^cmp-5]: Several workers solve the same problem at once and the best result wins.
@@ -74,7 +74,7 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 [^cmp-16]: CP-SAT runs a portfolio of differently configured search workers on the same instance by default, set by the num_workers parameter.
 [^cmp-17]: The portfolio workers share learned clauses, solutions and objective bounds while solving.
 [^cmp-18]: Reachable, but you build the model: distances enter as precomputed objective coefficients, so the metric is whatever you computed before the solver ever sees it.
-[^cmp-19]: Since every distance is a coefficient you supply, an arbitrary metric costs nothing extra — this is the one distance axis where a modeling solver is at no disadvantage.
+[^cmp-19]: Since every distance is a coefficient that you supply, an arbitrary metric costs nothing extra — this is the one distance axis where a modeling solver is at no disadvantage.
 [^cmp-20]: Reachable, but the objective must be linearized by hand — for max-min, a threshold variable bounded below every selected pair via big-M constraints.
 [^cmp-21]: Reachable only through an assignment MILP that pairs each selected item with its nearest selected neighbor; the formulation is considerably larger than the max-min one and is what drives the practical size limit down.
 [^cmp-22]: Reachable only by hand-building each term's objective and summing them into one, a formulation even larger than any single term's.
@@ -103,7 +103,7 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 [^cmp-45]: The same Minkowski-exponent parameter that provides L1 and Chebyshev takes any p.
 [^cmp-46]: The Minkowski exponent cannot express the geometric mean (the p → 0 limit of the power mean, which divides the sum by d before the root — not a Minkowski form), so the geometric mean is reachable only as a precomputed distance matrix.
 [^cmp-47]: A precomputed distance matrix is accepted directly, so any metric you can compute is usable.
-[^cmp-48]: The `fun_dist` argument maps the whole feature array to the full n×n distance matrix, so the function you supply builds a matrix, and all n² distances are stored.
+[^cmp-48]: The `fun_dist` argument maps the whole feature array to the full n×n distance matrix, so the function that you supply builds a matrix, and all n² distances are stored.
 [^cmp-49]: Its diversity measures are computed over the whole selection rather than over nearest-neighbor pairs, so the nearest-neighbor family is absent.
 [^cmp-50]: Label-stratified selection: given class labels, it picks proportionally across them. That covers disjoint groups with proportional targets, but not arbitrary minimum and maximum counts, and not groups an item can belong to more than once.
 [^cmp-51]: Several of its methods take a parameter that controls how much work they do — a sphere-exclusion radius, an OptiSim subsample size — but these change the character of the search rather than lengthening it. Raising one does not mean a better answer.
@@ -112,19 +112,19 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 [^cmp-54]: Reachable by passing your own distance function as the algorithms' `dist` argument.
 [^cmp-55]: `utils.cosine_dist` returns the angle between 2 vectors. The angle orders pairs the same way as cosine distance, so a max-min selection under `utils.cosine_dist` matches one under cosine distance.
 [^cmp-56]: There is no matrix input, but a `dist` function that looks each pair up in your own matrix makes the matrix usable.
-[^cmp-57]: Every algorithm takes the distance function as its `dist` argument and calls it for each pair it needs.
+[^cmp-57]: Every algorithm takes the distance function as its `dist` argument and calls it for each pair that it needs.
 [^cmp-58]: This is the whole point of the tool: it selects a maximally dispersed subset subject to a required count from each group, which is the fair-diversity problem max-div also targets.
 [^cmp-59]: Each item belongs to exactly one group. Overlapping membership — an item that is both in-region and in-category — is outside the model the algorithms are built on.
 [^cmp-60]: Counts are exact requirements per group, not a minimum and a maximum, so a range cannot be expressed.
 [^cmp-61]: The core functions take a dissimilarity matrix only; the scikit-learn-style estimator accepts a metric name and forwards it to scikit-learn's pairwise distances, which needs scikit-learn installed.
 [^cmp-62]: Not among the metric names scikit-learn understands, so it is reachable only as a precomputed dissimilarity matrix.
-[^cmp-63]: A precomputed dissimilarity matrix is the primary input and the one the documentation recommends, so any dissimilarity you can compute is usable as is.
+[^cmp-63]: A precomputed dissimilarity matrix is the primary input and the one that the documentation recommends.
 [^cmp-64]: The scikit-learn-style estimator forwards a callable `metric` to scikit-learn's `pairwise_distances`, which evaluates the metric into a full n×n matrix.
 [^cmp-65]: k-medoids minimizes the total dissimilarity of every item to its nearest medoid, a representativeness objective that places the medoids in dense regions; none of the dispersion objectives is optimized.
 [^cmp-66]: The iteration cap bounds the swap phase, but the cap is a convergence limit, not a budget: the search stops at the first local optimum it reaches, usually after a handful of passes, whatever cap is set.
 [^cmp-67]: The swap search can evaluate candidates on several threads, which speeds up one search; it is not several workers searching the problem.
 [^cmp-68]: Reachable only through the kernel you supply. DPPy never sees vectors or a distance function: you choose how similarity is defined when you build the kernel, and any metric you can express that way is available.
-[^cmp-69]: The likelihood or correlation kernel matrix is the native input. Note the sign convention differs from a distance: the kernel encodes similarity, and diversity comes from its determinant being large.
+[^cmp-69]: The likelihood or correlation kernel matrix is the native input. Note that the sign convention differs from a distance's: the kernel encodes similarity, and diversity comes from its determinant being large.
 [^cmp-70]: A kernel function is an input (`L_eval_X_data`). Most samplers evaluate it into the full kernel matrix; the `vfx` and `alpha` samplers evaluate it only between each item and a small sample of items (a Nyström dictionary).
 [^cmp-71]: DPPy draws samples from a determinantal point process rather than maximizing anything. Diversity is a property of the distribution it samples from — subsets whose kernel submatrix has a large determinant are more likely — so no objective is optimized and no selection is claimed to be best.
 [^cmp-72]: You can ask for more samples, but a sample count is a number of independent draws, not an improvement budget — the tenth draw is no better than the first, merely different.

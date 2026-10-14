@@ -61,7 +61,7 @@ solver:
       mark: partial
       note:
         text: >-
-          The `fun_dist` argument maps the whole feature array to the full n×n distance matrix, so the function you supply builds a matrix, and all n² distances are stored.
+          The `fun_dist` argument maps the whole feature array to the full n×n distance matrix, so the function that you supply builds a matrix, and all n² distances are stored.
     objective.max_min: {mark: full}
     objective.mean_nn:
       mark: none

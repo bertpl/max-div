@@ -47,7 +47,7 @@ solver:
       mark: full
       note:
         text: >-
-          The likelihood or correlation kernel matrix is the native input. Note the sign convention differs from a distance: the kernel encodes similarity, and diversity comes from its determinant being large.
+          The likelihood or correlation kernel matrix is the native input. Note that the sign convention differs from a distance's: the kernel encodes similarity, and diversity comes from its determinant being large.
     distance.custom_function:
       mark: full
       note:

@@ -65,7 +65,7 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 [^qc-selector-5]: The Minkowski exponent cannot express the geometric mean (the p → 0 limit of the power mean, which divides the sum by d before the root — not a Minkowski form), so the geometric mean is reachable only as a precomputed distance matrix.
 [^qc-selector-6]: Reachable by handing the tool that one coordinate as one-dimensional input.
 [^qc-selector-7]: A precomputed distance matrix is accepted directly, so any metric you can compute is usable.
-[^qc-selector-8]: The `fun_dist` argument maps the whole feature array to the full n×n distance matrix, so the function you supply builds a matrix, and all n² distances are stored.
+[^qc-selector-8]: The `fun_dist` argument maps the whole feature array to the full n×n distance matrix, so the function that you supply builds a matrix, and all n² distances are stored.
 [^qc-selector-9]: Its diversity measures are computed over the whole selection rather than over nearest-neighbor pairs, so the nearest-neighbor family is absent.
 [^qc-selector-10]: Label-stratified selection: given class labels, it picks proportionally across them. That covers disjoint groups with proportional targets, but not arbitrary minimum and maximum counts, and not groups an item can belong to more than once.
 [^qc-selector-11]: Several of its methods take a parameter that controls how much work they do — a sphere-exclusion radius, an OptiSim subsample size — but these change the character of the search rather than lengthening it. Raising one does not mean a better answer.

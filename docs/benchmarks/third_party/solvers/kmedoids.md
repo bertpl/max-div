@@ -51,7 +51,7 @@ solver:
       mark: full
       note:
         text: >-
-          A precomputed dissimilarity matrix is the primary input and the one the documentation recommends, so any dissimilarity you can compute is usable as is.
+          A precomputed dissimilarity matrix is the primary input and the one that the documentation recommends.
     distance.custom_function:
       mark: partial
       note:

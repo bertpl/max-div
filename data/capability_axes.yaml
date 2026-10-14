@@ -169,19 +169,19 @@ groups:
         label: custom distance matrix
         hero: true
         definition: >-
-          Accepts distances that the caller computed for every pair of items — a distance,
-          similarity or kernel matrix, or distances entered as the coefficients of an optimization
-          model — so a metric that the tool does not implement is usable, at the memory cost of
-          storing a distance for every pair.
+          Accepts a distance for every pair of items, computed by the caller, so a metric that the
+          tool does not implement is usable, at the memory cost of storing a distance for every
+          pair. The caller supplies these distances as a distance, similarity or kernel matrix, or
+          as the coefficients of an optimization model.
       - key: custom_function
         hero_label: custom function
         label: custom distance function
         hero: true
         definition: >-
           Accepts a function that computes the distance between 2 items, so a metric that the tool
-          does not implement is usable. A tool that calls the function only for the distances that
-          it needs counts as built in, and avoids storing a distance for every pair; a tool that
-          first evaluates the function into a full matrix counts as reachable, not built in.
+          does not implement is usable. Calling the function only for the distances that it needs
+          counts as built in; first evaluating the function into a full matrix counts as reachable,
+          not built in.
 
   - key: objective
     hero_label: objective
