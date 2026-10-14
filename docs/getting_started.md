@@ -141,7 +141,7 @@ problem = MaxDivProblem.new(
     # distance_metric=DistanceMetric.linf_chebyshev(),
     # distance_metric=DistanceMetric.cosine(),
     # distance_metric=DistanceMetric.minkowski(1.5),
-    # distance_metric=DistanceMetric.custom(my_distance),  # your own numba function, see below
+    # distance_metric=DistanceMetric.custom(my_distance),  # your own numba function, see "Your own distances"
 )
 ```
 
@@ -157,9 +157,9 @@ problem = MaxDivProblem.new(
 | `l_minus_inf()` | L−∞ distance -- the smallest per-dimension difference; a shared coordinate gives distance zero |
 | `along_axis(axis)` | Distance along one coordinate axis -- the absolute difference of that coordinate, every other coordinate ignored |
 | `l2_and_projections(l2_scale=1.0, k=None)` | The smaller of the L−∞ distance and an L2 part: `l2_scale` times the L2 distance raised to the power of the number of dimensions, or, given `k`, `l2_scale` times the L2 distance times a factor set by `k` and the number of dimensions -- under `min_separation()`, spreads a selection along every axis and in the full space at once; pass `k` to give the spread along the axes and the spread in the full space equal weight; assumes vectors in the unit cube |
-| `custom(distance_function, label=None)` | Your own `numba.njit` function of 2 vectors; `label` names the metric in a solution's objectives (by default the function's name) -- see [Custom distances](#custom-distances) |
+| `custom(distance_function, label=None)` | Your own `numba.njit` function of 2 vectors; `label` is the metric's name in `MaxDivSolution.diversity_objective_labels` (by default, the function's name) -- see [Your own distances](#your-own-distances) |
 
-#### Custom distances
+#### Your own distances
 
 If none of the built-in metrics fit, supply your own distances in one of 2 ways.
 
@@ -187,7 +187,7 @@ The metric works with every [distance storage](concepts/distance_storage.md) typ
 
 max-div always passes the vector of the item with the lower index as the first argument, so each pair of items gets one consistent distance even when the function itself is not symmetric.
 
-Each distance costs a function call that a built-in metric does not, so prefer a built-in metric that computes the same distance. Compile the function with `fastmath={"reassoc", "contract"}`, as the built-in metrics are, to let numba vectorize its loop over the coordinates.
+A custom function adds a function call to each distance computation, which a built-in metric avoids, so use a built-in metric when one computes the same distance. Compile the function with `fastmath={"reassoc", "contract"}`, as the built-in metrics are, to let numba vectorize its loop over the coordinates.
 
 **A precomputed distance matrix.** If you already have the distances -- from a similarity function that numba cannot compile, or from another tool -- supply them directly instead of vectors. Both a square symmetric `(n, n)` matrix and a condensed vector (as produced by `scipy.spatial.distance.pdist`) are accepted:
 
@@ -198,7 +198,7 @@ problem = MaxDivProblem.from_distances(distance_matrix, k=20)
 A problem built this way always stores the full matrix, so memory limits its size.
 
 Everything else -- diversity metrics, constraints, solver configuration -- works identically for
-both problem flavors.
+problems built from vectors and problems built from distances.
 
 ### Diversity metrics
 
