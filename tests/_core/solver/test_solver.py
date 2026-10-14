@@ -20,6 +20,7 @@ from max_div._core.solver._solver_state import SolverState
 from max_div._core.solver._solver_step import OptimizationStep, SolverStep
 from max_div._core.solver._step_identity import SolverStepIdentity
 from max_div._core.solver._strategies import InitializationStrategy, OptimizationStrategy
+from tests._core.metrics._distance.conftest import custom_l1
 from tests._core.metrics._distance.helpers import condensed_distances, l2_and_projections_reference
 
 
@@ -185,7 +186,11 @@ def test_solver_repeated_solve_reproduces_the_first():
     assert first.score == second.score
 
 
-@pytest.mark.parametrize("distance_metric", [DistanceMetric.l2_euclidean(), DistanceMetric.cosine()])
+@pytest.mark.parametrize(
+    "distance_metric",
+    [DistanceMetric.l2_euclidean(), DistanceMetric.cosine(), DistanceMetric.custom(custom_l1)],
+    ids=repr,
+)
 def test_solver_lazy_backend_bit_identical_selection(distance_metric: DistanceMetric):
     """A solve on the lazy backend selects exactly what the full-matrix solve selects."""
 
@@ -565,6 +570,54 @@ def test_min_separation_over_l2_and_projections_with_k_solves_in_parallel_from_l
 
     # --- assert -----------------------
     expected = _smallest_l2_and_projections_pair_distance(vectors, solution.i_selected, k)
+    assert solution.score.diversity == pytest.approx(expected, rel=1e-5)
+
+
+@pytest.mark.parametrize("storage_type", [DistanceStorageType.LAZY, DistanceStorageType.FULL_MATRIX], ids=str)
+def test_a_custom_distance_selects_what_the_built_in_metric_with_its_formula_selects(storage_type):
+    """A custom metric computing the L1 distance's bits makes the solve select what `l1_manhattan()` selects."""
+    # --- arrange ----------------------
+    vectors = np.random.default_rng(20261014).random((60, 3)).astype(np.float32)
+
+    def solve(distance_metric: DistanceMetric) -> MaxDivSolution:
+        problem = MaxDivProblem.new(vectors, k=8, distance_metric=distance_metric)
+        builder = MaxDivSolverBuilder(problem).with_preset(iterations(300)).with_seed(11)
+        return builder.with_distance_storage(storage_type).build().solve(verbosity=Verbosity.SILENT)
+
+    # --- act --------------------------
+    built_in = solve(DistanceMetric.l1_manhattan())
+    custom = solve(DistanceMetric.custom(custom_l1))
+
+    # --- assert -----------------------
+    assert list(custom.i_selected) == list(built_in.i_selected)
+    assert custom.score.diversity == built_in.score.diversity
+
+
+def test_a_custom_distance_solves_in_parallel_from_lazy_distance_stores():
+    """A 2-worker solve over a custom metric scores the selection by the custom function's distances.
+
+    Each worker process receives the metric pickled and compiles its own wrapper of the function.
+    """
+    # --- arrange ----------------------
+    vectors = np.random.default_rng(20261014).random((60, 2)).astype(np.float32)
+    problem = MaxDivProblem.new(
+        vectors,
+        k=10,
+        distance_metric=DistanceMetric.custom(custom_l1),
+        diversity_metric=DiversityMetric.min_separation(),
+    )
+    builder = ParallelMaxDivSolverBuilder(problem).with_seed(3).with_distance_storage(DistanceStorageType.LAZY)
+
+    # --- act --------------------------
+    solution = builder.with_workers(iterations(300), 2).build().solve(verbosity=Verbosity.SILENT)
+
+    # --- assert -----------------------
+    selected = vectors[np.asarray(solution.i_selected)]
+    expected = min(
+        np.float32(custom_l1(selected[a], selected[b]))
+        for a in range(len(selected))
+        for b in range(a + 1, len(selected))
+    )
     assert solution.score.diversity == pytest.approx(expected, rel=1e-5)
 
 

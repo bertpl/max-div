@@ -1,5 +1,6 @@
 """Fixtures shared across the distance test tree live here."""
 
+import numba
 import numpy as np
 import pytest
 
@@ -10,6 +11,19 @@ from max_div._core.metrics import DistanceMetric
 def vectors() -> np.ndarray:
     """Return a small float32 C-contiguous array with no zero rows, so every metric accepts it."""
     return np.ascontiguousarray(np.random.default_rng(7).random((6, 3), dtype=np.float32) + 0.1)
+
+
+@numba.njit(fastmath={"reassoc", "contract"})
+def custom_l1(a: np.ndarray, b: np.ndarray) -> float:
+    """Return the L1 distance of 2 vectors, written as a user would write it for `DistanceMetric.custom`.
+
+    It accumulates in float64 in coordinate order under the fastmath flags of the built-in metrics, so it
+    computes the bits that `DistanceMetric.l1_manhattan()` computes.
+    """
+    acc = 0.0
+    for c in range(a.shape[0]):
+        acc += abs(np.float64(a[c]) - np.float64(b[c]))
+    return acc
 
 
 # NAMED_METRICS lists every metric with a factory method of its own; the along-axis one reads a
@@ -26,6 +40,7 @@ NAMED_METRICS = (
     DistanceMetric.l2_and_projections(),
     DistanceMetric.l2_and_projections(l2_scale=0.25),
     DistanceMetric.l2_and_projections(k=100),
+    DistanceMetric.custom(custom_l1),
 )
 
 # MINKOWSKI_METRICS covers each Minkowski kind once: generic and specialized, rooted and not.
