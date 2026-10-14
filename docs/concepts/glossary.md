@@ -65,11 +65,7 @@ cannot satisfy everything.
 
 ## Custom distance function { #custom-distance-function }
 
-A `numba.njit` function that you write to compute the distance between 2 [vectors](#vector), passed to
-`DistanceMetric.custom()` in place of a built-in [distance metric](#distance-metric). Unlike
-[precomputed distances](#precomputed-distances), it works with every
-[distance storage](distance_storage.md) type, lazy storage included, so a full distance matrix does not
-limit the problem size. See [Getting Started](../getting_started.md#custom-distances).
+A `numba.njit` function that you write to compute the distance between 2 [vectors](#vector), passed to `DistanceMetric.custom()` as the [distance metric](#distance-metric). Unlike [precomputed distances](#precomputed-distances), it also works with [lazy distance storage](distance_storage.md). See [Getting Started](../getting_started.md#custom-distances).
 
 ## Dispersion { #dispersion }
 
@@ -83,11 +79,11 @@ its literature family.
 
 ## Distance metric { #distance-metric }
 
-The rule for measuring how far apart two items are: a built-in metric, such as Euclidean or cosine
-distance, or a [custom distance function](#custom-distance-function). It is chosen once per problem and determines every pairwise distance the solver reads,
-so it is moot when distances are supplied as [precomputed distances](#precomputed-distances)
-instead. The choice interacts with the
-[diversity metric](#diversity-metric): squared Euclidean and plain Euclidean, for instance, yield
+The rule for measuring how far apart 2 items are: a built-in metric, such as Euclidean or cosine
+distance, or a [custom distance function](#custom-distance-function). It is chosen once per
+problem and determines every pairwise distance that the solver reads, so it is moot when
+distances are supplied as [precomputed distances](#precomputed-distances) instead. The choice
+interacts with the [diversity metric](#diversity-metric): squared Euclidean and plain Euclidean, for instance, yield
 identical selections under [geometric-mean separation](#geometric-mean-separation), because
 squaring preserves the ordering of distances. See [Diversity & distance](diversity.md).
 
