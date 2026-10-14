@@ -33,23 +33,24 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 | distance metrics · cosine distance | <span class="mark mark-full">✔</span> | [^kmedoids-1] |
 | distance metrics · geometric-mean distance | <span class="mark mark-partial">◐</span> | [^kmedoids-2] |
 | distance metrics · single-dimension distance | <span class="mark mark-partial">◐</span> | [^kmedoids-3] |
-| distance metrics · caller-supplied distances | <span class="mark mark-full">✔</span> | [^kmedoids-4] |
-| diversity objectives · maximize the minimum separation | <span class="mark mark-none">—</span> | [^kmedoids-5] |
-| diversity objectives · maximize the mean nearest-neighbor separation | <span class="mark mark-none">—</span> | [^kmedoids-5] |
-| diversity objectives · maximize the geometric-mean nearest-neighbor separation | <span class="mark mark-none">—</span> | [^kmedoids-5] |
-| diversity objectives · maximize the harmonic-mean nearest-neighbor separation | <span class="mark mark-none">—</span> | [^kmedoids-5] |
-| diversity objectives · maximize the mean pairwise distance | <span class="mark mark-none">—</span> | [^kmedoids-5] |
-| diversity objectives · combine several diversity objectives into one | <span class="mark mark-none">—</span> | [^kmedoids-5] |
+| distance metrics · custom distance matrix | <span class="mark mark-full">✔</span> | [^kmedoids-4] |
+| distance metrics · custom distance function | <span class="mark mark-partial">◐</span> | [^kmedoids-5] |
+| diversity objectives · maximize the minimum separation | <span class="mark mark-none">—</span> | [^kmedoids-6] |
+| diversity objectives · maximize the mean nearest-neighbor separation | <span class="mark mark-none">—</span> | [^kmedoids-6] |
+| diversity objectives · maximize the geometric-mean nearest-neighbor separation | <span class="mark mark-none">—</span> | [^kmedoids-6] |
+| diversity objectives · maximize the harmonic-mean nearest-neighbor separation | <span class="mark mark-none">—</span> | [^kmedoids-6] |
+| diversity objectives · maximize the mean pairwise distance | <span class="mark mark-none">—</span> | [^kmedoids-6] |
+| diversity objectives · combine several diversity objectives into one | <span class="mark mark-none">—</span> | [^kmedoids-6] |
 | diversity objectives · certified proofs that a selection is optimal | <span class="mark mark-none">—</span> |  |
 | constraints beyond k · per-group counts over disjoint groups | <span class="mark mark-none">—</span> |  |
 | constraints beyond k · per-group counts over overlapping groups | <span class="mark mark-none">—</span> |  |
 | constraints beyond k · minimum and maximum counts per group | <span class="mark mark-none">—</span> |  |
 | constraints beyond k · certified verdicts on whether a constraint set is satisfiable | <span class="mark mark-none">—</span> |  |
-| time budget · budget expressed as an iteration count | <span class="mark mark-partial">◐</span> | [^kmedoids-6] |
+| time budget · budget expressed as an iteration count | <span class="mark mark-partial">◐</span> | [^kmedoids-7] |
 | time budget · budget expressed as wall-clock time | <span class="mark mark-none">—</span> |  |
-| time budget · the answer improves when given more budget | <span class="mark mark-none">—</span> | [^kmedoids-6] |
+| time budget · the answer improves when given more budget | <span class="mark mark-none">—</span> | [^kmedoids-7] |
 | multi-worker · several workers search one problem separately and the best result wins | <span class="mark mark-none">—</span> |  |
-| multi-worker · parallel workers share information mid-run | <span class="mark mark-none">—</span> | [^kmedoids-7] |
+| multi-worker · parallel workers share information mid-run | <span class="mark mark-none">—</span> | [^kmedoids-8] |
 | solver scaling · largest n within memory | n = 50k | |
 | solver scaling · largest n within the time budget | n = 50k | |
 | solver scaling · largest n closing 50% of the quality gap | — | |
@@ -61,6 +62,7 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 [^kmedoids-2]: Not among the metric names scikit-learn understands, so it is reachable only as a precomputed dissimilarity matrix.
 [^kmedoids-3]: Reachable by handing the tool that one coordinate as one-dimensional input.
 [^kmedoids-4]: A precomputed dissimilarity matrix is the primary input and the one the documentation recommends, so any dissimilarity you can compute is usable as is.
-[^kmedoids-5]: k-medoids minimizes the total dissimilarity of every item to its nearest medoid, a representativeness objective that places the medoids in dense regions; none of the dispersion objectives is optimized.
-[^kmedoids-6]: The iteration cap bounds the swap phase, but the cap is a convergence limit, not a budget: the search stops at the first local optimum it reaches, usually after a handful of passes, whatever cap is set.
-[^kmedoids-7]: The swap search can evaluate candidates on several threads, which speeds up one search; it is not several workers searching the problem.
+[^kmedoids-5]: The scikit-learn-style estimator forwards a callable `metric` to scikit-learn's `pairwise_distances`, which evaluates it into a full n×n matrix.
+[^kmedoids-6]: k-medoids minimizes the total dissimilarity of every item to its nearest medoid, a representativeness objective that places the medoids in dense regions; none of the dispersion objectives is optimized.
+[^kmedoids-7]: The iteration cap bounds the swap phase, but the cap is a convergence limit, not a budget: the search stops at the first local optimum it reaches, usually after a handful of passes, whatever cap is set.
+[^kmedoids-8]: The swap search can evaluate candidates on several threads, which speeds up one search; it is not several workers searching the problem.

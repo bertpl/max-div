@@ -23,34 +23,44 @@ solver:
         url: https://github.com/yhwang1990/code-FDM
   capabilities:
     distance.l1:
-      mark: partial
-      note: &edit_source
-        text: >-
-          The implementation is written around Euclidean distance; another metric means editing the source rather than passing an argument.
-    distance.l2: {mark: full}
-    distance.linf:
-      mark: partial
-      note: *edit_source
-    distance.minkowski:
-      mark: partial
-      note: *edit_source
-    distance.cosine:
-      mark: partial
-      note: *edit_source
-    distance.geomean:
-      mark: partial
-      note: *edit_source
-    distance.l_minus_inf:
-      mark: partial
-      note: *edit_source
-    distance.along_axis:
-      mark: partial
-      note: *edit_source
-    distance.custom:
       mark: full
       note:
         text: >-
-          Since you are editing the source in any case, an arbitrary metric is no harder than a common one — a consequence of it being research code rather than a designed feature.
+          `utils.manhattan_dist` ships with the repository, passed as the algorithms' `dist` argument.
+    distance.l2: {mark: full}
+    distance.linf:
+      mark: partial
+      note: &own_dist
+        text: >-
+          Reachable by passing your own distance function as the algorithms' `dist` argument.
+    distance.minkowski:
+      mark: partial
+      note: *own_dist
+    distance.cosine:
+      mark: partial
+      note:
+        text: >-
+          `utils.cosine_dist` returns the angle between 2 vectors, which orders pairs the same way as
+          cosine distance, so a max-min selection under it matches one under cosine distance.
+    distance.geomean:
+      mark: partial
+      note: *own_dist
+    distance.l_minus_inf:
+      mark: partial
+      note: *own_dist
+    distance.along_axis:
+      mark: partial
+      note: *own_dist
+    distance.custom_matrix:
+      mark: partial
+      note:
+        text: >-
+          There is no matrix input; a `dist` function that looks each pair up in your own matrix makes one usable.
+    distance.custom_function:
+      mark: full
+      note:
+        text: >-
+          Every algorithm takes the distance function as its `dist` argument and calls it for each pair it needs.
     objective.max_min: {mark: full}
     objective.mean_nn: {mark: none}
     objective.geomean_nn: {mark: none}

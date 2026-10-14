@@ -41,7 +41,12 @@ solver:
     distance.along_axis:
       mark: partial
       note: *callback
-    distance.custom:
+    distance.custom_matrix:
+      mark: full
+      note:
+        text: >-
+          `Pick` takes the lower triangle of a distance matrix as a 1-D array, so any metric you can compute is usable.
+    distance.custom_function:
       mark: full
       note:
         text: >-

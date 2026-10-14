@@ -25,15 +25,16 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 
 | Capability | Support | Notes |
 |---|:---:|---|
-| distance metrics · L1 (Manhattan) distance | <span class="mark mark-partial">◐</span> | [^code-fdm-2] |
+| distance metrics · L1 (Manhattan) distance | <span class="mark mark-full">✔</span> | [^code-fdm-2] |
 | distance metrics · L2 (Euclidean) distance | <span class="mark mark-full">✔</span> |  |
-| distance metrics · L∞ (Chebyshev) distance | <span class="mark mark-partial">◐</span> | [^code-fdm-2] |
-| distance metrics · L−∞ distance | <span class="mark mark-partial">◐</span> | [^code-fdm-2] |
-| distance metrics · Minkowski distance | <span class="mark mark-partial">◐</span> | [^code-fdm-2] |
-| distance metrics · cosine distance | <span class="mark mark-partial">◐</span> | [^code-fdm-2] |
-| distance metrics · geometric-mean distance | <span class="mark mark-partial">◐</span> | [^code-fdm-2] |
-| distance metrics · single-dimension distance | <span class="mark mark-partial">◐</span> | [^code-fdm-2] |
-| distance metrics · caller-supplied distances | <span class="mark mark-full">✔</span> | [^code-fdm-3] |
+| distance metrics · L∞ (Chebyshev) distance | <span class="mark mark-partial">◐</span> | [^code-fdm-3] |
+| distance metrics · L−∞ distance | <span class="mark mark-partial">◐</span> | [^code-fdm-3] |
+| distance metrics · Minkowski distance | <span class="mark mark-partial">◐</span> | [^code-fdm-3] |
+| distance metrics · cosine distance | <span class="mark mark-partial">◐</span> | [^code-fdm-4] |
+| distance metrics · geometric-mean distance | <span class="mark mark-partial">◐</span> | [^code-fdm-3] |
+| distance metrics · single-dimension distance | <span class="mark mark-partial">◐</span> | [^code-fdm-3] |
+| distance metrics · custom distance matrix | <span class="mark mark-partial">◐</span> | [^code-fdm-5] |
+| distance metrics · custom distance function | <span class="mark mark-full">✔</span> | [^code-fdm-6] |
 | diversity objectives · maximize the minimum separation | <span class="mark mark-full">✔</span> |  |
 | diversity objectives · maximize the mean nearest-neighbor separation | <span class="mark mark-none">—</span> |  |
 | diversity objectives · maximize the geometric-mean nearest-neighbor separation | <span class="mark mark-none">—</span> |  |
@@ -41,13 +42,13 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 | diversity objectives · maximize the mean pairwise distance | <span class="mark mark-none">—</span> |  |
 | diversity objectives · combine several diversity objectives into one | <span class="mark mark-none">—</span> |  |
 | diversity objectives · certified proofs that a selection is optimal | <span class="mark mark-none">—</span> |  |
-| constraints beyond k · per-group counts over disjoint groups | <span class="mark mark-full">✔</span> | [^code-fdm-4] |
-| constraints beyond k · per-group counts over overlapping groups | <span class="mark mark-none">—</span> | [^code-fdm-5] |
-| constraints beyond k · minimum and maximum counts per group | <span class="mark mark-none">—</span> | [^code-fdm-6] |
+| constraints beyond k · per-group counts over disjoint groups | <span class="mark mark-full">✔</span> | [^code-fdm-7] |
+| constraints beyond k · per-group counts over overlapping groups | <span class="mark mark-none">—</span> | [^code-fdm-8] |
+| constraints beyond k · minimum and maximum counts per group | <span class="mark mark-none">—</span> | [^code-fdm-9] |
 | constraints beyond k · certified verdicts on whether a constraint set is satisfiable | <span class="mark mark-none">—</span> |  |
 | time budget · budget expressed as an iteration count | <span class="mark mark-none">—</span> |  |
 | time budget · budget expressed as wall-clock time | <span class="mark mark-none">—</span> |  |
-| time budget · the answer improves when given more budget | <span class="mark mark-none">—</span> | [^code-fdm-7] |
+| time budget · the answer improves when given more budget | <span class="mark mark-none">—</span> | [^code-fdm-10] |
 | multi-worker · several workers search one problem separately and the best result wins | <span class="mark mark-none">—</span> |  |
 | multi-worker · parallel workers share information mid-run | <span class="mark mark-none">—</span> |  |
 | solver scaling · largest n within memory | n = 100M | |
@@ -58,9 +59,12 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 </div>
 
 [^code-fdm-1]: Never packaged: this is a research repository, not a release. Its last commit was in July 2022 and it carries no license file, which means no permission to use it is granted — a blocker for anything beyond reading the code, regardless of how well it performs. [Source](https://github.com/yhwang1990/code-FDM)
-[^code-fdm-2]: The implementation is written around Euclidean distance; another metric means editing the source rather than passing an argument.
-[^code-fdm-3]: Since you are editing the source in any case, an arbitrary metric is no harder than a common one — a consequence of it being research code rather than a designed feature.
-[^code-fdm-4]: This is the whole point of the tool: it selects a maximally dispersed subset subject to a required count from each group, which is the fair-diversity problem max-div also targets.
-[^code-fdm-5]: Each item belongs to exactly one group. Overlapping membership — an item that is both in-region and in-category — is outside the model the algorithms are built on.
-[^code-fdm-6]: Counts are exact requirements per group, not a minimum and a maximum, so a range cannot be expressed.
-[^code-fdm-7]: A single construction pass, so there is no budget to spend: the answer is whatever one greedy sweep produces, and waiting longer does not change it.
+[^code-fdm-2]: `utils.manhattan_dist` ships with the repository, passed as the algorithms' `dist` argument.
+[^code-fdm-3]: Reachable by passing your own distance function as the algorithms' `dist` argument.
+[^code-fdm-4]: `utils.cosine_dist` returns the angle between 2 vectors, which orders pairs the same way as cosine distance, so a max-min selection under it matches one under cosine distance.
+[^code-fdm-5]: There is no matrix input; a `dist` function that looks each pair up in your own matrix makes one usable.
+[^code-fdm-6]: Every algorithm takes the distance function as its `dist` argument and calls it for each pair it needs.
+[^code-fdm-7]: This is the whole point of the tool: it selects a maximally dispersed subset subject to a required count from each group, which is the fair-diversity problem max-div also targets.
+[^code-fdm-8]: Each item belongs to exactly one group. Overlapping membership — an item that is both in-region and in-category — is outside the model the algorithms are built on.
+[^code-fdm-9]: Counts are exact requirements per group, not a minimum and a maximum, so a range cannot be expressed.
+[^code-fdm-10]: A single construction pass, so there is no budget to spend: the answer is whatever one greedy sweep produces, and waiting longer does not change it.

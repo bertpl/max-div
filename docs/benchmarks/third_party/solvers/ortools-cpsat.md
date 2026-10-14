@@ -41,11 +41,16 @@ solver:
     distance.along_axis:
       mark: partial
       note: *integer_scaled
-    distance.custom:
+    distance.custom_matrix:
       mark: full
       note:
         text: >-
           Any distance you can compute and round to integers is usable, which in practice means any metric at all.
+    distance.custom_function:
+      mark: none
+      note:
+        text: >-
+          No solver input takes a function: the distances enter the model only as the coefficients that you compute.
     objective.max_min:
       mark: partial
       note:

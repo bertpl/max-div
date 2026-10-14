@@ -13,7 +13,7 @@ solver:
     license: Apache-2.0
     last_release: {version: "0.11.0", date: "2026-08-11"}
     determinism: seeded, fully reproducible
-    input: vectors (L1 / L2 / L2² / L∞ / cosine) or a precomputed distance matrix
+    input: vectors, under a built-in distance metric or your own distance function, or a precomputed distance matrix
   capabilities:
     distance.l1: {mark: full}
     distance.l2: {mark: full}
@@ -23,12 +23,19 @@ solver:
     distance.geomean: {mark: full}
     distance.l_minus_inf: {mark: full}
     distance.along_axis: {mark: full}
-    distance.custom:
+    distance.custom_matrix:
       mark: full
       note:
         text: >-
           A problem can be built from a precomputed distance matrix, square or condensed, so any
           metric the caller can compute is usable without max-div implementing it.
+    distance.custom_function:
+      mark: full
+      note:
+        text: >-
+          `DistanceMetric.custom()` takes a `numba.njit` function of 2 vectors. It works with every
+          distance storage type, so with lazy storage the solver calls the function for each
+          distance it reads and never stores all n² distances.
     objective.max_min: {mark: full}
     objective.mean_nn: {mark: full}
     objective.geomean_nn: {mark: full}

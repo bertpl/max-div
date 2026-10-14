@@ -41,11 +41,16 @@ solver:
     distance.along_axis:
       mark: partial
       note: *coeffs
-    distance.custom:
+    distance.custom_matrix:
       mark: full
       note:
         text: >-
           Distances are coefficients you supply, so an unusual metric costs no more than a common one.
+    distance.custom_function:
+      mark: none
+      note:
+        text: >-
+          No solver input takes a function: the distances enter the model only as the coefficients that you compute.
     objective.max_min:
       mark: partial
       note: &linearize

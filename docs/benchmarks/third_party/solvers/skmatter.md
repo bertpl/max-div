@@ -30,7 +30,8 @@ solver:
       mark: partial
       note:
         text: Reachable by handing the tool that one coordinate as one-dimensional input.
-    distance.custom: {mark: none}
+    distance.custom_matrix: {mark: none}
+    distance.custom_function: {mark: none}
     objective.max_min: {mark: full}
     objective.mean_nn: {mark: none}
     objective.geomean_nn: {mark: none}

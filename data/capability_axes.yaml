@@ -164,13 +164,23 @@ groups:
           coordinate) computed by the tool from vector input. Handing the tool that coordinate as
           one-dimensional input counts as reachable, not built in: in one dimension every Minkowski
           distance is the absolute difference of that coordinate.
-      - key: custom
-        hero_label: custom
-        label: caller-supplied distances
+      - key: custom_matrix
+        hero_label: custom matrix
+        label: custom distance matrix
         hero: true
         definition: >-
-          Accepts distances the caller computed — a distance matrix or a distance callable — so a
-          metric the tool does not implement is usable anyway.
+          Accepts distances that the caller computed for every pair of items — a distance,
+          similarity or kernel matrix, or distances entered as model coefficients — so a metric
+          that the tool does not implement is usable, at the memory cost of all n² distances.
+      - key: custom_function
+        hero_label: custom function
+        label: custom distance function
+        hero: true
+        definition: >-
+          Accepts a function that computes the distance between 2 items, so a metric that the tool
+          does not implement is usable. A tool that calls the function only for the distances it
+          needs avoids storing all n² of them; a tool that first evaluates the function into a full
+          matrix counts as reachable, not built in.
 
   - key: objective
     hero_label: objective
