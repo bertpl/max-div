@@ -34,7 +34,7 @@ solver:
       mark: none
       note:
         text: >-
-          Euclidean only: the input is a point cloud, and the KD-tree variants depend on Euclidean distance structurally, so this is not a gap waiting to be filled.
+          Euclidean only: the input is a point cloud, and the KD-tree variants depend on Euclidean distance structurally, so the Euclidean restriction is by design.
     distance.custom_function:
       mark: none
       note:

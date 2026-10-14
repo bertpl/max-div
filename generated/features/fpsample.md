@@ -60,6 +60,6 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 
 [^fpsample-1]: Reachable by L2-normalizing the vectors first: on the unit sphere, cosine distance is a monotone function of Euclidean distance, so a Euclidean picker returns the same ordering.
 [^fpsample-2]: Reachable by handing the tool that one coordinate as one-dimensional input.
-[^fpsample-3]: Euclidean only: the input is a point cloud, and the KD-tree variants depend on Euclidean distance structurally, so this is not a gap waiting to be filled.
+[^fpsample-3]: Euclidean only: the input is a point cloud, and the KD-tree variants depend on Euclidean distance structurally, so the Euclidean restriction is by design.
 [^fpsample-4]: Euclidean only: no input takes a distance function.
 [^fpsample-5]: A single construction pass, so there is no budget to spend: the answer is whatever one greedy sweep produces, and waiting longer does not change it.

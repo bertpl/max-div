@@ -26,36 +26,35 @@ solver:
       mark: full
       note:
         text: >-
-          `utils.manhattan_dist` ships with the repository, passed as the algorithms' `dist` argument.
+          The repository ships `utils.manhattan_dist`, which you pass as the algorithms' `dist` argument.
     distance.l2: {mark: full}
     distance.linf:
       mark: partial
-      note: &own_dist
+      note: &caller_dist
         text: >-
           Reachable by passing your own distance function as the algorithms' `dist` argument.
     distance.minkowski:
       mark: partial
-      note: *own_dist
+      note: *caller_dist
     distance.cosine:
       mark: partial
       note:
         text: >-
-          `utils.cosine_dist` returns the angle between 2 vectors, which orders pairs the same way as
-          cosine distance, so a max-min selection under it matches one under cosine distance.
+          `utils.cosine_dist` returns the angle between 2 vectors. The angle orders pairs the same way as cosine distance, so a max-min selection under `utils.cosine_dist` matches one under cosine distance.
     distance.geomean:
       mark: partial
-      note: *own_dist
+      note: *caller_dist
     distance.l_minus_inf:
       mark: partial
-      note: *own_dist
+      note: *caller_dist
     distance.along_axis:
       mark: partial
-      note: *own_dist
+      note: *caller_dist
     distance.custom_matrix:
       mark: partial
       note:
         text: >-
-          There is no matrix input; a `dist` function that looks each pair up in your own matrix makes one usable.
+          There is no matrix input, but a `dist` function that looks each pair up in your own matrix makes the matrix usable.
     distance.custom_function:
       mark: full
       note:

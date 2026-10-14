@@ -170,17 +170,18 @@ groups:
         hero: true
         definition: >-
           Accepts distances that the caller computed for every pair of items — a distance,
-          similarity or kernel matrix, or distances entered as model coefficients — so a metric
-          that the tool does not implement is usable, at the memory cost of all n² distances.
+          similarity or kernel matrix, or distances entered as the coefficients of an optimization
+          model — so a metric that the tool does not implement is usable, at the memory cost of
+          storing a distance for every pair.
       - key: custom_function
         hero_label: custom function
         label: custom distance function
         hero: true
         definition: >-
           Accepts a function that computes the distance between 2 items, so a metric that the tool
-          does not implement is usable. A tool that calls the function only for the distances it
-          needs avoids storing all n² of them; a tool that first evaluates the function into a full
-          matrix counts as reachable, not built in.
+          does not implement is usable. A tool that calls the function only for the distances that
+          it needs counts as built in, and avoids storing a distance for every pair; a tool that
+          first evaluates the function into a full matrix counts as reachable, not built in.
 
   - key: objective
     hero_label: objective

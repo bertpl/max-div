@@ -45,7 +45,7 @@ solver:
       mark: full
       note:
         text: >-
-          `Pick` takes the lower triangle of a distance matrix as a 1-D array, so any metric you can compute is usable.
+          `Pick` takes the lower triangle of a distance matrix as a 1-D array.
     distance.custom_function:
       mark: full
       note:

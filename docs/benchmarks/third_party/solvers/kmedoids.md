@@ -56,7 +56,7 @@ solver:
       mark: partial
       note:
         text: >-
-          The scikit-learn-style estimator forwards a callable `metric` to scikit-learn's `pairwise_distances`, which evaluates it into a full n×n matrix.
+          The scikit-learn-style estimator forwards a callable `metric` to scikit-learn's `pairwise_distances`, which evaluates the metric into a full n×n matrix.
     objective.max_min:
       mark: none
       note: &medoids_not_dispersion

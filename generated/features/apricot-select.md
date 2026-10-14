@@ -62,7 +62,7 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 [^apricot-select-2]: Not among the metric names scikit-learn understands, so it is reachable only as a precomputed similarity matrix.
 [^apricot-select-3]: The metric argument is a name forwarded to scikit-learn without the power parameter, so a caller-chosen p is reachable only through the precomputed-similarity input.
 [^apricot-select-4]: Reachable by handing the tool that one coordinate as one-dimensional input.
-[^apricot-select-5]: A precomputed similarity matrix is a first-class input (`metric='precomputed'`), so any similarity you can compute is usable. Note the sign convention: apricot maximizes similarity coverage, so a distance has to be turned into a similarity first.
+[^apricot-select-5]: A precomputed similarity matrix is a first-class input (`metric='precomputed'`). Note the sign convention: apricot maximizes similarity coverage, so a distance has to be turned into a similarity first.
 [^apricot-select-6]: The constructor's `metric` argument takes a name, not a function; a function is usable only through the precomputed-matrix input.
 [^apricot-select-7]: Submodular coverage objectives, not dispersion ones. Nothing here maximizes a minimum separation, and no reformulation makes facility location do so.
 [^apricot-select-8]: Facility location rewards how well the selection covers the remaining items, which on a distance-derived kernel is the standard submodular surrogate for a max-sum style objective — related to, but not identical with, maximizing the mean pairwise distance.

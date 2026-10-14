@@ -36,7 +36,7 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 | Tool | Guarantee | License | Version | Released | Determinism | Input | Last verified |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | **Anytime optimizers** |  |  |  |  |  |  |  |
-| <span class="subject-name">max-div</span> | heuristic | Apache-2.0 | <span class="release-part">0.11.0</span> | <span class="release-part">2026-08-11</span> | seeded, fully reproducible | vectors, under a built-in distance metric or your own distance function, or a precomputed distance matrix | 2026-08-11 |
+| <span class="subject-name">max-div</span> | heuristic | Apache-2.0 | <span class="release-part">0.11.0</span> | <span class="release-part">2026-08-11</span> | seeded, fully reproducible | vectors with a built-in distance metric, vectors with your own distance function, or a precomputed distance matrix | 2026-08-11 |
 | **Exact solvers** |  |  |  |  |  |  |  |
 | [OR-Tools CP-SAT](solvers/ortools-cpsat.md) | proven optimum | Apache-2.0 | <span class="release-part">9.15.6755</span> | <span class="release-part">2026-01-14</span> | deterministic with a fixed worker count | a hand-built model | 2026-07-27 |
 | [SCIP (PySCIPOpt)](solvers/scip.md) | proven optimum | Apache-2.0 (SCIP)[^cmp-73] | <span class="release-part">6.2.1</span> | <span class="release-part">2026-05-16</span> | deterministic | a hand-built model | 2026-07-27 |
@@ -57,7 +57,7 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 *Every fact above was verified on or after 2026-07-27; each tool's own date is in the table.*
 
 [^cmp-1]: A problem can be built from a precomputed distance matrix, square or condensed, so any metric the caller can compute is usable without max-div implementing it.
-[^cmp-2]: `DistanceMetric.custom()` takes a `numba.njit` function of 2 vectors. It works with every distance storage type, so with lazy storage the solver calls the function for each distance it reads and never stores all n² distances.
+[^cmp-2]: `DistanceMetric.custom()` takes a `numba.njit` function of 2 vectors. A custom metric works with every distance storage type, including lazy storage, in which the solver calls the function each time it needs a distance and never stores all n² distances.
 [^cmp-3]: Counts are per-group minimum and maximum bounds, and carry per-constraint weights and a choice of linear or quadratic penalty shaping when a problem is over-constrained.
 [^cmp-4]: `check_feasibility` returns a three-valued verdict whose definite answers are proofs. Feasible comes with a satisfying selection; infeasible with an independently re-checkable certificate. Unknown claims nothing.
 [^cmp-5]: Several workers solve the same problem at once and the best result wins.
@@ -82,17 +82,17 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 [^cmp-24]: Distances are coefficients you supply, so an unusual metric costs no more than a common one.
 [^cmp-25]: The dual simplex, the interior-point factorization and the MIP branch-and-bound each run in parallel, controlled by the parallel and threads options — threads jointly advancing one solve rather than racing independent ones.
 [^cmp-26]: Reachable through the distance callback you supply — RDKit itself has no opinion about the metric, it only calls your function.
-[^cmp-27]: `Pick` takes the lower triangle of a distance matrix as a 1-D array, so any metric you can compute is usable.
+[^cmp-27]: `Pick` takes the lower triangle of a distance matrix as a 1-D array.
 [^cmp-28]: The callback is the native interface rather than an escape hatch: it never needs all n² distances to exist at once, which is what lets this picker scale into the millions.
 [^cmp-29]: No per-group counting of any kind. It does accept a set of items that must appear in the result, which is a different guarantee entirely: membership for named items, not proportions across groups.
 [^cmp-30]: A single construction pass, so there is no budget to spend: the answer is whatever one greedy sweep produces, and waiting longer does not change it.
 [^cmp-31]: Reachable by L2-normalizing the vectors first: on the unit sphere, cosine distance is a monotone function of Euclidean distance, so a Euclidean picker returns the same ordering.
 [^cmp-32]: Reachable by handing the tool that one coordinate as one-dimensional input.
-[^cmp-33]: Euclidean only: the input is a point cloud, and the KD-tree variants depend on Euclidean distance structurally, so this is not a gap waiting to be filled.
+[^cmp-33]: Euclidean only: the input is a point cloud, and the KD-tree variants depend on Euclidean distance structurally, so the Euclidean restriction is by design.
 [^cmp-34]: Euclidean only: no input takes a distance function.
 [^cmp-35]: Not among the metric names scikit-learn understands, so it is reachable only as a precomputed similarity matrix.
 [^cmp-36]: The metric argument is a name forwarded to scikit-learn without the power parameter, so a caller-chosen p is reachable only through the precomputed-similarity input.
-[^cmp-37]: A precomputed similarity matrix is a first-class input (`metric='precomputed'`), so any similarity you can compute is usable. Note the sign convention: apricot maximizes similarity coverage, so a distance has to be turned into a similarity first.
+[^cmp-37]: A precomputed similarity matrix is a first-class input (`metric='precomputed'`). Note the sign convention: apricot maximizes similarity coverage, so a distance has to be turned into a similarity first.
 [^cmp-38]: The constructor's `metric` argument takes a name, not a function; a function is usable only through the precomputed-matrix input.
 [^cmp-39]: Submodular coverage objectives, not dispersion ones. Nothing here maximizes a minimum separation, and no reformulation makes facility location do so.
 [^cmp-40]: Facility location rewards how well the selection covers the remaining items, which on a distance-derived kernel is the standard submodular surrogate for a max-sum style objective — related to, but not identical with, maximizing the mean pairwise distance.
@@ -103,15 +103,15 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 [^cmp-45]: The same Minkowski-exponent parameter that provides L1 and Chebyshev takes any p.
 [^cmp-46]: The Minkowski exponent cannot express the geometric mean (the p → 0 limit of the power mean, which divides the sum by d before the root — not a Minkowski form), so the geometric mean is reachable only as a precomputed distance matrix.
 [^cmp-47]: A precomputed distance matrix is accepted directly, so any metric you can compute is usable.
-[^cmp-48]: `fun_dist` maps the whole feature array to the full n×n distance matrix, so you supply a matrix builder and all n² distances are stored.
+[^cmp-48]: The `fun_dist` argument maps the whole feature array to the full n×n distance matrix, so the function you supply builds a matrix, and all n² distances are stored.
 [^cmp-49]: Its diversity measures are computed over the whole selection rather than over nearest-neighbor pairs, so the nearest-neighbor family is absent.
 [^cmp-50]: Label-stratified selection: given class labels, it picks proportionally across them. That covers disjoint groups with proportional targets, but not arbitrary minimum and maximum counts, and not groups an item can belong to more than once.
 [^cmp-51]: Several of its methods take a parameter that controls how much work they do — a sphere-exclusion radius, an OptiSim subsample size — but these change the character of the search rather than lengthening it. Raising one does not mean a better answer.
 [^cmp-52]: MaxMin and MaxSum selection is sequential; OptiSim and DISE parallelize only their KDTree neighbor queries, not the search over selections.
-[^cmp-53]: `utils.manhattan_dist` ships with the repository, passed as the algorithms' `dist` argument.
+[^cmp-53]: The repository ships `utils.manhattan_dist`, which you pass as the algorithms' `dist` argument.
 [^cmp-54]: Reachable by passing your own distance function as the algorithms' `dist` argument.
-[^cmp-55]: `utils.cosine_dist` returns the angle between 2 vectors, which orders pairs the same way as cosine distance, so a max-min selection under it matches one under cosine distance.
-[^cmp-56]: There is no matrix input; a `dist` function that looks each pair up in your own matrix makes one usable.
+[^cmp-55]: `utils.cosine_dist` returns the angle between 2 vectors. The angle orders pairs the same way as cosine distance, so a max-min selection under `utils.cosine_dist` matches one under cosine distance.
+[^cmp-56]: There is no matrix input, but a `dist` function that looks each pair up in your own matrix makes the matrix usable.
 [^cmp-57]: Every algorithm takes the distance function as its `dist` argument and calls it for each pair it needs.
 [^cmp-58]: This is the whole point of the tool: it selects a maximally dispersed subset subject to a required count from each group, which is the fair-diversity problem max-div also targets.
 [^cmp-59]: Each item belongs to exactly one group. Overlapping membership — an item that is both in-region and in-category — is outside the model the algorithms are built on.
@@ -119,13 +119,13 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 [^cmp-61]: The core functions take a dissimilarity matrix only; the scikit-learn-style estimator accepts a metric name and forwards it to scikit-learn's pairwise distances, which needs scikit-learn installed.
 [^cmp-62]: Not among the metric names scikit-learn understands, so it is reachable only as a precomputed dissimilarity matrix.
 [^cmp-63]: A precomputed dissimilarity matrix is the primary input and the one the documentation recommends, so any dissimilarity you can compute is usable as is.
-[^cmp-64]: The scikit-learn-style estimator forwards a callable `metric` to scikit-learn's `pairwise_distances`, which evaluates it into a full n×n matrix.
+[^cmp-64]: The scikit-learn-style estimator forwards a callable `metric` to scikit-learn's `pairwise_distances`, which evaluates the metric into a full n×n matrix.
 [^cmp-65]: k-medoids minimizes the total dissimilarity of every item to its nearest medoid, a representativeness objective that places the medoids in dense regions; none of the dispersion objectives is optimized.
 [^cmp-66]: The iteration cap bounds the swap phase, but the cap is a convergence limit, not a budget: the search stops at the first local optimum it reaches, usually after a handful of passes, whatever cap is set.
 [^cmp-67]: The swap search can evaluate candidates on several threads, which speeds up one search; it is not several workers searching the problem.
 [^cmp-68]: Reachable only through the kernel you supply. DPPy never sees vectors or a distance function: you choose how similarity is defined when you build the kernel, and any metric you can express that way is available.
-[^cmp-69]: The likelihood or correlation kernel matrix is the native input, so a custom similarity is the native case rather than a workaround. Note the sign convention differs from a distance: the kernel encodes similarity, and diversity comes from its determinant being large.
-[^cmp-70]: A kernel function is an input (`L_eval_X_data`). The `vfx` and `alpha` samplers evaluate it only against a small Nyström dictionary; the other samplers evaluate it into the full kernel matrix.
+[^cmp-69]: The likelihood or correlation kernel matrix is the native input. Note the sign convention differs from a distance: the kernel encodes similarity, and diversity comes from its determinant being large.
+[^cmp-70]: A kernel function is an input (`L_eval_X_data`). Most samplers evaluate it into the full kernel matrix; the `vfx` and `alpha` samplers evaluate it only between each item and a small sample of items (a Nyström dictionary).
 [^cmp-71]: DPPy draws samples from a determinantal point process rather than maximizing anything. Diversity is a property of the distribution it samples from — subsets whose kernel submatrix has a large determinant are more likely — so no objective is optimized and no selection is claimed to be best.
 [^cmp-72]: You can ask for more samples, but a sample count is a number of independent draws, not an improvement budget — the tenth draw is no better than the first, merely different.
 [^cmp-73]: The two halves carry different licenses: the SCIP solver itself is Apache-2.0, while the PySCIPOpt binding installed from PyPI is MIT. [Source](https://pypi.org/project/PySCIPOpt/)

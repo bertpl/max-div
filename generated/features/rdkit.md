@@ -59,7 +59,7 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 </div>
 
 [^rdkit-1]: Reachable through the distance callback you supply — RDKit itself has no opinion about the metric, it only calls your function.
-[^rdkit-2]: `Pick` takes the lower triangle of a distance matrix as a 1-D array, so any metric you can compute is usable.
+[^rdkit-2]: `Pick` takes the lower triangle of a distance matrix as a 1-D array.
 [^rdkit-3]: The callback is the native interface rather than an escape hatch: it never needs all n² distances to exist at once, which is what lets this picker scale into the millions.
 [^rdkit-4]: No per-group counting of any kind. It does accept a set of items that must appear in the result, which is a different guarantee entirely: membership for named items, not proportions across groups.
 [^rdkit-5]: A single construction pass, so there is no budget to spend: the answer is whatever one greedy sweep produces, and waiting longer does not change it.

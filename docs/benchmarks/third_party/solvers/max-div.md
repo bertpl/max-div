@@ -13,7 +13,7 @@ solver:
     license: Apache-2.0
     last_release: {version: "0.11.0", date: "2026-08-11"}
     determinism: seeded, fully reproducible
-    input: vectors, under a built-in distance metric or your own distance function, or a precomputed distance matrix
+    input: vectors with a built-in distance metric, vectors with your own distance function, or a precomputed distance matrix
   capabilities:
     distance.l1: {mark: full}
     distance.l2: {mark: full}
@@ -33,9 +33,7 @@ solver:
       mark: full
       note:
         text: >-
-          `DistanceMetric.custom()` takes a `numba.njit` function of 2 vectors. It works with every
-          distance storage type, so with lazy storage the solver calls the function for each
-          distance it reads and never stores all n² distances.
+          `DistanceMetric.custom()` takes a `numba.njit` function of 2 vectors. A custom metric works with every distance storage type, including lazy storage, in which the solver calls the function each time it needs a distance and never stores all n² distances.
     objective.max_min: {mark: full}
     objective.mean_nn: {mark: full}
     objective.geomean_nn: {mark: full}

@@ -47,12 +47,12 @@ solver:
       mark: full
       note:
         text: >-
-          The likelihood or correlation kernel matrix is the native input, so a custom similarity is the native case rather than a workaround. Note the sign convention differs from a distance: the kernel encodes similarity, and diversity comes from its determinant being large.
+          The likelihood or correlation kernel matrix is the native input. Note the sign convention differs from a distance: the kernel encodes similarity, and diversity comes from its determinant being large.
     distance.custom_function:
       mark: full
       note:
         text: >-
-          A kernel function is an input (`L_eval_X_data`). The `vfx` and `alpha` samplers evaluate it only against a small Nyström dictionary; the other samplers evaluate it into the full kernel matrix.
+          A kernel function is an input (`L_eval_X_data`). Most samplers evaluate it into the full kernel matrix; the `vfx` and `alpha` samplers evaluate it only between each item and a small sample of items (a Nyström dictionary).
     objective.max_min:
       mark: none
       note: &samples_not_optimizes

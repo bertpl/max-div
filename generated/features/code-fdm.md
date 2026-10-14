@@ -59,10 +59,10 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 </div>
 
 [^code-fdm-1]: Never packaged: this is a research repository, not a release. Its last commit was in July 2022 and it carries no license file, which means no permission to use it is granted — a blocker for anything beyond reading the code, regardless of how well it performs. [Source](https://github.com/yhwang1990/code-FDM)
-[^code-fdm-2]: `utils.manhattan_dist` ships with the repository, passed as the algorithms' `dist` argument.
+[^code-fdm-2]: The repository ships `utils.manhattan_dist`, which you pass as the algorithms' `dist` argument.
 [^code-fdm-3]: Reachable by passing your own distance function as the algorithms' `dist` argument.
-[^code-fdm-4]: `utils.cosine_dist` returns the angle between 2 vectors, which orders pairs the same way as cosine distance, so a max-min selection under it matches one under cosine distance.
-[^code-fdm-5]: There is no matrix input; a `dist` function that looks each pair up in your own matrix makes one usable.
+[^code-fdm-4]: `utils.cosine_dist` returns the angle between 2 vectors. The angle orders pairs the same way as cosine distance, so a max-min selection under `utils.cosine_dist` matches one under cosine distance.
+[^code-fdm-5]: There is no matrix input, but a `dist` function that looks each pair up in your own matrix makes the matrix usable.
 [^code-fdm-6]: Every algorithm takes the distance function as its `dist` argument and calls it for each pair it needs.
 [^code-fdm-7]: This is the whole point of the tool: it selects a maximally dispersed subset subject to a required count from each group, which is the fair-diversity problem max-div also targets.
 [^code-fdm-8]: Each item belongs to exactly one group. Overlapping membership — an item that is both in-region and in-category — is outside the model the algorithms are built on.

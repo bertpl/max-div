@@ -28,8 +28,8 @@ Every capability cell carries one of the marks below. A mark composes with the c
 | cosine | Selects under cosine distance computed by the tool from vector input. Reaching it through a documented transform — L2-normalize, then select under Euclidean — counts as reachable, not built in. |
 | geomean | Selects under the geometric-mean distance (the d-th root of the product of the per-coordinate differences) computed by the tool from vector input. |
 | single-dimension | Selects under the distance along one coordinate axis (the absolute difference of that coordinate) computed by the tool from vector input. Handing the tool that coordinate as one-dimensional input counts as reachable, not built in: in one dimension every Minkowski distance is the absolute difference of that coordinate. |
-| custom matrix | Accepts distances that the caller computed for every pair of items — a distance, similarity or kernel matrix, or distances entered as model coefficients — so a metric that the tool does not implement is usable, at the memory cost of all n² distances. |
-| custom function | Accepts a function that computes the distance between 2 items, so a metric that the tool does not implement is usable. A tool that calls the function only for the distances it needs avoids storing all n² of them; a tool that first evaluates the function into a full matrix counts as reachable, not built in. |
+| custom matrix | Accepts distances that the caller computed for every pair of items — a distance, similarity or kernel matrix, or distances entered as the coefficients of an optimization model — so a metric that the tool does not implement is usable, at the memory cost of storing a distance for every pair. |
+| custom function | Accepts a function that computes the distance between 2 items, so a metric that the tool does not implement is usable. A tool that calls the function only for the distances that it needs counts as built in, and avoids storing a distance for every pair; a tool that first evaluates the function into a full matrix counts as reachable, not built in. |
 
 </div>
 

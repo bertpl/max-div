@@ -59,7 +59,7 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 </div>
 
 [^dppy-1]: Reachable only through the kernel you supply. DPPy never sees vectors or a distance function: you choose how similarity is defined when you build the kernel, and any metric you can express that way is available.
-[^dppy-2]: The likelihood or correlation kernel matrix is the native input, so a custom similarity is the native case rather than a workaround. Note the sign convention differs from a distance: the kernel encodes similarity, and diversity comes from its determinant being large.
-[^dppy-3]: A kernel function is an input (`L_eval_X_data`). The `vfx` and `alpha` samplers evaluate it only against a small Nyström dictionary; the other samplers evaluate it into the full kernel matrix.
+[^dppy-2]: The likelihood or correlation kernel matrix is the native input. Note the sign convention differs from a distance: the kernel encodes similarity, and diversity comes from its determinant being large.
+[^dppy-3]: A kernel function is an input (`L_eval_X_data`). Most samplers evaluate it into the full kernel matrix; the `vfx` and `alpha` samplers evaluate it only between each item and a small sample of items (a Nyström dictionary).
 [^dppy-4]: DPPy draws samples from a determinantal point process rather than maximizing anything. Diversity is a property of the distribution it samples from — subsets whose kernel submatrix has a large determinant are more likely — so no objective is optimized and no selection is claimed to be best.
 [^dppy-5]: You can ask for more samples, but a sample count is a number of independent draws, not an improvement budget — the tenth draw is no better than the first, merely different.

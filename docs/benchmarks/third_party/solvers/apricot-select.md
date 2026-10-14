@@ -49,7 +49,7 @@ solver:
       mark: full
       note:
         text: >-
-          A precomputed similarity matrix is a first-class input (`metric='precomputed'`), so any similarity you can compute is usable. Note the sign convention: apricot maximizes similarity coverage, so a distance has to be turned into a similarity first.
+          A precomputed similarity matrix is a first-class input (`metric='precomputed'`). Note the sign convention: apricot maximizes similarity coverage, so a distance has to be turned into a similarity first.
     distance.custom_function:
       mark: none
       note:
