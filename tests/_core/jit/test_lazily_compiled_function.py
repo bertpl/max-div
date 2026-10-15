@@ -21,10 +21,8 @@ def _new_lazy_double(is_inline_only: bool = False) -> LazilyCompiledFunction:
 
     An inline-only one also sets `inline="always"`, as `lazy_njit` requires.
     """
-    if is_inline_only:
-        return LazilyCompiledFunction(_double, "float64(float64)", {"cache": False, "inline": "always"}, True)
-    else:
-        return LazilyCompiledFunction(_double, "float64(float64)", {"cache": False})
+    options = {"cache": False, "inline": "always"} if is_inline_only else {"cache": False}
+    return LazilyCompiledFunction(_double, "float64(float64)", options, is_inline_only)
 
 
 # The `LazilyCompiledFunction` replaces `_halve` under the same name, as `lazy_njit` would, so that pickling by
@@ -69,7 +67,7 @@ def test_lazy_njit_wraps_the_function_unless_the_jit_is_disabled(
 def test_lazy_njit_records_whether_the_function_is_inline_only(
     monkeypatch: pytest.MonkeyPatch, inline: str | None, is_inline_only: bool | None, expected_is_inline_only: bool
 ) -> None:
-    """`lazy_njit` accepts `is_inline_only` with `inline="always"`, and its absence without it."""
+    """`lazy_njit`'s result reports the `is_inline_only` given with `inline="always"`, and `False` without `inline`."""
     # --- arrange ----------------------
     monkeypatch.setattr(numba.config, "DISABLE_JIT", False)
     monkeypatch.setattr(LazilyCompiledFunction, "_instances", [])
@@ -167,7 +165,7 @@ def test_a_python_call_of_an_inline_only_function_raises(is_compiled_first: bool
 
 
 def test_the_compiled_function_of_an_inline_only_function_accepts_python_calls() -> None:
-    """`compile()` returns a compiled function that Python can call, which is how tests call inline-only functions."""
+    """`compile()` returns a compiled function that Python can call, so tests call inline-only functions through it."""
     # --- arrange ----------------------
     lazy_double = _new_lazy_double(is_inline_only=True)
 

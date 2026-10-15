@@ -6,7 +6,7 @@ from scipy.spatial.distance import squareform
 
 from max_div._core.metrics import DistanceMetric
 from max_div._core.metrics._distance import DistanceStore, compute_full_matrix, get_distance
-from tests.helpers import callable_from_python
+from tests.helpers import as_python_callable
 
 
 def l2_and_projections_reference(a: np.ndarray, b: np.ndarray, l2_scale: float, k: int | None = None) -> float:
@@ -35,7 +35,7 @@ def custom_l1(a: np.ndarray, b: np.ndarray) -> float:
 def all_pair_distances(store: DistanceStore) -> list[float]:
     """Return every (i, j) distance that the store reports, self-pairs included."""
     return [
-        float(callable_from_python(get_distance)(store, np.int32(i), np.int32(j)))
+        float(as_python_callable(get_distance)(store, np.int32(i), np.int32(j)))
         for i in range(store.n)
         for j in range(store.n)
     ]

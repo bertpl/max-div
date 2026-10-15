@@ -16,7 +16,7 @@ from max_div._core._random._rng._core import (
     _TINY_F64,
     _xoroshiro128plus_next,
 )
-from tests.helpers import callable_from_python
+from tests.helpers import as_python_callable
 
 
 # -------------------------------------------------------------------------
@@ -90,7 +90,7 @@ def test_rand_float32_exact_range(rng_state: list[int], expected_uint64: int, ex
     rng_state_np = np.array(rng_state, dtype=np.uint64)
 
     # --- act --------------------------
-    value_uint64 = callable_from_python(_xoroshiro128plus_next)(
+    value_uint64 = as_python_callable(_xoroshiro128plus_next)(
         rng_state_np.copy()
     )  # copy rng_state to avoid modifying the original
     value_float32 = rand_float32(rng_state_np)
@@ -124,10 +124,10 @@ def test_rand_nz_float32_exact_range(rng_state: list[int], expected_uint64: int,
     rng_state_np = np.array(rng_state, dtype=np.uint64)
 
     # --- act --------------------------
-    value_uint64 = callable_from_python(_xoroshiro128plus_next)(
+    value_uint64 = as_python_callable(_xoroshiro128plus_next)(
         rng_state_np.copy()
     )  # copy rng_state to avoid modifying the original
-    value_float32 = callable_from_python(rand_nz_float32)(rng_state_np)
+    value_float32 = as_python_callable(rand_nz_float32)(rng_state_np)
 
     # --- assert -----------------------
     assert value_uint64 == expected_uint64, "rng_state should be chosen such that it produces the expected uint64 value"
@@ -143,10 +143,10 @@ def test_rand_float64_seed():
     rng_state_2 = new_rng_state(1)
 
     # --- act --------------------------
-    f11 = callable_from_python(rand_float64)(rng_state_1)
-    f12 = callable_from_python(rand_float64)(rng_state_1)
-    f21 = callable_from_python(rand_float64)(rng_state_2)
-    f22 = callable_from_python(rand_float64)(rng_state_2)
+    f11 = as_python_callable(rand_float64)(rng_state_1)
+    f12 = as_python_callable(rand_float64)(rng_state_1)
+    f21 = as_python_callable(rand_float64)(rng_state_2)
+    f22 = as_python_callable(rand_float64)(rng_state_2)
 
     print(type(f11), f11)
 
@@ -162,7 +162,7 @@ def test_rand_float64_stats():
     rng_state = new_rng_state(1)
 
     # --- act --------------------------
-    values = [callable_from_python(rand_float64)(rng_state) for _ in range(10000)]
+    values = [as_python_callable(rand_float64)(rng_state) for _ in range(10000)]
 
     # --- assert -----------------------
     assert min(values) < 0.01
@@ -193,10 +193,10 @@ def test_rand_float64_exact_range(rng_state: list[int], expected_uint64: int, ex
     rng_state_np = np.array(rng_state, dtype=np.uint64)
 
     # --- act --------------------------
-    value_uint64 = callable_from_python(_xoroshiro128plus_next)(
+    value_uint64 = as_python_callable(_xoroshiro128plus_next)(
         rng_state_np.copy()
     )  # copy rng_state to avoid modifying the original
-    value_float64 = callable_from_python(rand_float64)(rng_state_np)
+    value_float64 = as_python_callable(rand_float64)(rng_state_np)
 
     # --- assert -----------------------
     assert value_uint64 == expected_uint64, "rng_state should be chosen such that it produces the expected uint64 value"
@@ -227,10 +227,10 @@ def test_rand_nz_float64_exact_range(rng_state: list[int], expected_uint64: int,
     rng_state_np = np.array(rng_state, dtype=np.uint64)
 
     # --- act --------------------------
-    value_uint64 = callable_from_python(_xoroshiro128plus_next)(
+    value_uint64 = as_python_callable(_xoroshiro128plus_next)(
         rng_state_np.copy()
     )  # copy rng_state to avoid modifying the original
-    value_float64 = callable_from_python(rand_nz_float64)(rng_state_np)
+    value_float64 = as_python_callable(rand_nz_float64)(rng_state_np)
 
     # --- assert -----------------------
     assert value_uint64 == expected_uint64, "rng_state should be chosen such that it produces the expected uint64 value"
@@ -246,10 +246,10 @@ def test_rand_int32_seed():
     rng_state_2 = new_rng_state(1)
 
     # --- act --------------------------
-    i11 = callable_from_python(rand_int32)(rng_state_1, np.int32(0), np.int32(100))
-    i12 = callable_from_python(rand_int32)(rng_state_1, np.int32(0), np.int32(100))
-    i21 = callable_from_python(rand_int32)(rng_state_2, np.int32(0), np.int32(100))
-    i22 = callable_from_python(rand_int32)(rng_state_2, np.int32(0), np.int32(100))
+    i11 = as_python_callable(rand_int32)(rng_state_1, np.int32(0), np.int32(100))
+    i12 = as_python_callable(rand_int32)(rng_state_1, np.int32(0), np.int32(100))
+    i21 = as_python_callable(rand_int32)(rng_state_2, np.int32(0), np.int32(100))
+    i22 = as_python_callable(rand_int32)(rng_state_2, np.int32(0), np.int32(100))
 
     print(type(i11), i11)
 
@@ -267,7 +267,7 @@ def test_rand_int32_stats():
     high = np.int32(100)
 
     # --- act --------------------------
-    values = [callable_from_python(rand_int32)(rng_state, low, high) for _ in range(10000)]
+    values = [as_python_callable(rand_int32)(rng_state, low, high) for _ in range(10000)]
 
     # --- assert -----------------------
     assert min(values) == 0
@@ -284,7 +284,7 @@ def test_rand_int32_range():
     high = np.int32(50)
 
     # --- act --------------------------
-    values = [callable_from_python(rand_int32)(rng_state, low, high) for _ in range(10000)]
+    values = [as_python_callable(rand_int32)(rng_state, low, high) for _ in range(10000)]
 
     # --- assert -----------------------
     assert all(low <= v < high for v in values)
@@ -301,10 +301,10 @@ def test_rand_int64_seed():
     rng_state_2 = new_rng_state(1)
 
     # --- act --------------------------
-    i11 = callable_from_python(rand_int64)(rng_state_1, np.int64(0), np.int64(100))
-    i12 = callable_from_python(rand_int64)(rng_state_1, np.int64(0), np.int64(100))
-    i21 = callable_from_python(rand_int64)(rng_state_2, np.int64(0), np.int64(100))
-    i22 = callable_from_python(rand_int64)(rng_state_2, np.int64(0), np.int64(100))
+    i11 = as_python_callable(rand_int64)(rng_state_1, np.int64(0), np.int64(100))
+    i12 = as_python_callable(rand_int64)(rng_state_1, np.int64(0), np.int64(100))
+    i21 = as_python_callable(rand_int64)(rng_state_2, np.int64(0), np.int64(100))
+    i22 = as_python_callable(rand_int64)(rng_state_2, np.int64(0), np.int64(100))
 
     print(type(i11), i11)
 
@@ -322,7 +322,7 @@ def test_rand_int64_stats():
     high = np.int64(100)
 
     # --- act --------------------------
-    values = [callable_from_python(rand_int64)(rng_state, low, high) for _ in range(10000)]
+    values = [as_python_callable(rand_int64)(rng_state, low, high) for _ in range(10000)]
 
     # --- assert -----------------------
     assert min(values) == 0
@@ -339,7 +339,7 @@ def test_rand_int64_range():
     high = np.int64(50)
 
     # --- act --------------------------
-    values = [callable_from_python(rand_int64)(rng_state, low, high) for _ in range(1000)]
+    values = [as_python_callable(rand_int64)(rng_state, low, high) for _ in range(1000)]
 
     # --- assert -----------------------
     assert all(low <= v < high for v in values)
@@ -354,7 +354,7 @@ def test_rand_int64_large_range():
     high = np.int64(1_000_000_000)
 
     # --- act --------------------------
-    values = [callable_from_python(rand_int64)(rng_state, low, high) for _ in range(10000)]
+    values = [as_python_callable(rand_int64)(rng_state, low, high) for _ in range(10000)]
 
     # --- assert -----------------------
     assert all(low <= v < high for v in values)
@@ -373,8 +373,8 @@ def test_rand_int32_array_seed():
     rng_state_2 = new_rng_state(1)
 
     # --- act --------------------------
-    arr1 = callable_from_python(rand_int32_array)(rng_state_1, np.int32(0), np.int32(100), np.int32(10))
-    arr2 = callable_from_python(rand_int32_array)(rng_state_2, np.int32(0), np.int32(100), np.int32(10))
+    arr1 = as_python_callable(rand_int32_array)(rng_state_1, np.int32(0), np.int32(100), np.int32(10))
+    arr2 = as_python_callable(rand_int32_array)(rng_state_2, np.int32(0), np.int32(100), np.int32(10))
 
     # --- assert -----------------------
     assert np.array_equal(arr1, arr2)
@@ -387,8 +387,8 @@ def test_rand_int32_array_different_calls():
     rng_state = new_rng_state(1)
 
     # --- act --------------------------
-    arr1 = callable_from_python(rand_int32_array)(rng_state, np.int32(0), np.int32(100), np.int32(10))
-    arr2 = callable_from_python(rand_int32_array)(rng_state, np.int32(0), np.int32(100), np.int32(10))
+    arr1 = as_python_callable(rand_int32_array)(rng_state, np.int32(0), np.int32(100), np.int32(10))
+    arr2 = as_python_callable(rand_int32_array)(rng_state, np.int32(0), np.int32(100), np.int32(10))
 
     # --- assert -----------------------
     # Different calls should produce different results
@@ -403,7 +403,7 @@ def test_rand_int32_array_stats():
     size = np.int32(10000)
 
     # --- act --------------------------
-    values = callable_from_python(rand_int32_array)(rng_state, low, high, size)
+    values = as_python_callable(rand_int32_array)(rng_state, low, high, size)
 
     # --- assert -----------------------
     assert len(values) == 10000
@@ -423,7 +423,7 @@ def test_rand_int32_array_range():
     size = np.int32(10000)
 
     # --- act --------------------------
-    values = callable_from_python(rand_int32_array)(rng_state, low, high, size)
+    values = as_python_callable(rand_int32_array)(rng_state, low, high, size)
 
     # --- assert -----------------------
     assert len(values) == 10000
@@ -442,7 +442,7 @@ def test_rand_int32_array_small_range():
     size = np.int32(1000)
 
     # --- act --------------------------
-    values = callable_from_python(rand_int32_array)(rng_state, low, high, size)
+    values = as_python_callable(rand_int32_array)(rng_state, low, high, size)
 
     # --- assert -----------------------
     assert len(values) == 1000
@@ -460,7 +460,7 @@ def test_rand_int32_array_single_element():
     size = np.int32(1)
 
     # --- act --------------------------
-    values = callable_from_python(rand_int32_array)(rng_state, low, high, size)
+    values = as_python_callable(rand_int32_array)(rng_state, low, high, size)
 
     # --- assert -----------------------
     assert len(values) == 1
@@ -475,7 +475,7 @@ def test_rand_int32_array_large_size():
     size = np.int32(100000)
 
     # --- act --------------------------
-    values = callable_from_python(rand_int32_array)(rng_state, low, high, size)
+    values = as_python_callable(rand_int32_array)(rng_state, low, high, size)
 
     # --- assert -----------------------
     assert len(values) == 100000

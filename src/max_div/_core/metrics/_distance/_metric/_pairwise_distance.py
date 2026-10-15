@@ -34,10 +34,12 @@ from ._distance_metric import (
     METRIC_KIND_MINKOWSKI_POWERED,
 )
 
-# Every function here declares its vectors read-only, because their callers pass read-only arrays, such as those
-# that a distance store hands out. numba treats read-only as the wider type, so a writable array converts to it and
-# matches the same signature. Signature strings cannot spell a read-only array type, so every function here takes a
-# signature object.
+# Every function here declares its vectors read-only, because their callers pass read-only arrays, such as the
+# arrays that a distance store returns. Those callers inline these functions, so numba types each copy with the
+# caller's argument types; the declared signature applies only to a call from Python. numba converts a writable array
+# to the matching read-only array type, so a writable array matches the same signature.
+#
+# Signature strings cannot spell a read-only array type, so every function here takes a signature object.
 READONLY_F32_2D = numba.types.Array(numba.float32, 2, "C", readonly=True)
 
 # ==================================================================================================

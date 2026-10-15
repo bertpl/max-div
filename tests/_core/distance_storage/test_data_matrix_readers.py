@@ -19,7 +19,7 @@ from max_div._core.metrics._distance import (
     compute_full_matrix,
     get_distance,
 )
-from tests.helpers import callable_from_python
+from tests.helpers import as_python_callable
 
 # how long a spawned child may take to boot an interpreter, import max_div and answer
 _CHILD_TIMEOUT_S = 120
@@ -59,7 +59,7 @@ def _published_matrix_records() -> Iterator[PublishedDataMatrixRecords]:
 
 def _read_pairs(store: DistanceStore) -> list[float]:
     """Return the distances that the store reports for a fixed set of pairs, self-pair included."""
-    return [float(callable_from_python(get_distance)(store, np.int32(i), np.int32(j))) for i, j in _PAIRS]
+    return [float(as_python_callable(get_distance)(store, np.int32(i), np.int32(j))) for i, j in _PAIRS]
 
 
 def _expected_pairs() -> list[list[float]]:

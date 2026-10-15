@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 
 from max_div._core._math.select_k_minmax import select_k_max, select_k_max_into, select_k_max_masked, select_k_min
-from tests.helpers import callable_from_python
+from tests.helpers import as_python_callable
 
 
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
@@ -16,7 +16,7 @@ def test_select_k_min_correctness(k: int, dtype: type):
     arr = np.random.randn(n).astype(dtype)
 
     # --- act --------------------------
-    result_indices = callable_from_python(select_k_min)(arr, np.int32(k))
+    result_indices = as_python_callable(select_k_min)(arr, np.int32(k))
 
     # --- assert -----------------------
 
@@ -73,7 +73,7 @@ def test_select_k_clamps_k_into_valid_range(select_k, k: int):
     arr = np.arange(8, dtype=np.float32)
 
     # --- act --------------------------
-    result = callable_from_python(select_k)(arr, np.int32(k))
+    result = as_python_callable(select_k)(arr, np.int32(k))
 
     # --- assert -----------------------
     expected_size = min(max(k, 0), arr.shape[0])
@@ -122,7 +122,7 @@ def test_select_k_min_ranks_inf_keys_last():
     keys = np.array([np.inf, 3.0, np.inf, 1.0, 2.0, np.inf], dtype=np.float32)
 
     # --- act --------------------------
-    picked = callable_from_python(select_k_min)(keys, np.int32(3))
+    picked = as_python_callable(select_k_min)(keys, np.int32(3))
 
     # --- assert -----------------------
     assert sorted(picked.tolist()) == [1, 3, 4]
