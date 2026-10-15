@@ -104,22 +104,19 @@ def _find_drifts(compile_functions: Callable[[], None]) -> list[str]:
     call_types_by_dispatcher: dict[Dispatcher, set[tuple[types.Type, ...]]] = {}
 
     # --- switch inlining off --------------------
-    # numba reads the inline option while it compiles a caller, so it is switched off before anything compiles:
-    # for every function that exists now, and for every function that is created later
-    def switch_inlining_off(lazily_compiled_function: LazilyCompiledFunction) -> None:
-        """Replace the function's `inline="always"` with `inline="never"`."""
+    # numba reads the inline option while it compiles a caller, so inlining is switched off before anything
+    # compiles, both for every function that exists now and for every function that is created later
+    for lazily_compiled_function in LazilyCompiledFunction.instances():
         if lazily_compiled_function._options.get("inline") == "always":
             lazily_compiled_function._options = {**lazily_compiled_function._options, "inline": "never"}
-
-    for lazily_compiled_function in LazilyCompiledFunction.instances():
-        switch_inlining_off(lazily_compiled_function)
 
     original_new = LazilyCompiledFunction.__new__
 
     def new_without_inlining(cls: type, *args: object, **kwargs: object) -> LazilyCompiledFunction:
         """Create a `LazilyCompiledFunction` as usual, with inlining switched off."""
         lazily_compiled_function = original_new(cls, *args, **kwargs)
-        switch_inlining_off(lazily_compiled_function)
+        if lazily_compiled_function._options.get("inline") == "always":
+            lazily_compiled_function._options = {**lazily_compiled_function._options, "inline": "never"}
         return lazily_compiled_function
 
     LazilyCompiledFunction.__new__ = new_without_inlining

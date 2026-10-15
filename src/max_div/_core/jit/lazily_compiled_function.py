@@ -13,19 +13,23 @@ argument checks, casts and results are the same as with `numba.njit(signature)`.
 The first use is whichever of these comes first:
 
 - a call from Python;
-- the compilation of a numba function that calls it: numba asks for the type of every global that
-  the caller references, and the `typeof_impl` hook below compiles the function to answer that
-  request;
-- reading a public attribute of the compiled function, such as `signatures`.
+- the compilation of a numba function that calls it, unless the function declares `inline="always"`: numba asks
+  for the type of every global that the caller references, and the `typeof_impl` hook below compiles the function
+  to answer that request;
+- reading a public attribute of the compiled function other than `py_func` and `targetoptions`, such as
+  `signatures`.
 
 numba copies a function declared with `inline="always"` into each numba function that calls it, and types the copy
 with the caller's argument types, so the declared signatures apply only to direct use: a call from Python, or
 passing the function from Python to a numba function as an argument.
 
-Compiling a caller of such a function therefore does not compile the function itself. numba asks the function for
-`name`, `py_func`, `targetoptions` and its type while it compiles the caller, and the class answers each question
-without compiling: `name` is not forwarded, `py_func` and `targetoptions` come from the stored function and options,
-and the `typeof_impl` hook types the function as its `uncompiled_dispatcher`.
+Compiling a caller of such a function therefore does not compile the function itself. While numba compiles the
+caller, it reads 4 things from the function, and `LazilyCompiledFunction` returns each of them without compiling:
+
+- `name`: it is not forwarded, so reading it raises `AttributeError`;
+- `py_func` and `targetoptions`: they come from the stored Python function and options;
+- the function's type: `dispatcher_for_typing` returns a numba dispatcher of the function that holds no compiled
+  version and refuses to compile one.
 
 For a function that only numba functions call, the declared signatures never apply to those callers. `lazy_njit`
 therefore requires every `inline="always"` function to state `is_inline_only`, so that each one says whether its
@@ -89,10 +93,10 @@ class LazilyCompiledFunction(functools.partial):
     # Every instance is recorded here, in creation order, so that tests can compile all of them.
     _instances: ClassVar[list["LazilyCompiledFunction"]] = []
 
-    # The public attributes of a numba dispatcher, the only names that `__getattr__` forwards. numba asks a callee
-    # for other names, such as `name` while it resolves a call, and forwarding one would compile the function only
-    # to report that it has no such attribute.
-    _DISPATCHER_ATTRIBUTE_NAMES: ClassVar[frozenset[str]] = frozenset(
+    # `__getattr__` forwards only the public class attributes of a numba dispatcher. numba asks a callee for other
+    # names, such as `name` while it resolves a call, and forwarding one would compile the function only to report
+    # that it has no such attribute.
+    _DISPATCHER_CLASS_ATTRIBUTE_NAMES: ClassVar[frozenset[str]] = frozenset(
         name for name in dir(CPUDispatcher) if not name.startswith("_")
     )
 
@@ -164,19 +168,26 @@ class LazilyCompiledFunction(functools.partial):
                         self._point_partial_at(compiled_fun, (), {})
         return self._compiled_fun
 
-    @functools.cached_property
-    def uncompiled_dispatcher(self) -> CPUDispatcher:
-        """Return a numba dispatcher of the function that holds no compiled version and refuses to compile one.
+    def dispatcher_for_typing(self, purpose: Purpose) -> Callable[..., Any]:
+        """Return the dispatcher whose type numba gives the function, compiled only if numba needs a compiled version.
 
-        The `typeof_impl` hook types a reference to an `inline="always"` function in a numba caller as this
-        dispatcher, so compiling the caller does not compile the function. A call that numba does not inline then
-        fails to compile, with a typing error, instead of compiling a version for whatever types the caller passes.
+        numba passes `Purpose.constant` when it types a global that a numba function references, and
+        `Purpose.argument` when it types a value that Python passes to a numba function.
+
+        A referenced `inline="always"` function gets a dispatcher that holds no compiled version and refuses to compile
+        one, because the caller compiles a copy of the function's source. A call that numba does not inline then fails
+        to compile with a typing error, and does not compile a version for whatever types the caller passes.
+
+        Raises:
+            TypeError: If the function is inline-only and `purpose` is `Purpose.argument`.
         """
-        # numba's type stub accepts only option names that it lists, and `self._options` is a plain dict
-        dispatcher = numba.njit(**self._options)(self._py_function)  # ty: ignore[no-matching-overload]
-        # the flag that disable_compile() sets; disable_compile() itself asserts that a compiled version exists
-        dispatcher._can_compile = False  # noqa: SLF001 -- no public way to disable compiling an empty dispatcher
-        return dispatcher
+        if self._is_inline_only and purpose == Purpose.argument:
+            name = f"{self.__module__}.{self.__qualname__}"
+            raise TypeError(f"{name} is inline-only, so Python may not pass it to a numba function")
+        elif self._options.get("inline") == "always" and purpose == Purpose.constant:
+            return self._non_compiling_dispatcher
+        else:
+            return self.compile()
 
     # --------------------------------------------------------------------------
     #  Function behavior
@@ -195,16 +206,16 @@ class LazilyCompiledFunction(functools.partial):
 
     @property
     def targetoptions(self) -> dict[str, object]:
-        """Return the options for `numba.njit`, where numba's inlining step reads `inline`, without compiling."""
+        """Return the options for `numba.njit` without compiling; numba's inlining step reads `inline` from them."""
         return dict(self._options)
 
     def __getattr__(self, name: str) -> object:
-        """Read a public attribute of a numba dispatcher from the compiled function, compiling it first.
+        """Read a public class attribute of a numba dispatcher from the compiled function, compiling it first.
 
         Other names are never forwarded, because a lookup such as `copy.deepcopy` checking for `__deepcopy__`, or
-        numba checking a callee for `name`, must not trigger a compile.
+        numba checking a callee for `name`, must not trigger compilation.
         """
-        if name in LazilyCompiledFunction._DISPATCHER_ATTRIBUTE_NAMES:
+        if name in LazilyCompiledFunction._DISPATCHER_CLASS_ATTRIBUTE_NAMES:
             return getattr(self.compile(), name)
         else:
             raise AttributeError(name)
@@ -236,6 +247,15 @@ class LazilyCompiledFunction(functools.partial):
         # `__setstate__` is how pickle restores a partial, and the only way to change the function of
         # an existing one; typeshed's partial stub does not declare it
         self.__setstate__((func, args, keywords, self.__dict__))  # ty: ignore[call-non-callable]
+
+    @functools.cached_property
+    def _non_compiling_dispatcher(self) -> CPUDispatcher:
+        """Return a numba dispatcher that wraps the function, holds no compiled version and refuses to compile one."""
+        # numba's type stub accepts only option names that it lists, and `self._options` is a plain dict
+        dispatcher = numba.njit(**self._options)(self._py_function)  # ty: ignore[no-matching-overload]
+        # disable_compile() sets this flag, but it asserts that a compiled version exists, so the flag is set directly
+        dispatcher._can_compile = False  # noqa: SLF001 -- numba has no public way to disable compiling an empty dispatcher
+        return dispatcher
 
     @staticmethod
     def _compile_and_call(
@@ -304,17 +324,5 @@ def lazy_njit(signature: object, *, is_inline_only: bool | None = None, **option
 def _typeof_lazily_compiled_function(
     lazily_compiled_function: LazilyCompiledFunction, context: "_TypeofContext"
 ) -> numba.types.Type:
-    """Return the numba type of a `LazilyCompiledFunction`, compiling it only when numba needs a compiled version.
-
-    numba passes `Purpose.constant` when it types a global that a numba function references, and `Purpose.argument`
-    when it types a value that Python passes to a numba function. A referenced `inline="always"` function is typed
-    as its `uncompiled_dispatcher`, because the caller compiles a copy of its source; Python may not pass an
-    inline-only function at all.
-    """
-    if lazily_compiled_function.is_inline_only and context.purpose == Purpose.argument:
-        name = f"{lazily_compiled_function.__module__}.{lazily_compiled_function.__qualname__}"
-        raise TypeError(f"{name} is inline-only, so Python may not pass it to a numba function")
-    elif lazily_compiled_function.targetoptions.get("inline") == "always" and context.purpose == Purpose.constant:
-        return typeof_impl(lazily_compiled_function.uncompiled_dispatcher, context)
-    else:
-        return typeof_impl(lazily_compiled_function.compile(), context)
+    """Return the numba type of a `LazilyCompiledFunction`: the type of its `dispatcher_for_typing`."""
+    return typeof_impl(lazily_compiled_function.dispatcher_for_typing(context.purpose), context)

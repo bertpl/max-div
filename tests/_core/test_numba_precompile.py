@@ -72,9 +72,13 @@ def test_numba_precompile_compiles_every_function_of_the_package_that_is_not_inl
     numba_precompile()
 
     # --- assert -----------------------
-    functions = [function for function in LazilyCompiledFunction.instances() if not function.is_inline_only]
-    assert functions
-    assert all(function.is_compiled for function in functions)
+    lazily_compiled_functions = [
+        lazily_compiled_function
+        for lazily_compiled_function in LazilyCompiledFunction.instances()
+        if not lazily_compiled_function.is_inline_only
+    ]
+    assert lazily_compiled_functions
+    assert all(lazily_compiled_function.is_compiled for lazily_compiled_function in lazily_compiled_functions)
 
 
 @_needs_jit
@@ -86,36 +90,34 @@ def test_every_inline_only_function_of_the_package_compiles_with_its_declared_si
     """
     # --- arrange ----------------------
     numba_precompile()  # imports every module of the package, which records every inline-only function
-    functions = [function for function in LazilyCompiledFunction.instances() if function.is_inline_only]
+    lazily_compiled_functions = [
+        lazily_compiled_function
+        for lazily_compiled_function in LazilyCompiledFunction.instances()
+        if lazily_compiled_function.is_inline_only
+    ]
 
     # --- act --------------------------
-    for function in functions:
-        function.compile()
+    for lazily_compiled_function in lazily_compiled_functions:
+        lazily_compiled_function.compile()
 
     # --- assert -----------------------
-    assert functions
-    assert all(function.is_compiled for function in functions)
+    assert lazily_compiled_functions
+    assert all(lazily_compiled_function.is_compiled for lazily_compiled_function in lazily_compiled_functions)
 
 
-def test_numba_precompile_leaves_an_inline_only_function_uncompiled(monkeypatch: pytest.MonkeyPatch) -> None:
-    """The call does not compile an inline-only function, which its numba callers compile a copy of."""
-    # --- arrange ----------------------
-    monkeypatch.setattr(LazilyCompiledFunction, "_instances", [])
-    options = {"cache": False, "inline": "always"}
-    lazily_compiled_function = LazilyCompiledFunction(lambda x: 2.0 * x, "float64(float64)", options, True)
-
-    # --- act --------------------------
-    numba_precompile()
-
-    # --- assert -----------------------
-    assert not lazily_compiled_function.is_compiled
-
-
+@pytest.mark.parametrize(
+    "options, is_inline_only, expected_is_compiled",
+    [({"cache": False}, False, True), ({"cache": False, "inline": "always"}, True, False)],
+)
 @pytest.mark.parametrize("is_every_extra_missing", [False, True])
-def test_numba_precompile_compiles_each_recorded_function(
-    monkeypatch: pytest.MonkeyPatch, is_every_extra_missing: bool
+def test_numba_precompile_compiles_each_recorded_function_that_is_not_inline_only(
+    monkeypatch: pytest.MonkeyPatch,
+    is_every_extra_missing: bool,
+    options: dict[str, object],
+    is_inline_only: bool,
+    expected_is_compiled: bool,
 ) -> None:
-    """The call compiles a `LazilyCompiledFunction` that is not yet compiled, also when no module can be imported."""
+    """The call compiles each recorded function that is not inline-only, also when no module can be imported."""
     # --- arrange ----------------------
     if is_every_extra_missing:
 
@@ -128,13 +130,13 @@ def test_numba_precompile_compiles_each_recorded_function(
             "max_div._core.numba_precompile.importlib", SimpleNamespace(import_module=raise_missing_extra_error)
         )
     monkeypatch.setattr(LazilyCompiledFunction, "_instances", [])
-    lazily_compiled_function = LazilyCompiledFunction(lambda x: 2.0 * x, "float64(float64)", {"cache": False})
+    lazily_compiled_function = LazilyCompiledFunction(lambda x: 2.0 * x, "float64(float64)", options, is_inline_only)
 
     # --- act --------------------------
     numba_precompile()
 
     # --- assert -----------------------
-    assert lazily_compiled_function.is_compiled
+    assert lazily_compiled_function.is_compiled == expected_is_compiled
 
 
 @_needs_jit
