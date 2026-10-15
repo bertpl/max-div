@@ -38,5 +38,7 @@ def numba_precompile() -> None:
         except MissingExtraError:
             continue
 
+    # an inline-only function is not compiled here: each numba caller compiles a copy of its source
     for lazily_compiled_function in LazilyCompiledFunction.instances():
-        lazily_compiled_function.compile()
+        if not lazily_compiled_function.is_inline_only:
+            lazily_compiled_function.compile()

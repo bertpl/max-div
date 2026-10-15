@@ -1,6 +1,6 @@
-import importlib
 import subprocess
 import sys
+from types import SimpleNamespace
 
 import numba
 import pytest
@@ -66,21 +66,59 @@ print(n_added_overloads)
 
 
 @_needs_jit
-def test_numba_precompile_compiles_every_function_that_the_package_declares() -> None:
-    """The call compiles every `lazy_njit` function of the package, so a broken signature string fails this test."""
+def test_numba_precompile_compiles_every_function_of_the_package_that_is_not_inline_only() -> None:
+    """The call compiles every `lazy_njit` function of the package that Python may call."""
     # --- act --------------------------
     numba_precompile()
 
     # --- assert -----------------------
-    assert LazilyCompiledFunction.instances()
-    assert all(lazily_compiled_function.is_compiled for lazily_compiled_function in LazilyCompiledFunction.instances())
+    non_inline_only_functions = [
+        lazily_compiled_function
+        for lazily_compiled_function in LazilyCompiledFunction.instances()
+        if not lazily_compiled_function.is_inline_only
+    ]
+    assert non_inline_only_functions
+    assert all(lazily_compiled_function.is_compiled for lazily_compiled_function in non_inline_only_functions)
 
 
+@_needs_jit
+def test_every_inline_only_function_of_the_package_compiles_with_its_declared_signature() -> None:
+    """Each inline-only function compiles on its own, so a broken signature string fails this test.
+
+    `numba_precompile` leaves inline-only functions out, and each numba caller compiles a copy of the inline-only
+    function's source, so nothing else compiles the declared signatures of inline-only functions.
+    """
+    # --- arrange ----------------------
+    # numba_precompile imports every module of the package, which records every inline-only function
+    numba_precompile()
+    inline_only_functions = [
+        lazily_compiled_function
+        for lazily_compiled_function in LazilyCompiledFunction.instances()
+        if lazily_compiled_function.is_inline_only
+    ]
+
+    # --- act --------------------------
+    for lazily_compiled_function in inline_only_functions:
+        lazily_compiled_function.compile()
+
+    # --- assert -----------------------
+    assert inline_only_functions
+    assert all(lazily_compiled_function.is_compiled for lazily_compiled_function in inline_only_functions)
+
+
+@pytest.mark.parametrize(
+    "options, is_inline_only, expected_is_compiled",
+    [({"cache": False}, False, True), ({"cache": False, "inline": "always"}, True, False)],
+)
 @pytest.mark.parametrize("is_every_extra_missing", [False, True])
-def test_numba_precompile_compiles_each_recorded_function(
-    monkeypatch: pytest.MonkeyPatch, is_every_extra_missing: bool
+def test_numba_precompile_compiles_each_recorded_function_that_is_not_inline_only(
+    monkeypatch: pytest.MonkeyPatch,
+    is_every_extra_missing: bool,
+    options: dict[str, object],
+    is_inline_only: bool,
+    expected_is_compiled: bool,
 ) -> None:
-    """The call compiles a `LazilyCompiledFunction` that is not yet compiled, also when no module can be imported."""
+    """The call compiles each recorded function that is not inline-only, also when no module can be imported."""
     # --- arrange ----------------------
     if is_every_extra_missing:
 
@@ -88,15 +126,18 @@ def test_numba_precompile_compiles_each_recorded_function(
             """Fail as a module does on import when its optional extra is missing."""
             raise MissingExtraError(name)
 
-        monkeypatch.setattr(importlib, "import_module", raise_missing_extra_error)
+        # only numba_precompile's imports fail: numba itself imports modules when it loads a cached function
+        monkeypatch.setattr(
+            "max_div._core.numba_precompile.importlib", SimpleNamespace(import_module=raise_missing_extra_error)
+        )
     monkeypatch.setattr(LazilyCompiledFunction, "_instances", [])
-    lazily_compiled_function = LazilyCompiledFunction(lambda x: 2.0 * x, "float64(float64)", {"cache": False})
+    lazily_compiled_function = LazilyCompiledFunction(lambda x: 2.0 * x, "float64(float64)", options, is_inline_only)
 
     # --- act --------------------------
     numba_precompile()
 
     # --- assert -----------------------
-    assert lazily_compiled_function.is_compiled
+    assert lazily_compiled_function.is_compiled == expected_is_compiled
 
 
 @_needs_jit
