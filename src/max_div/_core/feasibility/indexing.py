@@ -1,11 +1,12 @@
 """`build_item_constraint_csr` transposes the packed constraint->item layout into an item->constraint CSR index."""
 
-import numba
 import numpy as np
 from numpy.typing import NDArray
 
+from max_div._core.jit import lazy_njit
 
-@numba.njit(cache=True)
+
+@lazy_njit("Tuple((int64[::1], int32[::1]))(int32[::1], int64)", cache=True)
 def build_item_constraint_csr(con_indices: NDArray[np.int32], n: int) -> tuple[NDArray[np.int64], NDArray[np.int32]]:
     """Transpose the packed constraint->item layout into an item->constraint CSR (compressed sparse row) index.
 
@@ -39,17 +40,3 @@ def build_item_constraint_csr(con_indices: NDArray[np.int32], n: int) -> tuple[N
             item_cons[cursor[j]] = np.int32(i)
             cursor[j] += 1
     return item_indptr, item_cons
-
-
-@numba.njit(cache=True)
-def _constraint_set_sizes(item_cons: NDArray[np.int32], m: int) -> NDArray[np.int64]:
-    """Return the member count of each constraint.
-
-    Args:
-        item_cons: item->constraint CSR values — the constraints containing each item.
-        m: the number of constraints.
-    """
-    sizes = np.zeros(m, dtype=np.int64)
-    for e in range(item_cons.shape[0]):
-        sizes[item_cons[e]] += 1
-    return sizes

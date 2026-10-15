@@ -28,10 +28,11 @@ Cholesky.
 
 from dataclasses import dataclass
 
-import numba
 import numpy as np
 from numpy.typing import NDArray
 from scipy.linalg import cho_factor, cho_solve
+
+from max_div._core.jit import lazy_njit
 
 from .evaluation import _item_scores
 from .indexing import build_item_constraint_csr
@@ -77,7 +78,7 @@ class RelaxationSolution:
 # ==================================================================================================
 #  njit helpers: the O(n)/O(nnz) array passes
 # ==================================================================================================
-@numba.njit(cache=True)
+@lazy_njit("float64[::1](int64[::1], int32[::1], float64[::1], int64)", cache=True)
 def _fractional_counts(
     item_indptr: NDArray[np.int64], item_cons: NDArray[np.int32], x: NDArray[np.float64], m: int
 ) -> NDArray[np.float64]:
@@ -96,7 +97,7 @@ def _fractional_counts(
     return counts
 
 
-@numba.njit(cache=True)
+@lazy_njit("float64[:, ::1](int64[::1], int32[::1], float64[::1], int64)", cache=True)
 def _weighted_gram(
     item_indptr: NDArray[np.int64], item_cons: NDArray[np.int32], d: NDArray[np.float64], m: int
 ) -> NDArray[np.float64]:

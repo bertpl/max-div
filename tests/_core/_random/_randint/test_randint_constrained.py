@@ -6,6 +6,7 @@ import pytest
 from max_div._core._random import new_rng_state
 from max_div._core._random._randint._randint_constrained import (
     _SCORE_PENALTY_ALREADY_SAMPLED,
+    I_FORBIDDEN_NONE,
     _compute_score,
     randint_constrained,
 )
@@ -54,6 +55,8 @@ def test_randint_constrained_basic(seed: int, eager: bool, p_mode: str) -> None:
         p=p,
         rng_state=rng_state,
         eager=eager,
+        k_context=np.int32(-1),
+        i_forbidden=I_FORBIDDEN_NONE,
     )
 
     # --- assert -----------------------
@@ -109,6 +112,8 @@ def test_randint_constrained_infeasible(seed: int, eager: bool, p_mode: str) -> 
         p=p,
         rng_state=rng_state,
         eager=eager,
+        k_context=np.int32(-1),
+        i_forbidden=I_FORBIDDEN_NONE,
     )
 
     # --- assert -----------------------
@@ -168,6 +173,7 @@ def test_randint_constrained_k_context(k_context: int, seed: int):
         rng_state=rng_state,
         eager=False,
         k_context=np.int32(k_context),
+        i_forbidden=I_FORBIDDEN_NONE,
     )
 
     # --- assert -----------------------
@@ -220,6 +226,7 @@ def test_randint_constrained_i_forbidden_validation(k, n, n_forbidden, expected_
         p=p,
         rng_state=rng_state,
         eager=False,
+        k_context=np.int32(-1),
         i_forbidden=i_forbidden,
     )
 
@@ -266,6 +273,7 @@ def test_randint_constrained_i_forbidden_priorities(min_count: int, eager: bool)
         rng_state=rng_state,
         eager=eager,
         i_forbidden=i_forbidden,
+        k_context=np.int32(-1),
     )
 
     # --- assert -----------------------

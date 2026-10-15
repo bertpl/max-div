@@ -5,17 +5,17 @@ violation aggregates, and the dual values that certify infeasibility.  Every fun
 in its arrays; the pipelines that search for good prices live in sibling modules.
 """
 
-import numba
 import numpy as np
 from numpy.typing import NDArray
 
 from max_div._core._math import select_k_max
+from max_div._core.jit import lazy_njit
 
 # soundness margin: g must exceed this before it counts as an infeasibility proof
 G_POSITIVE_TOL = 1e-9
 
 
-@numba.njit(cache=True)
+@lazy_njit("float64[::1](int64[::1], int32[::1], float64[::1], float64[::1])", cache=True)
 def _item_scores(
     item_indptr: NDArray[np.int64],
     item_cons: NDArray[np.int32],
@@ -41,7 +41,7 @@ def _item_scores(
     return scores
 
 
-@numba.njit(cache=True)
+@lazy_njit("int64[::1](float64[::1], int64)", cache=True)
 def _top_k_items(scores: NDArray[np.float64], k: int) -> NDArray[np.int64]:
     """Return the indices of the k largest scores via O(n log k) heap selection.
 
@@ -57,7 +57,7 @@ def _top_k_items(scores: NDArray[np.float64], k: int) -> NDArray[np.int64]:
     return select_k_max(scores, np.int32(k)).astype(np.int64)
 
 
-@numba.njit(cache=True)
+@lazy_njit("int64[::1](int64[::1], int32[::1], int64[::1], int64)", cache=True)
 def _selection_counts(
     item_indptr: NDArray[np.int64],
     item_cons: NDArray[np.int32],
@@ -80,7 +80,7 @@ def _selection_counts(
     return counts
 
 
-@numba.njit(cache=True)
+@lazy_njit("float64(int64[::1], int64[::1], int64[::1], float64[::1])", cache=True)
 def _weighted_violation(
     counts: NDArray[np.int64],
     con_min: NDArray[np.int64],
@@ -105,7 +105,7 @@ def _weighted_violation(
     return v
 
 
-@numba.njit(cache=True)
+@lazy_njit("int64[::1](int64[::1], int64[::1], int64[::1])", cache=True)
 def _per_constraint_violation(
     counts: NDArray[np.int64], con_min: NDArray[np.int64], con_max: NDArray[np.int64]
 ) -> NDArray[np.int64]:
@@ -128,22 +128,7 @@ def _per_constraint_violation(
     return out
 
 
-@numba.njit(cache=True)
-def _counts_feasible(counts: NDArray[np.int64], con_min: NDArray[np.int64], con_max: NDArray[np.int64]) -> bool:
-    """Return whether every constraint count lies within its bounds.
-
-    Args:
-        counts: per-constraint counts of selected members.
-        con_min: per-constraint minimum counts.
-        con_max: per-constraint maximum counts.
-    """
-    for i in range(counts.shape[0]):  # noqa: SIM110 — numba-compiled; the all(...) generator form is not supported
-        if counts[i] < con_min[i] or counts[i] > con_max[i]:
-            return False
-    return True
-
-
-@numba.njit(cache=True)
+@lazy_njit("float64(int64[::1], int64[::1], float64[::1], float64[::1], float64[::1], int64[::1])", cache=True)
 def _dual_value(
     con_min: NDArray[np.int64],
     con_max: NDArray[np.int64],
@@ -175,7 +160,7 @@ def _dual_value(
     return g
 
 
-@numba.njit(cache=True)
+@lazy_njit("float64[::1](float64[::1], float64[::1], float64[::1])", cache=True)
 def clamp_admissible(
     lam: NDArray[np.float64], w_lin: NDArray[np.float64], w_quad: NDArray[np.float64]
 ) -> NDArray[np.float64]:
@@ -200,7 +185,7 @@ def clamp_admissible(
     return out
 
 
-@numba.njit(cache=True)
+@lazy_njit("float64(float64, float64, float64)", cache=True)
 def _price_cost(lam: float, w_lin: float, w_quad: float) -> float:
     """Return the price cost `psi(lam)` of one constraint: what pricing above the linear weight costs.
 
@@ -218,7 +203,11 @@ def _price_cost(lam: float, w_lin: float, w_quad: float) -> float:
     return excess * excess / (4.0 * w_quad)
 
 
-@numba.njit(cache=True)
+@lazy_njit(
+    "float64(int64[::1], int64[::1], float64[::1], float64[::1], float64[::1], float64[::1], int64[::1], int32[::1], "
+    "int64)",
+    cache=True,
+)
 def certified_bound(
     con_min: NDArray[np.int64],
     con_max: NDArray[np.int64],

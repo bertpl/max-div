@@ -4,7 +4,6 @@ This function is roughly equivalent with randint, but supports defining constrai
 `con_indices` parameters.
 """
 
-import numba
 import numpy as np
 from numpy.typing import NDArray
 
@@ -15,6 +14,9 @@ from ._randint import randint1
 
 _SCORE_PENALTY_HARD_CONSTRAINT = np.int32(2**24)
 _SCORE_PENALTY_ALREADY_SAMPLED = np.int32(2**30)
+
+# Pass as i_forbidden to randint_constrained when no integer is forbidden.
+I_FORBIDDEN_NONE = np.empty(0, dtype=np.int32)
 
 
 # ==================================================================================================
@@ -77,17 +79,21 @@ def _compute_score(
     return scores
 
 
-@numba.njit(fastmath=True, cache=True)
+@lazy_njit(
+    "int32[::1](int32, int32, int32[:, ::1], int32[::1], uint64[::1], float32[::1], boolean, int32, int32[::1])",
+    fastmath=True,
+    cache=True,
+)
 def randint_constrained(  # noqa: C901 — case-dispatch structure is clearer un-split
     n: np.int32,
     k: np.int32,
     con_values: NDArray[np.int32],
     con_indices: NDArray[np.int32],
     rng_state: NDArray[np.uint64],
-    p: NDArray[np.float32] = np.zeros(0, dtype=np.float32),  # noqa: B008 — numba needs a concrete typed default
-    eager: bool = False,
-    k_context: np.int32 = np.int32(-1),  # noqa: B008 — numba needs a concrete typed default
-    i_forbidden: NDArray[np.int32] = np.empty(0, dtype=np.int32),  # noqa: B008 — numba needs a concrete typed default
+    p: NDArray[np.float32],
+    eager: bool,
+    k_context: np.int32,
+    i_forbidden: NDArray[np.int32],
 ) -> NDArray[np.int32]:
     """Generate `k` unique random integers from the range `[0, n)` while satisfying given constraints.
 
@@ -108,31 +114,33 @@ def randint_constrained(  # noqa: C901 — case-dispatch structure is clearer un
     PRIORITIES that this algorithm adheres to:
 
      1) Provide exactly 'k' unique samples (no replacement)
-     2) if provided, don't generate samples from i_forbidden   (can be used to indicate already sampled values)
+     2) don't generate samples from i_forbidden   (can be used to indicate already sampled values)
      3) satisfy constraints
-     4) if p is provided, don't sample from integers with p=0
+     4) don't sample from integers with p=0
 
     Args:
         n: range to sample from [0, n)
         k: number of unique samples to draw (no replacement)
         con_values: 2D array (m, 2) with min_count and max_count for each constraint              (never modified!)
         con_indices: 1D array with constraint indices in the format described in _constraints.py  (never modified!)
-        p: optional, target probabilities for each integer in `[0, n)`                            (never modified!)
+        p: target probabilities for each integer in `[0, n)`; an empty array (`P_UNIFORM`) gives uniform sampling
+                                                                                                  (never modified!)
         rng_state: (2-element uint64 array) state for random number generation; updated in-place.
             (use new_rng_state(seed) to construct an initial state)            (modified in-place)
         eager: if True, the algorithm will try to satisfy as many constraints as early as possible; in some cases
             increasing the probability of finding a feasible solution, albeit at the cost of sampling diversity
             and adherence to the provided p-values.
-        k_context: (int, default=-1) number of total samples - in the bigger context - we want to sample in order to
-            satisfy the constraints.  This informs the algorithm about the urgency of fulfilling
-            constraints, giving it potentially more liberty to pick from a wider range of samples and with
-            potentially higher p-values.
+        k_context: total number of samples, including the k of this call and any that later calls will draw,
+            that must together satisfy the constraints.  This informs the algorithm about the urgency of
+            fulfilling constraints, giving it potentially more liberty to pick from a wider range of samples and
+            with potentially higher p-values.
 
                       Two cases:
-                        a) not provided or <=k:  the algorithm assumes k_context = k
-                        b) provided and >k:      the algorithm knows that more samples will be drawn later.
+                        a) <=k (for example -1):  the algorithm assumes k_context = k
+                        b) >k:                    the algorithm knows that more samples will be drawn later.
 
-        i_forbidden: (optional) 1D array of integers in `[0, n)` that must not be sampled         (never modified!)
+        i_forbidden: 1D array of integers in `[0, n)` that must not be sampled; an empty array (`I_FORBIDDEN_NONE`)
+            forbids no integer                                                                   (never modified!)
 
     Returns:
         array of samples
@@ -164,7 +172,6 @@ def randint_constrained(  # noqa: C901 — case-dispatch structure is clearer un
     # avoiding issues later on when we exclude certain elements due to constraint-violation, which might otherwise
     # cause all p-values to become zero.
     if p.size == 0:
-        # no p provided --> uniform
         p_aug = np.ones(n, dtype=np.float32)
     else:
         # determine p_max

@@ -34,6 +34,8 @@ def test_choice_constrained_argument_validation():
             rng_state=rng_state,
             con_values=con_values,
             con_indices=con_indices,
+            eager=False,
+            k_context=np.int32(-1),
         )
 
     with pytest.raises(ValueError):
@@ -45,6 +47,8 @@ def test_choice_constrained_argument_validation():
             rng_state=rng_state,
             con_values=con_values,
             con_indices=con_indices,
+            eager=False,
+            k_context=np.int32(-1),
         )
 
 
@@ -126,6 +130,8 @@ def test_choice_constrained_p_adherence(seed: int):
         con_indices=con_indices,
         p=p,
         rng_state=rng_state,
+        eager=False,
+        k_context=np.int32(-1),
     )
 
     # --- assert -----------------------

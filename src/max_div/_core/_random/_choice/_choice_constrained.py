@@ -1,11 +1,15 @@
-import numba
 import numpy as np
 from numpy.typing import NDArray
 
 from max_div._core._random._randint import randint_constrained
+from max_div._core.jit import lazy_njit
 
 
-@numba.njit(fastmath=True, cache=True)
+@lazy_njit(
+    "int32[::1](int32, int32[::1], int32, float32[::1], uint64[::1], int32[:, ::1], int32[::1], boolean, int32)",
+    fastmath=True,
+    cache=True,
+)
 def choice_constrained(
     n: np.int32,
     values: NDArray[np.int32],
@@ -14,8 +18,8 @@ def choice_constrained(
     rng_state: NDArray[np.uint64],
     con_values: NDArray[np.int32],
     con_indices: NDArray[np.int32],
-    eager: bool = False,
-    k_context: np.int32 = np.int32(-1),  # noqa: B008 — numba needs a concrete typed default
+    eager: bool,
+    k_context: np.int32,
 ) -> NDArray[np.int32]:
     """Sample from a provided 'values' array instead of the range [0, n), respecting the provided constraints.
 
@@ -38,14 +42,14 @@ def choice_constrained(
         eager: if True, the algorithm will try to satisfy as many constraints as early as possible; in some cases
             increasing the probability of finding a feasible solution, albeit at the cost of sampling diversity
             and adherence to the provided p-values.
-        k_context: (int, default=-1) number of total samples - in the bigger context - we want to sample in order to
-            satisfy the constraints.  This informs the algorithm about the urgency of fulfilling
-            constraints, giving it potentially more liberty to pick from a wider range of samples and with
-            potentially higher p-values.
+        k_context: total number of samples, including the k of this call and any that later calls will draw,
+            that must together satisfy the constraints.  This informs the algorithm about the urgency of
+            fulfilling constraints, giving it potentially more liberty to pick from a wider range of samples and
+            with potentially higher p-values.
 
                       Two cases:
-                        a) not provided or <=k:  the algorithm assumes k_context = k
-                        b) provided and >k:      the algorithm knows that more samples will be drawn later.
+                        a) <=k (for example -1):  the algorithm assumes k_context = k
+                        b) >k:                    the algorithm knows that more samples will be drawn later.
 
     Returns:
         (NDArray[np.int32]) The array of samples, size (k,), taken from the provided 'values' array.

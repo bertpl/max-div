@@ -1,7 +1,7 @@
 import numpy as np
 from numpy.typing import NDArray
 
-from max_div._core._random import P_UNIFORM, randint, randint_constrained
+from max_div._core._random import I_FORBIDDEN_NONE, P_UNIFORM, randint, randint_constrained
 from max_div._core.solver._solver_state import SolverState
 
 from ._base import InitializationStrategy
@@ -40,6 +40,10 @@ class InitRandomSelection(InitializationStrategy):
                 con_values=state.con_values,
                 con_indices=state.con_indices,
                 rng_state=self._rng_state,
+                p=P_UNIFORM,
+                eager=False,
+                k_context=np.int32(-1),
+                i_forbidden=I_FORBIDDEN_NONE,
             )
         else:
             # don't take constraints into account

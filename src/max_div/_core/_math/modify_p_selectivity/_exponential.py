@@ -1,5 +1,4 @@
 import numpy as np
-from numba import njit
 from numpy.typing import NDArray
 
 from max_div._core._math.fast_log_exp import fast_exp2_f32
@@ -11,9 +10,12 @@ from max_div._core.jit import lazy_njit
 DEFAULT_LOW_VALUE = np.float32(0.1)
 
 
-# Defined ahead of its caller: the caller declares a signature, so it compiles when the
-# decorator runs and every function it calls has to exist by then.
-@njit(fastmath=True, inline="always", cache=True)
+@lazy_njit(
+    "void(float32[::1], float32[::1], float32, boolean, float32, float32, float32, float32)",
+    fastmath=True,
+    inline="always",
+    cache=True,
+)
 def _exponential_transform(
     p_in: NDArray[np.float32],
     p_out: NDArray[np.float32],

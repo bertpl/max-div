@@ -1,5 +1,6 @@
 from ._choice import choice, choice1, choice_constrained
 from ._randint import (
+    I_FORBIDDEN_NONE,
     P_UNIFORM,
     randint,
     randint1,
