@@ -1,8 +1,4 @@
-"""Check that importing max-div compiles none of its numba functions.
-
-Functions declared with `lazy_njit` compile on first use, not at import, so importing a module does not compile
-them.
-"""
+"""Check that importing max-div compiles none of its numba functions."""
 
 import subprocess
 import sys

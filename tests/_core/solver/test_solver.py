@@ -397,6 +397,7 @@ def test_a_solve_frees_its_state_without_the_cyclic_collector(monkeypatch: pytes
             .build()
             .solve(verbosity=Verbosity.SILENT)
         )
+        # drop the solution before checking which states are still alive, as a caller that discards it would
         del solution
         still_alive = [ref for ref in seen if ref() is not None]
     finally:

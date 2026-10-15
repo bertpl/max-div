@@ -19,8 +19,9 @@ def numba_precompile() -> None:
     the compile time. Calling this function first moves that cost to a point of your choice, such as the start of an
     application or of a test session.
 
-    After the call, no solve in this process compiles, except that a `DistanceMetric.custom()` metric compiles a
-    wrapper around your distance function, in well under a second, once per metric.
+    After the call, no solve in this process compiles a numba function, with one exception: each
+    `DistanceMetric.custom()` metric compiles a wrapper around your distance function once, which takes well under
+    a second.
 
     The compiled code is also written to numba's disk cache, from which the worker processes of a parallel solve and
     later processes load it.

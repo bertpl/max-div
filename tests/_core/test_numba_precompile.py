@@ -11,12 +11,18 @@ from max_div._core.numba_precompile import numba_precompile
 
 _needs_jit = pytest.mark.skipif(numba.config.DISABLE_JIT, reason="with the JIT disabled nothing compiles")
 
-# This script runs in a fresh interpreter, so that no earlier test has compiled or loaded a function that
-# `numba_precompile` misses.
+# This script runs in a fresh interpreter, so that the solves below still have to compile or load any function
+# that `numba_precompile` misses, even when an earlier test already compiled it.
 #
 # numba calls `add_overload` both when it compiles a function and when it loads one from its disk cache, so
 # counting those calls detects a missed function whatever the state of the cache.
-_SOLVES_AFTER_PRECOMPILE = """
+#
+# The script's solves cover:
+# - every preset
+# - every distance storage type other than AUTO
+# - both problem constructors
+# - a parallel solve
+_SOLVES_AFTER_PRECOMPILE_SCRIPT = """
 import numpy as np
 from numba.core.dispatcher import _DispatcherBase
 
@@ -42,7 +48,7 @@ _DispatcherBase.add_overload = counting_add_overload
 vectors = np.random.default_rng(0).random((200, 3)).astype(np.float32)
 constraints = [Constraint(int_set=set(range(40)), min_count=3, max_count=6)]
 for problem_constraints in (None, constraints):
-    for storage_type in (DistanceStorageType.FULL_MATRIX, DistanceStorageType.LAZY):
+    for storage_type in [t for t in DistanceStorageType if t is not DistanceStorageType.AUTO]:
         for preset in SolverPreset:
             problem = MaxDivProblem.new(vectors, k=10, constraints=problem_constraints)
             builder = MaxDivSolverBuilder(problem).with_preset(iterations(50), preset)
@@ -61,7 +67,7 @@ print(n_added_overloads)
 
 @_needs_jit
 def test_numba_precompile_compiles_every_function_that_the_package_declares() -> None:
-    """After the call, every `lazy_njit` function in the package is compiled, so a broken signature string fails."""
+    """The call compiles every `lazy_njit` function of the package, so a broken signature string fails this test."""
     # --- act --------------------------
     numba_precompile()
 
@@ -95,13 +101,10 @@ def test_numba_precompile_compiles_each_recorded_function(
 
 @_needs_jit
 def test_no_solve_after_numba_precompile_compiles_or_loads_a_numba_function() -> None:
-    """After the call, no solve compiles or loads a numba function.
-
-    The solves cover every preset, both distance storage types, both problem constructors and a parallel solve.
-    """
+    """After the call, no solve compiles or loads a numba function."""
     # --- act --------------------------
     output = subprocess.run(  # noqa: S603 -- fixed args
-        [sys.executable, "-c", _SOLVES_AFTER_PRECOMPILE], capture_output=True, text=True, check=True
+        [sys.executable, "-c", _SOLVES_AFTER_PRECOMPILE_SCRIPT], capture_output=True, text=True, check=True
     ).stdout
 
     # --- assert -----------------------
