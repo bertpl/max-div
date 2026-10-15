@@ -17,7 +17,7 @@ from max_div._core._markdown import (
     h3,
     h4,
 )
-from max_div._core._random import P_UNIFORM, new_rng_state, randint, randint_constrained
+from max_div._core._random import I_FORBIDDEN_NONE, P_UNIFORM, new_rng_state, randint, randint_constrained
 from max_div._core._utils import benchmark, stdout_to_file
 from max_div._core.constraints import Constraint, to_numpy_constraints
 
@@ -207,7 +207,7 @@ def _benchmark(
                 rng_state=rng_state,
                 eager=eager,
                 k_context=np.int32(-1),
-                i_forbidden=np.empty(0, dtype=np.int32),
+                i_forbidden=I_FORBIDDEN_NONE,
             )
 
     return TableTimeElapsed.from_benchmark_result(
@@ -257,7 +257,7 @@ def _determine_precision(
                 rng_state=rng_state,
                 eager=(mode == "eager"),
                 k_context=np.int32(-1),
-                i_forbidden=np.empty(0, dtype=np.int32),
+                i_forbidden=I_FORBIDDEN_NONE,
             )
 
         # Check if all constraints are satisfied
