@@ -1,21 +1,29 @@
+import importlib
 import subprocess
 import sys
+from concurrent.futures.process import BrokenProcessPool
+from pathlib import Path
 from types import SimpleNamespace
+from unittest.mock import MagicMock
 
 import numba
 import pytest
 
 from max_div._core.extras import MissingExtraError
 from max_div._core.jit import LazilyCompiledFunction
-from max_div._core.numba_precompile import numba_precompile
+from max_div._core.numba_precompile import _compile_function_by_name, numba_precompile
 
 _needs_jit = pytest.mark.skipif(numba.config.DISABLE_JIT, reason="with the JIT disabled nothing compiles")
+
+_FUNCTIONS_TO_PRECOMPILE_MODULE = "tests._core.functions_to_precompile"
 
 # This script runs in a fresh interpreter, so that the solves below still have to compile or load any function
 # that `numba_precompile` misses, even when an earlier test already compiled it.
 #
 # numba calls `add_overload` both when it compiles a function and when it loads one from its disk cache, so
 # counting those calls detects a missed function whatever the state of the cache.
+#
+# The script calls `numba_precompile` with its default process count, so it covers the processes too.
 #
 # The script's solves cover:
 # - every preset
@@ -69,7 +77,7 @@ print(n_added_overloads)
 def test_numba_precompile_compiles_every_function_of_the_package_that_is_not_inline_only() -> None:
     """The call compiles every `lazy_njit` function of the package that Python may call."""
     # --- act --------------------------
-    numba_precompile()
+    numba_precompile(n_processes=1)
 
     # --- assert -----------------------
     non_inline_only_functions = [
@@ -90,7 +98,7 @@ def test_every_inline_only_function_of_the_package_compiles_with_its_declared_si
     """
     # --- arrange ----------------------
     # numba_precompile imports every module of the package, which records every inline-only function
-    numba_precompile()
+    numba_precompile(n_processes=1)
     inline_only_functions = [
         lazily_compiled_function
         for lazily_compiled_function in LazilyCompiledFunction.instances()
@@ -134,7 +142,7 @@ def test_numba_precompile_compiles_each_recorded_function_that_is_not_inline_onl
     lazily_compiled_function = LazilyCompiledFunction(lambda x: 2.0 * x, "float64(float64)", options, is_inline_only)
 
     # --- act --------------------------
-    numba_precompile()
+    numba_precompile(n_processes=1)
 
     # --- assert -----------------------
     assert lazily_compiled_function.is_compiled == expected_is_compiled
@@ -150,3 +158,95 @@ def test_no_solve_after_numba_precompile_compiles_or_loads_a_numba_function() ->
 
     # --- assert -----------------------
     assert int(output.split()[-1]) == 0
+
+
+@pytest.fixture
+def functions_to_precompile(monkeypatch: pytest.MonkeyPatch) -> tuple[LazilyCompiledFunction, ...]:
+    """Record only the functions of `functions_to_precompile`, and keep `numba_precompile` from importing modules."""
+    monkeypatch.setattr(LazilyCompiledFunction, "_instances", [])
+    monkeypatch.setattr(
+        "max_div._core.numba_precompile.pkgutil", SimpleNamespace(walk_packages=lambda *args, **kwargs: [])
+    )
+    # importing the module afresh records its functions again, also when an earlier test imported it
+    monkeypatch.delitem(sys.modules, _FUNCTIONS_TO_PRECOMPILE_MODULE, raising=False)
+    importlib.import_module(_FUNCTIONS_TO_PRECOMPILE_MODULE)
+    return LazilyCompiledFunction.instances()
+
+
+def test_numba_precompile_rejects_fewer_than_1_process() -> None:
+    """The call raises for a process count below 1."""
+    # --- act / assert -----------------
+    with pytest.raises(ValueError, match="at least 1"):
+        numba_precompile(n_processes=0)
+
+
+@pytest.mark.parametrize("cpu_count, expected_pool_sizes", [(None, []), (1, []), (2, [2]), (8, [8]), (16, [8])])
+def test_numba_precompile_starts_by_default_1_process_per_cpu_and_at_most_8(
+    monkeypatch: pytest.MonkeyPatch,
+    functions_to_precompile: tuple[LazilyCompiledFunction, ...],
+    cpu_count: int | None,
+    expected_pool_sizes: list[int],
+) -> None:
+    """By default, the call starts 1 process per CPU, at most 8, and no pool for a single CPU or an unknown count."""
+    # --- arrange ----------------------
+    pool_class = MagicMock()
+    monkeypatch.setattr("max_div._core.numba_precompile.ProcessPoolExecutor", pool_class)
+    monkeypatch.setattr("max_div._core.numba_precompile.os.cpu_count", lambda: cpu_count)
+
+    # --- act --------------------------
+    numba_precompile()
+
+    # --- assert -----------------------
+    assert [call.args[0] for call in pool_class.call_args_list] == expected_pool_sizes
+    assert all(function.is_compiled for function in functions_to_precompile)
+
+
+def test_numba_precompile_compiles_in_this_process_when_a_process_dies(
+    monkeypatch: pytest.MonkeyPatch, functions_to_precompile: tuple[LazilyCompiledFunction, ...]
+) -> None:
+    """A process that dies breaks the pool, and the call then compiles every function in this process."""
+    # --- arrange ----------------------
+    pool_class = MagicMock()
+    pool_class.return_value.__enter__.return_value.map.side_effect = BrokenProcessPool
+    monkeypatch.setattr("max_div._core.numba_precompile.ProcessPoolExecutor", pool_class)
+
+    # --- act --------------------------
+    numba_precompile(n_processes=2)
+
+    # --- assert -----------------------
+    assert all(function.is_compiled for function in functions_to_precompile)
+
+
+@_needs_jit
+def test_numba_precompile_with_processes_leaves_this_process_only_cached_functions_to_load(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    functions_to_precompile: tuple[LazilyCompiledFunction, ...],
+) -> None:
+    """The spawned processes compile every function, and this process loads each one from numba's disk cache."""
+    # --- arrange ----------------------
+    # an empty disk cache: the spawned processes read the environment variable, this process the config value
+    monkeypatch.setenv("NUMBA_CACHE_DIR", str(tmp_path))
+    monkeypatch.setattr(numba.config, "CACHE_DIR", str(tmp_path))
+
+    # --- act --------------------------
+    numba_precompile(n_processes=2)
+
+    # --- assert -----------------------
+    assert all(function.stats.cache_hits for function in functions_to_precompile)
+    assert not any(function.stats.cache_misses for function in functions_to_precompile)
+
+
+@pytest.mark.parametrize("qualname, expected_compiled_qualnames", [("_double", ["_double"]), ("_missing", [])])
+def test_compile_function_by_name_compiles_only_the_recorded_function_of_that_name(
+    functions_to_precompile: tuple[LazilyCompiledFunction, ...],
+    qualname: str,
+    expected_compiled_qualnames: list[str],
+) -> None:
+    """A spawned process compiles the function of the given name, and skips a name that its module does not record."""
+    # --- act --------------------------
+    _compile_function_by_name(_FUNCTIONS_TO_PRECOMPILE_MODULE, qualname)
+
+    # --- assert -----------------------
+    compiled_qualnames = [function.py_func.__qualname__ for function in functions_to_precompile if function.is_compiled]
+    assert compiled_qualnames == expected_compiled_qualnames

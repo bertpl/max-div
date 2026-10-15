@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Shorten the compile time of `max_div.numba_precompile()` and of the first solve when numba's disk cache is empty
+- Make `max_div.numba_precompile()` compile in parallel processes, 2 to 3.5 times faster on an empty numba cache; a script must call it under `if __name__ == "__main__":`
 
 ### Deprecated
 
