@@ -10,6 +10,7 @@ from max_div._core._utils import stdout_to_file
 from max_div._core.constraints import Constraint
 from max_div._core.distance_storage import DistanceStorageType
 from max_div._core.metrics import DistanceMetric, DiversityMetric, HybridAggregationBase, HybridDiversityMetric
+from max_div._core.numba_precompile import numba_precompile
 from max_div._core.problem import MaxDivProblem
 from max_div._core.solver import MaxDivSolution, MaxDivSolverBuilder, Verbosity
 from max_div._core.solver._builders import ParallelMaxDivSolverBuilder
@@ -366,24 +367,13 @@ def test_a_solve_frees_its_state_without_the_cyclic_collector(monkeypatch: pytes
     vectors = np.random.default_rng(0).random((200, 3)).astype(np.float32)
     problem = MaxDivProblem.new(vectors, k=10)
 
-    def run_short_solve() -> None:
-        """Run a short solve and drop its solution."""
-        (
-            MaxDivSolverBuilder(problem)
-            .set_initialization_strategy(InitializationStrategy.random_selection())
-            .add_solver_step(OptimizationStep(OptimizationStrategy.random_swaps(), iterations(20)))
-            .build()
-            .solve(verbosity=Verbosity.SILENT)
-        )
-
     # A solve during which numba compiles creates a reference cycle through numba's objects: an
     # error from numba's type inference holds a traceback, and the traceback's frames refer to the
     # solver's frames, which hold the state.
     #
-    # Calling `run_short_solve()` once here, before the measurement, compiles all of a solve's
-    # functions, so in the measured solve below only the solver's own cycles can keep the state
-    # alive.
-    run_short_solve()
+    # With every function compiled before the measurement, only the solver's own cycles can keep the
+    # state of the measured solve alive.
+    numba_precompile()
 
     seen: list[weakref.ref] = []
     original_new = SolverState.new.__func__
@@ -400,7 +390,15 @@ def test_a_solve_frees_its_state_without_the_cyclic_collector(monkeypatch: pytes
     gc.collect()
     gc.disable()
     try:
-        run_short_solve()
+        solution = (
+            MaxDivSolverBuilder(problem)
+            .set_initialization_strategy(InitializationStrategy.random_selection())
+            .add_solver_step(OptimizationStep(OptimizationStrategy.random_swaps(), iterations(20)))
+            .build()
+            .solve(verbosity=Verbosity.SILENT)
+        )
+        # drop the solution before checking which states are still alive, as a caller that discards it would
+        del solution
         still_alive = [ref for ref in seen if ref() is not None]
     finally:
         gc.enable()

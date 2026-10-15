@@ -165,7 +165,8 @@ def test_private_names_are_not_forwarded() -> None:
 def test_a_lazily_compiled_function_pickles_by_reference() -> None:
     """Unpickling returns the module's own `LazilyCompiledFunction`, and neither step compiles it."""
     # --- arrange ----------------------
-    was_compiled = _halve.is_compiled  # tests/test_jit_compilation.py may already have compiled every instance
+    # numba_precompile(), which other tests call, may already have compiled every LazilyCompiledFunction
+    was_compiled = _halve.is_compiled
 
     # --- act --------------------------
     unpickled = pickle.loads(pickle.dumps(_halve))  # noqa: S301 -- round trip of an object this test created
