@@ -31,8 +31,9 @@ declared signatures apply to any call:
 - `is_inline_only=False` declares that Python also uses the function directly, so its declared signatures apply to
   those uses.
 
-`compile()` still compiles the declared signatures of an inline-only function, and its compiled function accepts
-calls from Python, which is how tests call an inline-only function.
+Only a call through the function's own name is refused: `compile()` returns numba's compiled function, which has no
+guard and accepts calls from Python. Tests call an inline-only function that way on purpose, through
+`tests.helpers.as_directly_callable`.
 """
 
 import functools
