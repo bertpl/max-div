@@ -64,7 +64,7 @@ help:
 	@echo ''
 	@echo '  test                                   Run pytest unit tests.'
 	@echo '  collect-test-ids                       List collected test node-ids without running them.'
-	@echo '  test-signature-drift                   Check that numba callers pass the types that each declared signature names.'
+	@echo '  test-signature-drift                   Check that numba callers pass the argument types of each declared signature.'
 	@echo '  test-scripts                           Run the tests of the maintainer tooling under ./scripts.'
 	@echo '  test-benchmarks                        Run the tests of the comparison-benchmark harness under ./benchmarks.'
 	@echo '  check-capability-data                  Validate the solver capability data without writing anything.'
@@ -124,8 +124,8 @@ build-capability-data:
 	uv run --no-default-groups --group tooling python scripts/capability_data.py
 	uv run --no-default-groups --group tooling python scripts/build_hero_table.py
 
-# The signature drift check (tests/test_numba_signature_drift.py) compiles the whole package with inlining off, on
-# an empty numba cache, so `make test` skips it and a dedicated CI job runs this target on every pull request.
+# `make test` skips the signature drift check, whose module docstring says why, so a dedicated CI job runs this
+# target on every pull request.
 test-signature-drift:
 	MAX_DIV_SIGNATURE_DRIFT_CHECK=1 $(UV_RUN) pytest ./tests/test_numba_signature_drift.py --durations=5 $(PYTEST_ARGS)
 
