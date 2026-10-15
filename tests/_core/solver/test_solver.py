@@ -376,12 +376,12 @@ def test_a_solve_frees_its_state_without_the_cyclic_collector(monkeypatch: pytes
             .solve(verbosity=Verbosity.SILENT)
         )
 
-    # A solve during which numba compiles also creates a reference cycle through numba's objects:
-    # an error that numba records while inferring types holds a traceback, and the traceback's
-    # frames refer to the solver's frames, which hold the state.
+    # A solve during which numba compiles creates a reference cycle through numba's objects: an
+    # error from numba's type inference holds a traceback, and the traceback's frames refer to the
+    # solver's frames, which hold the state.
     #
-    # Calling `run_short_solve()` once here, before the measurement, compiles every function that
-    # a solve calls, so in the measured solve below only the solver's own cycles can keep the state
+    # Calling `run_short_solve()` once here, before the measurement, compiles all of a solve's
+    # functions, so in the measured solve below only the solver's own cycles can keep the state
     # alive.
     run_short_solve()
 
