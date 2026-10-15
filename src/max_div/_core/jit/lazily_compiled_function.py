@@ -29,12 +29,15 @@ import functools
 import threading
 from collections.abc import Callable
 from types import FunctionType, MethodType
-from typing import Any, ClassVar, NoReturn, Self, TypeVar, cast
+from typing import TYPE_CHECKING, Any, ClassVar, NoReturn, Self, TypeVar, cast
 
 import numba
 from numba import config
-from numba.core.typing.typeof import Purpose, _TypeofContext
+from numba.core.typing.typeof import Purpose
 from numba.extending import typeof_impl
+
+if TYPE_CHECKING:
+    from numba.core.typing.typeof import _TypeofContext
 
 _F = TypeVar("_F", bound=FunctionType)
 
@@ -250,7 +253,7 @@ def lazy_njit(signature: object, *, is_inline_only: bool | None = None, **option
 # ==================================================================================================
 @typeof_impl.register(LazilyCompiledFunction)
 def _typeof_lazily_compiled_function(
-    lazily_compiled_function: LazilyCompiledFunction, context: _TypeofContext
+    lazily_compiled_function: LazilyCompiledFunction, context: "_TypeofContext"
 ) -> numba.types.Type:
     """Type a `LazilyCompiledFunction` as its compiled function, refusing an inline-only one passed as an argument.
 
