@@ -48,7 +48,9 @@ def fast_geomean_f32(values: NDArray[np.float32]) -> np.float32:
     n = values.shape[0]
     for i in range(n):
         log_sum += fast_log2_f32(values[i])
-    return fast_exp2_f32(log_sum / n)
+    # float32, because numba types an inlined callee with its caller's argument types: a float64 mean would
+    # make fast_exp2_f32 compute in float64
+    return fast_exp2_f32(np.float32(log_sum / n))
 
 
 @lazy_njit("void(float32[:, ::1], float32[::1], float32[::1])", fastmath={"reassoc", "contract"}, cache=True)
