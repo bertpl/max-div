@@ -168,7 +168,7 @@ def functions_to_precompile(monkeypatch: pytest.MonkeyPatch) -> tuple[LazilyComp
     monkeypatch.setattr(
         "max_div._core.numba_precompile.pkgutil", SimpleNamespace(walk_packages=lambda *args, **kwargs: [])
     )
-    # importing the module afresh records its functions again, also when an earlier test imported it
+    # importing the module afresh records its functions again, even when an earlier test imported it
     monkeypatch.delitem(sys.modules, _FUNCTIONS_TO_PRECOMPILE_MODULE_NAME, raising=False)
     importlib.import_module(_FUNCTIONS_TO_PRECOMPILE_MODULE_NAME)
     return LazilyCompiledFunction.instances()
@@ -182,7 +182,7 @@ def test_numba_precompile_rejects_fewer_than_1_process() -> None:
 
 
 @pytest.mark.parametrize("cpu_count, expected_pool_sizes", [(None, []), (1, []), (2, [2]), (8, [8]), (16, [8])])
-def test_numba_precompile_starts_by_default_1_process_per_cpu_and_at_most_8(
+def test_numba_precompile_uses_by_default_1_process_per_cpu_and_at_most_8(
     monkeypatch: pytest.MonkeyPatch,
     functions_to_precompile: tuple[LazilyCompiledFunction, ...],
     cpu_count: int | None,
@@ -242,7 +242,7 @@ def test_numba_precompile_with_processes_leaves_this_process_only_cached_functio
 def test_compile_into_disk_cache_compiles_the_function_that_it_receives(
     functions_to_precompile: tuple[LazilyCompiledFunction, ...],
 ) -> None:
-    """The function that each spawned process runs compiles the function that it receives, and no other."""
+    """`_compile_into_disk_cache` compiles only the function that it receives."""
     # --- arrange ----------------------
     lazily_compiled_function, other_lazily_compiled_function = functions_to_precompile
 
