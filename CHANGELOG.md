@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.21.6 (2026-10-15)
 
 ### Added
 - Add `DistanceMetric.custom()`, a distance metric that computes each distance with your own `numba.njit` function, and that also works with the `LAZY` distance storage type
@@ -13,14 +13,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Show separately in the comparison with other tools whether each tool accepts a custom distance matrix and whether it accepts a custom distance function
-
-### Deprecated
-
-### Removed
-
-### Fixed
-
-### Security
 
 ## 0.21.5 (2026-10-10)
 
