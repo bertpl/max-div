@@ -25,6 +25,7 @@ explains how one function runs both compiled and interpreted:
 
 import functools
 from collections.abc import Callable
+from typing import TYPE_CHECKING, cast
 
 import numba
 import numpy as np
@@ -33,6 +34,9 @@ from numba import types
 from numba.core.ccallback import CFunc
 from numba.extending import intrinsic, overload
 from numpy.typing import NDArray
+
+if TYPE_CHECKING:
+    from numba.core.dispatcher import Dispatcher
 
 # A custom distance function takes 2 rows of the vectors, each a 1-D float32 array, and returns their distance.
 # It is a numba dispatcher, or, with JIT compilation off, the plain Python function that `numba.njit` returns.
@@ -75,12 +79,13 @@ def _compile_wrapper(distance_function: CustomDistanceFunction) -> CFunc:
     compiles with its caller's fastmath flags, so the wrapper needs the user's flags to compute what the
     user's function computes.
     """
-    # ty does not know a dispatcher's attributes, `targetoptions` and `py_func`
-    target_options = distance_function.targetoptions  # ty: ignore[unresolved-attribute]
+    # only called with JIT compilation on, where `numba.njit` returns a dispatcher
+    dispatcher = cast("Dispatcher", distance_function)
+    target_options = dispatcher.targetoptions
     # `numba.njit` warns when it is given `nopython`, and the inlined copy sets its own `inline`, so neither of
     # the user's values is passed on.
     options = {name: value for name, value in target_options.items() if name not in ("nopython", "inline")}
-    python_function = distance_function.py_func  # ty: ignore[unresolved-attribute]
+    python_function = dispatcher.py_func
     inlined_function = numba.njit(inline="always", **options)(python_function)
 
     @numba.cfunc(_WRAPPER_SIGNATURE, **options)
