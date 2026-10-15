@@ -22,6 +22,8 @@ max-div compiles its numerical functions with numba the first time they are used
 
 The first solve in a fresh environment therefore takes longer, from a few seconds to about a minute depending on the machine and on which solver features the solve uses; later runs load the compiled code from the cache.
 
+To pay that cost at a moment of your choice, for example when your application starts or before you time a solve, call `max_div.numba_precompile()`. It compiles every function, so that later solves in the same process compile nothing.
+
 ## Basic Usage
 
 ### 1. Define a problem

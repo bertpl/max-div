@@ -226,6 +226,7 @@ nav:
       - Core:
         - MaxDivSolver: reference/solver/MaxDivSolver.md
         - MaxDivSolverBuilder: reference/solver/MaxDivSolverBuilder.md
+        - numba_precompile: reference/solver/numba_precompile.md
       - Presets & Strategies:
         - SolverPreset: reference/solver/SolverPreset.md
         - InitializationStrategy: reference/solver/InitializationStrategy.md

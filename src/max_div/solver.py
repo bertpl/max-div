@@ -2,6 +2,7 @@
 
 from ._core._warnings import ParallelSolvingWarning, SolverBudgetWarning
 from ._core.distance_storage import DistanceStorageType
+from ._core.numba_precompile import numba_precompile
 from ._core.solver import (
     ConstraintPenalty,
     InitializationStrategy,
@@ -48,6 +49,7 @@ __all__ = [
     "hours",
     "iterations",
     "minutes",
+    "numba_precompile",
     "seconds",
 ]
 
