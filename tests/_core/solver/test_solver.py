@@ -366,7 +366,7 @@ def test_a_solve_frees_its_state_without_the_cyclic_collector(monkeypatch: pytes
     vectors = np.random.default_rng(0).random((200, 3)).astype(np.float32)
     problem = MaxDivProblem.new(vectors, k=10)
 
-    def solve() -> None:
+    def run_short_solve() -> None:
         """Run a short solve and drop its solution."""
         (
             MaxDivSolverBuilder(problem)
@@ -376,12 +376,14 @@ def test_a_solve_frees_its_state_without_the_cyclic_collector(monkeypatch: pytes
             .solve(verbosity=Verbosity.SILENT)
         )
 
-    # A solve during which numba compiles creates a reference cycle of numba's own: an error that
-    # numba records while inferring types holds a traceback, and the traceback's frames reach up to
-    # the solver's frames, which hold the state.  The warm-up solve compiles every function that
-    # the solve calls, so in the measured solve below only the solver's own cycles can keep the
-    # state alive.
-    solve()
+    # A solve during which numba compiles also creates a reference cycle through numba's objects:
+    # an error that numba records while inferring types holds a traceback, and the traceback's
+    # frames refer to the solver's frames, which hold the state.
+    #
+    # Calling `run_short_solve()` once here, before the measurement, compiles every function that
+    # a solve calls, so in the measured solve below only the solver's own cycles can keep the state
+    # alive.
+    run_short_solve()
 
     seen: list[weakref.ref] = []
     original_new = SolverState.new.__func__
@@ -398,7 +400,7 @@ def test_a_solve_frees_its_state_without_the_cyclic_collector(monkeypatch: pytes
     gc.collect()
     gc.disable()
     try:
-        solve()
+        run_short_solve()
         still_alive = [ref for ref in seen if ref() is not None]
     finally:
         gc.enable()
