@@ -6,6 +6,7 @@ Terms used across the documentation, defined once. Each entry carries a stable a
 [Constraint group](#constraint-group) ·
 [Constraint weight](#constraint-weight) ·
 [Constraint-violation penalty](#constraint-violation-penalty) ·
+[Custom distance function](#custom-distance-function) ·
 [Dispersion](#dispersion) ·
 [Distance metric](#distance-metric) ·
 [Diversity contribution](#diversity-contribution) ·
@@ -62,6 +63,10 @@ or quadratic. Linear treats every unit of violation alike; quadratic punishes on
 far more than several small ones, which pushes the solver toward spreading its shortfalls when it
 cannot satisfy everything.
 
+## Custom distance function { #custom-distance-function }
+
+A `numba.njit` function that you write to compute the distance between 2 [vectors](#vector), passed to `DistanceMetric.custom()` as the [distance metric](#distance-metric). Unlike [precomputed distances](#precomputed-distances), it also works with [lazy distance storage](distance_storage.md). See [Getting Started](../getting_started.md#your-own-distances).
+
 ## Dispersion { #dispersion }
 
 The operations-research term for the family of problems max-div solves: choose a subset that is
@@ -74,13 +79,9 @@ its literature family.
 
 ## Distance metric { #distance-metric }
 
-The rule for measuring how far apart two items are: Euclidean, squared Euclidean, Manhattan, or
-cosine. It is chosen once per problem and determines every pairwise distance the solver reads,
-so it is moot when distances are supplied as [precomputed distances](#precomputed-distances)
-instead. The choice interacts with the
-[diversity metric](#diversity-metric): squared Euclidean and plain Euclidean, for instance, yield
-identical selections under [geometric-mean separation](#geometric-mean-separation), because
-squaring preserves the ordering of distances. See [Diversity & distance](diversity.md).
+The rule for measuring how far apart 2 items are: a built-in metric, such as Euclidean or cosine distance, or a [custom distance function](#custom-distance-function). The distance metric is chosen once per problem and determines every pairwise distance that the solver reads, so it is moot when distances are supplied as [precomputed distances](#precomputed-distances) instead.
+
+The choice interacts with the [diversity metric](#diversity-metric): squared Euclidean and plain Euclidean, for instance, yield identical selections under [geometric-mean separation](#geometric-mean-separation), because squaring preserves the ordering of distances. See [Diversity & distance](diversity.md).
 
 ## Diversity contribution { #diversity-contribution }
 
@@ -216,7 +217,8 @@ or only a partition into disjoint strata. See [Constraints](constraints.md).
 ## Precomputed distances { #precomputed-distances }
 
 Pairwise distances supplied directly, instead of [vectors](#vector) for max-div to compute them
-from — the way to use a custom or non-Euclidean measure. Either a square *n*×*n* symmetric matrix
+from — one of the 2 ways to use a distance that max-div does not implement, the other being a
+[custom distance function](#custom-distance-function). Either a square *n*×*n* symmetric matrix
 or a condensed array of the *n*(*n*−1)/2 unique values (the layout
 `scipy.spatial.distance.pdist` returns) is accepted. The solver reads from a full *n*×*n* matrix
 throughout, which makes each [swap](#swap) cheap, so a condensed input is expanded into one (see
