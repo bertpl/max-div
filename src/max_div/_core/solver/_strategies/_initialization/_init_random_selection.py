@@ -40,6 +40,10 @@ class InitRandomSelection(InitializationStrategy):
                 con_values=state.con_values,
                 con_indices=state.con_indices,
                 rng_state=self._rng_state,
+                p=P_UNIFORM,
+                eager=False,
+                k_context=np.int32(-1),
+                i_forbidden=np.empty(0, dtype=np.int32),
             )
         else:
             # don't take constraints into account

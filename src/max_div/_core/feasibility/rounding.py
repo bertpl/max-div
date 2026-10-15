@@ -6,17 +6,17 @@ individual draws deviate only by sampling fluctuation.  Different draws land in 
 the property that makes rounding-based initializations vary with the seed.
 """
 
-import numba
 import numpy as np
 from numpy.typing import NDArray
 
 from max_div._core._random import rand_float64
+from max_div._core.jit import lazy_njit
 
 from .evaluation import _selection_counts, _weighted_violation
 from .repair import _repair_selection
 
 
-@numba.njit(cache=True)
+@lazy_njit("int64[::1](float64[::1], int64, uint64[::1])", cache=True)
 def systematic_sample(marginals: NDArray[np.float64], k: int, rng_state: NDArray[np.uint64]) -> NDArray[np.int64]:
     """Draw a selection of exactly `k` items with per-item inclusion probabilities `marginals`.
 
@@ -61,7 +61,7 @@ def systematic_sample(marginals: NDArray[np.float64], k: int, rng_state: NDArray
     return selection
 
 
-@numba.njit(cache=True)
+@lazy_njit("void(float64[::1], int64[::1], int64, int64)", cache=True)
 def _top_up_selection(marginals: NDArray[np.float64], selection: NDArray[np.int64], n_selected: int, k: int) -> None:
     """Fill `selection[n_selected:k]` in place with the largest-marginal items not yet selected.
 
@@ -93,7 +93,11 @@ def _top_up_selection(marginals: NDArray[np.float64], selection: NDArray[np.int6
         n_selected += 1
 
 
-@numba.njit(cache=True)
+@lazy_njit(
+    "Tuple((int64[::1], float64))(float64[::1], int64, uint64[::1], int32[::1], int64[::1], int32[::1], int64[::1], "
+    "int64[::1], float64[::1], int64)",
+    cache=True,
+)
 def sample_and_repair(
     marginals: NDArray[np.float64],
     k: int,
@@ -143,7 +147,11 @@ def sample_and_repair(
     return out, violation
 
 
-@numba.njit(cache=True)
+@lazy_njit(
+    "Tuple((int64[::1], float64))(float64[::1], int64, int32[::1], int64[::1], int32[::1], int64[::1], int64[::1], "
+    "float64[::1], int64)",
+    cache=True,
+)
 def deterministic_round(
     marginals: NDArray[np.float64],
     k: int,
@@ -193,7 +201,7 @@ def deterministic_round(
     return out, violation
 
 
-@numba.njit(cache=True)
+@lazy_njit("float64(int64[::1], int64[::1], int32[::1], int64[::1], int64[::1], float64[::1])", cache=True)
 def selection_violation(
     selection: NDArray[np.int64],
     item_indptr: NDArray[np.int64],

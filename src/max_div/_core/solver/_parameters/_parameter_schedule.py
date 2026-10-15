@@ -4,9 +4,10 @@ With 'scheduling' we refer to letting parameters evolve according to a certain s
  executing of a SolverStep, based on the progress fraction in [0.0, 1.0].
 """
 
-import numba
 import numpy as np
 from numpy.typing import NDArray
+
+from max_div._core.jit import lazy_njit
 
 from .base import ParameterValueSource
 
@@ -162,7 +163,7 @@ def _schedules_to_2d_numpy_array(schedules: list[ParameterSchedule]) -> NDArray[
     return arr
 
 
-@numba.njit(fastmath=True, inline="always", cache=True)
+@lazy_njit("float64[::1](float64[:, ::1], float64)", fastmath=True, inline="always", cache=True)
 def _evaluate_schedules(schedules_array: NDArray[np.float64], f: float) -> NDArray[np.float64]:
     """Evaluate multiple ParameterSchedule instances at once, given their numpy array representation.
 

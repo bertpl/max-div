@@ -2,7 +2,6 @@ import math
 from functools import lru_cache
 from itertools import product
 
-import numba
 import numpy as np
 from numpy._typing import NDArray
 
@@ -12,6 +11,7 @@ from max_div._core._math.fast_pow._fast_pow import _D_E1 as d1_current
 from max_div._core._math.fast_pow._fast_pow import _D_L0 as c0_current
 from max_div._core._math.fast_pow._fast_pow import _D_L1 as c1_current
 from max_div._core._math.optimization import minimize_nd_random
+from max_div._core.jit import lazy_njit
 
 
 # ==================================================================================================
@@ -130,7 +130,7 @@ class Cost:
 # ==================================================================================================
 #  Cost Function - NUMBA
 # ==================================================================================================
-@numba.njit(cache=True)
+@lazy_njit("float64[::1](float64[::1], float64[::1], float64, float64, float64, float64, float64, float64)", cache=True)
 def pow2_approx_array(
     x_arr: np.ndarray, t_arr: np.ndarray, c0: float, c1: float, c2: float, d0: float, d1: float, d2: float
 ) -> np.ndarray:

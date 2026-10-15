@@ -1,7 +1,7 @@
-import numba
 import numpy as np
 
 from max_div._core._math.optimization import minimize_nd_random
+from max_div._core.jit import lazy_njit
 
 
 # ==================================================================================================
@@ -142,7 +142,7 @@ class Cost:
 # ==================================================================================================
 #  Cost Function - NUMBA
 # ==================================================================================================
-@numba.njit(cache=True)
+@lazy_njit("float64[::1](float64[::1], float64, float64, float64)", cache=True)
 def log2_approx_array(x_arr: np.ndarray, c0: float, c1: float, c2: float) -> np.ndarray:
     n = x_arr.shape[0]
     result = np.empty(n, dtype=np.float64)
@@ -151,7 +151,7 @@ def log2_approx_array(x_arr: np.ndarray, c0: float, c1: float, c2: float) -> np.
     return result
 
 
-@numba.njit(cache=True)
+@lazy_njit("float64[::1](float64[::1], float64, float64, float64)", cache=True)
 def exp2_approx_array(x_arr: np.ndarray, c0: float, c1: float, c2: float) -> np.ndarray:
     n = x_arr.shape[0]
     result = np.empty(n, dtype=np.float64)
@@ -160,7 +160,7 @@ def exp2_approx_array(x_arr: np.ndarray, c0: float, c1: float, c2: float) -> np.
     return result
 
 
-@numba.njit(inline="always", cache=True)
+@lazy_njit("float64(float64, float64, float64, float64)", inline="always", cache=True)
 def log2_approx(x: float, c0: float, c1: float, c2: float) -> float:
     """Only efficient for x in or close to [0.5, 1]."""
     if x <= 0:
@@ -179,7 +179,7 @@ def log2_approx(x: float, c0: float, c1: float, c2: float) -> float:
     return offset + (c0 + (c1 * x) + (c2 * x * x))
 
 
-@numba.njit(inline="always", cache=True)
+@lazy_njit("float64(float64, float64, float64, float64)", inline="always", cache=True)
 def exp2_approx(x: float, d0: float, d1: float, d2: float) -> float:
     """Only efficient for x in or close to [0, 1]."""
     # make sure x is in [0.0, 1.0]

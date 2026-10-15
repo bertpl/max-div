@@ -4,9 +4,10 @@
 and apply the moves.
 """
 
-import numba
 import numpy as np
 from numpy.typing import NDArray
+
+from max_div._core.jit import lazy_njit
 
 from .evaluation import _weighted_violation
 
@@ -15,7 +16,7 @@ SWAP_CAP_MIN = 500  # minimum swap budget (strict improvement already guarantees
 TIE_TOL = 1e-12  # improvement threshold for repair swaps
 
 
-@numba.njit(cache=True)
+@lazy_njit("float64(int64, int64[::1], int32[::1], int64[::1], int64[::1], int64[::1], float64[::1])", cache=True)
 def _add_gain(
     item: int,
     item_indptr: NDArray[np.int64],
@@ -50,7 +51,7 @@ def _add_gain(
     return gain
 
 
-@numba.njit(cache=True)
+@lazy_njit("float64(int64, int64[::1], int32[::1], int64[::1], int64[::1], int64[::1], float64[::1])", cache=True)
 def _remove_gain(
     item: int,
     item_indptr: NDArray[np.int64],
@@ -84,7 +85,7 @@ def _remove_gain(
     return gain
 
 
-@numba.njit(cache=True)
+@lazy_njit("int64(int64[::1], int64[::1], int64[::1], float64[::1])", cache=True)
 def _worst_violated_constraint(
     counts: NDArray[np.int64],
     con_min: NDArray[np.int64],
@@ -114,7 +115,11 @@ def _worst_violated_constraint(
     return worst
 
 
-@numba.njit(cache=True)
+@lazy_njit(
+    "Tuple((int64, float64))(int64, boolean, int32[::1], int64[::1], int32[::1], boolean[::1], int64[::1], int64[::1], "
+    "int64[::1], float64[::1])",
+    cache=True,
+)
 def _best_member_move(
     worst: int,
     short: bool,
@@ -161,7 +166,11 @@ def _best_member_move(
     return best_item, best_gain
 
 
-@numba.njit(cache=True)
+@lazy_njit(
+    "Tuple((int64, float64))(int64, boolean, int64[::1], int32[::1], boolean[::1], int64[::1], int64[::1], int64[::1], "
+    "float64[::1])",
+    cache=True,
+)
 def _best_counterpart_move(
     primary_item: int,
     short: bool,
@@ -206,7 +215,7 @@ def _best_counterpart_move(
     return best_item, best_gain
 
 
-@numba.njit(cache=True)
+@lazy_njit("void(int64, int64, int64[::1], int32[::1], boolean[::1], int64[::1])", cache=True)
 def _apply_swap(
     add_item: int,
     remove_item: int,
@@ -233,7 +242,11 @@ def _apply_swap(
         counts[item_cons[e]] -= 1
 
 
-@numba.njit(cache=True)
+@lazy_njit(
+    "float64(int32[::1], int64[::1], int32[::1], int64[::1], int64[::1], float64[::1], boolean[::1], int64[::1], "
+    "int64)",
+    cache=True,
+)
 def _repair_selection(
     con_indices: NDArray[np.int32],
     item_indptr: NDArray[np.int64],

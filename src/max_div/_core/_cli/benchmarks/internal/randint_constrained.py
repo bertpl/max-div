@@ -206,6 +206,8 @@ def _benchmark(
                 p=p,
                 rng_state=rng_state,
                 eager=eager,
+                k_context=np.int32(-1),
+                i_forbidden=np.empty(0, dtype=np.int32),
             )
 
     return TableTimeElapsed.from_benchmark_result(
@@ -254,6 +256,8 @@ def _determine_precision(
                 p=p,
                 rng_state=rng_state,
                 eager=(mode == "eager"),
+                k_context=np.int32(-1),
+                i_forbidden=np.empty(0, dtype=np.int32),
             )
 
         # Check if all constraints are satisfied

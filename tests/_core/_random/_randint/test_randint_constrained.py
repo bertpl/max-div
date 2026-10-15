@@ -54,6 +54,8 @@ def test_randint_constrained_basic(seed: int, eager: bool, p_mode: str) -> None:
         p=p,
         rng_state=rng_state,
         eager=eager,
+        k_context=np.int32(-1),
+        i_forbidden=np.empty(0, dtype=np.int32),
     )
 
     # --- assert -----------------------
@@ -109,6 +111,8 @@ def test_randint_constrained_infeasible(seed: int, eager: bool, p_mode: str) -> 
         p=p,
         rng_state=rng_state,
         eager=eager,
+        k_context=np.int32(-1),
+        i_forbidden=np.empty(0, dtype=np.int32),
     )
 
     # --- assert -----------------------
@@ -168,6 +172,7 @@ def test_randint_constrained_k_context(k_context: int, seed: int):
         rng_state=rng_state,
         eager=False,
         k_context=np.int32(k_context),
+        i_forbidden=np.empty(0, dtype=np.int32),
     )
 
     # --- assert -----------------------
@@ -220,6 +225,7 @@ def test_randint_constrained_i_forbidden_validation(k, n, n_forbidden, expected_
         p=p,
         rng_state=rng_state,
         eager=False,
+        k_context=np.int32(-1),
         i_forbidden=i_forbidden,
     )
 
@@ -266,6 +272,7 @@ def test_randint_constrained_i_forbidden_priorities(min_count: int, eager: bool)
         rng_state=rng_state,
         eager=eager,
         i_forbidden=i_forbidden,
+        k_context=np.int32(-1),
     )
 
     # --- assert -----------------------

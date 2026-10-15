@@ -1,5 +1,4 @@
 import numpy as np
-from numba import njit
 from numpy.typing import NDArray
 
 from max_div._core._random import randint1
@@ -44,7 +43,7 @@ def sample_truncated_poisson(
     return randint1(n=np.int32(p.shape[0]), p=p, rng_state=rng_state) + min_value
 
 
-@njit(fastmath=True, inline="always", cache=True)
+@lazy_njit("float32(int32, int32, float32)", fastmath=True, inline="always", cache=True)
 def truncated_poisson_expected_value(min_value: np.int32, max_value: np.int32, _lambda: np.float32) -> np.float32:
     """Compute expected value of a two-sided truncated Poisson distribution with given min, max & lambda values.
 
