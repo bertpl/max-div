@@ -15,7 +15,7 @@ from ._randint import randint1
 _SCORE_PENALTY_HARD_CONSTRAINT = np.int32(2**24)
 _SCORE_PENALTY_ALREADY_SAMPLED = np.int32(2**30)
 
-# to be used to indicate that no integer is forbidden
+# Pass as i_forbidden to randint_constrained when no integer is forbidden.
 I_FORBIDDEN_NONE = np.empty(0, dtype=np.int32)
 
 
@@ -130,10 +130,10 @@ def randint_constrained(  # noqa: C901 — case-dispatch structure is clearer un
         eager: if True, the algorithm will try to satisfy as many constraints as early as possible; in some cases
             increasing the probability of finding a feasible solution, albeit at the cost of sampling diversity
             and adherence to the provided p-values.
-        k_context: number of total samples - in the bigger context - that we want to sample in order to
-            satisfy the constraints.  This informs the algorithm about the urgency of fulfilling
-            constraints, giving it potentially more liberty to pick from a wider range of samples and with
-            potentially higher p-values.
+        k_context: total number of samples, including the k of this call and any that later calls will draw,
+            that must together satisfy the constraints.  This informs the algorithm about the urgency of
+            fulfilling constraints, giving it potentially more liberty to pick from a wider range of samples and
+            with potentially higher p-values.
 
                       Two cases:
                         a) <=k (for example -1):  the algorithm assumes k_context = k
@@ -172,7 +172,6 @@ def randint_constrained(  # noqa: C901 — case-dispatch structure is clearer un
     # avoiding issues later on when we exclude certain elements due to constraint-violation, which might otherwise
     # cause all p-values to become zero.
     if p.size == 0:
-        # empty p (P_UNIFORM) --> uniform
         p_aug = np.ones(n, dtype=np.float32)
     else:
         # determine p_max

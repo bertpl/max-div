@@ -42,10 +42,10 @@ def choice_constrained(
         eager: if True, the algorithm will try to satisfy as many constraints as early as possible; in some cases
             increasing the probability of finding a feasible solution, albeit at the cost of sampling diversity
             and adherence to the provided p-values.
-        k_context: number of total samples - in the bigger context - that we want to sample in order to
-            satisfy the constraints.  This informs the algorithm about the urgency of fulfilling
-            constraints, giving it potentially more liberty to pick from a wider range of samples and with
-            potentially higher p-values.
+        k_context: total number of samples, including the k of this call and any that later calls will draw,
+            that must together satisfy the constraints.  This informs the algorithm about the urgency of
+            fulfilling constraints, giving it potentially more liberty to pick from a wider range of samples and
+            with potentially higher p-values.
 
                       Two cases:
                         a) <=k (for example -1):  the algorithm assumes k_context = k
