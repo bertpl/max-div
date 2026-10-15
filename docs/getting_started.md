@@ -26,6 +26,8 @@ To compile at a moment of your choice, for example when your application starts 
 
 The one exception is a `DistanceMetric.custom()` metric: each one compiles a wrapper around its distance function, in under a second.
 
+`max_div.numba_precompile()` compiles in parallel processes, each of which imports your main module again, so a script must call it under `if __name__ == "__main__":`, or pass `n_processes=1` to compile in this process only.
+
 ## Basic Usage
 
 ### 1. Define a problem
