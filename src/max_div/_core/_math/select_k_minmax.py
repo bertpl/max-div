@@ -15,6 +15,7 @@ from max_div._core.jit import lazy_njit
     ["int32[:](float32[:], int32)", "int32[:](float64[:], int32)"],
     fastmath={"reassoc", "contract"},
     inline="always",
+    is_inline_only=True,
     cache=True,
 )
 def select_k_min(arr: NDArray[np.float32] | NDArray[np.float64], k: np.int32) -> NDArray[np.int32]:  # noqa: C901 — case-dispatch structure is clearer un-split
@@ -147,6 +148,7 @@ def select_k_min(arr: NDArray[np.float32] | NDArray[np.float64], k: np.int32) ->
     ["int32[:](float32[:], int32)", "int32[:](float64[:], int32)"],
     fastmath={"reassoc", "contract"},
     inline="always",
+    is_inline_only=False,
     cache=True,
 )
 def select_k_max(arr: NDArray[np.float32] | NDArray[np.float64], k: np.int32) -> NDArray[np.int32]:  # noqa: C901 — case-dispatch structure is clearer un-split
@@ -384,6 +386,7 @@ def select_k_max_masked(  # noqa: C901 — case-dispatch structure is clearer un
 @lazy_njit(
     numba.void(numba.float32[:], numba.int32[:], numba.int64, numba.int64),
     inline="always",
+    is_inline_only=True,
     cache=True,
     fastmath={"reassoc", "contract"},
 )

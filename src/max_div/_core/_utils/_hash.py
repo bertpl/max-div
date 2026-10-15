@@ -20,7 +20,7 @@ def deterministic_hash_int64(obj: object) -> np.int64:
     return int_to_int64(deterministic_hash(obj))
 
 
-@lazy_njit("int32[::1](int32[::1], int64)", fastmath=True, inline="always", cache=True)
+@lazy_njit("int32[::1](int32[::1], int64)", fastmath=True, inline="always", is_inline_only=False, cache=True)
 def np_int32_array_var_length_hash(arr: NDArray[np.int32], n: int) -> NDArray[np.int32]:
     """Takes the input array and creates an output array of length n, that represents a var-length hash of the input."""
     # create output array

@@ -1,6 +1,7 @@
 import numpy as np
 
 from max_div._core._math.modify_p_selectivity._helpers import _p_max
+from tests.helpers import callable_from_python
 
 
 def test_modify_p_helpers_p_max():
@@ -10,9 +11,9 @@ def test_modify_p_helpers_p_max():
     p_3 = np.array([], dtype=np.float32)
 
     # --- act --------------------------
-    p_max_1 = _p_max(p_1)
-    p_max_2 = _p_max(p_2)
-    p_max_3 = _p_max(p_3)
+    p_max_1 = callable_from_python(_p_max)(p_1)
+    p_max_2 = callable_from_python(_p_max)(p_2)
+    p_max_3 = callable_from_python(_p_max)(p_3)
 
     # --- assert -----------------------
     assert p_max_1 == np.float32(0.345)

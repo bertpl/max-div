@@ -4,6 +4,7 @@ import pytest
 from max_div._core._random import new_rng_state
 from max_div._core._random._distributions import sample_modified_power_distribution
 from max_div._core._random._distributions._modified_power import _modified_power_transform
+from tests.helpers import callable_from_python
 
 
 @pytest.mark.parametrize("m", [0.01, 0.1, 0.2, 0.5, 0.8, 0.9, 0.99])
@@ -31,9 +32,9 @@ def test_sample_symmetric_power_distribution_edge_cases():
 @pytest.mark.parametrize("m", [0.01, 0.1, 0.2, 0.5, 0.8, 0.9, 0.99])
 def test_modified_power_transformation(m: float):
     # --- act --------------------------
-    f0_0 = _modified_power_transform(np.float32(0.0), np.float32(m))
-    f0_5 = _modified_power_transform(np.float32(0.5), np.float32(m))
-    f1_0 = _modified_power_transform(np.float32(1.0), np.float32(m))
+    f0_0 = callable_from_python(_modified_power_transform)(np.float32(0.0), np.float32(m))
+    f0_5 = callable_from_python(_modified_power_transform)(np.float32(0.5), np.float32(m))
+    f1_0 = callable_from_python(_modified_power_transform)(np.float32(1.0), np.float32(m))
 
     # --- assert -----------------------
     assert f0_0 == 0.0

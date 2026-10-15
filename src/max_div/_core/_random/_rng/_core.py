@@ -47,13 +47,13 @@ _TINY_F32 = np.float32((2**-8) * np.finfo(float32).eps)  # small (<< EPS_F32) no
 # ==================================================================================================
 #  Core
 # ==================================================================================================
-@lazy_njit("uint64(uint64,uint64)", fastmath=True, inline="always", cache=True)
+@lazy_njit("uint64(uint64,uint64)", fastmath=True, inline="always", is_inline_only=True, cache=True)
 def rotl(x: uint64, k: uint64) -> uint64:
     """Rotate left operation."""
     return (x << k) | (x >> (uint64(64) - k))
 
 
-@lazy_njit("uint64(uint64[:])", fastmath=True, inline="always", cache=True)
+@lazy_njit("uint64(uint64[:])", fastmath=True, inline="always", is_inline_only=True, cache=True)
 def _xoroshiro128plus_next(rng_state: NDArray[uint64]) -> uint64:
     """Generate next random uint64 and update state in-place."""
     s0 = rng_state[0]
@@ -67,7 +67,7 @@ def _xoroshiro128plus_next(rng_state: NDArray[uint64]) -> uint64:
     return result
 
 
-@lazy_njit("uint64(uint64[:])", fastmath=True, inline="always", cache=True)
+@lazy_njit("uint64(uint64[:])", fastmath=True, inline="always", is_inline_only=True, cache=True)
 def _splitmix64_next(init_state: NDArray[uint64]) -> uint64:
     """Used to initialize xoroshiro128+ state from single seed; init_state is a 1-element array, modified in-place."""
     z = init_state[0] + uint64(0x9E3779B97F4A7C15)

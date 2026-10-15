@@ -9,6 +9,7 @@ from max_div._core.metrics._distance import (
 )
 from max_div._core.metrics._distance._store import KIND_FULL_MATRIX, KIND_LAZY
 from tests._core.metrics._distance.helpers import condensed_distances
+from tests.helpers import callable_from_python
 
 
 # -------------------------------------------------------------------------
@@ -25,7 +26,7 @@ def test_get_distance_full_matrix_values(i: int, j: int):
     expected_value = squareform(pdist(vectors))[i, j]
 
     # --- act --------------------------
-    value = get_distance(store, np.int32(i), np.int32(j))
+    value = callable_from_python(get_distance)(store, np.int32(i), np.int32(j))
 
     # --- assert -----------------------
     assert value == pytest.approx(expected_value)
@@ -146,7 +147,9 @@ def _distances_per_backend(vectors: np.ndarray, metric: DistanceMetric) -> dict[
     """Every pair distance, from every backend, as one matrix per backend."""
     n = vectors.shape[0]
     return {
-        name: np.array([[get_distance(store, np.int32(i), np.int32(j)) for j in range(n)] for i in range(n)])
+        name: np.array(
+            [[callable_from_python(get_distance)(store, np.int32(i), np.int32(j)) for j in range(n)] for i in range(n)]
+        )
         for name, store in _all_backend_stores(vectors, metric).items()
     }
 

@@ -32,7 +32,7 @@ _DIGIT_MASK = np.uint32(_N_DIGIT_VALUES - 1)
 _SIGN_BIT = np.uint32(0x80000000)
 
 
-@lazy_njit("float32[::1](float32[::1])", inline="always", cache=True)
+@lazy_njit("float32[::1](float32[::1])", inline="always", is_inline_only=True, cache=True)
 def sorted_copy_f32(values: NDArray[np.float32]) -> NDArray[np.float32]:
     """Return the values in ascending order, as a new array; `values` is left unchanged.
 
@@ -76,7 +76,7 @@ def sorted_copy_f32(values: NDArray[np.float32]) -> NDArray[np.float32]:
 #  Helpers
 # ==================================================================================================
 # Numba compiles these, so they are module-level functions.
-@lazy_njit("Tuple((uint32[::1], int32[:, ::1]))(float32[::1])", inline="always", cache=True)
+@lazy_njit("Tuple((uint32[::1], int32[:, ::1]))(float32[::1])", inline="always", is_inline_only=True, cache=True)
 def _keys_and_digit_counts(values: NDArray[np.float32]) -> tuple[NDArray[np.uint32], NDArray[np.int32]]:
     """Return the sort key of each value, and per digit position the number of keys with each digit value.
 
@@ -98,7 +98,7 @@ def _keys_and_digit_counts(values: NDArray[np.float32]) -> tuple[NDArray[np.uint
     return keys, counts
 
 
-@lazy_njit("float32[::1](uint32[::1])", inline="always", cache=True)
+@lazy_njit("float32[::1](uint32[::1])", inline="always", is_inline_only=True, cache=True)
 def _values_from_keys(keys: NDArray[np.uint32]) -> NDArray[np.float32]:
     """Return the float32 value of each sort key, undoing the order-preserving transform."""
     n = keys.shape[0]

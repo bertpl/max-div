@@ -32,7 +32,7 @@ _S22 = np.float32(_D22)
 # -------------------------------------------------------------------------
 #  Fast approximations for np.log2
 # -------------------------------------------------------------------------
-@lazy_njit(numba.float64(numba.float64), fastmath=True, inline="always", cache=True)
+@lazy_njit(numba.float64(numba.float64), fastmath=True, inline="always", is_inline_only=True, cache=True)
 def fast_exp2_f64(x: np.float64) -> np.float64:
     """Fast exp approximation using 2nd order polynomial after range reduction.
 
@@ -49,7 +49,7 @@ def fast_exp2_f64(x: np.float64) -> np.float64:
     return np.float64(math.ldexp(exp2_f, int(k)))
 
 
-@lazy_njit(numba.float32(numba.float32), fastmath=True, inline="always", cache=True)
+@lazy_njit(numba.float32(numba.float32), fastmath=True, inline="always", is_inline_only=True, cache=True)
 def fast_exp2_f32(x: np.float32) -> np.float32:
     """Fast exp2 approximation using 2nd order polynomial after range reduction.
 
@@ -69,7 +69,7 @@ def fast_exp2_f32(x: np.float32) -> np.float32:
 # -------------------------------------------------------------------------
 #  Fast approximations for np.exp
 # -------------------------------------------------------------------------
-@lazy_njit(numba.float64(numba.float64), fastmath=True, inline="always", cache=True)
+@lazy_njit(numba.float64(numba.float64), fastmath=True, inline="always", is_inline_only=True, cache=True)
 def fast_exp_f64(x: np.float64) -> np.float64:
     """Fast exp approximation using 2nd order polynomial after range reduction.
 
@@ -78,7 +78,7 @@ def fast_exp_f64(x: np.float64) -> np.float64:
     return fast_exp2_f64(_D_LOG2_E * x)
 
 
-@lazy_njit(numba.float32(numba.float32), fastmath=True, inline="always", cache=True)
+@lazy_njit(numba.float32(numba.float32), fastmath=True, inline="always", is_inline_only=True, cache=True)
 def fast_exp_f32(x: np.float32) -> np.float32:
     """Fast exp approximation using 2nd order polynomial after range reduction.
 

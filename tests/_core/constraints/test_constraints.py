@@ -16,6 +16,7 @@ from max_div._core.constraints.constraints import (
     to_numpy_constraints,
     to_numpy_membership,
 )
+from tests.helpers import callable_from_python
 
 
 def test_constraint_default_weight():
@@ -252,9 +253,9 @@ def test_np_con_min_value():
     )
 
     # --- act & assert -----------------
-    assert _np_con_min_value(con_values, np.int32(0)) == 2
-    assert _np_con_min_value(con_values, np.int32(1)) == 0
-    assert _np_con_min_value(con_values, np.int32(2)) == 2
+    assert callable_from_python(_np_con_min_value)(con_values, np.int32(0)) == 2
+    assert callable_from_python(_np_con_min_value)(con_values, np.int32(1)) == 0
+    assert callable_from_python(_np_con_min_value)(con_values, np.int32(2)) == 2
 
 
 def test_np_con_max_value():
@@ -269,9 +270,9 @@ def test_np_con_max_value():
     )
 
     # --- act & assert -----------------
-    assert _np_con_max_value(con_values, np.int32(0)) == 3
-    assert _np_con_max_value(con_values, np.int32(1)) == 7
-    assert _np_con_max_value(con_values, np.int32(2)) == 2
+    assert callable_from_python(_np_con_max_value)(con_values, np.int32(0)) == 3
+    assert callable_from_python(_np_con_max_value)(con_values, np.int32(1)) == 7
+    assert callable_from_python(_np_con_max_value)(con_values, np.int32(2)) == 2
 
 
 def test_np_con_indices():
@@ -286,9 +287,15 @@ def test_np_con_indices():
     )
 
     # --- act & assert -----------------
-    assert np.array_equal(_np_con_indices(con_indices, np.int32(0)), np.array([0, 1, 2, 3, 4], dtype=np.int32))
-    assert np.array_equal(_np_con_indices(con_indices, np.int32(1)), np.array([10, 11, 12, 13], dtype=np.int32))
-    assert np.array_equal(_np_con_indices(con_indices, np.int32(2)), np.array([3, 11], dtype=np.int32))
+    assert np.array_equal(
+        callable_from_python(_np_con_indices)(con_indices, np.int32(0)), np.array([0, 1, 2, 3, 4], dtype=np.int32)
+    )
+    assert np.array_equal(
+        callable_from_python(_np_con_indices)(con_indices, np.int32(1)), np.array([10, 11, 12, 13], dtype=np.int32)
+    )
+    assert np.array_equal(
+        callable_from_python(_np_con_indices)(con_indices, np.int32(2)), np.array([3, 11], dtype=np.int32)
+    )
 
 
 @pytest.mark.parametrize(
@@ -311,7 +318,7 @@ def test_np_largest_con_index(i1_max: int, i2_max: int, i3_max: int, expected_re
     )
 
     # --- act --------------------------
-    result = _np_largest_con_index(con_indices)
+    result = callable_from_python(_np_largest_con_index)(con_indices)
 
     # --- assert -----------------------
     assert result == expected_result
@@ -429,4 +436,4 @@ def test_np_largest_con_index_skips_an_empty_segment():
     con_indices = np.array([4, 4, 4, 6, 4, 7], dtype=np.int32)
 
     # --- act & assert -----------------
-    assert _np_largest_con_index(con_indices) == 7
+    assert callable_from_python(_np_largest_con_index)(con_indices) == 7

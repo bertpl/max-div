@@ -1,4 +1,5 @@
 import pickle
+from collections.abc import Callable
 from types import MethodType, SimpleNamespace
 
 import numba
@@ -15,9 +16,15 @@ def _double(x: float) -> float:
     return 2.0 * x
 
 
-def _new_lazy_double() -> LazilyCompiledFunction:
-    """Return a new, uncompiled `LazilyCompiledFunction` around `_double` that numba does not cache on disk."""
-    return LazilyCompiledFunction(_double, "float64(float64)", {"cache": False})
+def _new_lazy_double(is_inline_only: bool = False) -> LazilyCompiledFunction:
+    """Return a new, uncompiled `LazilyCompiledFunction` around `_double` that numba does not cache on disk.
+
+    An inline-only one also sets `inline="always"`, as `lazy_njit` requires.
+    """
+    if is_inline_only:
+        return LazilyCompiledFunction(_double, "float64(float64)", {"cache": False, "inline": "always"}, True)
+    else:
+        return LazilyCompiledFunction(_double, "float64(float64)", {"cache": False})
 
 
 # The `LazilyCompiledFunction` replaces `_halve` under the same name, as `lazy_njit` would, so that pickling by
@@ -53,6 +60,45 @@ def test_lazy_njit_wraps_the_function_unless_the_jit_is_disabled(
         assert isinstance(decorated, LazilyCompiledFunction)
         assert not decorated.is_compiled
         assert LazilyCompiledFunction.instances() == (decorated,)
+
+
+@pytest.mark.parametrize(
+    "inline, is_inline_only, expected_is_inline_only",
+    [("always", True, True), ("always", False, False), (None, None, False)],
+)
+def test_lazy_njit_records_whether_the_function_is_inline_only(
+    monkeypatch: pytest.MonkeyPatch, inline: str | None, is_inline_only: bool | None, expected_is_inline_only: bool
+) -> None:
+    """`lazy_njit` accepts `is_inline_only` with `inline="always"`, and its absence without it."""
+    # --- arrange ----------------------
+    monkeypatch.setattr(numba.config, "DISABLE_JIT", False)
+    monkeypatch.setattr(LazilyCompiledFunction, "_instances", [])
+    options = {} if inline is None else {"inline": inline}
+
+    # --- act --------------------------
+    decorated = lazy_njit("float64(float64)", is_inline_only=is_inline_only, cache=False, **options)(_double)
+
+    # --- assert -----------------------
+    assert decorated.is_inline_only == expected_is_inline_only
+
+
+@pytest.mark.parametrize("is_jit_disabled", [False, True])
+@pytest.mark.parametrize(
+    "inline, is_inline_only",
+    [("always", None), (None, True), (None, False), ("never", True)],
+)
+def test_lazy_njit_requires_is_inline_only_exactly_with_inline_always(
+    monkeypatch: pytest.MonkeyPatch, is_jit_disabled: bool, inline: str | None, is_inline_only: bool | None
+) -> None:
+    """`lazy_njit` raises when `is_inline_only` is missing with `inline="always"`, or given without it."""
+    # --- arrange ----------------------
+    monkeypatch.setattr(numba.config, "DISABLE_JIT", is_jit_disabled)
+    options = {} if inline is None else {"inline": inline}
+    decorator = lazy_njit("float64(float64)", is_inline_only=is_inline_only, cache=False, **options)
+
+    # --- act / assert -----------------
+    with pytest.raises(ValueError, match="is_inline_only must be set exactly when"):
+        decorator(_double)
 
 
 # ==================================================================================================
@@ -107,11 +153,52 @@ def test_a_lazily_compiled_function_binds_as_a_method_when_read_from_an_instance
     assert not lazy_double.is_compiled
 
 
+@pytest.mark.parametrize("is_compiled_first", [False, True])
+def test_a_python_call_of_an_inline_only_function_raises(is_compiled_first: bool) -> None:
+    """A call from Python of an inline-only function raises `TypeError`, also once it is compiled."""
+    # --- arrange ----------------------
+    lazy_double = _new_lazy_double(is_inline_only=True)
+    if is_compiled_first:
+        lazy_double.compile()
+
+    # --- act / assert -----------------
+    with pytest.raises(TypeError, match="is inline-only, so only numba functions may call it"):
+        lazy_double(1.5)
+
+
+def test_the_compiled_function_of_an_inline_only_function_accepts_python_calls() -> None:
+    """`compile()` returns a compiled function that Python can call, which is how tests call inline-only functions."""
+    # --- arrange ----------------------
+    lazy_double = _new_lazy_double(is_inline_only=True)
+
+    # --- act --------------------------
+    result = lazy_double.compile()(1.5)
+
+    # --- assert -----------------------
+    assert result == 3.0
+
+
 @_needs_jit
-def test_compiling_an_njit_caller_compiles_the_function_it_calls() -> None:
+def test_passing_an_inline_only_function_from_python_to_an_njit_function_raises() -> None:
+    """numba's typing hook refuses an inline-only function that Python passes to an njit function as an argument."""
+    # --- arrange ----------------------
+    lazy_double = _new_lazy_double(is_inline_only=True)
+
+    def call_on(function: Callable[[float], float], x: float) -> float:
+        """Return `function(x)`."""
+        return function(x)
+
+    # --- act / assert -----------------
+    with pytest.raises(TypeError, match="is inline-only, so Python may not pass it to a numba function"):
+        numba.njit(call_on)(lazy_double, 1.5)
+
+
+@_needs_jit
+@pytest.mark.parametrize("is_inline_only", [False, True])
+def test_compiling_an_njit_caller_compiles_the_function_it_calls(is_inline_only: bool) -> None:
     """Compiling an njit function that calls a `LazilyCompiledFunction` compiles it too, through numba's typing hook."""
     # --- arrange ----------------------
-    lazy_double = _new_lazy_double()
+    lazy_double = _new_lazy_double(is_inline_only)
 
     def add_one_to_double(x: float) -> float:
         """Return twice `x`, plus 1."""

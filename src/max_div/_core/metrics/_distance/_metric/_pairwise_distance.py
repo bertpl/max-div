@@ -61,6 +61,7 @@ READONLY_F32_2D = numba.types.Array(numba.float32, 2, "C", readonly=True)
 @lazy_njit(
     numba.float64(READONLY_F32_2D, numba.int64, numba.int64),
     inline="always",
+    is_inline_only=True,
     cache=True,
     fastmath={"reassoc", "contract"},
 )
@@ -75,6 +76,7 @@ def _l1_distance(vectors: NDArray[np.float32], i: int | np.signedinteger, j: int
 @lazy_njit(
     numba.float64(READONLY_F32_2D, numba.int64, numba.int64),
     inline="always",
+    is_inline_only=True,
     cache=True,
     fastmath={"reassoc", "contract"},
 )
@@ -90,6 +92,7 @@ def _l2sq_distance(vectors: NDArray[np.float32], i: int | np.signedinteger, j: i
 @lazy_njit(
     numba.float64(READONLY_F32_2D, numba.int64, numba.int64),
     inline="always",
+    is_inline_only=True,
     cache=True,
     fastmath={"reassoc", "contract"},
 )
@@ -106,6 +109,7 @@ def _linf_distance(vectors: NDArray[np.float32], i: int | np.signedinteger, j: i
 @lazy_njit(
     numba.float64(READONLY_F32_2D, numba.int64, numba.int64),
     inline="always",
+    is_inline_only=True,
     cache=True,
     fastmath={"reassoc", "contract"},
 )
@@ -124,6 +128,7 @@ def _lminusinf_distance(
 @lazy_njit(
     numba.float64(READONLY_F32_2D, numba.int64, numba.int64, numba.float64),
     inline="always",
+    is_inline_only=True,
     cache=True,
     fastmath={"reassoc", "contract"},
 )
@@ -158,6 +163,7 @@ def _l2_and_projections_distance(
 @lazy_njit(
     numba.float64(READONLY_F32_2D, numba.int64, numba.int64, numba.float64),
     inline="always",
+    is_inline_only=True,
     cache=True,
     fastmath={"reassoc", "contract"},
 )
@@ -172,7 +178,12 @@ def _l2_and_projections_for_k_distance(
     return min(_lminusinf_distance(vectors, i, j), l2_factor * np.sqrt(_l2sq_distance(vectors, i, j)))
 
 
-@lazy_njit(numba.float64(READONLY_F32_2D, numba.int64, numba.int64, numba.float64), inline="always", cache=True)
+@lazy_njit(
+    numba.float64(READONLY_F32_2D, numba.int64, numba.int64, numba.float64),
+    inline="always",
+    is_inline_only=True,
+    cache=True,
+)
 def _custom_distance(
     vectors: NDArray[np.float32], i: int | np.signedinteger, j: int | np.signedinteger, address_as_float: float
 ) -> np.float64:
@@ -191,6 +202,7 @@ def _custom_distance(
 @lazy_njit(
     numba.float64(READONLY_F32_2D, numba.int64, numba.int64, numba.float64),
     inline="always",
+    is_inline_only=True,
     cache=True,
     fastmath={"reassoc", "contract"},
 )
@@ -207,6 +219,7 @@ def _minkowski_distance_powered(
 @lazy_njit(
     numba.float64(READONLY_F32_2D, numba.int64, numba.int64),
     inline="always",
+    is_inline_only=True,
     cache=True,
     fastmath={"reassoc", "contract"},
 )
@@ -223,6 +236,7 @@ def _minkowski_distance_powered_p05(
 @lazy_njit(
     numba.float64(READONLY_F32_2D, numba.int64, numba.int64),
     inline="always",
+    is_inline_only=True,
     cache=True,
     fastmath={"reassoc", "contract"},
 )
@@ -239,6 +253,7 @@ def _minkowski_distance_powered_p025(
 @lazy_njit(
     numba.float64(READONLY_F32_2D, numba.int64, numba.int64),
     inline="always",
+    is_inline_only=True,
     cache=True,
     fastmath={"reassoc", "contract"},
 )
@@ -255,6 +270,7 @@ def _minkowski_distance_powered_p0125(
 @lazy_njit(
     numba.float64(READONLY_F32_2D, numba.int64, numba.int64),
     inline="always",
+    is_inline_only=True,
     cache=True,
     fastmath={"reassoc", "contract"},
 )
@@ -273,7 +289,7 @@ def _geomean_distance(vectors: NDArray[np.float32], i: int | np.signedinteger, j
     return np.exp(log_sum / d)
 
 
-@lazy_njit(numba.float64(READONLY_F32_2D, numba.int64, numba.int64), inline="always", cache=True)
+@lazy_njit(numba.float64(READONLY_F32_2D, numba.int64, numba.int64), inline="always", is_inline_only=True, cache=True)
 def _along_axis_distance(
     vectors: NDArray[np.float32], i: int | np.signedinteger, j: int | np.signedinteger
 ) -> np.float64:
@@ -284,6 +300,7 @@ def _along_axis_distance(
 @lazy_njit(
     numba.float32(READONLY_F32_2D, numba.int32, numba.float64, numba.int32, numba.int32),
     inline="always",
+    is_inline_only=True,
     cache=True,
 )
 def _pairwise_distance(  # noqa: C901 -- flat dispatch, one arm per kind: complexity here is roster size, not tangledness

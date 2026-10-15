@@ -8,6 +8,7 @@ from max_div._core.metrics import (
     HybridAggregationGeometricMean,
     HybridAggregationMinimum,
 )
+from tests.helpers import callable_from_python
 
 
 def _random_rows(n_rows: int, n_terms: int) -> np.ndarray:
@@ -102,8 +103,8 @@ def test_an_aggregation_at_equal_weights_is_bit_for_bit_the_unweighted_mean(aggr
     score = aggregation.aggregate_scores(rows[0, :])
 
     # --- assert -----------------------
-    np.testing.assert_array_equal(aggregated_rows, [row_mean(rows[i, :]) for i in range(1000)])
-    assert score == float(row_mean(rows[0, :]))
+    np.testing.assert_array_equal(aggregated_rows, [callable_from_python(row_mean)(rows[i, :]) for i in range(1000)])
+    assert score == float(callable_from_python(row_mean)(rows[0, :]))
 
 
 # ==================================================================================================

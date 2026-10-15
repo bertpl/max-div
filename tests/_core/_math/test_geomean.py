@@ -2,6 +2,7 @@ import numpy as np
 import pytest
 
 from max_div._core._math.geomean import fast_geomean_f32, geomean_f32, weighted_geomean_per_row_f32
+from tests.helpers import callable_from_python
 
 # Positive normal floats only, the domain `fast_geomean_f32` is defined on, so both functions can
 # share these cases.
@@ -29,7 +30,7 @@ def test_geomean_f32(values: list[float], expected: float) -> None:
     values = np.array(values, dtype=np.float32)
 
     # --- act --------------------------
-    result = geomean_f32(values)
+    result = callable_from_python(geomean_f32)(values)
 
     # --- assert -----------------------
     assert result == pytest.approx(expected, rel=1e-6, abs=1e-6)
@@ -49,7 +50,7 @@ def test_fast_geomean_f32(values: list[float], expected: float, tol: float) -> N
     values = np.array(values, dtype=np.float32)
 
     # --- act --------------------------
-    result = fast_geomean_f32(values)
+    result = callable_from_python(fast_geomean_f32)(values)
 
     # --- assert -----------------------
     assert result == pytest.approx(expected, rel=tol, abs=tol)
@@ -68,7 +69,7 @@ def test_weighted_geomean_per_row_f32_at_equal_weights_is_geomean_f32_of_each_ro
     weighted_geomean_per_row_f32(values, np.ones(3, dtype=np.float32), out)
 
     # --- assert -----------------------
-    expected = np.array([geomean_f32(values[i, :]) for i in range(1000)], dtype=np.float32)
+    expected = np.array([callable_from_python(geomean_f32)(values[i, :]) for i in range(1000)], dtype=np.float32)
     np.testing.assert_array_equal(out, expected)
     assert out[0] == 0.0
     assert np.isinf(out[1])

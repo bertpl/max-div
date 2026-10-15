@@ -30,6 +30,7 @@ _DIAGONAL_ATOL = 1e-6
 @lazy_njit(
     "Tuple((int64, int64, int64, float64, float64))(float32[:, ::1], int64, int64, int64, int64)",
     inline="always",
+    is_inline_only=True,
     cache=True,
 )
 def _scan_square_block(

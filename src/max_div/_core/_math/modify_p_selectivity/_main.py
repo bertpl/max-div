@@ -21,7 +21,9 @@ __MODIFIER_MAX = np.float32(1.0 - 10.0 * EPS_F32)
 # ==================================================================================================
 #  Main Numba entrypoint
 # ==================================================================================================
-@lazy_njit("void(float32[::1], float32, int32, float32[::1])", fastmath=True, inline="always", cache=True)
+@lazy_njit(
+    "void(float32[::1], float32, int32, float32[::1])", fastmath=True, inline="always", is_inline_only=False, cache=True
+)
 def modify_p_selectivity(  # noqa: C901 — case-dispatch structure is clearer un-split
     p: NDArray[np.float32], modifier: np.float32, method: np.int32, p_out: NDArray[np.float32]
 ) -> None:

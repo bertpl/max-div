@@ -6,6 +6,7 @@ from numpy.typing import NDArray
 
 from max_div._core._random import P_UNIFORM, choice, choice1, randint
 from max_div._core._random._rng import new_rng_state
+from tests.helpers import callable_from_python
 
 
 # ==================================================================================================
@@ -63,7 +64,7 @@ def test_choice1(n_values: int, k: int, uniform: bool) -> None:
 
     # --- act --------------------------
     results = [
-        choice1(
+        callable_from_python(choice1)(
             values=values,
             p=p,
             rng_state=rng_state,

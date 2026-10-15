@@ -475,7 +475,7 @@ class SwapBasedOptimizationStrategy(OptimizationStrategy, ABC):
 # ==================================================================================================
 #  Helper classes
 # ==================================================================================================
-@lazy_njit("void(int64[:], boolean)", fastmath=True, inline="always", cache=True)
+@lazy_njit("void(int64[:], boolean)", fastmath=True, inline="always", is_inline_only=False, cache=True)
 def _update_success_rate_state(success_rate_state: NDArray[np.int64], success: bool) -> None:
     """Update success rate state in-place, based on provided success flag.
 
@@ -500,7 +500,7 @@ def _update_success_rate_state(success_rate_state: NDArray[np.int64], success: b
         success_rate_state[2 * n - 1] = it
 
 
-@lazy_njit("float64(int64[:])", fastmath=True, inline="always", cache=True)
+@lazy_njit("float64(int64[:])", fastmath=True, inline="always", is_inline_only=False, cache=True)
 def _estimate_success_rate(success_rate_state: NDArray[np.int64]) -> np.float64:
     """Estimates the success rate based on the provided success rate state.
 
