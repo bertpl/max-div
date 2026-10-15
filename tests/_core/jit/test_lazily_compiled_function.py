@@ -16,13 +16,17 @@ def _double(x: float) -> float:
     return 2.0 * x
 
 
-def _new_lazy_double(is_inline_only: bool = False) -> LazilyCompiledFunction:
+def _new_lazy_double(is_inline_only: bool | None = None) -> LazilyCompiledFunction:
     """Return a new, uncompiled `LazilyCompiledFunction` around `_double` that numba does not cache on disk.
 
-    An inline-only one also sets `inline="always"`, as `lazy_njit` requires.
+    `is_inline_only=None` declares no `inline` option; `True` or `False` also sets `inline="always"`, as `lazy_njit`
+    requires.
     """
-    options = {"cache": False, "inline": "always"} if is_inline_only else {"cache": False}
-    return LazilyCompiledFunction(_double, "float64(float64)", options, is_inline_only)
+    if is_inline_only is None:
+        return LazilyCompiledFunction(_double, "float64(float64)", {"cache": False})
+    else:
+        options = {"cache": False, "inline": "always"}
+        return LazilyCompiledFunction(_double, "float64(float64)", options, is_inline_only)
 
 
 # The `LazilyCompiledFunction` replaces `_halve` under the same name, as `lazy_njit` would, so that pickling by
@@ -192,9 +196,18 @@ def test_passing_an_inline_only_function_from_python_to_an_njit_function_raises(
 
 
 @_needs_jit
-@pytest.mark.parametrize("is_inline_only", [False, True])
-def test_compiling_an_njit_caller_compiles_the_function_it_calls(is_inline_only: bool) -> None:
-    """Compiling an njit function that calls a `LazilyCompiledFunction` compiles it too, through numba's typing hook."""
+@pytest.mark.parametrize(
+    "is_inline_only, expected_is_compiled",
+    [(None, True), (False, False), (True, False)],
+)
+def test_compiling_an_njit_caller_compiles_the_function_unless_the_caller_inlines_it(
+    is_inline_only: bool | None, expected_is_compiled: bool
+) -> None:
+    """An njit caller compiles a `LazilyCompiledFunction` that it calls, unless it inlines a copy of its source.
+
+    A function that its caller inlines must stay uncompiled: a numba release that compiled it again would cancel the
+    compile time that `inline="always"` functions save.
+    """
     # --- arrange ----------------------
     lazy_double = _new_lazy_double(is_inline_only)
 
@@ -207,7 +220,7 @@ def test_compiling_an_njit_caller_compiles_the_function_it_calls(is_inline_only:
 
     # --- assert -----------------------
     assert result == 4.0
-    assert lazy_double.is_compiled
+    assert lazy_double.is_compiled == expected_is_compiled
 
 
 @_needs_jit
@@ -236,14 +249,51 @@ def test_public_attributes_are_forwarded_to_the_compiled_function(monkeypatch: p
     assert lazy_double.signatures == ["declared"]
 
 
-def test_private_names_are_not_forwarded() -> None:
-    """Reading a private or dunder name raises `AttributeError` without compiling the function."""
+@pytest.mark.parametrize("name", ["_not_an_attribute", "name"])
+def test_names_that_a_dispatcher_does_not_have_are_not_forwarded(name: str) -> None:
+    """Reading a name that a numba dispatcher does not have raises `AttributeError` without compiling the function.
+
+    numba asks a callee for `name` while it compiles a caller, so forwarding it would compile every callee.
+    """
     # --- arrange ----------------------
     lazy_double = _new_lazy_double()
 
     # --- act / assert -----------------
     with pytest.raises(AttributeError):
-        _ = lazy_double._not_an_attribute
+        getattr(lazy_double, name)
+    assert not lazy_double.is_compiled
+
+
+def test_py_func_and_targetoptions_are_read_without_compiling() -> None:
+    """`py_func` and `targetoptions`, which numba reads to inline a callee, come from the stored values."""
+    # --- arrange ----------------------
+    lazy_double = _new_lazy_double(is_inline_only=True)
+
+    # --- act --------------------------
+    py_func = lazy_double.py_func
+    targetoptions = lazy_double.targetoptions
+
+    # --- assert -----------------------
+    assert py_func is _double
+    assert targetoptions["inline"] == "always"
+    assert not lazy_double.is_compiled
+
+
+def test_the_uncompiled_dispatcher_holds_no_compiled_version_and_refuses_to_compile(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A call of the uncompiled dispatcher raises `TypeError`, and compiles neither it nor the function."""
+    # --- arrange ----------------------
+    monkeypatch.setattr(numba.config, "DISABLE_JIT", False)
+    lazy_double = _new_lazy_double(is_inline_only=True)
+
+    # --- act --------------------------
+    dispatcher = lazy_double.uncompiled_dispatcher
+
+    # --- assert -----------------------
+    with pytest.raises(TypeError, match="No matching definition"):
+        dispatcher(1.5)
+    assert dispatcher.signatures == []
     assert not lazy_double.is_compiled
 
 

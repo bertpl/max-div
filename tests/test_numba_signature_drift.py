@@ -98,21 +98,31 @@ def _find_drifts_in_fresh_interpreter(check_target: str, numba_cache_dir: Path) 
 def _find_drifts(compile_functions: Callable[[], None]) -> list[str]:
     """Run `compile_functions` with inlining off, and describe each call whose argument types drift.
 
-    This function replaces `LazilyCompiledFunction.compile` and `Dispatcher.get_call_template` for the rest of the
+    This function replaces `LazilyCompiledFunction.__new__` and `Dispatcher.get_call_template` for the rest of the
     process and does not restore them, so call it only in an interpreter that compiles nothing else.
     """
     call_types_by_dispatcher: dict[Dispatcher, set[tuple[types.Type, ...]]] = {}
 
     # --- switch inlining off --------------------
-    original_compile = LazilyCompiledFunction.compile
-
-    def compile_without_inlining(lazily_compiled_function: LazilyCompiledFunction) -> Callable[..., object]:
-        """Compile the function with `inline="never"` where it declares `inline="always"`."""
+    # numba reads the inline option while it compiles a caller, so it is switched off before anything compiles:
+    # for every function that exists now, and for every function that is created later
+    def switch_inlining_off(lazily_compiled_function: LazilyCompiledFunction) -> None:
+        """Replace the function's `inline="always"` with `inline="never"`."""
         if lazily_compiled_function._options.get("inline") == "always":
             lazily_compiled_function._options = {**lazily_compiled_function._options, "inline": "never"}
-        return original_compile(lazily_compiled_function)
 
-    LazilyCompiledFunction.compile = compile_without_inlining
+    for lazily_compiled_function in LazilyCompiledFunction.instances():
+        switch_inlining_off(lazily_compiled_function)
+
+    original_new = LazilyCompiledFunction.__new__
+
+    def new_without_inlining(cls: type, *args: object, **kwargs: object) -> LazilyCompiledFunction:
+        """Create a `LazilyCompiledFunction` as usual, with inlining switched off."""
+        lazily_compiled_function = original_new(cls, *args, **kwargs)
+        switch_inlining_off(lazily_compiled_function)
+        return lazily_compiled_function
+
+    LazilyCompiledFunction.__new__ = new_without_inlining
 
     # --- record the argument types of each call -
     original_get_call_template = Dispatcher.get_call_template
