@@ -53,7 +53,7 @@ stop_if_failed = $(if $(filter CI_TEST_MATRIX_FAILED,$(1)),$(error scripts/ci_te
 # to pass coverage flags, and deliberately keeps the warnings visible.
 PYTEST_ARGS ?= --disable-warnings
 
-.PHONY: help build test collect-test-ids test-scripts test-benchmarks check-capability-data build-capability-data coverage test-and-coverage lint dev-setup release splash docs show-coverage show-docs update-internal-benchmarks update-solver-strategies-benchmarks update-solver-feasibility-benchmarks update-all-benchmarks update-solver-benchmark-figures
+.PHONY: help build test collect-test-ids test-signature-drift test-scripts test-benchmarks check-capability-data build-capability-data coverage test-and-coverage lint dev-setup release splash docs show-coverage show-docs update-internal-benchmarks update-solver-strategies-benchmarks update-solver-feasibility-benchmarks update-all-benchmarks update-solver-benchmark-figures
 
 help:
 	@echo 'Commands:'
@@ -64,6 +64,7 @@ help:
 	@echo ''
 	@echo '  test                                   Run pytest unit tests.'
 	@echo '  collect-test-ids                       List collected test node-ids without running them.'
+	@echo '  test-signature-drift                   Check that numba callers pass the argument types of each declared signature.'
 	@echo '  test-scripts                           Run the tests of the maintainer tooling under ./scripts.'
 	@echo '  test-benchmarks                        Run the tests of the comparison-benchmark harness under ./benchmarks.'
 	@echo '  check-capability-data                  Validate the solver capability data without writing anything.'
@@ -122,6 +123,11 @@ check-capability-data:
 build-capability-data:
 	uv run --no-default-groups --group tooling python scripts/capability_data.py
 	uv run --no-default-groups --group tooling python scripts/build_hero_table.py
+
+# `make test` skips the signature drift check, and the docstring of tests/test_numba_signature_drift.py says why;
+# this target runs it.
+test-signature-drift:
+	MAX_DIV_SIGNATURE_DRIFT_CHECK=1 $(UV_RUN) pytest ./tests/test_numba_signature_drift.py --durations=5 $(PYTEST_ARGS)
 
 test-scripts:
 	# These tests check the maintainer tooling, not the package, so 1 run on the default Python covers them.
