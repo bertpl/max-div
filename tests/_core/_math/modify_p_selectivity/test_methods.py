@@ -11,7 +11,7 @@ from max_div._core._math.modify_p_selectivity._methods import (
     _pwl_2_segment,
     _uniform,
 )
-from tests.helpers import as_python_callable
+from tests.helpers import as_directly_callable
 
 
 # ==================================================================================================
@@ -22,7 +22,7 @@ def test_modify_p_methods_uniform():
     p = np.array([0.0, 0.123, 0.002, 0.345, 0.0], dtype=np.float32)
 
     # --- act --------------------------
-    as_python_callable(_uniform)(p)
+    as_directly_callable(_uniform)(p)
 
     # --- assert -----------------------
     assert min(p) == max(p) == np.float32(1.0)
@@ -33,7 +33,7 @@ def test_modify_p_methods_max_selective():
     p = np.array([0.0, 0.123, 0.002, 1.0, 0.0, 1.0], dtype=np.float32)
 
     # --- act --------------------------
-    as_python_callable(_max_selective)(p)
+    as_directly_callable(_max_selective)(p)
 
     # --- assert -----------------------
     assert np.array_equal(
@@ -66,7 +66,7 @@ def test_modify_p_methods_accuracy(fun: Callable, tol: float):
     e_tot = 0.0
     for modifier, expected_result in zip(modifiers, p_out_expected):
         p_out = p.copy()
-        as_python_callable(fun)(p_out, modifier)
+        as_directly_callable(fun)(p_out, modifier)
         e_tot += sum(abs(p_out - expected_result))
 
     e_tot /= n * n

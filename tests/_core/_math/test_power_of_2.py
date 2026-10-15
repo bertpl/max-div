@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 
 from max_div._core._math import _POWERS_OF_2_F32_MAX_EXP, _POWERS_OF_2_F32_MIN_EXP, power_of_2_f32
-from tests.helpers import as_python_callable
+from tests.helpers import as_directly_callable
 
 
 @pytest.mark.parametrize(
@@ -14,7 +14,7 @@ def test_power_of_2_f32_regular_range(k: int):
     expected_result = np.float32(2**k)
 
     # --- act --------------------------
-    result = as_python_callable(power_of_2_f32)(np.int32(k))
+    result = as_directly_callable(power_of_2_f32)(np.int32(k))
 
     # --- assert -----------------------
     assert result == expected_result
@@ -24,20 +24,20 @@ def test_power_of_2_f32_edge_cases():
     # --- act & assert -----------------
 
     # underflow
-    assert as_python_callable(power_of_2_f32)(np.int32(-1000000)) == 0.0
-    assert as_python_callable(power_of_2_f32)(np.int32(-1000)) == 0.0
-    assert as_python_callable(power_of_2_f32)(np.int32(-200)) == 0.0
-    assert as_python_callable(power_of_2_f32)(np.int32(-151)) == 0.0
-    assert as_python_callable(power_of_2_f32)(np.int32(-150)) == 0.0
-    assert as_python_callable(power_of_2_f32)(_POWERS_OF_2_F32_MIN_EXP) == 0.0
-    assert as_python_callable(power_of_2_f32)(np.int32(-149)) > 0.0
+    assert as_directly_callable(power_of_2_f32)(np.int32(-1000000)) == 0.0
+    assert as_directly_callable(power_of_2_f32)(np.int32(-1000)) == 0.0
+    assert as_directly_callable(power_of_2_f32)(np.int32(-200)) == 0.0
+    assert as_directly_callable(power_of_2_f32)(np.int32(-151)) == 0.0
+    assert as_directly_callable(power_of_2_f32)(np.int32(-150)) == 0.0
+    assert as_directly_callable(power_of_2_f32)(_POWERS_OF_2_F32_MIN_EXP) == 0.0
+    assert as_directly_callable(power_of_2_f32)(np.int32(-149)) > 0.0
 
     # overflow
-    assert as_python_callable(power_of_2_f32)(np.int32(127)) < np.inf
-    assert as_python_callable(power_of_2_f32)(_POWERS_OF_2_F32_MAX_EXP) == np.inf
-    assert as_python_callable(power_of_2_f32)(np.int32(128)) == np.inf
-    assert as_python_callable(power_of_2_f32)(np.int32(129)) == np.inf
-    assert as_python_callable(power_of_2_f32)(np.int32(150)) == np.inf
-    assert as_python_callable(power_of_2_f32)(np.int32(200)) == np.inf
-    assert as_python_callable(power_of_2_f32)(np.int32(1000)) == np.inf
-    assert as_python_callable(power_of_2_f32)(np.int32(1000000)) == np.inf
+    assert as_directly_callable(power_of_2_f32)(np.int32(127)) < np.inf
+    assert as_directly_callable(power_of_2_f32)(_POWERS_OF_2_F32_MAX_EXP) == np.inf
+    assert as_directly_callable(power_of_2_f32)(np.int32(128)) == np.inf
+    assert as_directly_callable(power_of_2_f32)(np.int32(129)) == np.inf
+    assert as_directly_callable(power_of_2_f32)(np.int32(150)) == np.inf
+    assert as_directly_callable(power_of_2_f32)(np.int32(200)) == np.inf
+    assert as_directly_callable(power_of_2_f32)(np.int32(1000)) == np.inf
+    assert as_directly_callable(power_of_2_f32)(np.int32(1000000)) == np.inf

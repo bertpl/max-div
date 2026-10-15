@@ -67,7 +67,7 @@ def test_lazy_njit_wraps_the_function_unless_the_jit_is_disabled(
 def test_lazy_njit_records_whether_the_function_is_inline_only(
     monkeypatch: pytest.MonkeyPatch, inline: str | None, is_inline_only: bool | None, expected_is_inline_only: bool
 ) -> None:
-    """`lazy_njit`'s result reports the `is_inline_only` given with `inline="always"`, and `False` without `inline`."""
+    """A decorated function reports the `is_inline_only` given with `inline="always"`, or `False` without `inline`."""
     # --- arrange ----------------------
     monkeypatch.setattr(numba.config, "DISABLE_JIT", False)
     monkeypatch.setattr(LazilyCompiledFunction, "_instances", [])
@@ -153,7 +153,7 @@ def test_a_lazily_compiled_function_binds_as_a_method_when_read_from_an_instance
 
 @pytest.mark.parametrize("is_compiled_first", [False, True])
 def test_a_python_call_of_an_inline_only_function_raises(is_compiled_first: bool) -> None:
-    """A call from Python of an inline-only function raises `TypeError`, also once it is compiled."""
+    """A call from Python of an inline-only function raises `TypeError`, even after it is compiled."""
     # --- arrange ----------------------
     lazy_double = _new_lazy_double(is_inline_only=True)
     if is_compiled_first:

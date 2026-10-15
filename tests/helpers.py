@@ -37,11 +37,11 @@ def _first_with_prefix(names: list[str], prefix: str) -> str:
     return next(name for name in names if name.startswith(prefix))
 
 
-def as_python_callable(function: Callable[..., Any]) -> Callable[..., Any]:
+def as_directly_callable(function: Callable[..., Any]) -> Callable[..., Any]:
     """Return a version of a `lazy_njit` function that a test can call from Python, even when it is inline-only.
 
     An inline-only `LazilyCompiledFunction` refuses calls from Python, but its compiled function accepts them. With
-    the JIT disabled, `lazy_njit` returns the plain function, which `as_python_callable` returns unchanged.
+    the JIT disabled, `lazy_njit` returns the plain function, which `as_directly_callable` returns unchanged.
     """
     if isinstance(function, LazilyCompiledFunction):
         return function.compile()

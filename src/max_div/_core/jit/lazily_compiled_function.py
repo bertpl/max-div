@@ -22,10 +22,17 @@ numba copies a function declared with `inline="always"` into each numba function
 with the caller's argument types, so the declared signatures apply only to direct use: a call from Python, or
 passing the function from Python to a numba function as an argument.
 
-For a function that only numba functions call, the declared signatures therefore never apply, so `lazy_njit`
-requires every `inline="always"` function to state `is_inline_only`. `is_inline_only=True` declares the function
-inline-only: only numba functions use it, and direct use raises `TypeError`, so that the declaration cannot become
-false unnoticed.
+For a function that only numba functions call, the declared signatures never apply to those callers. `lazy_njit`
+therefore requires every `inline="always"` function to state `is_inline_only`, so that each one says whether its
+declared signatures apply to any call:
+
+- `is_inline_only=True` declares the function inline-only: only numba functions use it, and direct use raises
+  `TypeError`, so a direct use added later fails at once;
+- `is_inline_only=False` declares that Python also uses the function directly, so its declared signatures apply to
+  those uses.
+
+`compile()` still compiles the declared signatures of an inline-only function, and its compiled function accepts
+calls from Python, which is how tests call an inline-only function.
 """
 
 import functools
@@ -97,10 +104,10 @@ class LazilyCompiledFunction(functools.partial):
         self._options = options
         self._is_inline_only = is_inline_only
         self._compiled_fun = None
-        # `_initial_partial_arguments` holds the partial's arguments until `compile` first runs, and for
-        # good for an inline-only function. The instance dict keeps a reference to them, so that when
-        # `compile` replaces the partial's function and arguments, the old arguments are not freed while
-        # another thread is still inside a call that uses them.
+        # `_initial_partial_arguments` holds the partial's arguments until `compile` first runs, and
+        # permanently for an inline-only function. The instance dict keeps a reference to these
+        # arguments, so that when `compile` replaces the partial's function and arguments, the old
+        # arguments are not freed while another thread is still inside a call that uses them.
         self._initial_partial_arguments = ((self,), {})
         self._point_partial_at(initial_partial_function, *self._initial_partial_arguments)
         LazilyCompiledFunction._instances.append(self)
@@ -121,7 +128,7 @@ class LazilyCompiledFunction(functools.partial):
 
     @property
     def is_inline_only(self) -> bool:
-        """Return whether only numba functions may use the function, which then raises `TypeError` on direct use."""
+        """Return whether only numba functions may use the function; if so, a direct use raises `TypeError`."""
         return self._is_inline_only
 
     def compile(self) -> Callable[..., Any]:
@@ -137,7 +144,7 @@ class LazilyCompiledFunction(functools.partial):
             with LazilyCompiledFunction._compiled_fun_assignment_lock:
                 if self._compiled_fun is None:
                     self._compiled_fun = compiled_fun
-                    # an inline-only function keeps raising on a call from Python, also once a numba caller
+                    # an inline-only function keeps raising on a call from Python, even after a numba caller
                     # or a test has compiled it
                     if not self._is_inline_only:
                         self._point_partial_at(compiled_fun, (), {})
@@ -232,15 +239,15 @@ def lazy_njit(signature: object, *, is_inline_only: bool | None = None, **option
 
     def decorator(py_function: _F) -> _F:
         """Wrap `py_function` in a `LazilyCompiledFunction`, or return it unchanged when numba's JIT is disabled."""
-        is_inlined = options.get("inline") == "always"
+        is_inline_always = options.get("inline") == "always"
         is_inline_only_stated = is_inline_only is not None
-        if is_inlined != is_inline_only_stated:
+        if is_inline_always != is_inline_only_stated:
             name = f"{py_function.__module__}.{py_function.__qualname__}"
             raise ValueError(
                 f"{name} sets inline={options.get('inline')!r} and is_inline_only={is_inline_only!r}, but "
                 "is_inline_only must be set exactly when inline='always' is"
             )
-        if config.DISABLE_JIT:  # ty: ignore[unresolved-attribute] -- set at runtime from NUMBA_DISABLE_JIT
+        elif config.DISABLE_JIT:  # ty: ignore[unresolved-attribute] -- set at runtime from NUMBA_DISABLE_JIT
             return py_function
         else:
             lazily_compiled_function = LazilyCompiledFunction(
@@ -258,7 +265,7 @@ def lazy_njit(signature: object, *, is_inline_only: bool | None = None, **option
 def _typeof_lazily_compiled_function(
     lazily_compiled_function: LazilyCompiledFunction, context: "_TypeofContext"
 ) -> numba.types.Type:
-    """Type a `LazilyCompiledFunction` as its compiled function, refusing an inline-only one passed as an argument.
+    """Return the numba type of the compiled function, and refuse an inline-only one that Python passes as an argument.
 
     numba passes `Purpose.constant` when it types a global that a numba function references, and `Purpose.argument`
     when it types a value that Python passes to a numba function.
@@ -266,4 +273,5 @@ def _typeof_lazily_compiled_function(
     if lazily_compiled_function.is_inline_only and context.purpose == Purpose.argument:
         name = f"{lazily_compiled_function.__module__}.{lazily_compiled_function.__qualname__}"
         raise TypeError(f"{name} is inline-only, so Python may not pass it to a numba function")
-    return typeof_impl(lazily_compiled_function.compile(), context)
+    else:
+        return typeof_impl(lazily_compiled_function.compile(), context)

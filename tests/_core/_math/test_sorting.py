@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 
 from max_div._core._math.sorting import sorted_copy_f32
-from tests.helpers import as_python_callable
+from tests.helpers import as_directly_callable
 
 
 def _values(kind: str, n: int) -> np.ndarray:
@@ -35,7 +35,7 @@ def test_sorted_copy_f32_equals_np_sort_bit_for_bit(kind: str, n: int):
     original = values.copy()
 
     # --- act --------------------------
-    result = as_python_callable(sorted_copy_f32)(values)
+    result = as_directly_callable(sorted_copy_f32)(values)
 
     # --- assert -----------------------
     np.testing.assert_array_equal(result.view(np.uint32), np.sort(values).view(np.uint32))
@@ -49,7 +49,7 @@ def test_sorted_copy_f32_puts_negative_zero_before_positive_zero():
     values[:2] = [0.0, -0.0]
 
     # --- act --------------------------
-    result = as_python_callable(sorted_copy_f32)(values)
+    result = as_directly_callable(sorted_copy_f32)(values)
 
     # --- assert -----------------------
     assert np.signbit(result[0])
