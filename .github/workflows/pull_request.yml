@@ -107,6 +107,20 @@ jobs:
         if: ${{ !cancelled() }}
         run: make test-benchmarks
 
+  # The signature drift check compiles the whole package with inlining off, on an empty numba cache, so it runs as 1
+  # job on the default Python, outside the package test matrix, where it would cost every JIT-on job about a minute.
+  signature-drift:
+    needs: [preflight]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up uv
+        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+      - name: Check the declared signatures against their numba callers
+        run: make test-signature-drift
+
   # Package-integrity gate: build once, verify the wheel statically, then
   # blind-install the artifact and test against it — catches packaging holes
   # (empty wheel, missing modules) that editable-install runs cannot see.
@@ -160,7 +174,7 @@ jobs:
     # `always()` is load-bearing — without it the gate is skipped when an
     # upstream job fails, and GitHub treats a skipped required check as passing.
     if: always()
-    needs: [preflight, pre-commit, test, test-tooling, package, pip-audit, docs]
+    needs: [preflight, pre-commit, test, test-tooling, signature-drift, package, pip-audit, docs]
     runs-on: ubuntu-latest
     steps:
       - name: Fail if any required job did not succeed

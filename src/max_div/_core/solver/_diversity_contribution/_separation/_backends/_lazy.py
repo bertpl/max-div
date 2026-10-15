@@ -46,7 +46,8 @@ def add_many(sep: NDArray[np.float32], store: DistanceStore, i_added_many: NDArr
             nearest = sep[j]
             for i in i_added_many:
                 if i != j:
-                    nearest = min(nearest, get_distance_lazy(store, i, j))
+                    # numba.prange yields a uint64 index, and get_distance_lazy declares int64
+                    nearest = min(nearest, get_distance_lazy(store, i, np.int64(j)))
             sep[j] = nearest
     else:
         for j in range(store.n):
