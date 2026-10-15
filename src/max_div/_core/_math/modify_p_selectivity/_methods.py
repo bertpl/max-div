@@ -56,8 +56,8 @@ def _power_fast_log2_exp2(p: NDArray[np.float32], modifier: np.float32) -> NDArr
     with...   t = (1 + modifier)/(1 - modifier)
               modifier in (-1, +1).
     """
-    # float32, because numba types an inlined callee with its caller's argument types: a float64 t would
-    # make the float32 approximation compute in float64
+    # Cast t to float32: numba compiles an inlined function for the argument types that its caller passes,
+    # so a float64 t would make fast_exp2_f32 compute in float64.
     t = np.float32((1 + modifier) / (1 - modifier))
     for i in range(p.size):
         p[i] = fast_exp2_f32(t * fast_log2_f32(p[i]))
@@ -71,8 +71,8 @@ def _power_fast_pow(p: NDArray[np.float32], modifier: np.float32) -> NDArray[np.
     with...   t = (1 + modifier)/(1 - modifier)
               modifier in (-1, +1).
     """
-    # float32, because numba types an inlined callee with its caller's argument types: a float64 t would
-    # make the float32 approximation compute in float64
+    # Cast t to float32: numba compiles an inlined function for the argument types that its caller passes,
+    # so a float64 t would make fast_pow_f32 compute in float64.
     t = np.float32((1 + modifier) / (1 - modifier))
     for i in range(p.size):
         p[i] = fast_pow_f32(p[i], t)

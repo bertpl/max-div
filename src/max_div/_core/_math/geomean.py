@@ -48,8 +48,8 @@ def fast_geomean_f32(values: NDArray[np.float32]) -> np.float32:
     n = values.shape[0]
     for i in range(n):
         log_sum += fast_log2_f32(values[i])
-    # float32, because numba types an inlined callee with its caller's argument types: a float64 mean would
-    # make fast_exp2_f32 compute in float64
+    # Cast the mean to float32: numba compiles an inlined function for the argument types that its caller passes,
+    # so a float64 mean would make fast_exp2_f32 compute in float64.
     return fast_exp2_f32(np.float32(log_sum / n))
 
 

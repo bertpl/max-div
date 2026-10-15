@@ -53,7 +53,8 @@ def fast_exp2_f64(x: np.float64) -> np.float64:
 def fast_exp2_f32(x: np.float32) -> np.float32:
     """Fast exp2 approximation using 2nd order polynomial after range reduction.
 
-    (Max rel error ~0.0026 over entire range.)
+    (Max rel error ~0.0026 over entire range.) Pass a float32 argument: numba compiles an inlined function for
+    the argument types that its caller passes, so a float64 argument makes this function compute in float64.
     """
     # --- split in int + fraction ----------------
     k = np.floor(x)  # float32
