@@ -34,6 +34,15 @@ from ._distance_metric import (
     METRIC_KIND_MINKOWSKI_POWERED,
 )
 
+# Every function here is inline-only (see `max_div._core.jit.lazily_compiled_function`), so its declared signature
+# applies only to the compiled function that `compile()` returns, and documents what its callers pass.
+#
+# The signature declares the vectors read-only, as the arrays that a distance store returns are. numba converts a
+# writable array to the matching read-only array type, so the compiled function accepts writable arrays too.
+#
+# Signature strings cannot spell a read-only array type, so every function here takes a signature object.
+READONLY_F32_2D = numba.types.Array(numba.float32, 2, "C", readonly=True)
+
 # ==================================================================================================
 #  Pairwise distance functions
 # ==================================================================================================
@@ -52,7 +61,13 @@ from ._distance_metric import (
 # of the solver documentation.
 
 
-@lazy_njit("float64(float32[:, ::1], int64, int64)", inline="always", cache=True, fastmath={"reassoc", "contract"})
+@lazy_njit(
+    numba.float64(READONLY_F32_2D, numba.int64, numba.int64),
+    inline="always",
+    is_inline_only=True,
+    cache=True,
+    fastmath={"reassoc", "contract"},
+)
 def _l1_distance(vectors: NDArray[np.float32], i: int | np.signedinteger, j: int | np.signedinteger) -> np.float64:
     """Return the L1 (Manhattan) distance between vectors i and j, accumulated in float64."""
     acc = np.float64(0.0)
@@ -61,7 +76,13 @@ def _l1_distance(vectors: NDArray[np.float32], i: int | np.signedinteger, j: int
     return acc
 
 
-@lazy_njit("float64(float32[:, ::1], int64, int64)", inline="always", cache=True, fastmath={"reassoc", "contract"})
+@lazy_njit(
+    numba.float64(READONLY_F32_2D, numba.int64, numba.int64),
+    inline="always",
+    is_inline_only=True,
+    cache=True,
+    fastmath={"reassoc", "contract"},
+)
 def _l2sq_distance(vectors: NDArray[np.float32], i: int | np.signedinteger, j: int | np.signedinteger) -> np.float64:
     """Return the squared L2 (Euclidean) distance between vectors i and j, accumulated in float64."""
     acc = np.float64(0.0)
@@ -71,7 +92,13 @@ def _l2sq_distance(vectors: NDArray[np.float32], i: int | np.signedinteger, j: i
     return acc
 
 
-@lazy_njit("float64(float32[:, ::1], int64, int64)", inline="always", cache=True, fastmath={"reassoc", "contract"})
+@lazy_njit(
+    numba.float64(READONLY_F32_2D, numba.int64, numba.int64),
+    inline="always",
+    is_inline_only=True,
+    cache=True,
+    fastmath={"reassoc", "contract"},
+)
 def _linf_distance(vectors: NDArray[np.float32], i: int | np.signedinteger, j: int | np.signedinteger) -> np.float64:
     """Return the Linf (Chebyshev) distance between vectors i and j, accumulated in float64."""
     acc = np.float64(0.0)
@@ -82,7 +109,13 @@ def _linf_distance(vectors: NDArray[np.float32], i: int | np.signedinteger, j: i
     return acc
 
 
-@lazy_njit("float64(float32[:, ::1], int64, int64)", inline="always", cache=True, fastmath={"reassoc", "contract"})
+@lazy_njit(
+    numba.float64(READONLY_F32_2D, numba.int64, numba.int64),
+    inline="always",
+    is_inline_only=True,
+    cache=True,
+    fastmath={"reassoc", "contract"},
+)
 def _lminusinf_distance(
     vectors: NDArray[np.float32], i: int | np.signedinteger, j: int | np.signedinteger
 ) -> np.float64:
@@ -96,7 +129,11 @@ def _lminusinf_distance(
 
 
 @lazy_njit(
-    "float64(float32[:, ::1], int64, int64, float64)", inline="always", cache=True, fastmath={"reassoc", "contract"}
+    numba.float64(READONLY_F32_2D, numba.int64, numba.int64, numba.float64),
+    inline="always",
+    is_inline_only=True,
+    cache=True,
+    fastmath={"reassoc", "contract"},
 )
 def _l2_and_projections_distance(
     vectors: NDArray[np.float32], i: int | np.signedinteger, j: int | np.signedinteger, l2_scale: np.float64
@@ -127,7 +164,11 @@ def _l2_and_projections_distance(
 
 
 @lazy_njit(
-    "float64(float32[:, ::1], int64, int64, float64)", inline="always", cache=True, fastmath={"reassoc", "contract"}
+    numba.float64(READONLY_F32_2D, numba.int64, numba.int64, numba.float64),
+    inline="always",
+    is_inline_only=True,
+    cache=True,
+    fastmath={"reassoc", "contract"},
 )
 def _l2_and_projections_for_k_distance(
     vectors: NDArray[np.float32], i: int | np.signedinteger, j: int | np.signedinteger, l2_factor: np.float64
@@ -140,7 +181,12 @@ def _l2_and_projections_for_k_distance(
     return min(_lminusinf_distance(vectors, i, j), l2_factor * np.sqrt(_l2sq_distance(vectors, i, j)))
 
 
-@lazy_njit("float64(float32[:, ::1], int64, int64, float64)", inline="always", cache=True)
+@lazy_njit(
+    numba.float64(READONLY_F32_2D, numba.int64, numba.int64, numba.float64),
+    inline="always",
+    is_inline_only=True,
+    cache=True,
+)
 def _custom_distance(
     vectors: NDArray[np.float32], i: int | np.signedinteger, j: int | np.signedinteger, address_as_float: float
 ) -> np.float64:
@@ -157,7 +203,11 @@ def _custom_distance(
 
 
 @lazy_njit(
-    "float64(float32[:, ::1], int64, int64, float64)", inline="always", cache=True, fastmath={"reassoc", "contract"}
+    numba.float64(READONLY_F32_2D, numba.int64, numba.int64, numba.float64),
+    inline="always",
+    is_inline_only=True,
+    cache=True,
+    fastmath={"reassoc", "contract"},
 )
 def _minkowski_distance_powered(
     vectors: NDArray[np.float32], i: int | np.signedinteger, j: int | np.signedinteger, p: np.float64
@@ -169,7 +219,13 @@ def _minkowski_distance_powered(
     return acc
 
 
-@lazy_njit("float64(float32[:, ::1], int64, int64)", inline="always", cache=True, fastmath={"reassoc", "contract"})
+@lazy_njit(
+    numba.float64(READONLY_F32_2D, numba.int64, numba.int64),
+    inline="always",
+    is_inline_only=True,
+    cache=True,
+    fastmath={"reassoc", "contract"},
+)
 def _minkowski_distance_powered_p05(
     vectors: NDArray[np.float32], i: int | np.signedinteger, j: int | np.signedinteger
 ) -> np.float64:
@@ -180,7 +236,13 @@ def _minkowski_distance_powered_p05(
     return acc
 
 
-@lazy_njit("float64(float32[:, ::1], int64, int64)", inline="always", cache=True, fastmath={"reassoc", "contract"})
+@lazy_njit(
+    numba.float64(READONLY_F32_2D, numba.int64, numba.int64),
+    inline="always",
+    is_inline_only=True,
+    cache=True,
+    fastmath={"reassoc", "contract"},
+)
 def _minkowski_distance_powered_p025(
     vectors: NDArray[np.float32], i: int | np.signedinteger, j: int | np.signedinteger
 ) -> np.float64:
@@ -191,7 +253,13 @@ def _minkowski_distance_powered_p025(
     return acc
 
 
-@lazy_njit("float64(float32[:, ::1], int64, int64)", inline="always", cache=True, fastmath={"reassoc", "contract"})
+@lazy_njit(
+    numba.float64(READONLY_F32_2D, numba.int64, numba.int64),
+    inline="always",
+    is_inline_only=True,
+    cache=True,
+    fastmath={"reassoc", "contract"},
+)
 def _minkowski_distance_powered_p0125(
     vectors: NDArray[np.float32], i: int | np.signedinteger, j: int | np.signedinteger
 ) -> np.float64:
@@ -202,7 +270,13 @@ def _minkowski_distance_powered_p0125(
     return acc
 
 
-@lazy_njit("float64(float32[:, ::1], int64, int64)", inline="always", cache=True, fastmath={"reassoc", "contract"})
+@lazy_njit(
+    numba.float64(READONLY_F32_2D, numba.int64, numba.int64),
+    inline="always",
+    is_inline_only=True,
+    cache=True,
+    fastmath={"reassoc", "contract"},
+)
 def _geomean_distance(vectors: NDArray[np.float32], i: int | np.signedinteger, j: int | np.signedinteger) -> np.float64:
     """Return the geometric mean of the per-dimension absolute differences of vectors i and j.
 
@@ -218,7 +292,7 @@ def _geomean_distance(vectors: NDArray[np.float32], i: int | np.signedinteger, j
     return np.exp(log_sum / d)
 
 
-@lazy_njit("float64(float32[:, ::1], int64, int64)", inline="always", cache=True)
+@lazy_njit(numba.float64(READONLY_F32_2D, numba.int64, numba.int64), inline="always", is_inline_only=True, cache=True)
 def _along_axis_distance(
     vectors: NDArray[np.float32], i: int | np.signedinteger, j: int | np.signedinteger
 ) -> np.float64:
@@ -227,8 +301,9 @@ def _along_axis_distance(
 
 
 @lazy_njit(
-    numba.float32(numba.float32[:, ::1], numba.int32, numba.float64, numba.int32, numba.int32),
+    numba.float32(READONLY_F32_2D, numba.int32, numba.float64, numba.int32, numba.int32),
     inline="always",
+    is_inline_only=True,
     cache=True,
 )
 def _pairwise_distance(  # noqa: C901 -- flat dispatch, one arm per kind: complexity here is roster size, not tangledness

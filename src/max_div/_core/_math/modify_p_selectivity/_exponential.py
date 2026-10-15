@@ -14,6 +14,7 @@ DEFAULT_LOW_VALUE = np.float32(0.1)
     "void(float32[::1], float32[::1], float32, boolean, float32, float32, float32, float32)",
     fastmath=True,
     inline="always",
+    is_inline_only=True,
     cache=True,
 )
 def _exponential_transform(
@@ -46,7 +47,9 @@ def _exponential_transform(
             p_out[i] = fast_exp2_f32(exponent * t_times_log2_low_value)
 
 
-@lazy_njit("void(float32[::1], float32[::1], float32, boolean, float32)", inline="always", cache=True)
+@lazy_njit(
+    "void(float32[::1], float32[::1], float32, boolean, float32)", inline="always", is_inline_only=False, cache=True
+)
 def exponential_selectivity(
     p_in: NDArray[np.float32],
     p_out: NDArray[np.float32],

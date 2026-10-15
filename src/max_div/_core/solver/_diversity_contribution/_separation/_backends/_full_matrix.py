@@ -57,7 +57,9 @@ def add_many(sep: NDArray[np.float32], store: DistanceStore, i_added_many: NDArr
             sep[j] = nearest
 
 
-@lazy_njit(numba.float32(DISTANCE_STORE_TYPE, numba.int64, numba.int32[::1]), inline="always", cache=True)
+@lazy_njit(
+    numba.float32(DISTANCE_STORE_TYPE, numba.int64, numba.int32[::1]), inline="always", is_inline_only=True, cache=True
+)
 def _nearest_selected(store: DistanceStore, j: int | np.integer, selection: NDArray[np.int32]) -> np.float32:
     """Return the distance from item j to its nearest neighbor within `selection`, or +inf."""
     nearest = np.float32(np.inf)

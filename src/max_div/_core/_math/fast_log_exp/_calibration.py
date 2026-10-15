@@ -160,7 +160,7 @@ def exp2_approx_array(x_arr: np.ndarray, c0: float, c1: float, c2: float) -> np.
     return result
 
 
-@lazy_njit("float64(float64, float64, float64, float64)", inline="always", cache=True)
+@lazy_njit("float64(float64, float64, float64, float64)", inline="always", is_inline_only=True, cache=True)
 def log2_approx(x: float, c0: float, c1: float, c2: float) -> float:
     """Only efficient for x in or close to [0.5, 1]."""
     if x <= 0:
@@ -179,7 +179,7 @@ def log2_approx(x: float, c0: float, c1: float, c2: float) -> float:
     return offset + (c0 + (c1 * x) + (c2 * x * x))
 
 
-@lazy_njit("float64(float64, float64, float64, float64)", inline="always", cache=True)
+@lazy_njit("float64(float64, float64, float64, float64)", inline="always", is_inline_only=True, cache=True)
 def exp2_approx(x: float, d0: float, d1: float, d2: float) -> float:
     """Only efficient for x in or close to [0, 1]."""
     # make sure x is in [0.0, 1.0]

@@ -5,7 +5,7 @@ from max_div._core._random import randint1
 from max_div._core.jit import lazy_njit
 
 
-@lazy_njit("int32(int32, int32, float32, uint64[:])", fastmath=True, inline="always", cache=True)
+@lazy_njit("int32(int32, int32, float32, uint64[:])", fastmath=True, inline="always", is_inline_only=False, cache=True)
 def sample_truncated_poisson(
     min_value: np.int32,
     max_value: np.int32,
@@ -43,7 +43,7 @@ def sample_truncated_poisson(
     return randint1(n=np.int32(p.shape[0]), p=p, rng_state=rng_state) + min_value
 
 
-@lazy_njit("float32(int32, int32, float32)", fastmath=True, inline="always", cache=True)
+@lazy_njit("float32(int32, int32, float32)", fastmath=True, inline="always", is_inline_only=True, cache=True)
 def truncated_poisson_expected_value(min_value: np.int32, max_value: np.int32, _lambda: np.float32) -> np.float32:
     """Compute expected value of a two-sided truncated Poisson distribution with given min, max & lambda values.
 

@@ -28,7 +28,9 @@ if TYPE_CHECKING:
     from numpy.typing import NDArray
 
 
-@lazy_njit(numba.float32(DISTANCE_STORE_TYPE, numba.int32, numba.int32[::1]), inline="always", cache=True)
+@lazy_njit(
+    numba.float32(DISTANCE_STORE_TYPE, numba.int32, numba.int32[::1]), inline="always", is_inline_only=True, cache=True
+)
 def _nearest_selected(store: DistanceStore, j: np.int32, selection: NDArray[np.int32]) -> np.float32:
     """Return the distance from item j to its nearest neighbor within `selection`, or +inf."""
     nearest = np.float32(np.inf)

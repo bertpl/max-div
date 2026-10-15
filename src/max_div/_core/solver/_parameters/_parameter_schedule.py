@@ -163,7 +163,7 @@ def _schedules_to_2d_numpy_array(schedules: list[ParameterSchedule]) -> NDArray[
     return arr
 
 
-@lazy_njit("float64[::1](float64[:, ::1], float64)", fastmath=True, inline="always", cache=True)
+@lazy_njit("float64[::1](float64[:, ::1], float64)", fastmath=True, inline="always", is_inline_only=False, cache=True)
 def _evaluate_schedules(schedules_array: NDArray[np.float64], f: float) -> NDArray[np.float64]:
     """Evaluate multiple ParameterSchedule instances at once, given their numpy array representation.
 

@@ -5,6 +5,7 @@ from max_div._core.metrics import DistanceMetric
 from max_div._core.metrics._distance import DistanceStore, compute_full_matrix, get_distance
 from max_div._core.metrics._distance._metric._custom_distance import address_of_custom_distance_function
 from tests._core.metrics._distance.helpers import custom_l1
+from tests.helpers import as_directly_callable
 
 
 @numba.njit
@@ -30,7 +31,7 @@ def test_a_lazy_store_reads_the_value_of_the_function():
     store = DistanceStore.lazy_from_vectors(vectors, DistanceMetric.custom(custom_l1))
 
     # --- act --------------------------
-    distance = get_distance(store, np.int32(1), np.int32(3))
+    distance = as_directly_callable(get_distance)(store, np.int32(1), np.int32(3))
 
     # --- assert -----------------------
     assert distance == np.float32(custom_l1(vectors[1], vectors[3]))
@@ -45,7 +46,9 @@ def test_the_function_is_called_with_the_lower_index_first():
 
     # --- act --------------------------
     matrix = compute_full_matrix(vectors, metric)
-    lazy_matrix = np.array([[get_distance(store, np.int32(i), np.int32(j)) for j in range(4)] for i in range(4)])
+    lazy_matrix = np.array(
+        [[as_directly_callable(get_distance)(store, np.int32(i), np.int32(j)) for j in range(4)] for i in range(4)]
+    )
 
     # --- assert -----------------------
     expected = np.array(

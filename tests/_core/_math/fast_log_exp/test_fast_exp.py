@@ -4,6 +4,7 @@ import numpy as np
 import pytest
 
 from max_div._core._math.fast_log_exp import fast_exp2_f32, fast_exp2_f64, fast_exp_f32, fast_exp_f64
+from tests.helpers import as_directly_callable
 
 
 # ==================================================================================================
@@ -16,7 +17,7 @@ def test_fast_exp_f64():
     np_expx_values = np.exp(x_values)
 
     # --- act --------------------------
-    fast_expx_values = np.array([fast_exp_f64(x) for x in x_values])
+    fast_expx_values = np.array([as_directly_callable(fast_exp_f64)(x) for x in x_values])
 
     # --- assert -----------------------
     diff = max(np.abs(np_expx_values - fast_expx_values) / np_expx_values)
@@ -32,8 +33,8 @@ def test_fast_exp_f64_continuity(x0: float):
     dfdx_true = math.exp(x0)
 
     # --- act --------------------------
-    fx_min = fast_exp_f64(np.float64(x0 - dx))
-    fx_plus = fast_exp_f64(np.float64(x0 + dx))
+    fx_min = as_directly_callable(fast_exp_f64)(np.float64(x0 - dx))
+    fx_plus = as_directly_callable(fast_exp_f64)(np.float64(x0 + dx))
 
     # --- assert -----------------------
     assert abs(fx_plus - fx_min) <= 10 * (2 * dx * dfdx_true)
@@ -45,9 +46,9 @@ def test_fast_exp_f64_smoothness(x0: float):
     dx = 1e-12
 
     # --- act --------------------------
-    fx_min = fast_exp_f64(np.float64(x0 - dx))
-    fx = fast_exp_f64(np.float64(x0))
-    fx_plus = fast_exp_f64(np.float64(x0 + dx))
+    fx_min = as_directly_callable(fast_exp_f64)(np.float64(x0 - dx))
+    fx = as_directly_callable(fast_exp_f64)(np.float64(x0))
+    fx_plus = as_directly_callable(fast_exp_f64)(np.float64(x0 + dx))
 
     # --- assert -----------------------
     dfdx_plus = (fx_plus - fx) / dx
@@ -63,7 +64,7 @@ def test_fast_exp_f32():
     np_expx_values = np.exp(x_values)
 
     # --- act --------------------------
-    fast_expx_values = np.array([fast_exp_f32(x) for x in x_values])
+    fast_expx_values = np.array([as_directly_callable(fast_exp_f32)(x) for x in x_values])
 
     # --- assert -----------------------
     diff = max(np.abs(np_expx_values - fast_expx_values) / np_expx_values)
@@ -82,7 +83,7 @@ def test_fast_exp2_f64():
     np_exp2x_values = np.exp2(x_values)
 
     # --- act --------------------------
-    fast_exp2x_values = np.array([fast_exp2_f64(x) for x in x_values])
+    fast_exp2x_values = np.array([as_directly_callable(fast_exp2_f64)(x) for x in x_values])
 
     # --- assert -----------------------
     diff = max(np.abs(np_exp2x_values - fast_exp2x_values) / np_exp2x_values)
@@ -98,7 +99,7 @@ def test_fast_exp2_f32():
     np_exp2x_values = np.exp2(x_values)
 
     # --- act --------------------------
-    fast_exp2x_values = np.array([fast_exp2_f32(x) for x in x_values])
+    fast_exp2x_values = np.array([as_directly_callable(fast_exp2_f32)(x) for x in x_values])
 
     # --- assert -----------------------
     diff = max(np.abs(np_exp2x_values - fast_exp2x_values) / np_exp2x_values)

@@ -60,6 +60,7 @@ def add_many(sep: NDArray[np.float32], store: DistanceStore, i_added_many: NDArr
 @lazy_njit(
     numba.float32(DISTANCE_STORE_TYPE, numba.int64, numba.int32[::1]),
     inline="always",
+    is_inline_only=True,
     cache=True,
     fastmath={"reassoc", "contract"},
 )

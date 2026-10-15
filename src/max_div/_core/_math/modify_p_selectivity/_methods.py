@@ -17,7 +17,7 @@ from max_div._core.jit import lazy_njit
 # ==================================================================================================
 #  Boundary methods
 # ==================================================================================================
-@lazy_njit("void(float32[::1])", fastmath=True, inline="always", cache=True)
+@lazy_njit("void(float32[::1])", fastmath=True, inline="always", is_inline_only=True, cache=True)
 def _uniform(p: NDArray[np.float32]) -> None:
     """Transform p in [0,1] in-place to uniform distribution (all values equal to 1.0)."""
     # --- fill with 1.0 values -------------------
@@ -25,7 +25,7 @@ def _uniform(p: NDArray[np.float32]) -> None:
         p[i] = np.float32(1.0)
 
 
-@lazy_njit("void(float32[::1])", fastmath=True, inline="always", cache=True)
+@lazy_njit("void(float32[::1])", fastmath=True, inline="always", is_inline_only=True, cache=True)
 def _max_selective(p: NDArray[np.float32]) -> None:
     """Transform p in [0,1] in-place to maximally selective distribution (all values equal to 0.0 or 1.0)."""
     # --- fill with 1.0 or 0.0 -------------------
@@ -36,7 +36,7 @@ def _max_selective(p: NDArray[np.float32]) -> None:
 # ==================================================================================================
 #  Regular methods - POWER-based
 # ==================================================================================================
-@lazy_njit("float32[::1](float32[::1], float32)", fastmath=True, inline="always", cache=True)
+@lazy_njit("float32[::1](float32[::1], float32)", fastmath=True, inline="always", is_inline_only=True, cache=True)
 def _power_exact(p: NDArray[np.float32], modifier: np.float32) -> NDArray[np.float32]:
     """Modify p in [0,1] in-place using exact p[i] <-- p[i] ** t.
 
@@ -49,7 +49,7 @@ def _power_exact(p: NDArray[np.float32], modifier: np.float32) -> NDArray[np.flo
     return p
 
 
-@lazy_njit("float32[::1](float32[::1], float32)", fastmath=True, inline="always", cache=True)
+@lazy_njit("float32[::1](float32[::1], float32)", fastmath=True, inline="always", is_inline_only=True, cache=True)
 def _power_fast_log2_exp2(p: NDArray[np.float32], modifier: np.float32) -> NDArray[np.float32]:
     """Modify p in [0,1] in-place using approximation p[i] <-- fast_exp2(t * fast_log2(p[i])).
 
@@ -62,7 +62,7 @@ def _power_fast_log2_exp2(p: NDArray[np.float32], modifier: np.float32) -> NDArr
     return p
 
 
-@lazy_njit("float32[::1](float32[::1], float32)", fastmath=True, inline="always", cache=True)
+@lazy_njit("float32[::1](float32[::1], float32)", fastmath=True, inline="always", is_inline_only=True, cache=True)
 def _power_fast_pow(p: NDArray[np.float32], modifier: np.float32) -> NDArray[np.float32]:
     """Modify p in [0,1] in-place using approximation p[i] <-- fast_pow(p[i], t).
 
@@ -78,7 +78,7 @@ def _power_fast_pow(p: NDArray[np.float32], modifier: np.float32) -> NDArray[np.
 # ==================================================================================================
 #  Regular methods - PWL-based
 # ==================================================================================================
-@lazy_njit("float32[::1](float32[::1], float32)", fastmath=True, inline="always", cache=True)
+@lazy_njit("float32[::1](float32[::1], float32)", fastmath=True, inline="always", is_inline_only=True, cache=True)
 def _pwl_2_segment(p: NDArray[np.float32], modifier: np.float32) -> NDArray[np.float32]:
     r"""Modify p in [0,1] in-place using 2-segment piecewise linear approximation of p[i] = p[i] ** t.
 

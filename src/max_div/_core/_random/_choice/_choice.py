@@ -40,7 +40,7 @@ def choice(
     return samples
 
 
-@lazy_njit("int32(int32[:], float32[:], uint64[:])", fastmath=True, inline="always", cache=True)
+@lazy_njit("int32(int32[:], float32[:], uint64[:])", fastmath=True, inline="always", is_inline_only=True, cache=True)
 def choice1(
     values: NDArray[np.int32],
     p: NDArray[np.float32],
