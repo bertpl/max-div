@@ -107,10 +107,11 @@ jobs:
         if: ${{ !cancelled() }}
         run: make test-benchmarks
 
-  # The signature drift check (tests/test_numba_signature_drift.py) checks that numba callers pass the types that
-  # each declared signature names. It compiles the whole package with inlining off, on an empty numba cache, so it
-  # runs as 1 job on the default Python, outside the package test matrix, whose jobs with JIT compilation on would
-  # each repeat that compilation.
+  # The signature drift check (tests/test_numba_signature_drift.py) checks that numba callers pass the argument types
+  # of each declared signature.
+  #
+  # Compiling the whole package with inlining off, on an empty numba cache, is slow, so the check runs as 1 job on
+  # the default Python. In the package test matrix, every job with JIT compilation on would repeat that compilation.
   signature-drift:
     needs: [preflight]
     runs-on: ubuntu-latest

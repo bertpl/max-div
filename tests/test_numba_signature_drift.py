@@ -1,14 +1,14 @@
 """Check that numba callers pass the argument types of a `lazy_njit` function's declared signature.
 
 numba copies a function declared with `inline="always"` into each numba function that calls it, and compiles the
-copy for its caller's argument types, so it never checks those types against the declared signature. A signature
+copy for its caller's argument types, so numba never checks those types against the declared signature. A signature
 can then name types that no caller passes, and nothing fails.
 
 This check compiles every numba function of the package with inlining switched off, so that each caller makes a
-real call, which numba types against the callee's declared signatures.
+real call, and numba matches the call's argument types to the callee's declared signatures.
 
-It records the argument types of every call to a `lazy_njit` function, and compares them with the callee's declared
-signatures, using numba's own conversion rules:
+The check records the argument types of every call to a `lazy_njit` function, and compares them with the callee's
+declared signatures, using numba's own conversion rules:
 
 - an exact match, a promotion (`float32` to `float64`) or a safe conversion (`int32` to `int64`, or a writable array
   to a read-only one) passes;
@@ -17,8 +17,9 @@ signatures, using numba's own conversion rules:
 
 An integer literal passes when its value fits the declared integer type.
 
-Each check runs in a fresh interpreter with its own empty numba cache: the cache does not record the inline option,
-so the versions compiled here must not mix with the inlined ones that the rest of the suite loads.
+Each test runs in a fresh interpreter with its own empty numba cache: the cache does not record the inline option,
+so the functions compiled here without inlining must not mix with the inlined versions that the rest of the suite
+loads.
 
 The check compiles the whole package on an empty cache, so it runs only when the environment variable
 MAX_DIV_SIGNATURE_DRIFT_CHECK is 1, as `make test-signature-drift` and its CI job set it.
@@ -66,7 +67,7 @@ def test_every_numba_caller_passes_types_that_the_declared_signature_accepts(tmp
 
 
 def test_the_check_reports_a_caller_that_passes_a_drifting_type(tmp_path: Path) -> None:
-    """A caller that passes float64 to a function declared with `is_inline_only=True` for float32 is reported."""
+    """A caller passing float64 to a function declared as `float32(float32)` with `is_inline_only=True` is reported."""
     # --- act --------------------------
     drifts = _find_drifts_in_fresh_interpreter("self-test", tmp_path)
 
@@ -79,33 +80,34 @@ def test_the_check_reports_a_caller_that_passes_a_drifting_type(tmp_path: Path) 
 # ==================================================================================================
 #  Helpers
 # ==================================================================================================
-def _find_drifts_in_fresh_interpreter(code_to_check: str, numba_cache_dir: Path) -> list[str]:
-    """Run this module as a script on `code_to_check`, with its own numba cache, and return the drifts that it prints.
+def _find_drifts_in_fresh_interpreter(check_target: str, numba_cache_dir: Path) -> list[str]:
+    """Run this module as a script on `check_target`, with its own numba cache, and return the drifts that it prints.
 
     Args:
-        code_to_check: `"package"` checks every numba function of the package; any other value checks the caller
+        check_target: `"package"` checks every numba function of the package; any other value checks the caller
             that `_compile_a_caller_that_drifts` builds.
-        numba_cache_dir: An empty directory that the script run uses as its numba cache.
+        numba_cache_dir: An empty directory for the numba cache of the script run.
     """
     env = {**os.environ, "NUMBA_CACHE_DIR": str(numba_cache_dir)}
     output = subprocess.run(  # noqa: S603 -- fixed args, script mode
-        [sys.executable, "-m", __name__, code_to_check], env=env, capture_output=True, text=True, check=True
+        [sys.executable, "-m", __name__, check_target], env=env, capture_output=True, text=True, check=True
     ).stdout
     return [line for line in output.splitlines() if line]
 
 
 def _find_drifts(compile_functions: Callable[[], None]) -> list[str]:
-    """Compile with inlining off, record the argument types of each call, and describe each call that drifts.
+    """Run `compile_functions` with inlining off, and describe each call whose argument types drift.
 
-    It replaces `LazilyCompiledFunction.compile` and `Dispatcher.get_call_template` for the rest of the process and
-    does not restore them, so call it only in an interpreter that compiles nothing else.
+    This function replaces `LazilyCompiledFunction.compile` and `Dispatcher.get_call_template` for the rest of the
+    process and does not restore them, so call it only in an interpreter that compiles nothing else.
     """
-    call_types_by_callee: dict[Dispatcher, set[tuple[types.Type, ...]]] = {}
+    call_types_by_dispatcher: dict[Dispatcher, set[tuple[types.Type, ...]]] = {}
 
     # --- switch inlining off --------------------
     original_compile = LazilyCompiledFunction.compile
 
     def compile_without_inlining(lazily_compiled_function: LazilyCompiledFunction) -> Callable[..., object]:
+        """Compile the function with `inline="never"` where it declares `inline="always"`."""
         if lazily_compiled_function._options.get("inline") == "always":
             lazily_compiled_function._options = {**lazily_compiled_function._options, "inline": "never"}
         return original_compile(lazily_compiled_function)
@@ -115,24 +117,25 @@ def _find_drifts(compile_functions: Callable[[], None]) -> list[str]:
     # --- record the argument types of each call -
     original_get_call_template = Dispatcher.get_call_template
 
-    def recording_get_call_template(dispatcher: Dispatcher, args: tuple, kws: dict) -> object:
+    def get_call_template_with_recording(dispatcher: Dispatcher, args: tuple, kws: dict) -> object:
+        """Record the argument types of a call to `dispatcher`, then type the call as numba does."""
         # a keyword argument goes to the position of its parameter, as numba binds it
         parameter_names = list(inspect.signature(dispatcher.py_func).parameters)
         call_types = tuple(args) + tuple(kws[name] for name in parameter_names[len(args) :] if name in kws)
-        call_types_by_callee.setdefault(dispatcher, set()).add(call_types)
+        call_types_by_dispatcher.setdefault(dispatcher, set()).add(call_types)
         return original_get_call_template(dispatcher, args, kws)
 
-    Dispatcher.get_call_template = recording_get_call_template
+    Dispatcher.get_call_template = get_call_template_with_recording
 
     compile_functions()
 
     # --- compare calls with signatures ----------
     lazy_njit_py_functions = {function.__wrapped__ for function in LazilyCompiledFunction.instances()}
     drifts = []
-    for dispatcher, calls in call_types_by_callee.items():
+    for dispatcher, all_call_types in call_types_by_dispatcher.items():
         if dispatcher.py_func in lazy_njit_py_functions:
             declared_signatures = dispatcher.signatures
-            for call_types in calls:
+            for call_types in all_call_types:
                 if not _is_accepted(call_types, declared_signatures):
                     name = f"{dispatcher.py_func.__module__}.{dispatcher.py_func.__qualname__}"
                     drifts.append(f"{name}: called with {call_types}, declared {declared_signatures}")
@@ -166,14 +169,16 @@ def _conversion(typing_context: object, call_type: types.Type, declared_type: ty
 
 
 def _compile_a_caller_that_drifts() -> None:
-    """Compile a caller that passes float64 to a function declared with `is_inline_only=True` and float32."""
+    """Compile a caller that passes float64 to a function declared as `float32(float32)` with `is_inline_only=True`."""
 
     @lazy_njit("float32(float32)", inline="always", is_inline_only=True, cache=False)
     def halve(x):
+        """Return half of `x`; the declared signature takes only float32."""
         return x * np.float32(0.5)
 
     @lazy_njit("float32(float64)", cache=False)
     def call_halve(x):
+        """Call `halve` with a float64, which its declared signature does not accept."""
         return halve(x)
 
     call_halve.compile()

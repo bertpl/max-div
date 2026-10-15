@@ -172,7 +172,7 @@ def randint(  # noqa: C901 — case-dispatch structure is clearer un-split
             # sorting is part of the dedup; a k-element shuffle restores the uniformly random
             # order the Fisher-Yates path returns
             for i in range(k - 1):
-                # numba types k - 1 as int64, so i is an int64, and rand_int32 declares its `low` parameter as int32
+                # numba infers k - 1 as int64, so i is an int64, and rand_int32 declares its `low` parameter as int32
                 j = rand_int32(rng_state, np.int32(i), k)
                 samples[i], samples[j] = samples[j], samples[i]
             return samples
