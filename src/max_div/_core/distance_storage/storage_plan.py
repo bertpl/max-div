@@ -10,6 +10,9 @@ matrix, `USER_MATRIX_ID`: the problem's vectors, or the distances that it was gi
 - the producer of every data matrix that a resolved spec reads, by matrix id;
 - the storage type of each distance store, which the solution reports.
 
+Equal distance specs, such as specs over metrics that compare equal, get 1 distance store, so a
+solve computes their distances once.
+
 The plan produces no data matrix itself: an `InProcessDataMatrixReader`, or a
 `SharedMemoryDataMatrixPublisher` for a parallel solve, runs the producers when the solve starts.
 """

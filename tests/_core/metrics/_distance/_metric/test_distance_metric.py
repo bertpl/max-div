@@ -1,11 +1,13 @@
 import math
 import pickle
 
+import numba
 import numpy as np
 import pytest
 
 from max_div._core.metrics import DistanceMetric
-from max_div._core.metrics._distance._metric import NO_FLOAT_PARAM, validate_vector_array_layout
+from max_div._core.metrics._distance._metric import NO_FLOAT_PARAM, _distance_metric, validate_vector_array_layout
+from tests._core.metrics._distance.helpers import custom_l1
 
 # Every metric with a dedicated factory method of its own.
 _FACTORY_METRICS = (
@@ -18,6 +20,7 @@ _FACTORY_METRICS = (
     DistanceMetric.l_minus_inf(),
     DistanceMetric.along_axis(0),
     DistanceMetric.l2_and_projections(),
+    DistanceMetric.custom(custom_l1),
 )
 
 
@@ -56,11 +59,15 @@ def test_a_bare_distance_metric_cannot_be_created():
 
 @pytest.mark.parametrize(
     "factory_metric",
-    [metric for metric in _FACTORY_METRICS if metric != DistanceMetric.l2_and_projections()],
+    [
+        metric
+        for metric in _FACTORY_METRICS
+        if metric not in (DistanceMetric.l2_and_projections(), DistanceMetric.custom(custom_l1))
+    ],
     ids=repr,
 )
 def test_factory_metrics_without_a_float_parameter_have_no_float_param(factory_metric: DistanceMetric):
-    """Every dedicated factory but `l2_and_projections` returns a metric whose float parameter is `NO_FLOAT_PARAM`."""
+    """Every dedicated factory but `l2_and_projections` and `custom` returns a metric without a float parameter."""
     # --- act / assert -----------------
     assert factory_metric.float_param(3) == NO_FLOAT_PARAM
 
@@ -127,6 +134,8 @@ def test_a_metric_survives_pickling(metric: DistanceMetric):
         (DistanceMetric.minkowski(3), "L3"),
         (DistanceMetric.minkowski(3, root=False), "L3-powered"),
         (DistanceMetric.minkowski(0.5), "L0.5"),
+        (DistanceMetric.custom(custom_l1), "custom_l1"),
+        (DistanceMetric.custom(custom_l1, label="taxicab"), "taxicab"),
     ],
 )
 def test_label_is_a_short_name_per_metric(metric: DistanceMetric, expected: str):
@@ -273,6 +282,68 @@ def test_l2_and_projections_float_param_combines_k_and_the_dimension_count(
     """With `k` the float parameter is the L2 scale times (k^(1/d) - 1) / (k - 1); without `k` it is the L2 scale."""
     # --- act / assert -----------------
     assert metric.float_param(n_dims) == pytest.approx(expected)
+
+
+# ==================================================================================================
+#  Custom
+# ==================================================================================================
+def _plain_python_l1(a: np.ndarray, b: np.ndarray) -> float:
+    """Return the L1 distance of 2 vectors, without numba compiling it."""
+    return float(np.abs(a - b).sum())
+
+
+@pytest.mark.parametrize(
+    "distance_function",
+    [
+        pytest.param(
+            _plain_python_l1,
+            marks=pytest.mark.skipif(numba.config.DISABLE_JIT, reason="needs numba's JIT"),
+            id="plain Python function",
+        ),
+        pytest.param(42, id="int"),
+    ],
+)
+def test_custom_rejects_anything_but_a_numba_function(distance_function: object):
+    """`custom` raises TypeError for a plain Python function with JIT compilation on, and for a non-callable."""
+    # --- act / assert -----------------
+    with pytest.raises(TypeError, match=r"numba\.njit"):
+        DistanceMetric.custom(distance_function)  # ty: ignore[invalid-argument-type] -- the case under test
+
+
+def test_custom_float_param_is_the_same_whole_number_for_every_call():
+    """A custom metric's float parameter is a positive whole number, independent of the dimension count."""
+    # --- act --------------------------
+    float_params = {DistanceMetric.custom(custom_l1).float_param(n_dims) for n_dims in (1, 3, 100)}
+
+    # --- assert -----------------------
+    (float_param,) = float_params
+    assert float_param > 0
+    assert float_param == int(float_param)
+
+
+def test_custom_float_param_raises_for_an_address_that_a_float_cannot_hold(monkeypatch: pytest.MonkeyPatch):
+    """An address above 2**53 does not convert to a float and back unchanged, so the metric refuses it."""
+    # --- arrange ----------------------
+    monkeypatch.setattr(_distance_metric, "address_of_custom_distance_function", lambda distance_function: 2**53 + 1)
+
+    # --- act / assert -----------------
+    with pytest.raises(RuntimeError, match="does not fit a float64"):
+        DistanceMetric.custom(custom_l1).float_param(3)
+
+
+def test_custom_with_the_function_name_as_label_equals_custom_without_a_label():
+    """Passing the function's name as the label gives the metric that the default label gives."""
+    # --- act / assert -----------------
+    assert DistanceMetric.custom(custom_l1, label="custom_l1") == DistanceMetric.custom(custom_l1)
+
+
+def test_custom_repr_names_the_label_when_it_differs_from_the_function_name():
+    """The repr of a custom metric with its own label passes that label to the factory."""
+    # --- act --------------------------
+    text = repr(DistanceMetric.custom(custom_l1, label="taxicab"))
+
+    # --- assert -----------------------
+    assert text == "DistanceMetric.custom(custom_l1, label='taxicab')"
 
 
 # ==================================================================================================

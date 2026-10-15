@@ -12,9 +12,11 @@ from numpy.typing import NDArray
 
 from max_div._core.jit import lazy_njit
 
+from ._custom_distance import call_custom_distance
 from ._distance_metric import (
     METRIC_KIND_ALONG_AXIS,
     METRIC_KIND_COS,
+    METRIC_KIND_CUSTOM,
     METRIC_KIND_GEOMEAN,
     METRIC_KIND_L1,
     METRIC_KIND_L2,
@@ -138,6 +140,22 @@ def _l2_and_projections_for_k_distance(
     return min(_lminusinf_distance(vectors, i, j), l2_factor * np.sqrt(_l2sq_distance(vectors, i, j)))
 
 
+@lazy_njit("float64(float32[:, ::1], int64, int64, float64)", inline="always", cache=True)
+def _custom_distance(
+    vectors: NDArray[np.float32], i: int | np.signedinteger, j: int | np.signedinteger, address_as_float: float
+) -> np.float64:
+    """Return the custom distance between rows i and j, computed by the function at the address in `address_as_float`.
+
+    The lower index goes first, so that (i, j) and (j, i) read the same value even when the user's function is not
+    symmetric.
+    """
+    address = np.int64(address_as_float)
+    if i < j:
+        return np.float64(call_custom_distance(address, vectors, np.int64(i), np.int64(j)))
+    else:
+        return np.float64(call_custom_distance(address, vectors, np.int64(j), np.int64(i)))
+
+
 @lazy_njit(
     "float64(float32[:, ::1], int64, int64, float64)", inline="always", cache=True, fastmath={"reassoc", "contract"}
 )
@@ -226,11 +244,18 @@ def _pairwise_distance(  # noqa: C901 -- flat dispatch, one arm per kind: comple
 
     - the power `p` of a generic Minkowski kind;
     - the `l2_scale` of the L2-and-projections distance;
-    - for the L2-and-projections distance weighted for k items: the factor on the L2 distance.
+    - for the L2-and-projections distance weighted for k items: the factor on the L2 distance;
+    - for a custom distance: the address of its compiled function, as a float.
 
     The selector is loop-invariant in every calling loop, so the branch order is not
-    performance-relevant.  The specialized Minkowski kinds apply the outer root as repeated
-    squarings.
+    performance-relevant.
+
+    What a branch calls is performance-relevant: this function is inlined into every loop that reads
+    a distance from a lazy distance store, and a call to a separately compiled function in any branch,
+    even a branch that never runs for the current kind, slows those loops for every kind, so everything
+    that a branch calls must be inlined too.
+
+    The specialized Minkowski kinds apply the outer root as repeated squarings.
     """
     if metric_kind == METRIC_KIND_L1:
         return np.float32(_l1_distance(vectors, i, j))
@@ -252,6 +277,8 @@ def _pairwise_distance(  # noqa: C901 -- flat dispatch, one arm per kind: comple
         return np.float32(_l2_and_projections_distance(vectors, i, j, metric_float_param))
     if metric_kind == METRIC_KIND_L2_AND_PROJECTIONS_FOR_K:
         return np.float32(_l2_and_projections_for_k_distance(vectors, i, j, metric_float_param))
+    if metric_kind == METRIC_KIND_CUSTOM:
+        return np.float32(_custom_distance(vectors, i, j, metric_float_param))
     if metric_kind == METRIC_KIND_MINKOWSKI:
         return np.float32(_minkowski_distance_powered(vectors, i, j, metric_float_param) ** (1.0 / metric_float_param))
     if metric_kind == METRIC_KIND_MINKOWSKI_POWERED:

@@ -1,5 +1,6 @@
 """These helpers compute or read pairwise distances for tests."""
 
+import numba
 import numpy as np
 from scipy.spatial.distance import squareform
 
@@ -15,6 +16,19 @@ def l2_and_projections_reference(a: np.ndarray, b: np.ndarray, l2_scale: float, 
         return float(min(gaps.min(), l2_scale * l2 ** len(gaps)))
     else:
         return float(min(gaps.min(), l2_scale * (k ** (1.0 / len(gaps)) - 1.0) / (k - 1.0) * l2))
+
+
+@numba.njit(fastmath={"reassoc", "contract"})
+def custom_l1(a: np.ndarray, b: np.ndarray) -> float:
+    """Return the L1 distance of 2 vectors, written as a user would write it for `DistanceMetric.custom`.
+
+    It accumulates in float64 in coordinate order under the fastmath flags of the built-in metrics, so it
+    computes the same bits as `DistanceMetric.l1_manhattan()`.
+    """
+    acc = 0.0
+    for c in range(a.shape[0]):
+        acc += abs(np.float64(a[c]) - np.float64(b[c]))
+    return acc
 
 
 def all_pair_distances(store: DistanceStore) -> list[float]:

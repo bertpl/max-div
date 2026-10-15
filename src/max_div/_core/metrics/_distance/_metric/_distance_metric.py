@@ -10,11 +10,13 @@ from typing import ClassVar
 
 import numba
 import numpy as np
+from numba.core.dispatcher import Dispatcher
 from numpy.typing import NDArray
 
 from max_div._core._utils import is_non_bool_int
 from max_div._core.jit import lazy_njit
 
+from ._custom_distance import CustomDistanceFunction, address_of_custom_distance_function
 from ._vector_layout import validate_vector_array_layout
 
 # These selector values let njit functions branch on the metric without object-mode.
@@ -36,6 +38,7 @@ METRIC_KIND_ALONG_AXIS = 14
 METRIC_KIND_LMINUSINF = 15
 METRIC_KIND_L2_AND_PROJECTIONS = 16
 METRIC_KIND_L2_AND_PROJECTIONS_FOR_K = 17
+METRIC_KIND_CUSTOM = 18
 
 # NO_FLOAT_PARAM is the float passed to the compiled pairwise distance function for a kind that takes no float
 # parameter (every kind that takes one requires it to be > 0, so 0.0 is free to mean "none").
@@ -256,6 +259,38 @@ class DistanceMetric:
             return cls.l2_euclidean() if root else cls.l2s_euclidean_squared()
         else:
             return MinkowskiDistanceMetric(p=p, has_outer_root=root)
+
+    @classmethod
+    def custom(cls, distance_function: CustomDistanceFunction, label: str | None = None) -> "DistanceMetric":
+        """Return a distance metric that computes each distance with your own `numba.njit` function.
+
+        `distance_function(a, b)` receives 2 vectors, each a 1-D float32 array, and returns their distance
+        as a float.
+
+        It is always called with the vector of the lower index first, so the distance from a to b equals the
+        distance from b to a even if the function is not symmetric itself.
+
+        The metric works with every distance storage type.  With lazy storage, the solver calls the function
+        each time it reads a distance.
+
+        Each distance costs a function call that a built-in metric does not, so prefer a built-in metric
+        that computes the same distance.  Compile the function with ``fastmath={"reassoc", "contract"}``,
+        as the built-in metrics are, to let numba vectorize the function's loop over the coordinates.
+
+        The function must meet these conditions, none of which is checked:
+
+        - it returns a finite, non-negative value;
+        - it does not write to its arguments;
+        - it is safe to call from several threads at once.
+
+        Args:
+            distance_function: The `numba.njit` function that computes the distance between 2 vectors.
+            label: The metric's label, shown in a solution's objectives; by default the function's name.
+
+        Raises:
+            TypeError: If `distance_function` is not a `numba.njit` function.
+        """
+        return CustomDistanceMetric(distance_function=distance_function, metric_label=label)
 
     # --------------------------------------------------------------------------
     #  What the compiled pairwise distance function needs
@@ -660,6 +695,78 @@ class L2AndProjectionsForKDistanceMetric(L2AndProjectionsDistanceMetric):
     def _factory_arg_reprs(self) -> tuple[str, ...]:
         """Return the arguments of `L2AndProjectionsDistanceMetric`, followed by `k`."""
         return (*super()._factory_arg_reprs(), f"k={self.k}")
+
+
+# ==================================================================================================
+#  Custom
+# ==================================================================================================
+@dataclass(frozen=True, repr=False)
+class CustomDistanceMetric(DistanceMetric):
+    """This metric computes each distance with the user's numba function; see `DistanceMetric.custom`.
+
+    The compiled pairwise distance function calls the user's function through the address of its compiled
+    wrapper (see `_custom_distance`), and receives that address as the metric's float parameter.
+
+    A distance store therefore needs no field of its own for the address, which matters because every field
+    of a store costs time each time the store is passed from Python into compiled code, whatever the metric.
+
+    Pickling the metric pickles only the user's function, and each process compiles its own C-callable
+    wrapper of it, so the metric works in the worker processes of a parallel solve.  Metrics over the same
+    function compare equal only when their labels match too.
+    """
+
+    distance_function: CustomDistanceFunction
+    metric_label: str | None  # None when the label is the function's name
+
+    _kind = METRIC_KIND_CUSTOM
+    _factory_name = "custom"
+
+    def __post_init__(self) -> None:
+        """Reject a function that is not a `numba.njit` function, and store a label equal to its name as None."""
+        # With JIT compilation off, `numba.njit` returns the function itself, so any callable is accepted.
+        is_jit_disabled = numba.config.DISABLE_JIT  # ty: ignore[unresolved-attribute] -- set at runtime
+        is_numba_function = isinstance(self.distance_function, Dispatcher) or (
+            is_jit_disabled and callable(self.distance_function)
+        )
+        if not is_numba_function:
+            raise TypeError(f"DistanceMetric.custom requires a numba.njit function; got {self.distance_function!r}.")
+        # Storing None for the default label makes `custom(f)` equal to `custom(f, label=f.__name__)`; a frozen
+        # dataclass rejects `self.metric_label = ...`, so it is set with `object.__setattr__`.
+        function_name = self.distance_function.__name__  # ty: ignore[unresolved-attribute] -- a function has a name
+        if self.metric_label == function_name:
+            object.__setattr__(self, "metric_label", None)
+
+    def float_param(self, n_dims: int) -> float:
+        """Return the address of the user's function's compiled wrapper as a float, compiling the wrapper on first use.
+
+        A float64 holds every integer below 2**53 exactly, and addresses on 64-bit systems stay below 2**48,
+        so the compiled pairwise distance function converts the float back to the same address.
+
+        Raises:
+            RuntimeError: If the address does not convert to a float and back unchanged.
+        """
+        address = address_of_custom_distance_function(self.distance_function)
+        float_address = float(address)
+        if int(float_address) == address:
+            return float_address
+        else:
+            raise RuntimeError(f"The address {address:#x} of {self!r} does not fit a float64 exactly.")
+
+    @property
+    def label(self) -> str:
+        """Return the label given to `DistanceMetric.custom`, by default the function's name."""
+        if self.metric_label is None:
+            return self.distance_function.__name__  # ty: ignore[unresolved-attribute] -- a function has a name
+        else:
+            return self.metric_label
+
+    def _factory_arg_reprs(self) -> tuple[str, ...]:
+        """Return the function's name, followed by `label` when it differs from that name."""
+        function_name = self.distance_function.__name__  # ty: ignore[unresolved-attribute] -- a function has a name
+        if self.metric_label is None:
+            return (function_name,)
+        else:
+            return (function_name, f"label={self.metric_label!r}")
 
 
 # ==================================================================================================
