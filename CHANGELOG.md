@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
-- Shorten the compile time on an empty numba cache, for `max_div.numba_precompile()` and for the first solve
+- Shorten the compile time of `max_div.numba_precompile()` and of the first solve when numba's disk cache is empty
 
 ### Deprecated
 

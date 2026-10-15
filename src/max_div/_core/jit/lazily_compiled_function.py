@@ -13,7 +13,8 @@ argument checks, casts and results are the same as with `numba.njit(signature)`.
 The first use is whichever of these comes first:
 
 - a call from Python;
-- the compilation of a numba function that calls it, unless the function declares `inline="always"`: numba asks
+- the compilation of a numba function that calls it, unless numba copies the function's source into that caller
+  (`inline="always"`): numba asks
   for the type of every global that the caller references, and the `typeof_impl` hook below compiles the function
   to answer that request;
 - reading a public attribute of the compiled function other than `py_func` and `targetoptions`, such as
@@ -23,13 +24,15 @@ numba copies a function declared with `inline="always"` into each numba function
 with the caller's argument types, so the declared signatures apply only to direct use: a call from Python, or
 passing the function from Python to a numba function as an argument.
 
-Compiling a caller of such a function therefore does not compile the function itself. While numba compiles the
-caller, it reads 4 things from the function, and `LazilyCompiledFunction` returns each of them without compiling:
+Compiling a caller of an `inline="always"` function therefore does not compile that function itself. While numba
+compiles the caller, it reads the following from the function, and `LazilyCompiledFunction` returns each of them
+without compiling:
 
-- `name`: it is not forwarded, so reading it raises `AttributeError`;
+- `name`: `LazilyCompiledFunction` does not delegate it to the compiled function, so reading it raises
+  `AttributeError`;
 - `py_func` and `targetoptions`: they come from the stored Python function and options;
 - the function's type: `dispatcher_for_typing` returns a numba dispatcher of the function that holds no compiled
-  version and refuses to compile one.
+  version and cannot compile one.
 
 For a function that only numba functions call, the declared signatures never apply to those callers. `lazy_njit`
 therefore requires every `inline="always"` function to state `is_inline_only`, so that each one says whether its
@@ -169,14 +172,16 @@ class LazilyCompiledFunction(functools.partial):
         return self._compiled_fun
 
     def dispatcher_for_typing(self, purpose: Purpose) -> Callable[..., Any]:
-        """Return the dispatcher whose type numba gives the function, compiled only if numba needs a compiled version.
+        """Return the dispatcher whose type numba uses for the function; the function compiles only if numba needs it.
 
         numba passes `Purpose.constant` when it types a global that a numba function references, and
         `Purpose.argument` when it types a value that Python passes to a numba function.
 
         A referenced `inline="always"` function gets a dispatcher that holds no compiled version and refuses to compile
-        one, because the caller compiles a copy of the function's source. A call that numba does not inline then fails
-        to compile with a typing error, and does not compile a version for whatever types the caller passes.
+        one, because the caller compiles a copy of the function's source.
+
+        If numba does not inline a call to such a function, compiling the caller fails with a typing error, and numba
+        compiles no version of the function for the caller's argument types.
 
         Raises:
             TypeError: If the function is inline-only and `purpose` is `Purpose.argument`.
@@ -250,7 +255,7 @@ class LazilyCompiledFunction(functools.partial):
 
     @functools.cached_property
     def _non_compiling_dispatcher(self) -> CPUDispatcher:
-        """Return a numba dispatcher that wraps the function, holds no compiled version and refuses to compile one."""
+        """Return a numba dispatcher that wraps the function, holds no compiled version and cannot compile one."""
         # numba's type stub accepts only option names that it lists, and `self._options` is a plain dict
         dispatcher = numba.njit(**self._options)(self._py_function)  # ty: ignore[no-matching-overload]
         # disable_compile() sets this flag, but it asserts that a compiled version exists, so the flag is set directly

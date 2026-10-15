@@ -72,37 +72,38 @@ def test_numba_precompile_compiles_every_function_of_the_package_that_is_not_inl
     numba_precompile()
 
     # --- assert -----------------------
-    lazily_compiled_functions = [
+    non_inline_only_functions = [
         lazily_compiled_function
         for lazily_compiled_function in LazilyCompiledFunction.instances()
         if not lazily_compiled_function.is_inline_only
     ]
-    assert lazily_compiled_functions
-    assert all(lazily_compiled_function.is_compiled for lazily_compiled_function in lazily_compiled_functions)
+    assert non_inline_only_functions
+    assert all(lazily_compiled_function.is_compiled for lazily_compiled_function in non_inline_only_functions)
 
 
 @_needs_jit
 def test_every_inline_only_function_of_the_package_compiles_with_its_declared_signature() -> None:
     """Each inline-only function compiles on its own, so a broken signature string fails this test.
 
-    `numba_precompile` leaves inline-only functions out, and their numba callers compile a copy of their source, so
-    nothing else compiles their declared signatures.
+    `numba_precompile` leaves inline-only functions out, and each numba caller compiles a copy of the inline-only
+    function's source, so nothing else compiles the declared signatures of inline-only functions.
     """
     # --- arrange ----------------------
-    numba_precompile()  # imports every module of the package, which records every inline-only function
-    lazily_compiled_functions = [
+    # numba_precompile imports every module of the package, which records every inline-only function
+    numba_precompile()
+    inline_only_functions = [
         lazily_compiled_function
         for lazily_compiled_function in LazilyCompiledFunction.instances()
         if lazily_compiled_function.is_inline_only
     ]
 
     # --- act --------------------------
-    for lazily_compiled_function in lazily_compiled_functions:
+    for lazily_compiled_function in inline_only_functions:
         lazily_compiled_function.compile()
 
     # --- assert -----------------------
-    assert lazily_compiled_functions
-    assert all(lazily_compiled_function.is_compiled for lazily_compiled_function in lazily_compiled_functions)
+    assert inline_only_functions
+    assert all(lazily_compiled_function.is_compiled for lazily_compiled_function in inline_only_functions)
 
 
 @pytest.mark.parametrize(

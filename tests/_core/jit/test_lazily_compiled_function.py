@@ -206,8 +206,8 @@ def test_compiling_an_njit_caller_compiles_the_function_unless_the_caller_inline
 ) -> None:
     """An njit caller compiles a `LazilyCompiledFunction` that it calls, unless the caller inlines a copy of its source.
 
-    An inlined function must stay uncompiled: if a numba release compiled such a function on its own again, the
-    compile time that `inline="always"` saves would be lost.
+    An inlined function must stay uncompiled: if a numba release compiled such a function on its own, the compile
+    time that `inline="always"` saves would be lost.
     """
     # --- arrange ----------------------
     lazy_double = _new_lazy_double(is_inline_only)
@@ -314,10 +314,10 @@ def test_dispatcher_for_typing_refuses_an_inline_only_function_that_python_passe
         lazy_double.dispatcher_for_typing(Purpose.argument)
 
 
-def test_the_dispatcher_for_typing_an_inlined_reference_holds_no_compiled_version_and_refuses_to_compile(
+def test_the_dispatcher_for_typing_an_inlined_reference_holds_no_compiled_version_and_cannot_compile(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """A call of that dispatcher raises `TypeError`, and compiles neither the dispatcher nor the function."""
+    """Calling the dispatcher for an inlined reference raises `TypeError`, and compiles neither it nor the function."""
     # --- arrange ----------------------
     monkeypatch.setattr(numba.config, "DISABLE_JIT", False)
     lazy_double = _new_lazy_double(is_inline_only=True)
