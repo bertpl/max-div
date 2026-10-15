@@ -33,7 +33,8 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 | distance metrics · cosine distance | <span class="mark mark-partial">◐</span> | [^skmatter-1] |
 | distance metrics · geometric-mean distance | <span class="mark mark-none">—</span> |  |
 | distance metrics · single-dimension distance | <span class="mark mark-partial">◐</span> | [^skmatter-2] |
-| distance metrics · caller-supplied distances | <span class="mark mark-none">—</span> |  |
+| distance metrics · custom distance matrix | <span class="mark mark-none">—</span> |  |
+| distance metrics · custom distance function | <span class="mark mark-none">—</span> |  |
 | diversity objectives · maximize the minimum separation | <span class="mark mark-full">✔</span> |  |
 | diversity objectives · maximize the mean nearest-neighbor separation | <span class="mark mark-none">—</span> |  |
 | diversity objectives · maximize the geometric-mean nearest-neighbor separation | <span class="mark mark-none">—</span> |  |

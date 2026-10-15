@@ -48,12 +48,16 @@ solver:
     distance.along_axis:
       mark: partial
       note: *coefficients
-    distance.custom:
+    distance.custom_matrix:
       mark: full
       note:
         text: >-
-          Since every distance is a coefficient you supply, an arbitrary metric costs nothing
-          extra — this is the one distance axis where a modeling solver is at no disadvantage.
+          Since every distance is a coefficient that you supply, an arbitrary metric costs nothing extra — this is the one distance axis where a modeling solver is at no disadvantage.
+    distance.custom_function:
+      mark: none
+      note:
+        text: >-
+          No solver input takes a function: the distances enter the model only as the coefficients that you compute.
     objective.max_min:
       mark: partial
       note: &linearize

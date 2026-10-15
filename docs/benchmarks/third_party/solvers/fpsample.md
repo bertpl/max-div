@@ -30,11 +30,16 @@ solver:
       mark: partial
       note:
         text: Reachable by handing the tool that one coordinate as one-dimensional input.
-    distance.custom:
+    distance.custom_matrix:
       mark: none
       note:
         text: >-
-          Euclidean only. The KD-tree variants depend on it structurally, so this is not a gap waiting to be filled.
+          Euclidean only: the input is a point cloud, and the KD-tree variants depend on Euclidean distance structurally, so the Euclidean restriction is by design.
+    distance.custom_function:
+      mark: none
+      note:
+        text: >-
+          Euclidean only: no input takes a distance function.
     objective.max_min: {mark: full}
     objective.mean_nn: {mark: none}
     objective.geomean_nn: {mark: none}

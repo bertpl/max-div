@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add `DistanceMetric.custom()`, a distance metric that computes each distance with your own `numba.njit` function, and that also works with the `LAZY` distance storage type
 
 ### Changed
+- Show separately in the comparison with other tools whether each tool accepts a custom distance matrix and whether it accepts a custom distance function
 
 ### Deprecated
 

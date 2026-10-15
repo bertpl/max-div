@@ -47,12 +47,16 @@ solver:
       mark: partial
       note:
         text: Reachable by handing the tool that one coordinate as one-dimensional input.
-    distance.custom:
+    distance.custom_matrix:
       mark: full
       note:
         text: >-
-          A precomputed dissimilarity matrix is the primary input and the one the documentation
-          recommends, so any dissimilarity you can compute is usable as is.
+          A precomputed dissimilarity matrix is the primary input and the one that the documentation recommends.
+    distance.custom_function:
+      mark: partial
+      note:
+        text: >-
+          The scikit-learn-style estimator forwards a callable `metric` to scikit-learn's `pairwise_distances`, which evaluates the metric into a full n×n matrix.
     objective.max_min:
       mark: none
       note: &medoids_not_dispersion

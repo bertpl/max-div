@@ -45,11 +45,16 @@ solver:
       mark: partial
       note:
         text: Reachable by handing the tool that one coordinate as one-dimensional input.
-    distance.custom:
+    distance.custom_matrix:
       mark: full
       note:
         text: >-
-          A precomputed similarity matrix is a first-class input, so any similarity you can compute is usable. Note the sign convention: apricot maximizes similarity coverage, so a distance has to be turned into a similarity first.
+          A precomputed similarity matrix is a first-class input (`metric='precomputed'`). Note the sign convention: apricot maximizes similarity coverage, so a distance has to be turned into a similarity first.
+    distance.custom_function:
+      mark: none
+      note:
+        text: >-
+          The constructor's `metric` argument takes a name, not a function; a function is usable only through the precomputed-matrix input.
     objective.max_min:
       mark: none
       note: &coverage_not_dispersion

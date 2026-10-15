@@ -23,7 +23,8 @@ solver:
         text: >-
           Available through the same Minkowski-exponent parameter that provides L1: its radius-based
           methods forward `p` to scipy, which treats p=∞ as the Chebyshev norm; the greedy pickers
-          accept any metric as a precomputed distance matrix or callable.
+          accept any metric as a precomputed distance matrix, or as a callable that returns the full
+          matrix.
     distance.minkowski:
       mark: full
       note:
@@ -51,11 +52,16 @@ solver:
       mark: partial
       note:
         text: Reachable by handing the tool that one coordinate as one-dimensional input.
-    distance.custom:
+    distance.custom_matrix:
       mark: full
       note:
         text: >-
           A precomputed distance matrix is accepted directly, so any metric you can compute is usable.
+    distance.custom_function:
+      mark: partial
+      note:
+        text: >-
+          The `fun_dist` argument maps the whole feature array to the full n×n distance matrix, so the function that you supply builds a matrix, and all n² distances are stored.
     objective.max_min: {mark: full}
     objective.mean_nn:
       mark: none

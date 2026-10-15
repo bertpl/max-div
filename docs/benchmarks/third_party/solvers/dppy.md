@@ -43,13 +43,16 @@ solver:
     distance.along_axis:
       mark: partial
       note: *via_kernel
-    distance.custom:
+    distance.custom_matrix:
       mark: full
       note:
         text: >-
-          The kernel is entirely caller-supplied, so a custom similarity is the native case rather
-          than a workaround. Note the sign convention differs from a distance: the kernel encodes
-          similarity, and diversity comes from its determinant being large.
+          The likelihood or correlation kernel matrix is the native input. Note that the sign convention differs from a distance's: the kernel encodes similarity, and diversity comes from its determinant being large.
+    distance.custom_function:
+      mark: full
+      note:
+        text: >-
+          A kernel function is an input (`L_eval_X_data`). Most samplers evaluate it into the full kernel matrix; the `vfx` and `alpha` samplers evaluate it only between each item and a small sample of items (a Nyström dictionary).
     objective.max_min:
       mark: none
       note: &samples_not_optimizes

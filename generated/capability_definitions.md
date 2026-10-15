@@ -28,7 +28,8 @@ Every capability cell carries one of the marks below. A mark composes with the c
 | cosine | Selects under cosine distance computed by the tool from vector input. Reaching it through a documented transform — L2-normalize, then select under Euclidean — counts as reachable, not built in. |
 | geomean | Selects under the geometric-mean distance (the d-th root of the product of the per-coordinate differences) computed by the tool from vector input. |
 | single-dimension | Selects under the distance along one coordinate axis (the absolute difference of that coordinate) computed by the tool from vector input. Handing the tool that coordinate as one-dimensional input counts as reachable, not built in: in one dimension every Minkowski distance is the absolute difference of that coordinate. |
-| custom | Accepts distances the caller computed — a distance matrix or a distance callable — so a metric the tool does not implement is usable anyway. |
+| custom matrix | Accepts a distance for every pair of items, computed by the caller, so a metric that the tool does not implement is usable, at the memory cost of storing a distance for every pair. The caller supplies these distances as a distance, similarity or kernel matrix, or as the coefficients of an optimization model. |
+| custom function | Accepts a function that computes the distance between 2 items, so a metric that the tool does not implement is usable. Calling the function only for the distances that it needs counts as built in; first evaluating the function into a full matrix counts as reachable, not built in. |
 
 </div>
 
