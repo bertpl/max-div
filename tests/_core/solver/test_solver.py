@@ -369,8 +369,10 @@ def test_a_solve_frees_its_state_without_the_cyclic_collector(monkeypatch: pytes
 
     # A solve during which numba compiles creates a reference cycle through numba's objects: an
     # error from numba's type inference holds a traceback, and the traceback's frames refer to the
-    # solver's frames, which hold the state.  With every function compiled before the measurement,
-    # only the solver's own cycles can keep the state of the measured solve alive.
+    # solver's frames, which hold the state.
+    #
+    # With every function compiled before the measurement, only the solver's own cycles can keep the
+    # state of the measured solve alive.
     numba_precompile()
 
     seen: list[weakref.ref] = []

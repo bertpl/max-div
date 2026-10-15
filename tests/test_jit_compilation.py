@@ -1,7 +1,7 @@
 """Check that importing max-div compiles none of its numba functions.
 
-Functions declared with `lazy_njit` compile on first use, not at import; `tests/_core/test_numba_precompile.py`
-compiles all of them, so that a broken signature string fails a test.
+Functions declared with `lazy_njit` compile on first use, not at import, so importing a module does not compile
+them.
 """
 
 import subprocess

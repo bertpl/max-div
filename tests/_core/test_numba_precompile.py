@@ -11,8 +11,10 @@ from max_div._core.numba_precompile import numba_precompile
 
 _needs_jit = pytest.mark.skipif(numba.config.DISABLE_JIT, reason="with the JIT disabled nothing compiles")
 
-# Run in a fresh interpreter, so that no earlier test has compiled or loaded a function that `numba_precompile`
-# misses. numba calls `add_overload` both when it compiles a function and when it loads one from its disk cache, so
+# This script runs in a fresh interpreter, so that no earlier test has compiled or loaded a function that
+# `numba_precompile` misses.
+#
+# numba calls `add_overload` both when it compiles a function and when it loads one from its disk cache, so
 # counting those calls detects a missed function whatever the state of the cache.
 _SOLVES_AFTER_PRECOMPILE = """
 import numpy as np
@@ -43,8 +45,8 @@ for problem_constraints in (None, constraints):
     for storage_type in (DistanceStorageType.FULL_MATRIX, DistanceStorageType.LAZY):
         for preset in SolverPreset:
             problem = MaxDivProblem.new(vectors, k=10, constraints=problem_constraints)
-            builder = MaxDivSolverBuilder(problem).with_preset(iterations(50), preset).with_distance_storage(storage_type)
-            builder.build().solve(verbosity=Verbosity.SILENT)
+            builder = MaxDivSolverBuilder(problem).with_preset(iterations(50), preset)
+            builder.with_distance_storage(storage_type).build().solve(verbosity=Verbosity.SILENT)
 
 distances = np.linalg.norm(vectors[:, None, :] - vectors[None, :, :], axis=-1)
 problem = MaxDivProblem.from_distances(distances, k=10, constraints=constraints)
@@ -72,15 +74,15 @@ def test_numba_precompile_compiles_every_function_that_the_package_declares() ->
 def test_numba_precompile_compiles_each_recorded_function(
     monkeypatch: pytest.MonkeyPatch, is_every_extra_missing: bool
 ) -> None:
-    """The call compiles a function that is recorded but not yet compiled, also when no module can be imported."""
+    """The call compiles a `LazilyCompiledFunction` that is not yet compiled, also when no module can be imported."""
     # --- arrange ----------------------
     if is_every_extra_missing:
 
-        def import_module_without_extras(name: str) -> None:
+        def raise_missing_extra_error(name: str) -> None:
             """Fail as a module does on import when its optional extra is missing."""
             raise MissingExtraError(name)
 
-        monkeypatch.setattr(importlib, "import_module", import_module_without_extras)
+        monkeypatch.setattr(importlib, "import_module", raise_missing_extra_error)
     monkeypatch.setattr(LazilyCompiledFunction, "_instances", [])
     lazily_compiled_function = LazilyCompiledFunction(lambda x: 2.0 * x, "float64(float64)", {"cache": False})
 
@@ -93,7 +95,10 @@ def test_numba_precompile_compiles_each_recorded_function(
 
 @_needs_jit
 def test_no_solve_after_numba_precompile_compiles_or_loads_a_numba_function() -> None:
-    """After the call, solves of every preset, storage type and problem kind add no compiled function in the process."""
+    """After the call, no solve compiles or loads a numba function.
+
+    The solves cover every preset, both distance storage types, both problem constructors and a parallel solve.
+    """
     # --- act --------------------------
     output = subprocess.run(  # noqa: S603 -- fixed args
         [sys.executable, "-c", _SOLVES_AFTER_PRECOMPILE], capture_output=True, text=True, check=True
