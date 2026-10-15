@@ -55,8 +55,8 @@ def fast_pow_f32(x: np.float32, t: np.float32) -> np.float32:
        -->  x in [0.001, 0.999]
        -->  t in [0.05, 20.0]
 
-    Pass float32 arguments: numba compiles an inlined function for the argument types that its caller passes,
-    so a float64 `x` or `t` makes this function compute in float64.
+    Pass float32 arguments: numba compiles an inlined function for its caller's argument types, so a float64
+    `x` or `t` makes this function compute in float64.
     """
     # ---------------------------------------------------------------
     #  Approximate log2(x)
