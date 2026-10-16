@@ -40,6 +40,17 @@ def _halve(x: float) -> float:
 _halve = LazilyCompiledFunction(_halve, "float64(float64)", {"cache": False})
 
 
+@pytest.fixture(autouse=True)
+def _empty_list_of_recorded_functions(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Give each test an empty list of recorded functions, so that the functions it creates are gone after it.
+
+    The list is shared by the whole process, and `numba_precompile` compiles every function in it in spawned
+    processes, which find each function by its name. A later test in the same process that calls `numba_precompile`
+    would otherwise fail on a function that a test here created under another name.
+    """
+    monkeypatch.setattr(LazilyCompiledFunction, "_instances", [])
+
+
 # ==================================================================================================
 #  Decorator
 # ==================================================================================================
@@ -50,7 +61,6 @@ def test_lazy_njit_wraps_the_function_unless_the_jit_is_disabled(
     """With the JIT on, `lazy_njit` returns an uncompiled, recorded `LazilyCompiledFunction`; off, the function."""
     # --- arrange ----------------------
     monkeypatch.setattr(numba.config, "DISABLE_JIT", is_jit_disabled)
-    monkeypatch.setattr(LazilyCompiledFunction, "_instances", [])
 
     # --- act --------------------------
     decorated = lazy_njit("float64(float64)", cache=False)(_double)
@@ -75,7 +85,6 @@ def test_lazy_njit_records_whether_the_function_is_inline_only(
     """A decorated function reports the `is_inline_only` given with `inline="always"`, or `False` without `inline`."""
     # --- arrange ----------------------
     monkeypatch.setattr(numba.config, "DISABLE_JIT", False)
-    monkeypatch.setattr(LazilyCompiledFunction, "_instances", [])
     options = {} if inline is None else {"inline": inline}
 
     # --- act --------------------------
