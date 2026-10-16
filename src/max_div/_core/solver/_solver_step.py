@@ -232,6 +232,13 @@ class OptimizationStep(SolverStep[OptimizationStrategy]):
                 ]
             )
         tracker = duration.track()
+        if __import__("os").environ.get("MAX_DIV_DIAG"):  # TEMPORARY CI diagnostic
+            print(
+                f"[diag pid={__import__('os').getpid()} t={__import__('time').monotonic():.4f}] step start "
+                f"duration={duration} batch_seconds={batch_seconds}",
+                file=__import__("sys").stderr,
+                flush=True,
+            )
         score_checkpoints: list[ScoreCheckpoint] = []
         next_checkpoint_iter_count = 1
 
@@ -260,6 +267,14 @@ class OptimizationStep(SolverStep[OptimizationStrategy]):
             # --- batch boundary -----------------
             if coordinator is not None:
                 coordinator.at_batch_boundary(state, progress.fraction, elapsed_before_step + tracker.elapsed())
+            if __import__("os").environ.get("MAX_DIV_DIAG"):  # TEMPORARY CI diagnostic
+                print(
+                    f"[diag pid={__import__('os').getpid()} t={__import__('time').monotonic():.4f}] batch "
+                    f"frac_at_start={progress.fraction:.3f} n_iters={n_iters} "
+                    f"elapsed={tracker.elapsed().t_elapsed_sec:.4f} iters_total={tracker.iter_count()}",
+                    file=__import__("sys").stderr,
+                    flush=True,
+                )
 
             # --- create checkpoint if needed ----
             if tracker.iter_count() >= next_checkpoint_iter_count:
