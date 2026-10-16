@@ -304,9 +304,11 @@ class DistanceMetric:
                 Minkowski distance.
 
         Raises:
-            TypeError: If `distance_function` is not a `numba.njit` function, a value in `params` is not a bool,
-                an int or a float, or `distance_function` does not take the values in `params` after its 2
-                vectors.
+            TypeError: If any of these holds:
+
+                - `distance_function` is not a `numba.njit` function;
+                - a value in `params` is not a bool, an int or a float;
+                - `distance_function` does not take the values in `params` after its 2 vectors.
             ValueError: If an int in `params` does not fit in a 64-bit integer.
         """
         bound_distance_function = BoundDistanceFunction(function=distance_function, params=params)
@@ -732,12 +734,14 @@ class CustomDistanceMetric(DistanceMetric):
 
     Pickling the metric pickles only the user's function and its values, and each process compiles its own
     C-callable wrapper of the function with those values, so the metric works in the worker processes of a
-    parallel solve.  Metrics compare equal when their bound distance functions are equal (see
-    `BoundDistanceFunction`) and their labels match.
+    parallel solve.
+
+    Metrics compare equal when their bound distance functions are equal (see `BoundDistanceFunction`) and their
+    labels match.
     """
 
     bound_distance_function: BoundDistanceFunction
-    metric_label: str | None  # None when the label is the bound distance function's name
+    metric_label: str | None  # the label is None when it equals the bound distance function's name
 
     _kind = METRIC_KIND_CUSTOM
     _factory_name = "custom"

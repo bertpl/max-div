@@ -7,15 +7,16 @@ declares its signature once and is cached.  A numba function passed as an object
 so a distance store that held one would get a different numba type for each function, and every solver
 function would compile again for each.
 
-Instead, `BoundDistanceFunction.address` compiles the user's function into a wrapper with the C calling
-convention, whose address is a plain integer, and `call_custom_distance` calls the wrapper at that address.
+Instead, `BoundDistanceFunction.address` compiles the user's function, together with any parameter values
+that follow its 2 vectors, into a wrapper with the C calling convention, whose address is a plain integer, and
+`call_custom_distance` calls the wrapper at that address.
 `CustomDistanceMetric` passes the address to the compiled pairwise distance function.
 
 ## Parameter values
 
 The user's function may take parameter values after its 2 vectors, such as the power of a Minkowski
 distance.  The wrapper holds each value as a constant, so its C signature is the same for any values, and
-a solve passes compiled code only the wrapper's address, as it does for a function that takes no values.
+a solve passes only the wrapper's address to compiled code, as it does for a function that takes no values.
 
 ## How it runs with JIT compilation on and off
 
@@ -25,8 +26,8 @@ explains how one function runs both compiled and interpreted:
   - **Compiled** — the `@overload` of `call_custom_distance` replaces it in compiled callers with the
     `_call_address` intrinsic, which emits the call to the address.
   - **Interpreted** — with JIT compilation off, no wrapper and no intrinsic exist.  The "address" is
-    then a key into a table of bound distance functions, each of which takes 2 rows of the vectors and
-    calls the user's function with its values, and `call_custom_distance` is an ordinary Python call.
+    then a key into a table of `BoundDistanceFunction` objects, and `call_custom_distance` is an ordinary
+    Python call that passes the 2 rows to the object at that key.
 """
 
 import functools
@@ -78,7 +79,8 @@ class BoundDistanceFunction:
     types them as int64, float64 and boolean and compiles different code for each, so 2 bound functions are
     equal only when they compile the same wrapper.
 
-    The wrapper cache and the table of bound distance functions key on this equality.
+    `_compile_wrapper` and `_register_in_address_table` cache by this equality, so equal bound functions share 1
+    address.
     """
 
     function: CustomDistanceFunction
@@ -88,8 +90,11 @@ class BoundDistanceFunction:
         """Check the function, convert the values to Python types, and check that they fit the function's arguments.
 
         Raises:
-            TypeError: If `function` is not a `numba.njit` function, a value is not a bool, an integer or a
-                floating-point number, or `function` does not take the values after its 2 vectors.
+            TypeError: If any of these holds:
+
+                - `function` is not a `numba.njit` function;
+                - a value is not a bool, an integer or a floating-point number;
+                - `function` does not take the values after its 2 vectors.
             ValueError: If an integer value does not fit in int64.
         """
         # With JIT compilation off, `numba.njit` returns the function itself, so any callable is accepted.
@@ -143,39 +148,36 @@ class BoundDistanceFunction:
     # --------------------------------------------------------------------------
     @property
     def _comparison_key(self) -> "Hashable":
-        """Return the function and each value paired with its type, which equality and hashing compare."""
+        """Return what equality and hashing compare: the function, and each value paired with its type."""
         return (self.function, tuple((type(value), value) for value in self.params))
 
     @functools.cache  # noqa: B019 -- the cache keeps every wrapper alive for the life of the process, as intended
     def _compile_wrapper(self) -> CFunc:
-        """Return the C-callable wrapper of the numba function with its values, compiled on the first call.
+        """Return the C-callable wrapper that calls the numba function with the bound values, compiled on first call.
 
         The cache also keeps every wrapper alive for the life of the process.  A distance store holds only the
         wrapper's address, so the wrapper must stay in memory as long as the process runs.
-
-        The wrapper compiles the function's Python source inline, so a distance costs 1 call, not 2.
-
-        The wrapper and the inlined copy of the function both take the function's own njit options: an inlined
-        function compiles with its caller's fastmath flags, so the wrapper needs the user's flags to compute what
-        the user's function computes.
         """
-        # only called with JIT compilation on, where `numba.njit` returns a dispatcher
+        # `_compile_wrapper` runs only with JIT compilation on, where `numba.njit` returns a dispatcher
         dispatcher = cast("Dispatcher", self.function)
+        # An inlined function compiles with its caller's fastmath flags, so the wrapper and the inlined copy of the
+        # function both take the function's own njit options, to compute what the user's function computes.
         target_options = dispatcher.targetoptions
         # `numba.njit` warns when it is given `nopython`, and the inlined copy sets its own `inline`, so neither of
         # the user's values is passed on.
         options = {name: value for name, value in target_options.items() if name not in ("nopython", "inline")}
+        # The wrapper compiles the function's Python source inline, so a distance costs 1 call, not 2.
         inlined_function = numba.njit(inline="always", **options)(dispatcher.py_func)
 
         # numba cannot inline a call that passes `*args`, so the wrapper's source is generated, and it reads each value
-        # from a global variable of its own, such as `value_0`.  numba compiles each global variable that a function
+        # from a global variable of its own, such as `param_0`.  numba compiles each global variable that a function
         # reads as a constant, so each value becomes a constant in the wrapper.
-        value_names = [f"value_{index}" for index in range(len(self.params))]
-        arguments_source = ", ".join(["numba.carray(row_a, (n_dims,))", "numba.carray(row_b, (n_dims,))", *value_names])
+        param_names = [f"param_{index}" for index in range(len(self.params))]
+        arguments_source = ", ".join(["numba.carray(row_a, (n_dims,))", "numba.carray(row_b, (n_dims,))", *param_names])
         namespace: dict[str, Any] = {
             "numba": numba,
             "inlined_function": inlined_function,
-            **dict(zip(value_names, self.params)),
+            **dict(zip(param_names, self.params)),
         }
         source = f"def wrapper(row_a, row_b, n_dims):\n    return inlined_function({arguments_source})\n"
         exec(source, namespace)  # noqa: S102 -- the source holds only names generated here, never a user's string

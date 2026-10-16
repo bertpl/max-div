@@ -36,7 +36,7 @@ def custom_l1(a: np.ndarray, b: np.ndarray) -> float:
 def custom_minkowski(a: np.ndarray, b: np.ndarray, p: float, has_root: bool) -> float:
     """Return the Minkowski distance of 2 vectors with power `p`, without its root if `has_root` is off.
 
-    It computes as `DistanceMetric.minkowski(p, root=has_root)` does, so it computes the same bits.
+    It uses the arithmetic of `DistanceMetric.minkowski(p, root=has_root)`, so it returns bit-identical results.
     """
     acc = np.float64(0.0)
     for c in range(a.shape[0]):

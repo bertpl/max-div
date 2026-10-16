@@ -623,7 +623,7 @@ def test_a_custom_distance_selects_what_the_built_in_metric_with_its_formula_sel
 
 
 @pytest.mark.parametrize(
-    "custom_metric, distance_of_rows",
+    "custom_metric, distance_function",
     [
         (DistanceMetric.custom(custom_l1), custom_l1),
         (
@@ -633,7 +633,7 @@ def test_a_custom_distance_selects_what_the_built_in_metric_with_its_formula_sel
     ],
     ids=["no values", "2 values"],
 )
-def test_a_custom_distance_solves_in_parallel_from_lazy_distance_stores(custom_metric, distance_of_rows):
+def test_a_custom_distance_solves_in_parallel_from_lazy_distance_stores(custom_metric, distance_function):
     """A 2-worker solve over a custom metric scores the selection by the custom function's distances."""
     # --- arrange ----------------------
     vectors = np.random.default_rng(20261014).random((60, 2)).astype(np.float32)
@@ -651,7 +651,7 @@ def test_a_custom_distance_solves_in_parallel_from_lazy_distance_stores(custom_m
     # --- assert -----------------------
     selected = vectors[np.asarray(solution.i_selected)]
     expected = min(
-        np.float32(distance_of_rows(selected[a], selected[b]))
+        np.float32(distance_function(selected[a], selected[b]))
         for a in range(len(selected))
         for b in range(a + 1, len(selected))
     )

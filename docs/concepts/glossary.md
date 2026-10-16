@@ -65,7 +65,7 @@ cannot satisfy everything.
 
 ## Custom distance function { #custom-distance-function }
 
-A `numba.njit` function that you write to compute the distance between 2 [vectors](#vector), passed to `DistanceMetric.custom()` as the [distance metric](#distance-metric), together with the values of the function's parameters that follow the 2 vectors. Unlike [precomputed distances](#precomputed-distances), it also works with [lazy distance storage](distance_storage.md). See [Getting Started](../getting_started.md#your-own-distances).
+A `numba.njit` function that you write to compute the distance between 2 [vectors](#vector), passed to `DistanceMetric.custom()` as the [distance metric](#distance-metric). If the function takes parameters after the 2 vectors, you pass their values in `params`. Unlike [precomputed distances](#precomputed-distances), it also works with [lazy distance storage](distance_storage.md). See [Getting Started](../getting_started.md#your-own-distances).
 
 ## Dispersion { #dispersion }
 

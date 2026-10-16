@@ -340,7 +340,7 @@ def test_custom_float_param_raises_for_an_address_that_a_float_cannot_hold(monke
     ids=["no values", "2 values"],
 )
 def test_custom_with_the_default_label_given_equals_custom_without_a_label(distance_function, params, default_label):
-    """Passing the default label, the function's name with any values, gives the metric that no label gives."""
+    """Passing the default label, such as `custom_minkowski(3.0, True)`, gives the same metric as passing no label."""
     # --- act / assert -----------------
     assert DistanceMetric.custom(distance_function, default_label, params=params) == DistanceMetric.custom(
         distance_function, params=params
@@ -358,13 +358,13 @@ def test_custom_with_the_default_label_given_equals_custom_without_a_label(dista
     ],
     ids=["label", "label and values"],
 )
-def test_custom_repr_names_the_label_when_it_differs_from_the_default_and_any_values(metric, expected):
+def test_custom_repr_names_the_label_when_it_differs_from_the_default_and_any_params(metric, expected):
     """The repr of a custom metric passes its own label, and its values if there are any, to the factory."""
     # --- act / assert -----------------
     assert repr(metric) == expected
 
 
-def test_custom_metrics_with_values_of_other_types_differ():
+def test_custom_metrics_with_params_of_other_types_differ():
     """`3` equals `3.0` and `1` equals `True` in Python, but each gives a custom metric of its own."""
     # --- act --------------------------
     metrics = {DistanceMetric.custom(custom_minkowski, params=params) for params in [(3.0, True), (3, True), (3.0, 1)]}
