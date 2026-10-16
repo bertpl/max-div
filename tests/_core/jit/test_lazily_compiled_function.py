@@ -41,12 +41,14 @@ _halve = LazilyCompiledFunction(_halve, "float64(float64)", {"cache": False})
 
 
 @pytest.fixture(autouse=True)
-def _empty_list_of_recorded_functions(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Give each test an empty list of recorded functions, so that the functions it creates are gone after it.
+def _use_empty_list_of_recorded_functions(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Give each test its own empty list of recorded functions; pytest puts the original list back after the test.
 
-    The list is shared by the whole process, and `numba_precompile` compiles every function in it in spawned
-    processes, which find each function by its name. A later test in the same process that calls `numba_precompile`
-    would otherwise fail on a function that a test here created under another name.
+    Every `LazilyCompiledFunction` records itself in a list that the whole process shares, and `numba_precompile`
+    compiles every function in that list in spawned processes, which find each function by its module and qualified
+    name. A later test in the same process that calls `numba_precompile` would otherwise fail on a function that a
+    test here wrapped without binding the wrapper to its name: a spawned process that looks up `_double` finds the
+    plain function, not the `LazilyCompiledFunction` around it.
     """
     monkeypatch.setattr(LazilyCompiledFunction, "_instances", [])
 
