@@ -327,7 +327,7 @@ def test_custom_float_param_is_the_same_whole_number_for_every_call():
 def test_custom_float_param_raises_for_an_address_that_a_float_cannot_hold(monkeypatch: pytest.MonkeyPatch):
     """An address above 2**53 does not convert to a float and back unchanged, so the metric refuses it."""
     # --- arrange ----------------------
-    monkeypatch.setattr(BoundDistanceFunction, "address", lambda bound_function: 2**53 + 1)
+    monkeypatch.setattr(BoundDistanceFunction, "address", lambda bound_distance_function: 2**53 + 1)
 
     # --- act / assert -----------------
     with pytest.raises(RuntimeError, match="does not fit a float64"):

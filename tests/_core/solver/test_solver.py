@@ -604,7 +604,7 @@ def test_min_separation_over_l2_and_projections_with_k_solves_in_parallel_from_l
 def test_a_custom_distance_selects_what_the_built_in_metric_with_its_formula_selects(
     storage_type, custom_metric, built_in_metric
 ):
-    """A custom metric with the floats of a built-in metric makes the solve select what the built-in one selects."""
+    """A custom metric that computes a built-in metric's floats makes the solve select what the built-in one selects."""
     # --- arrange ----------------------
     vectors = np.random.default_rng(20261014).random((60, 3)).astype(np.float32)
 

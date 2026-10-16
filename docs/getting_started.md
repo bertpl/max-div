@@ -198,7 +198,7 @@ def capped_l1(a, b, cap):
 metric = DistanceMetric.custom(capped_l1, params=(0.25,))
 ```
 
-Each value is a bool, an int or a float, and numba compiles it into the function as a constant. The metric's default label shows the values, here `capped_l1(0.25)`. Values of different types give different metrics, because numba compiles different code for each: `params=(1,)` and `params=(1.0,)` are 2 metrics.
+Each value is a bool, an int or a float, and numba compiles it into the function as a constant, so each new set of values costs a compilation of its own. The metric's default label shows the values, here `capped_l1(0.25)`. Values of different types give different metrics, because numba compiles different code for each: `params=(1,)` and `params=(1.0,)` are 2 metrics.
 
 The metric works with every [distance storage](concepts/distance_storage.md) type, lazy storage included, so it also works for problems too large for a full distance matrix. The function must meet these conditions, none of which is checked:
 

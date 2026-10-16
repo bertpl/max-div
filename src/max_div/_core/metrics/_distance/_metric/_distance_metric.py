@@ -270,14 +270,16 @@ class DistanceMetric:
         """Return a distance metric that computes each distance with your own `numba.njit` function.
 
         `distance_function(a, b, *params)` receives 2 vectors, each a 1-D float32 array, followed by the values
-        in `params`, and returns their distance as a float.
+        in `params`, and returns the distance between the 2 vectors as a float.
 
         It is always called with the vector of the lower index first, so the distance from a to b equals the
         distance from b to a even if the function is not symmetric itself.
 
         Each value in `params` is a bool, an int or a float.  A numpy scalar of one of these kinds is converted
-        to the Python type, so the function receives a numba boolean, int64 or float64.  numba compiles the
-        values into the function as constants.  Metrics with values of different types are different metrics:
+        to the Python type, so the function receives a numba boolean, int64 or float64.
+
+        numba compiles the values into the function as constants, so each new set of values costs a compilation
+        of its own, once per process.  Metrics with values of different types are different metrics:
         `params=(3,)`, `params=(3.0,)` and `params=(True,)` give 3 metrics, because numba compiles different
         code for each.
 
@@ -307,8 +309,8 @@ class DistanceMetric:
                 vectors.
             ValueError: If an int in `params` does not fit in a 64-bit integer.
         """
-        bound_function = BoundDistanceFunction(function=distance_function, params=params)
-        return CustomDistanceMetric(bound_function=bound_function, metric_label=label)
+        bound_distance_function = BoundDistanceFunction(function=distance_function, params=params)
+        return CustomDistanceMetric(bound_distance_function=bound_distance_function, metric_label=label)
 
     # --------------------------------------------------------------------------
     #  What the compiled pairwise distance function needs
@@ -729,22 +731,23 @@ class CustomDistanceMetric(DistanceMetric):
     of a store costs time each time the store is passed from Python into compiled code, whatever the metric.
 
     Pickling the metric pickles only the user's function and its values, and each process compiles its own
-    C-callable wrapper of them, so the metric works in the worker processes of a parallel solve.  Metrics
-    compare equal when their bound functions are equal (see `BoundDistanceFunction`) and their labels match.
+    C-callable wrapper of the function with those values, so the metric works in the worker processes of a
+    parallel solve.  Metrics compare equal when their bound distance functions are equal (see
+    `BoundDistanceFunction`) and their labels match.
     """
 
-    bound_function: BoundDistanceFunction
-    metric_label: str | None  # None when the label is the bound function's name
+    bound_distance_function: BoundDistanceFunction
+    metric_label: str | None  # None when the label is the bound distance function's name
 
     _kind = METRIC_KIND_CUSTOM
     _factory_name = "custom"
 
     def __post_init__(self) -> None:
         """Store a label equal to the default label as None."""
-        # Storing None for the default label makes `custom(f)` equal to `custom(f, label=f.__name__)`, and the same
-        # for a metric with values; a frozen dataclass rejects `self.metric_label = ...`, so it is set with
-        # `object.__setattr__`.
-        if self.metric_label == self.bound_function.name:
+        # Storing None for the default label makes `custom(f)` equal to `custom(f, label=f.__name__)`, and
+        # `custom(f, params=(3.0,))` equal to `custom(f, label="f(3.0)", params=(3.0,))`; a frozen dataclass rejects
+        # `self.metric_label = ...`, so it is set with `object.__setattr__`.
+        if self.metric_label == self.bound_distance_function.name:
             object.__setattr__(self, "metric_label", None)
 
     def float_param(self, n_dims: int) -> float:
@@ -756,7 +759,7 @@ class CustomDistanceMetric(DistanceMetric):
         Raises:
             RuntimeError: If the address does not convert to a float and back unchanged.
         """
-        address = self.bound_function.address()
+        address = self.bound_distance_function.address()
         float_address = float(address)
         if int(float_address) == address:
             return float_address
@@ -765,20 +768,20 @@ class CustomDistanceMetric(DistanceMetric):
 
     @property
     def label(self) -> str:
-        """Return the label given to `DistanceMetric.custom`, by default the bound function's name."""
+        """Return the label given to `DistanceMetric.custom`, by default the bound distance function's name."""
         if self.metric_label is None:
-            return self.bound_function.name
+            return self.bound_distance_function.name
         else:
             return self.metric_label
 
     def _factory_arg_reprs(self) -> tuple[str, ...]:
-        """Return the function's name, followed by `label` when it differs from the default and by any `params`."""
-        function = self.bound_function.function
+        """Return the function's name, then `label` when it differs from the default label, then any `params`."""
+        function = self.bound_distance_function.function
         arg_reprs = [function.__name__]  # ty: ignore[unresolved-attribute] -- a function has a name
         if self.metric_label is not None:
             arg_reprs.append(f"label={self.metric_label!r}")
-        if self.bound_function.params:
-            arg_reprs.append(f"params={self.bound_function.params!r}")
+        if self.bound_distance_function.params:
+            arg_reprs.append(f"params={self.bound_distance_function.params!r}")
         return tuple(arg_reprs)
 
 

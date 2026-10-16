@@ -72,7 +72,7 @@ def test_a_bound_function_differs_from_anything_else():
     ids=repr,
 )
 def test_each_value_becomes_a_python_bool_int_or_float(value, expected):
-    """A numpy scalar becomes the Python scalar of its kind, so it equals a bound function given that Python scalar."""
+    """A numpy scalar becomes its kind's Python scalar, so the bound function equals one created with that scalar."""
     # --- act --------------------------
     bound_function = BoundDistanceFunction(_with_one_value, (value,))
 
@@ -132,7 +132,7 @@ def test_the_name_is_the_function_name_followed_by_any_values(function, params, 
     ids=["no values", "2 values"],
 )
 def test_a_lazy_store_reads_the_value_of_the_function(metric, distance_of_rows):
-    """A lazy store over a custom metric reads the function's return value for its values, narrowed to float32."""
+    """A lazy store over a custom metric reads what the function returns for the metric's values, as a float32."""
     # --- arrange ----------------------
     vectors = np.random.default_rng(20261014).random((5, 3)).astype(np.float32)
     store = DistanceStore.lazy_from_vectors(vectors, metric)
