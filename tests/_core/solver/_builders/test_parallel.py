@@ -402,7 +402,10 @@ def test_custom_worker_groups_default_to_groups_of_about_four():
     assert solver._group_sizes == [4, 4]
 
 
-@pytest.mark.parametrize("budget", [seconds(0.2), iterations(200)])
+# A worker's first iteration loads the numba functions from the disk cache, which takes up to about 0.2 s on a
+# slow CI runner and counts against the time budget. A worker merges groups only at the start of a later batch, so
+# the time budget leaves room for batches after that first iteration.
+@pytest.mark.parametrize("budget", [seconds(1.0), iterations(200)])
 def test_a_dynamic_solve_returns_a_valid_solution_and_records_its_dissolutions(budget):
     """A dynamic solve produces an ordinary solution that carries the schedule's changes."""
     # --- arrange ----------------------
