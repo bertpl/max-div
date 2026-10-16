@@ -116,12 +116,6 @@ def solve_in_worker(
     This function is the entry point of a spawned worker, so it must stay importable by name — a
     spawned child reconstructs the function from its module path rather than inheriting it.
     """
-    if __import__("os").environ.get("MAX_DIV_DIAG"):  # TEMPORARY CI diagnostic
-        print(
-            f"[diag pid={__import__('os').getpid()} t={time.monotonic():.4f}] worker {worker_index} entry",
-            file=__import__("sys").stderr,
-            flush=True,
-        )
     if requirements is not None:
         reporter: ProgressReporter = ForwardingProgressReporter(messages, worker_index, requirements)
     else:
@@ -132,8 +126,6 @@ def solve_in_worker(
             # gives the shared-memory segment of each matrix id
             solver = config.build_solver(data_matrix_reader=data_matrix_reader)
             t_start = time.monotonic()
-            if __import__("os").environ.get("MAX_DIV_DIAG"):  # TEMPORARY CI diagnostic
-                print(f"[diag pid={__import__('os').getpid()} t={t_start:.4f}] solve start", file=__import__("sys").stderr, flush=True)
             solution = solver.solve(coordinator=coordinator, progress_reporter=reporter)
             messages.put(
                 WorkerResult(

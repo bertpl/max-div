@@ -402,42 +402,14 @@ def test_custom_worker_groups_default_to_groups_of_about_four():
     assert solver._group_sizes == [4, 4]
 
 
-def _filter_diag(text):  # TEMPORARY CI diagnostic
-    """Keep the non-batch lines and, per worker, the first 5 batches, each 5% band's first batch, and the last."""
-    kept, seen, last = [], {}, {}
-    for line in text.splitlines():
-        if "] batch " not in line:
-            kept.append(line)
-            continue
-        pid = line.split()[1]
-        frac = float(line.split("frac_at_start=")[1].split()[0])
-        count, band = seen.get(pid, (0, -1))
-        if count < 5 or int(frac * 20) != band:
-            kept.append(line)
-        seen[pid] = (count + 1, int(frac * 20))
-        last[pid] = line
-    return "\n".join(kept + ["LAST " + line for line in last.values()])
-
-
 @pytest.mark.parametrize("budget", [seconds(0.2), iterations(200)])
-def test_a_dynamic_solve_returns_a_valid_solution_and_records_its_dissolutions(budget, monkeypatch, capfd):
+def test_a_dynamic_solve_returns_a_valid_solution_and_records_its_dissolutions(budget):
     """A dynamic solve produces an ordinary solution that carries the schedule's changes."""
     # --- arrange ----------------------
     solver = ParallelMaxDivSolverBuilder(_problem()).with_seed(5).with_workers(budget, 2).build()
-    monkeypatch.setenv("MAX_DIV_DIAG", "1")  # TEMPORARY CI diagnostic
-    capfd.readouterr()
-    t_parent_start = __import__('time').monotonic()
 
     # --- act --------------------------
     solution = solver.solve(verbosity=Verbosity.SILENT)
-    t_parent_end = __import__('time').monotonic()
-    diag_err = capfd.readouterr().err
-    if type(budget).__name__ == "TargetTimeDuration":  # TEMPORARY CI diagnostic: report every job's timeline
-        pytest.fail(
-            f"DIAG cpus={__import__('os').cpu_count()} machine={__import__('platform').machine()} "
-            f"parent_start={t_parent_start:.4f} parent_end={t_parent_end:.4f} "
-            f"changes={len(solution.worker_group_changes)}\n{_filter_diag(diag_err)}"
-        )
 
     # --- assert -----------------------
     assert solution.i_selected.size == 8
