@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 
 from max_div._core.metrics import DistanceMetric
-from tests._core.metrics._distance.helpers import custom_l1
+from tests._core.metrics._distance.helpers import custom_l1, custom_minkowski
 
 
 @pytest.fixture
@@ -28,6 +28,7 @@ NAMED_METRICS = (
     DistanceMetric.l2_and_projections(l2_scale=0.25),
     DistanceMetric.l2_and_projections(k=100),
     DistanceMetric.custom(custom_l1),
+    DistanceMetric.custom(custom_minkowski, params=(3.0, True)),
 )
 
 # MINKOWSKI_METRICS covers each Minkowski kind once: generic and specialized, rooted and not.
