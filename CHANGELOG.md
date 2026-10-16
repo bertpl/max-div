@@ -5,21 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
-
-### Added
+## 0.21.7 (2026-10-16)
 
 ### Changed
 - **Breaking:** Make `max_div.numba_precompile()` compile in parallel processes, which makes it 2 to 3.5 times faster when numba's disk cache is empty; a script must call it under `if __name__ == "__main__":`
 - Shorten the compile time of `max_div.numba_precompile()` and of the first solve when numba's disk cache is empty
-
-### Deprecated
-
-### Removed
-
-### Fixed
-
-### Security
 
 ## 0.21.6 (2026-10-15)
 
