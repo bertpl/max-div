@@ -21,7 +21,12 @@ from max_div._core.solver._solver_state import SolverState
 from max_div._core.solver._solver_step import OptimizationStep, SolverStep
 from max_div._core.solver._step_identity import SolverStepIdentity
 from max_div._core.solver._strategies import InitializationStrategy, OptimizationStrategy
-from tests._core.metrics._distance.helpers import condensed_distances, custom_l1, l2_and_projections_reference
+from tests._core.metrics._distance.helpers import (
+    condensed_distances,
+    custom_l1,
+    custom_minkowski,
+    l2_and_projections_reference,
+)
 
 
 # ==================================================================================================
@@ -586,9 +591,20 @@ def test_min_separation_over_l2_and_projections_with_k_solves_in_parallel_from_l
 # ==================================================================================================
 #  Custom distance metric
 # ==================================================================================================
+@pytest.mark.parametrize(
+    "custom_metric, built_in_metric",
+    [
+        (DistanceMetric.custom(custom_l1), DistanceMetric.l1_manhattan()),
+        (DistanceMetric.custom(custom_minkowski, params=(3.0, True)), DistanceMetric.minkowski(3.0)),
+        (DistanceMetric.custom(custom_minkowski, params=(1.5, False)), DistanceMetric.minkowski(1.5, root=False)),
+    ],
+    ids=repr,
+)
 @pytest.mark.parametrize("storage_type", [DistanceStorageType.LAZY, DistanceStorageType.FULL_MATRIX], ids=str)
-def test_a_custom_distance_selects_what_the_built_in_metric_with_its_formula_selects(storage_type):
-    """A custom metric with the same floats as `l1_manhattan()` makes the solve select what `l1_manhattan()` selects."""
+def test_a_custom_distance_selects_what_the_built_in_metric_with_its_formula_selects(
+    storage_type, custom_metric, built_in_metric
+):
+    """A custom metric that computes a built-in metric's floats makes the solve select what the built-in one selects."""
     # --- arrange ----------------------
     vectors = np.random.default_rng(20261014).random((60, 3)).astype(np.float32)
 
@@ -598,22 +614,33 @@ def test_a_custom_distance_selects_what_the_built_in_metric_with_its_formula_sel
         return builder.with_distance_storage(storage_type).build().solve(verbosity=Verbosity.SILENT)
 
     # --- act --------------------------
-    built_in_solution = solve(DistanceMetric.l1_manhattan())
-    custom_solution = solve(DistanceMetric.custom(custom_l1))
+    built_in_solution = solve(built_in_metric)
+    custom_solution = solve(custom_metric)
 
     # --- assert -----------------------
     assert list(custom_solution.i_selected) == list(built_in_solution.i_selected)
     assert custom_solution.score.diversity == built_in_solution.score.diversity
 
 
-def test_a_custom_distance_solves_in_parallel_from_lazy_distance_stores():
+@pytest.mark.parametrize(
+    "custom_metric, distance_function",
+    [
+        (DistanceMetric.custom(custom_l1), custom_l1),
+        (
+            DistanceMetric.custom(custom_minkowski, params=(3.0, True)),
+            lambda a, b: custom_minkowski(a, b, 3.0, True),
+        ),
+    ],
+    ids=["no values", "2 values"],
+)
+def test_a_custom_distance_solves_in_parallel_from_lazy_distance_stores(custom_metric, distance_function):
     """A 2-worker solve over a custom metric scores the selection by the custom function's distances."""
     # --- arrange ----------------------
     vectors = np.random.default_rng(20261014).random((60, 2)).astype(np.float32)
     problem = MaxDivProblem.new(
         vectors,
         k=10,
-        distance_metric=DistanceMetric.custom(custom_l1),
+        distance_metric=custom_metric,
         diversity_metric=DiversityMetric.min_separation(),
     )
     builder = ParallelMaxDivSolverBuilder(problem).with_seed(3).with_distance_storage(DistanceStorageType.LAZY)
@@ -624,7 +651,7 @@ def test_a_custom_distance_solves_in_parallel_from_lazy_distance_stores():
     # --- assert -----------------------
     selected = vectors[np.asarray(solution.i_selected)]
     expected = min(
-        np.float32(custom_l1(selected[a], selected[b]))
+        np.float32(distance_function(selected[a], selected[b]))
         for a in range(len(selected))
         for b in range(a + 1, len(selected))
     )

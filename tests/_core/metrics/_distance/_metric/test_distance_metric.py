@@ -6,8 +6,9 @@ import numpy as np
 import pytest
 
 from max_div._core.metrics import DistanceMetric
-from max_div._core.metrics._distance._metric import NO_FLOAT_PARAM, _distance_metric, validate_vector_array_layout
-from tests._core.metrics._distance.helpers import custom_l1
+from max_div._core.metrics._distance._metric import NO_FLOAT_PARAM, validate_vector_array_layout
+from max_div._core.metrics._distance._metric._custom_distance import BoundDistanceFunction
+from tests._core.metrics._distance.helpers import custom_l1, custom_minkowski
 
 # Every metric with a dedicated factory method of its own.
 _FACTORY_METRICS = (
@@ -136,6 +137,8 @@ def test_a_metric_survives_pickling(metric: DistanceMetric):
         (DistanceMetric.minkowski(0.5), "L0.5"),
         (DistanceMetric.custom(custom_l1), "custom_l1"),
         (DistanceMetric.custom(custom_l1, label="taxicab"), "taxicab"),
+        (DistanceMetric.custom(custom_minkowski, params=(3.0, True)), "custom_minkowski(3.0, True)"),
+        (DistanceMetric.custom(custom_minkowski, "L3", params=(3.0, True)), "L3"),
     ],
 )
 def test_label_is_a_short_name_per_metric(metric: DistanceMetric, expected: str):
@@ -324,26 +327,51 @@ def test_custom_float_param_is_the_same_whole_number_for_every_call():
 def test_custom_float_param_raises_for_an_address_that_a_float_cannot_hold(monkeypatch: pytest.MonkeyPatch):
     """An address above 2**53 does not convert to a float and back unchanged, so the metric refuses it."""
     # --- arrange ----------------------
-    monkeypatch.setattr(_distance_metric, "address_of_custom_distance_function", lambda distance_function: 2**53 + 1)
+    monkeypatch.setattr(BoundDistanceFunction, "address", lambda bound_distance_function: 2**53 + 1)
 
     # --- act / assert -----------------
     with pytest.raises(RuntimeError, match="does not fit a float64"):
         DistanceMetric.custom(custom_l1).float_param(3)
 
 
-def test_custom_with_the_function_name_as_label_equals_custom_without_a_label():
-    """Passing the function's name as the label gives the metric that the default label gives."""
+@pytest.mark.parametrize(
+    "distance_function, params, default_label",
+    [(custom_l1, (), "custom_l1"), (custom_minkowski, (3.0, True), "custom_minkowski(3.0, True)")],
+    ids=["no values", "2 values"],
+)
+def test_custom_with_the_default_label_given_equals_custom_without_a_label(distance_function, params, default_label):
+    """Passing the default label, such as `custom_minkowski(3.0, True)`, gives the same metric as passing no label."""
     # --- act / assert -----------------
-    assert DistanceMetric.custom(custom_l1, label="custom_l1") == DistanceMetric.custom(custom_l1)
+    assert DistanceMetric.custom(distance_function, default_label, params=params) == DistanceMetric.custom(
+        distance_function, params=params
+    )
 
 
-def test_custom_repr_names_the_label_when_it_differs_from_the_function_name():
-    """The repr of a custom metric with its own label passes that label to the factory."""
+@pytest.mark.parametrize(
+    "metric, expected",
+    [
+        (DistanceMetric.custom(custom_l1, label="taxicab"), "DistanceMetric.custom(custom_l1, label='taxicab')"),
+        (
+            DistanceMetric.custom(custom_minkowski, label="L3", params=(3.0, True)),
+            "DistanceMetric.custom(custom_minkowski, label='L3', params=(3.0, True))",
+        ),
+    ],
+    ids=["label", "label and values"],
+)
+def test_custom_repr_names_the_label_when_it_differs_from_the_default_and_any_params(metric, expected):
+    """The repr of a custom metric passes its own label, and its values if there are any, to the factory."""
+    # --- act / assert -----------------
+    assert repr(metric) == expected
+
+
+def test_custom_metrics_with_params_of_other_types_differ():
+    """`3` equals `3.0` and `1` equals `True` in Python, but each gives a custom metric of its own."""
     # --- act --------------------------
-    text = repr(DistanceMetric.custom(custom_l1, label="taxicab"))
+    metrics = {DistanceMetric.custom(custom_minkowski, params=params) for params in [(3.0, True), (3, True), (3.0, 1)]}
 
     # --- assert -----------------------
-    assert text == "DistanceMetric.custom(custom_l1, label='taxicab')"
+    assert len(metrics) == 3
+    assert DistanceMetric.custom(custom_minkowski, params=(3.0, True)) in metrics
 
 
 # ==================================================================================================

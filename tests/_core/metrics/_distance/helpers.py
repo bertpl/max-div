@@ -32,6 +32,21 @@ def custom_l1(a: np.ndarray, b: np.ndarray) -> float:
     return acc
 
 
+@numba.njit(fastmath={"reassoc", "contract"})
+def custom_minkowski(a: np.ndarray, b: np.ndarray, p: float, has_root: bool) -> float:
+    """Return the Minkowski distance of 2 vectors with power `p`, without its root if `has_root` is off.
+
+    It uses the arithmetic of `DistanceMetric.minkowski(p, root=has_root)`, so it returns bit-identical results.
+    """
+    acc = np.float64(0.0)
+    for c in range(a.shape[0]):
+        acc += abs(np.float64(a[c]) - np.float64(b[c])) ** p
+    if has_root:
+        return acc ** (1.0 / p)
+    else:
+        return acc
+
+
 def all_pair_distances(store: DistanceStore) -> list[float]:
     """Return every (i, j) distance that the store reports, self-pairs included."""
     return [

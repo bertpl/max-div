@@ -163,7 +163,7 @@ problem = MaxDivProblem.new(
 | `l_minus_inf()` | L−∞ distance -- the smallest per-dimension difference; a shared coordinate gives distance zero |
 | `along_axis(axis)` | Distance along one coordinate axis -- the absolute difference of that coordinate, every other coordinate ignored |
 | `l2_and_projections(l2_scale=1.0, k=None)` | The smaller of the L−∞ distance and an L2 part: `l2_scale` times the L2 distance raised to the power of the number of dimensions, or, given `k`, `l2_scale` times the L2 distance times a factor set by `k` and the number of dimensions -- under `min_separation()`, spreads a selection along every axis and in the full space at once; pass `k` to give the spread along the axes and the spread in the full space equal weight; assumes vectors in the unit cube |
-| `custom(distance_function, label=None)` | Your own `numba.njit` function of 2 vectors; `label` is the metric's name in `MaxDivSolution.diversity_objective_labels` (by default, the function's name) -- see [Your own distances](#your-own-distances) |
+| `custom(distance_function, label=None, *, params=())` | Your own `numba.njit` function, called with 2 vectors followed by the values in `params`; `label` is the metric's name in `MaxDivSolution.diversity_objective_labels` (by default, the function's name, with any values in parentheses) -- see [Your own distances](#your-own-distances) |
 
 #### Your own distances
 
@@ -184,6 +184,23 @@ def weighted_l1(a, b):
 
 problem = MaxDivProblem.new(vectors, k=20, distance_metric=DistanceMetric.custom(weighted_l1))
 ```
+
+If your function takes parameters after the 2 vectors, such as a cap on each coordinate's difference, pass their values in `params`:
+
+```python
+@numba.njit(fastmath={"reassoc", "contract"})
+def capped_l1(a, b, cap):
+    acc = 0.0
+    for c in range(a.shape[0]):
+        acc += min(abs(np.float64(a[c]) - np.float64(b[c])), cap)
+    return acc
+
+metric = DistanceMetric.custom(capped_l1, params=(0.25,))
+```
+
+- **Each value is a bool, an int or a float.** numba compiles it into the function as a constant, so each new set of values costs a compilation of its own.
+- **Values of different types give different metrics**, because numba compiles different code for each: `params=(1,)` and `params=(1.0,)` are 2 metrics.
+- **The metric's default label shows the values**, here `capped_l1(0.25)`.
 
 The metric works with every [distance storage](concepts/distance_storage.md) type, lazy storage included, so it also works for problems too large for a full distance matrix. The function must meet these conditions, none of which is checked:
 
